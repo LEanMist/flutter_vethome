@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'cadastro_page.dart';
 
 class LoginPage extends StatefulWidget{
   const LoginPage({super.key});
@@ -35,6 +36,13 @@ class _LoginPageState extends State<LoginPage>{
       );
       return;
     }
+  }
+
+  void abrirCadastro(){
+    Navigator.push(
+      context, 
+      MaterialPageRoute(builder: (context) => const CadastroPage())
+    );
   }
   
   @override
@@ -165,7 +173,7 @@ class _LoginPageState extends State<LoginPage>{
                       inset_shadow.BoxShadow(
                         color: Color.fromARGB(60, 0, 0, 0),
                         blurRadius: 10,
-                        offset: Offset(0, 3),
+                        offset: Offset(0, 4),
                         inset: true,
                       ),
                     ],
@@ -228,11 +236,12 @@ class _LoginPageState extends State<LoginPage>{
               )
             ),
 
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.3,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+            Center(
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.3,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -258,9 +267,7 @@ class _LoginPageState extends State<LoginPage>{
                     ],
                   ),
                   TextButton(
-                    onPressed: () {
-                      mostrarMensagem('Recuperação de senha');
-                    },
+                    onPressed: (){},
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: Size.zero,
@@ -275,23 +282,33 @@ class _LoginPageState extends State<LoginPage>{
                       ),
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
 
             const SizedBox(height: 30,),
 
             Center(
-              child: SizedBox(
+              child: Container(
                 width: MediaQuery.of(context).size.width * 0.23,
                 height: 70,
+                decoration: const inset_shadow.BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(80)),
+                  boxShadow: [
+                    inset_shadow.BoxShadow(
+                      color: Color.fromARGB(150, 105, 66, 67),
+                      blurRadius: 8,
+                      offset: Offset(4, 5),
+                    ),
+                  ],
+                ),
                 child: TextButton(
                   onPressed: entrar,
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFFAD3D5),
                     foregroundColor: const Color(0xFFFAD3D5),
-                    elevation: 10,
-                    shadowColor: const Color.fromARGB(190, 0, 0, 0),
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(80),
                     ),
@@ -304,19 +321,22 @@ class _LoginPageState extends State<LoginPage>{
                         style: GoogleFonts.montserratAlternates(
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF68442E),
-                          fontSize: 20,
+                          fontSize: 18,
                         ),
                       ),
-                      const Positioned(
-                        right: 8,
-                        child: Icon(
-                          Icons.login,
-                          color: Color(0xFF68442E),
-                          size: 30,
+                      const Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: EdgeInsets.only(right: 9),
+                          child: Icon(
+                            Icons.login,
+                            color: Color(0xFF68442E),
+                            size: 30,
+                          ),
                         ),
                       ),
                     ],
-                    ),
+                  ),
                 )
               ),
             ),
@@ -324,16 +344,25 @@ class _LoginPageState extends State<LoginPage>{
              const SizedBox(height: 10),
 
             Center(
-              child: SizedBox(
+              child: Container(
                 width: MediaQuery.of(context).size.width * 0.2,
                 height: 70,
+                decoration: const inset_shadow.BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(80)),
+                  boxShadow: [
+                    inset_shadow.BoxShadow(
+                      color: Color.fromARGB(150, 105, 66, 67),
+                      blurRadius: 8,
+                      offset: Offset(4, 5),
+                    ),
+                  ],
+                ),
                 child: TextButton(
-                  onPressed: (){},
+                  onPressed: abrirCadastro,
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFC08081),
                     foregroundColor: const Color(0xFF68442E),
-                    elevation: 10,
-                    shadowColor: const Color.fromARGB(190, 0, 0, 0),
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(80),
                     ),
@@ -343,7 +372,7 @@ class _LoginPageState extends State<LoginPage>{
                     style: GoogleFonts.montserratAlternates(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 18,
                     ),
                   ),
                 )
