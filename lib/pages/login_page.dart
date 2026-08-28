@@ -63,11 +63,11 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context, constraints) {
             final compacto =
                 constraints.maxWidth < 500 || constraints.maxHeight < 700;
-            final espacamentoInicial = compacto ? 60.0 : 40.0;
-            final tamanhoLogo = compacto ? 128.0 : 180.0;
-            final espacamentoCampos = compacto ? 12.0 : 20.0;
-            final alturaBotao = compacto ? 56.0 : 70.0;
-            final fonteBotao = compacto ? 15.0 : 18.0;
+            final double espacamentoInicial = compacto ? 60.0 : 40.0;
+            final double tamanhoLogo = compacto ? 128.0 : 180.0;
+            final double espacamentoCampos = compacto ? 12.0 : 20.0;
+            final double alturaBotao = compacto ? 56.0 : 70.0;
+            final double fonteBotao = compacto ? 15.0 : 18.0;
 
             return Padding(
               padding: EdgeInsets.symmetric(horizontal: compacto ? 16 : 24),

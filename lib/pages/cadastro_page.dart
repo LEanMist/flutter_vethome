@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:google_fonts/google_fonts.dart';
+import 'informacoes_page.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
 
   @override
   State<CadastroPage> createState() => _CadastroPageState();
+}
+
+void abrirInformacoesCadastro(BuildContext context){
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => const InformacoesCadastroPage()),
+  );
 }
 
 class _CadastroPageState extends State<CadastroPage> {
@@ -53,6 +61,7 @@ class _CadastroPageState extends State<CadastroPage> {
                         alturaBotao,
                         fonteBotao,
                         0.75,
+                        () => abrirInformacoesCadastro(context),
                       ),
                       const SizedBox(height: 30),
                       _botao(
@@ -61,6 +70,7 @@ class _CadastroPageState extends State<CadastroPage> {
                         alturaBotao,
                         fonteBotao,
                         0.9,
+                        (){}
                       ),
                       const SizedBox(height: 30),
                       _botao(
@@ -69,6 +79,7 @@ class _CadastroPageState extends State<CadastroPage> {
                         alturaBotao,
                         fonteBotao,
                         0.75,
+                        (){}
                       ),
                     ],
                   ),
@@ -127,6 +138,7 @@ class _CadastroPageState extends State<CadastroPage> {
     double altura,
     double fonte,
     double opacidadeLinhaSuperior,
+    VoidCallback onPressed,
   ) {
     return Container(
       width: largura,
@@ -145,7 +157,7 @@ class _CadastroPageState extends State<CadastroPage> {
         fit: StackFit.expand,
         children: [
           TextButton(
-            onPressed: () {},
+            onPressed: onPressed,
             style: TextButton.styleFrom(
               backgroundColor: const Color(0xFFFAD3D5),
               foregroundColor: const Color(0xFF68442E),
