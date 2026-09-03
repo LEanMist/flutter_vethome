@@ -63,8 +63,8 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context, constraints) {
             final compacto =
                 constraints.maxWidth < 500 || constraints.maxHeight < 700;
-            final double espacamentoInicial = compacto ? 60.0 : 40.0;
-            final double tamanhoLogo = compacto ? 128.0 : 180.0;
+            final double espacamentoInicial = compacto ? 80.0 : 100.0;
+            final double tamanhoLogo = compacto ? 92.0 : 130.0;
             final double espacamentoCampos = compacto ? 12.0 : 20.0;
             final double alturaBotao = compacto ? 56.0 : 70.0;
             final double fonteBotao = compacto ? 15.0 : 18.0;
@@ -79,36 +79,43 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       SizedBox(height: espacamentoInicial),
 
-                      Center(
-                        child: Container(
-                          width: tamanhoLogo,
-                          height: tamanhoLogo,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black54,
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                                offset: Offset(0, 4),
+                      SizedBox(
+                        width: double.infinity,
+                        
+                          child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 74),
+                            Center(
+                              child: Container(
+                                width: tamanhoLogo,
+                                height: tamanhoLogo,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black54,
+                                      blurRadius: 10,
+                                      spreadRadius: 2,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: Image.asset(
+                                  'assets/imagens/VetHome_logo_1.jpg',
+                                  width: tamanhoLogo,
+                                  height: tamanhoLogo,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
-                            ],
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Image.asset(
-                            'assets/imagens/VetHome_logo_1.jpg',
-                            width: tamanhoLogo,
-                            height: tamanhoLogo,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
+                            ),
 
-                      SizedBox(height: compacto ? 20 : 40),
+                            SizedBox(height: compacto ? 14 : 26),
 
                       Center(
                         child: SizedBox(
-                          width: 250,
+                          width: compacto ? 220 : 270,
                           child: Container(
                             decoration: const inset_shadow.BoxDecoration(
                               color: Color.fromRGBO(192, 128, 129, 0.15),
@@ -180,7 +187,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       Center(
                         child: SizedBox(
-                          width: 250,
+                          width: compacto ? 220 : 270,
                           child: Container(
                             decoration: const inset_shadow.BoxDecoration(
                               color: Color.fromRGBO(192, 128, 129, 0.15),
@@ -264,64 +271,68 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                      Center(
-                        child: SizedBox(
-                          width: 280,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Checkbox(
-                                    value: lembrarDeMim,
-                                    onChanged: (selecionado) {
-                                      setState(() {
-                                        lembrarDeMim = selecionado ?? false;
-                                      });
-                                    },
-                                    shape: const CircleBorder(),
-                                    activeColor: const Color(0xFF68442E),
-                                    checkColor: Colors.white,
-                                  ),
-                                  Text(
-                                    'Lembre de mim',
-                                    style: GoogleFonts.montserratAlternates(
-                                      color: const Color(0xFF68442E),
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 9,
+                            Center(
+                              child: SizedBox(
+                                width: compacto ? 250 : 300,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Checkbox(
+                                          value: lembrarDeMim,
+                                          onChanged: (selecionado) {
+                                            setState(() {
+                                              lembrarDeMim = selecionado ?? false;
+                                            });
+                                          },
+                                          shape: const CircleBorder(),
+                                          activeColor: const Color(0xFF68442E),
+                                          checkColor: Colors.white,
+                                        ),
+                                        Text(
+                                          'Lembre de mim',
+                                          style: GoogleFonts.montserratAlternates(
+                                            color: const Color(0xFF68442E),
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 9,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                              TextButton(
-                                onPressed: () {},
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.all(17),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
+                                    TextButton(
+                                      onPressed: () {},
+                                      style: TextButton.styleFrom(
+                                        padding: EdgeInsets.all(17),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: Text(
+                                        'Esqueceu a senha?',
+                                        style: GoogleFonts.montserratAlternates(
+                                          color: const Color(0xFF68442E),
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 9,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: Text(
-                                  'Esqueceu a senha?',
-                                  style: GoogleFonts.montserratAlternates(
-                                    color: const Color(0xFF68442E),
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 9,
-                                  ),
-                                ),
                               ),
-                            ],
+                            ),
+                          ],
                           ),
-                        ),
+                        
                       ),
 
-                      SizedBox(height: compacto ? 16 : 30),
+                      SizedBox(height: compacto ? 30 : 40),
 
                       Center(
                         
                         child: Container(
-                          width: 180,
+                          width: 200,
                           height: alturaBotao,
                           decoration: const inset_shadow.BoxDecoration(
                             borderRadius: BorderRadius.all(Radius.circular(80)),
@@ -371,7 +382,7 @@ class _LoginPageState extends State<LoginPage> {
                               Positioned(
                                 top: 0.7,
                                 left: 21,
-                                right: 20,
+                                right: 30,
                                 child: Container(
                                   height: 2,
                                   decoration: BoxDecoration(
@@ -382,8 +393,8 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               Positioned(
                                 bottom: 1,
-                                left: 18,
-                                right: 18,
+                                left: 25,
+                                right: 20,
                                 child: Container(
                                   height: 2,
                                   decoration: BoxDecoration(
