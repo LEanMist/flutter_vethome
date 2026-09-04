@@ -78,255 +78,276 @@ class _LoginPageState extends State<LoginPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(height: espacamentoInicial),
-
-                      SizedBox(
-                        width: double.infinity,
-                        
-                          child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(height: 74),
-                            Center(
-                              child: Container(
-                                width: tamanhoLogo,
-                                height: tamanhoLogo,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black54,
-                                      blurRadius: 10,
-                                      spreadRadius: 2,
-                                      offset: Offset(0, 4),
+                            SizedBox(
+                              width: double.infinity,
+                              child: Stack(  
+                                children: [
+                                  Positioned.fill(
+                                    child: CustomPaint(
+                                      painter: FormaLoginPainter(),
                                     ),
-                                  ],
-                                ),
-                                clipBehavior: Clip.antiAlias,
-                                child: Image.asset(
-                                  'assets/imagens/VetHome_logo_1.jpg',
-                                  width: tamanhoLogo,
-                                  height: tamanhoLogo,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
+                                  ),
 
-                            SizedBox(height: compacto ? 14 : 26),
-
-                      Center(
-                        child: SizedBox(
-                          width: compacto ? 220 : 270,
-                          child: Container(
-                            decoration: const inset_shadow.BoxDecoration(
-                              color: Color.fromRGBO(192, 128, 129, 0.15),
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(80),
-                              ),
-                              boxShadow: [
-                                inset_shadow.BoxShadow(
-                                  color: Color.fromARGB(60, 0, 0, 0),
-                                  blurRadius: 10,
-                                  offset: Offset(0, 3),
-                                  inset: true,
-                                ),
-                              ],
-                            ),
-                            child: TextField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              style: GoogleFonts.montserratAlternates(
-                                fontWeight: FontWeight.w500,
-                              ),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Colors.transparent,
-                                hintText: 'Usuario',
-                                hintStyle: GoogleFonts.montserratAlternates(
-                                  fontWeight: FontWeight.w500,
-                                ),
-
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: compacto ? 12 : 20,
-                                  horizontal: 18,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(80),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(80),
-                                  borderSide: const BorderSide(
-                                    width: 1.5,
-                                    color: Color(0xFF68442E),
-                                  ),
-                                ),
-                                prefixIcon: Container(
-                                  margin: const EdgeInsets.only(
-                                    left: 5,
-                                    right: 8,
-                                  ),
-                                  width: compacto ? 42 : 54,
-                                  height: compacto ? 42 : 54,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFFAD3D5),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.person,
-                                    color: Color(0xFF68442E),
-                                    size: compacto ? 30 : 40,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: espacamentoCampos),
-
-                      Center(
-                        child: SizedBox(
-                          width: compacto ? 220 : 270,
-                          child: Container(
-                            decoration: const inset_shadow.BoxDecoration(
-                              color: Color.fromRGBO(192, 128, 129, 0.15),
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(80),
-                              ),
-                              boxShadow: [
-                                inset_shadow.BoxShadow(
-                                  color: Color.fromARGB(60, 0, 0, 0),
-                                  blurRadius: 10,
-                                  offset: Offset(0, 4),
-                                  inset: true,
-                                ),
-                              ],
-                            ),
-                            child: TextField(
-                              controller: _senhaController,
-                              obscureText: esconderSenha,
-                              style: GoogleFonts.montserratAlternates(
-                                fontWeight: FontWeight.w500,
-                              ),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Colors.transparent,
-                                hintText: 'Senha',
-                                hintStyle: GoogleFonts.montserratAlternates(
-                                  fontWeight: FontWeight.w500,
-                                ),
-
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: compacto ? 12 : 20,
-                                  horizontal: 18,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(80),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(80),
-                                  borderSide: const BorderSide(
-                                    width: 1.5,
-                                    color: Color(0xFF68442E),
-                                  ),
-                                ),
-                                prefixIcon: Container(
-                                  margin: const EdgeInsets.only(
-                                    left: 5,
-                                    right: 8,
-                                  ),
-                                  width: compacto ? 42 : 54,
-                                  height: compacto ? 42 : 54,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFFAD3D5),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.lock,
-                                    color: Color(0xFF68442E),
-                                    size: compacto ? 30 : 40,
-                                  ),
-                                ),
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      esconderSenha = !esconderSenha;
-                                    });
-                                  },
-                                  color: const Color(0xFF68442E),
-                                  icon: Icon(
-                                    esconderSenha
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
-                                  ),
-                                  tooltip: esconderSenha
-                                      ? 'Mostrar senha'
-                                      : 'Ocultar senha',
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                            Center(
-                              child: SizedBox(
-                                width: compacto ? 250 : 300,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Checkbox(
-                                          value: lembrarDeMim,
-                                          onChanged: (selecionado) {
-                                            setState(() {
-                                              lembrarDeMim = selecionado ?? false;
-                                            });
-                                          },
-                                          shape: const CircleBorder(),
-                                          activeColor: const Color(0xFF68442E),
-                                          checkColor: Colors.white,
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        height: compacto ? 300 : 300,
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Positioned(
+                                              top: 0,
+                                              child: _pata(compacto ? 0.75 : 1.0
+                                              ),
+                                            ),
+                                            Positioned(
+                                              bottom: 35,
+                                              child: Container(
+                                                width: tamanhoLogo,
+                                                height: tamanhoLogo,
+                                                decoration: const BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black54,
+                                                      blurRadius: 10,
+                                                      spreadRadius: 2,
+                                                      offset: Offset(0, 4),
+                                                    ),
+                                                  ],
+                                                ),
+                                                clipBehavior: Clip.antiAlias,
+                                                child: Image.asset(
+                                                  'assets/imagens/VetHome_logo_1.jpg',
+                                                  width: tamanhoLogo,
+                                                  height: tamanhoLogo,
+                                                  fit: BoxFit.contain,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        Text(
-                                          'Lembre de mim',
-                                          style: GoogleFonts.montserratAlternates(
-                                            color: const Color(0xFF68442E),
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 9,
+                                      ),
+
+                                      SizedBox(height: compacto ? 14 : 26),
+
+                                      Center(
+                                        child: SizedBox(
+                                          width: compacto ? 220 : 270,
+                                          child: Container(
+                                            decoration: const inset_shadow.BoxDecoration(
+                                              color: Color.fromRGBO(192, 128, 129, 0.15),
+                                              borderRadius: BorderRadius.all(
+                                                Radius.circular(80),
+                                              ),
+                                              boxShadow: [
+                                                inset_shadow.BoxShadow(
+                                                  color: Color.fromARGB(60, 0, 0, 0),
+                                                  blurRadius: 10,
+                                                  offset: Offset(0, 3),
+                                                  inset: true,
+                                                ),
+                                              ],
+                                            ),
+                                            child: TextField(
+                                              controller: _emailController,
+                                              keyboardType: TextInputType.emailAddress,
+                                              style: GoogleFonts.montserratAlternates(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              decoration: InputDecoration(
+                                                filled: true,
+                                                fillColor: Colors.transparent,
+                                                hintText: 'Usuario',
+                                                hintStyle: GoogleFonts.montserratAlternates(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+
+                                                contentPadding: EdgeInsets.symmetric(
+                                                  vertical: compacto ? 12 : 20,
+                                                  horizontal: 18,
+                                                ),
+                                                border: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(80),
+                                                  borderSide: BorderSide.none,
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(80),
+                                                  borderSide: const BorderSide(
+                                                    width: 1.5,
+                                                    color: Color(0xFF68442E),
+                                                  ),
+                                                ),
+                                                prefixIcon: Container(
+                                                  margin: const EdgeInsets.only(
+                                                    left: 1,
+                                                    right: 8,
+                                                  ),
+                                                  width: compacto ? 42 : 54,
+                                                  height: compacto ? 42 : 54,
+                                                  decoration: const BoxDecoration(
+                                                    color: Color(0xFFFAD3D5),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.person,
+                                                    color: Color(0xFF68442E),
+                                                    size: compacto ? 30 : 40,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      SizedBox(height: espacamentoCampos),
+
+                                      Center(
+                                        child: SizedBox(
+                                          width: compacto ? 220 : 270,
+                                          child: Container(
+                                            decoration: const inset_shadow.BoxDecoration(
+                                              color: Color.fromRGBO(192, 128, 129, 0.15),
+                                              borderRadius: BorderRadius.all(
+                                                Radius.circular(80),
+                                              ),
+                                              boxShadow: [
+                                                inset_shadow.BoxShadow(
+                                                  color: Color.fromARGB(60, 0, 0, 0),
+                                                  blurRadius: 10,
+                                                  offset: Offset(0, 4),
+                                                  inset: true,
+                                                ),
+                                              ],
+                                            ),
+                                            child: TextField(
+                                              controller: _senhaController,
+                                              obscureText: esconderSenha,
+                                              style: GoogleFonts.montserratAlternates(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              decoration: InputDecoration(
+                                                filled: true,
+                                                fillColor: Colors.transparent,
+                                                hintText: 'Senha',
+                                                hintStyle: GoogleFonts.montserratAlternates(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+
+                                                contentPadding: EdgeInsets.symmetric(
+                                                  vertical: compacto ? 12 : 20,
+                                                  horizontal: 18,
+                                                ),
+                                                border: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(80),
+                                                  borderSide: BorderSide.none,
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(80),
+                                                  borderSide: const BorderSide(
+                                                    width: 1.5,
+                                                    color: Color(0xFF68442E),
+                                                  ),
+                                                ),
+                                                prefixIcon: Container(
+                                                  margin: const EdgeInsets.only(
+                                                    left: 1,
+                                                    right: 8,
+                                                  ),
+                                                  width: compacto ? 42 : 54,
+                                                  height: compacto ? 42 : 54,
+                                                  decoration: const BoxDecoration(
+                                                    color: Color(0xFFFAD3D5),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.lock,
+                                                    color: Color(0xFF68442E),
+                                                    size: compacto ? 30 : 40,
+                                                  ),
+                                                ),
+                                                suffixIcon: IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      esconderSenha = !esconderSenha;
+                                                    });
+                                                  },
+                                                  color: const Color(0xFF68442E),
+                                                  icon: Icon(
+                                                    esconderSenha
+                                                        ? Icons.visibility
+                                                        : Icons.visibility_off,
+                                                  ),
+                                                  tooltip: esconderSenha
+                                                      ? 'Mostrar senha'
+                                                      : 'Ocultar senha',
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      Center(
+                                        child: SizedBox(
+                                          width: compacto ? 250 : 300,
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Checkbox(
+                                                    value: lembrarDeMim,
+                                                    onChanged: (selecionado) {
+                                                      setState(() {
+                                                        lembrarDeMim = selecionado ?? false;
+                                                      });
+                                                    },
+                                                    shape: const CircleBorder(),
+                                                    activeColor: const Color(0xFF68442E),
+                                                    checkColor: Colors.white,
+                                                  ),
+                                                  Text(
+                                                    'Lembre de mim',
+                                                    style: GoogleFonts.montserratAlternates(
+                                                      color: const Color(0xFF68442E),
+                                                      fontWeight: FontWeight.w500,
+                                                      fontSize: 9,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              TextButton(
+                                                onPressed: () {},
+                                                style: TextButton.styleFrom(
+                                                  padding: EdgeInsets.all(17),
+                                                  minimumSize: Size.zero,
+                                                  tapTargetSize:
+                                                      MaterialTapTargetSize.shrinkWrap,
+                                                ),
+                                                child: Text(
+                                                  'Esqueceu a senha?',
+                                                  style: GoogleFonts.montserratAlternates(
+                                                    color: const Color(0xFF68442E),
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 9,
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    TextButton(
-                                      onPressed: () {},
-                                      style: TextButton.styleFrom(
-                                        padding: EdgeInsets.all(17),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: Text(
-                                        'Esqueceu a senha?',
-                                        style: GoogleFonts.montserratAlternates(
-                                          color: const Color(0xFF68442E),
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 9,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ],
-                          ),
-                        
+                        ),  
                       ),
 
+                      
                       SizedBox(height: compacto ? 30 : 40),
 
                       Center(
@@ -455,5 +476,201 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+  Widget _almofada({
+  required double largura,
+  required double altura,
+  required double rotacao,
+}) {
+  return Transform.rotate(
+    angle: rotacao,
+    child: Container(
+      width: largura,
+      height: altura,
+      decoration: const BoxDecoration(
+        color: Color(0xFFC08081),
+        borderRadius: BorderRadius.all(
+          Radius.circular(50),
+        ),
+        boxShadow: [
+          // sombra projetada
+          BoxShadow(
+            color: Color.fromARGB(80, 105, 66, 67),
+            blurRadius: 10,
+            offset: Offset(5, 7),
+          ),
+
+          // brilho
+          BoxShadow(
+            color: Color.fromARGB(100, 255, 255, 255),
+            blurRadius: 5,
+            offset: Offset(-4, -4),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+  Widget _pata(double escala) {
+  return SizedBox(
+    width: 330 * escala,
+    height: 260 * escala,
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+
+        // Dedo superior esquerdo
+        Positioned(
+          top: 5 * escala,
+          left: 65 * escala,
+          child: _almofada(
+            largura: 58 * escala,
+            altura: 85 * escala,
+            rotacao: -0.25,
+          ),
+        ),
+
+        // Dedo superior direito
+        Positioned(
+          top: 5 * escala,
+          right: 65 * escala,
+          child: _almofada(
+            largura: 58 * escala,
+            altura: 85 * escala,
+            rotacao: 0.25,
+          ),
+        ),
+
+        // Dedo inferior esquerdo
+        Positioned(
+          top: 75 * escala,
+          left: 5 * escala,
+          child: _almofada(
+            largura: 58 * escala,
+            altura: 85 * escala,
+            rotacao: -0.45,
+          ),
+        ),
+
+        // Dedo inferior direito
+        Positioned(
+          top: 75 * escala,
+          right: 5 * escala,
+          child: _almofada(
+            largura: 58 * escala,
+            altura: 85 * escala,
+            rotacao: 0.45,
+          ),
+        ),
+      ],
+    ),
+  );
+ }
+}
+class FormaLoginPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path();
+
+    // Começa no topo central da forma
+    path.moveTo(size.width * 0.50, 0);
+
+    // Curva superior esquerda
+    path.cubicTo(
+      size.width * 0.40,
+      0,
+      size.width * 0.34,
+      size.height * 0.10,
+      size.width * 0.27,
+      size.height * 0.22,
+    );
+
+    // Descida pelo lado esquerdo
+    path.cubicTo(
+      size.width * 0.18,
+      size.height * 0.35,
+      size.width * 0.08,
+      size.height * 0.43,
+      size.width * 0.04,
+      size.height * 0.55,
+    );
+
+    // Curva inferior esquerda
+    path.cubicTo(
+      size.width * 0.00,
+      size.height * 0.68,
+      size.width * 0.04,
+      size.height * 0.91,
+      size.width * 0.20,
+      size.height * 0.96,
+    );
+
+    // Parte inferior
+    path.cubicTo(
+      size.width * 0.35,
+      size.height * 1.00,
+      size.width * 0.65,
+      size.height * 1.00,
+      size.width * 0.80,
+      size.height * 0.96,
+    );
+
+    // Curva inferior direita
+    path.cubicTo(
+      size.width * 0.96,
+      size.height * 0.91,
+      size.width * 1.00,
+      size.height * 0.68,
+      size.width * 0.96,
+      size.height * 0.55,
+    );
+
+    // Subida pelo lado direito
+    path.cubicTo(
+      size.width * 0.92,
+      size.height * 0.43,
+      size.width * 0.82,
+      size.height * 0.35,
+      size.width * 0.73,
+      size.height * 0.22,
+    );
+
+    // Curva superior direita
+    path.cubicTo(
+      size.width * 0.66,
+      size.height * 0.10,
+      size.width * 0.60,
+      0,
+      size.width * 0.50,
+      0,
+    );
+
+    path.close();
+
+    // Sombra externa
+    final sombra = Paint()
+      ..color = const Color.fromARGB(55, 105, 66, 67)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        12,
+      );
+
+    canvas.drawPath(
+      path.shift(const Offset(0, 5)),
+      sombra,
+    );
+
+    // Fundo da forma
+    final fundo = Paint()
+      ..color = const Color(0xFFFAD3D5)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(path, fundo);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }
