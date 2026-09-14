@@ -68,6 +68,7 @@ class _LoginPageState extends State<LoginPage> {
             final double espacamentoCampos = compacto ? 12.0 : 20.0;
             final double alturaBotao = compacto ? 56.0 : 70.0;
             final double fonteBotao = compacto ? 15.0 : 18.0;
+            final double deslocamentoForma = compacto ? 18.0 : 24.0;
 
             return Padding(
               padding: EdgeInsets.symmetric(horizontal: compacto ? 16 : 24),
@@ -80,11 +81,15 @@ class _LoginPageState extends State<LoginPage> {
                       SizedBox(height: espacamentoInicial),
                             SizedBox(
                               width: double.infinity,
-                              child: Stack(  
+                              child: Stack(
+                                clipBehavior: Clip.none,
                                 children: [
                                   Positioned.fill(
-                                    child: CustomPaint(
-                                      painter: FormaLoginPainter(),
+                                    child: Transform.translate(
+                                      offset: Offset(0, deslocamentoForma),
+                                      child: CustomPaint(
+                                        painter: FormaLoginPainter(),
+                                      ),
                                     ),
                                   ),
 
@@ -517,11 +522,12 @@ class _LoginPageState extends State<LoginPage> {
     height: 260 * escala,
     child: Stack(
       alignment: Alignment.center,
+      clipBehavior: Clip.none,
       children: [
 
         // Dedo superior esquerdo
         Positioned(
-          top: 5 * escala,
+          top: -5 * escala,
           left: 65 * escala,
           child: _almofada(
             largura: 58 * escala,
@@ -532,7 +538,7 @@ class _LoginPageState extends State<LoginPage> {
 
         // Dedo superior direito
         Positioned(
-          top: 5 * escala,
+          top: -5 * escala,
           right: 65 * escala,
           child: _almofada(
             largura: 58 * escala,
@@ -543,8 +549,8 @@ class _LoginPageState extends State<LoginPage> {
 
         // Dedo inferior esquerdo
         Positioned(
-          top: 75 * escala,
-          left: 5 * escala,
+          top: 105 * escala,
+          left: -70 * escala,
           child: _almofada(
             largura: 58 * escala,
             altura: 85 * escala,
@@ -554,8 +560,8 @@ class _LoginPageState extends State<LoginPage> {
 
         // Dedo inferior direito
         Positioned(
-          top: 75 * escala,
-          right: 5 * escala,
+          top: 105 * escala,
+          right: -70 * escala,
           child: _almofada(
             largura: 58 * escala,
             altura: 85 * escala,
@@ -572,17 +578,17 @@ class FormaLoginPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final path = Path();
 
-    // Começa no topo central da forma
-    path.moveTo(size.width * 0.50, 0);
+    // Começa mais abaixo, com uma pequena curva arredondada entre as almofadas
+    path.moveTo(size.width * 0.50, size.height * 0.12);
 
     // Curva superior esquerda
     path.cubicTo(
-      size.width * 0.40,
-      0,
-      size.width * 0.34,
-      size.height * 0.10,
-      size.width * 0.27,
-      size.height * 0.22,
+      size.width * 0.45,
+      size.height * 0.12,
+      size.width * 0.36,
+      size.height * 0.12,
+      size.width * 0.28,
+      size.height * 0.24,
     );
 
     // Descida pelo lado esquerdo
@@ -632,19 +638,19 @@ class FormaLoginPainter extends CustomPainter {
       size.width * 0.82,
       size.height * 0.35,
       size.width * 0.73,
-      size.height * 0.22,
+      size.height * 0.26,
     );
 
     // Curva superior direita
     path.cubicTo(
-      size.width * 0.66,
-      size.height * 0.10,
-      size.width * 0.60,
-      0,
+      size.width * 0.63,
+      size.height * 0.12,
+      size.width * 0.57,
+      size.height * 0.12,
       size.width * 0.50,
-      0,
+      size.height * 0.12,
     );
-
+  
     path.close();
 
     // Sombra externa
