@@ -52,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
           style: GoogleFonts.comfortaa(
             color: const Color(0xFF68442E),
             fontWeight: FontWeight.bold,
-            fontSize: 30,
+            fontSize: 28,
           ),
         ),
         centerTitle: true,
@@ -63,12 +63,14 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context, constraints) {
             final compacto =
                 constraints.maxWidth < 500 || constraints.maxHeight < 700;
-            final double espacamentoInicial = compacto ? 80.0 : 100.0;
+            final double espacamentoInicial = compacto ? 52.0 : 100.0;
             final double tamanhoLogo = compacto ? 92.0 : 130.0;
             final double espacamentoCampos = compacto ? 12.0 : 20.0;
             final double alturaBotao = compacto ? 56.0 : 70.0;
             final double fonteBotao = compacto ? 15.0 : 18.0;
             final double deslocamentoForma = compacto ? 18.0 : 24.0;
+            final double alturacampos = compacto ? 40.0 : 60.0;
+            final double larguraCampos = compacto ? 220.0 : 270.0;
 
             return Padding(
               padding: EdgeInsets.symmetric(horizontal: compacto ? 16 : 24),
@@ -97,13 +99,13 @@ class _LoginPageState extends State<LoginPage> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       SizedBox(
-                                        height: compacto ? 300 : 300,
+                                        height: compacto ? 200 : 300,
                                         child: Stack(
                                           alignment: Alignment.center,
                                           children: [
                                             Positioned(
                                               top: 0,
-                                              child: _pata(compacto ? 0.75 : 1.0
+                                              child: _pata(compacto ? 0.60 : 1.1
                                               ),
                                             ),
                                             Positioned(
@@ -135,11 +137,12 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                       ),
 
-                                      SizedBox(height: compacto ? 14 : 26),
+                                      SizedBox(height: compacto ? 1 : 26),
 
                                       Center(
                                         child: SizedBox(
-                                          width: compacto ? 220 : 270,
+                                          width: larguraCampos,
+                                          height: alturacampos,
                                           child: Container(
                                             decoration: const inset_shadow.BoxDecoration(
                                               color: Color.fromRGBO(192, 128, 129, 0.15),
@@ -160,6 +163,7 @@ class _LoginPageState extends State<LoginPage> {
                                               keyboardType: TextInputType.emailAddress,
                                               style: GoogleFonts.montserratAlternates(
                                                 fontWeight: FontWeight.w500,
+                                                fontSize: compacto ? 14 : 16,
                                               ),
                                               decoration: InputDecoration(
                                                 filled: true,
@@ -167,10 +171,11 @@ class _LoginPageState extends State<LoginPage> {
                                                 hintText: 'Usuario',
                                                 hintStyle: GoogleFonts.montserratAlternates(
                                                   fontWeight: FontWeight.w500,
+                                                  fontSize: compacto ? 14 : 16,
                                                 ),
 
                                                 contentPadding: EdgeInsets.symmetric(
-                                                  vertical: compacto ? 12 : 20,
+                                                  vertical: compacto ? 10 : 20,
                                                   horizontal: 18,
                                                 ),
                                                 border: OutlineInputBorder(
@@ -189,8 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                                                     left: 1,
                                                     right: 8,
                                                   ),
-                                                  width: compacto ? 42 : 54,
-                                                  height: compacto ? 42 : 54,
+                                                  width: compacto ? 17 : 54,
                                                   decoration: const BoxDecoration(
                                                     color: Color(0xFFFAD3D5),
                                                     shape: BoxShape.circle,
@@ -198,7 +202,7 @@ class _LoginPageState extends State<LoginPage> {
                                                   child: Icon(
                                                     Icons.person,
                                                     color: Color(0xFF68442E),
-                                                    size: compacto ? 30 : 40,
+                                                    size: compacto ? 25 : 40,
                                                   ),
                                                 ),
                                               ),
@@ -211,7 +215,8 @@ class _LoginPageState extends State<LoginPage> {
 
                                       Center(
                                         child: SizedBox(
-                                          width: compacto ? 220 : 270,
+                                          width: larguraCampos,
+                                          height: alturacampos,
                                           child: Container(
                                             decoration: const inset_shadow.BoxDecoration(
                                               color: Color.fromRGBO(192, 128, 129, 0.15),
@@ -232,6 +237,7 @@ class _LoginPageState extends State<LoginPage> {
                                               obscureText: esconderSenha,
                                               style: GoogleFonts.montserratAlternates(
                                                 fontWeight: FontWeight.w500,
+                                                fontSize: compacto ? 14 : 16,
                                               ),
                                               decoration: InputDecoration(
                                                 filled: true,
@@ -239,6 +245,7 @@ class _LoginPageState extends State<LoginPage> {
                                                 hintText: 'Senha',
                                                 hintStyle: GoogleFonts.montserratAlternates(
                                                   fontWeight: FontWeight.w500,
+                                                  fontSize: compacto ? 14 : 16,
                                                 ),
 
                                                 contentPadding: EdgeInsets.symmetric(
@@ -261,8 +268,7 @@ class _LoginPageState extends State<LoginPage> {
                                                     left: 1,
                                                     right: 8,
                                                   ),
-                                                  width: compacto ? 42 : 54,
-                                                  height: compacto ? 42 : 54,
+                                                  width: compacto ? 17 : 54,
                                                   decoration: const BoxDecoration(
                                                     color: Color(0xFFFAD3D5),
                                                     shape: BoxShape.circle,
@@ -270,7 +276,7 @@ class _LoginPageState extends State<LoginPage> {
                                                   child: Icon(
                                                     Icons.lock,
                                                     color: Color(0xFF68442E),
-                                                    size: compacto ? 30 : 40,
+                                                    size: compacto ? 25 : 40,
                                                   ),
                                                 ),
                                                 suffixIcon: IconButton(
@@ -294,7 +300,6 @@ class _LoginPageState extends State<LoginPage> {
                                           ),
                                         ),
                                       ),
-
                                       Center(
                                         child: SizedBox(
                                           width: compacto ? 250 : 300,
@@ -304,23 +309,35 @@ class _LoginPageState extends State<LoginPage> {
                                               Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Checkbox(
-                                                    value: lembrarDeMim,
-                                                    onChanged: (selecionado) {
-                                                      setState(() {
-                                                        lembrarDeMim = selecionado ?? false;
-                                                      });
-                                                    },
-                                                    shape: const CircleBorder(),
-                                                    activeColor: const Color(0xFF68442E),
-                                                    checkColor: Colors.white,
+                                                  SizedBox(
+                                                    width: 28,
+                                                    height: 28,
+                                                    child: Transform.scale(
+                                                      scale: 0.75,
+                                                      child: Checkbox(
+                                                        value: lembrarDeMim,
+                                                        onChanged: (selecionado) {
+                                                          setState(() {
+                                                            lembrarDeMim =
+                                                                selecionado ?? false;
+                                                          });
+                                                        },
+                                                        shape: const CircleBorder(),
+                                                        activeColor: const Color(0xFF68442E),
+                                                        checkColor: Colors.white,
+                                                        materialTapTargetSize:
+                                                            MaterialTapTargetSize.shrinkWrap,
+                                                        visualDensity: VisualDensity.compact,
+                                                      ),
+                                                    ),
                                                   ),
+                                                  const SizedBox(width: 2),
                                                   Text(
                                                     'Lembre de mim',
                                                     style: GoogleFonts.montserratAlternates(
                                                       color: const Color(0xFF68442E),
                                                       fontWeight: FontWeight.w500,
-                                                      fontSize: 9,
+                                                      fontSize: 8,
                                                     ),
                                                   ),
                                                 ],
@@ -328,7 +345,7 @@ class _LoginPageState extends State<LoginPage> {
                                               TextButton(
                                                 onPressed: () {},
                                                 style: TextButton.styleFrom(
-                                                  padding: EdgeInsets.all(17),
+                                                  padding: EdgeInsets.all(11),
                                                   minimumSize: Size.zero,
                                                   tapTargetSize:
                                                       MaterialTapTargetSize.shrinkWrap,
@@ -338,7 +355,7 @@ class _LoginPageState extends State<LoginPage> {
                                                   style: GoogleFonts.montserratAlternates(
                                                     color: const Color(0xFF68442E),
                                                     fontWeight: FontWeight.w500,
-                                                    fontSize: 9,
+                                                    fontSize: 8,
                                             ),
                                           ),
                                         ),
@@ -353,7 +370,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
 
                       
-                      SizedBox(height: compacto ? 30 : 40),
+                      SizedBox(height: compacto ? 35 : 50),
 
                       Center(
                         
@@ -516,9 +533,47 @@ class _LoginPageState extends State<LoginPage> {
     ),
   );
 }
+
+  Widget _almofadaComContorno({
+    required double largura,
+    required double altura,
+    required double rotacao,
+  }) {
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        Transform.rotate(
+          angle: rotacao,
+          child: Container(
+            width: largura + 18,
+            height: altura + 18,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAD3D5),
+              borderRadius: BorderRadius.circular(50),
+              boxShadow: const [
+                inset_shadow.BoxShadow(
+                    color: Color.fromARGB(190, 75, 42, 43),
+                    blurRadius: 6,
+                    offset: Offset(-4, -1),
+                    inset: true,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        _almofada(
+          largura: largura,
+          altura: altura,
+          rotacao: rotacao,
+        ),
+      ],
+    );
+  }
+
   Widget _pata(double escala) {
   return SizedBox(
-    width: 330 * escala,
+    width: 370 * escala,
     height: 260 * escala,
     child: Stack(
       alignment: Alignment.center,
@@ -527,9 +582,9 @@ class _LoginPageState extends State<LoginPage> {
 
         // Dedo superior esquerdo
         Positioned(
-          top: -5 * escala,
+          top: -30 * escala,
           left: 65 * escala,
-          child: _almofada(
+          child: _almofadaComContorno(
             largura: 58 * escala,
             altura: 85 * escala,
             rotacao: -0.25,
@@ -538,9 +593,9 @@ class _LoginPageState extends State<LoginPage> {
 
         // Dedo superior direito
         Positioned(
-          top: -5 * escala,
+          top: -30 * escala,
           right: 65 * escala,
-          child: _almofada(
+          child: _almofadaComContorno(
             largura: 58 * escala,
             altura: 85 * escala,
             rotacao: 0.25,
@@ -549,9 +604,9 @@ class _LoginPageState extends State<LoginPage> {
 
         // Dedo inferior esquerdo
         Positioned(
-          top: 105 * escala,
+          top: 90 * escala,
           left: -70 * escala,
-          child: _almofada(
+          child: _almofadaComContorno(
             largura: 58 * escala,
             altura: 85 * escala,
             rotacao: -0.45,
@@ -560,9 +615,9 @@ class _LoginPageState extends State<LoginPage> {
 
         // Dedo inferior direito
         Positioned(
-          top: 105 * escala,
+          top: 90 * escala,
           right: -70 * escala,
-          child: _almofada(
+          child: _almofadaComContorno(
             largura: 58 * escala,
             altura: 85 * escala,
             rotacao: 0.45,
@@ -593,50 +648,50 @@ class FormaLoginPainter extends CustomPainter {
 
     // Descida pelo lado esquerdo
     path.cubicTo(
-      size.width * 0.18,
-      size.height * 0.35,
-      size.width * 0.08,
-      size.height * 0.43,
-      size.width * 0.04,
-      size.height * 0.55,
+      size.width * 0.20,
+      size.height * 0.38,
+      size.width * 0.20,
+      size.height * 0.40,
+      size.width * 0.07,
+      size.height * 0.62,
     );
 
     // Curva inferior esquerda
     path.cubicTo(
-      size.width * 0.00,
-      size.height * 0.68,
-      size.width * 0.04,
-      size.height * 0.91,
+      size.width * 0.01,
+      size.height * 0.72,
+      size.width * 0.02,
+      size.height * 0.95,
       size.width * 0.20,
-      size.height * 0.96,
+      size.height * 0.98,
     );
 
     // Parte inferior
     path.cubicTo(
-      size.width * 0.35,
-      size.height * 1.00,
-      size.width * 0.65,
+      size.width * 0.40,
       size.height * 1.00,
       size.width * 0.80,
+      size.height * 1.00,
+      size.width * 0.86,
       size.height * 0.96,
     );
 
     // Curva inferior direita
     path.cubicTo(
-      size.width * 0.96,
-      size.height * 0.91,
-      size.width * 1.00,
-      size.height * 0.68,
-      size.width * 0.96,
-      size.height * 0.55,
+      size.width * 0.92,
+      size.height * 0.93,
+      size.width * 1.03,
+      size.height * 0.88,
+      size.width * 0.97,
+      size.height * 0.65,
     );
 
     // Subida pelo lado direito
     path.cubicTo(
-      size.width * 0.92,
-      size.height * 0.43,
-      size.width * 0.82,
-      size.height * 0.35,
+      size.width * 0.89,
+      size.height * 0.50,
+      size.width * 0.80,
+      size.height * 0.37,
       size.width * 0.73,
       size.height * 0.26,
     );
