@@ -52,35 +52,35 @@ class _LoginPageState extends State<LoginPage> {
           style: GoogleFonts.comfortaa(
             color: const Color(0xFF68442E),
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
-        elevation: 0,
       ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final compacto =
+            final bool compacto =
                 constraints.maxWidth < 500 || constraints.maxHeight < 700;
-            final double espacamentoInicial = compacto ? 52.0 : 100.0;
-            final double tamanhoLogo = compacto ? 92.0 : 130.0;
-            final double espacamentoCampos = compacto ? 12.0 : 20.0;
+            final double espacamentoInicial = compacto ? 25.0 : 100.0;
+            final double tamanhoLogo = compacto ? 125.0 : 130.0;
+            final double espacamentoCampos = compacto ? 10.0 : 20.0;
             final double alturaBotao = compacto ? 56.0 : 70.0;
+            final double larguraBotao = compacto ? 250.0 : 400.0;
             final double fonteBotao = compacto ? 15.0 : 18.0;
-            final double deslocamentoForma = compacto ? 18.0 : 24.0;
+            final double deslocamentoForma = compacto ? 25.0 : 24.0;
             final double alturacampos = compacto ? 40.0 : 60.0;
             final double larguraCampos = compacto ? 220.0 : 270.0;
 
             return Padding(
-              padding: EdgeInsets.symmetric(horizontal: compacto ? 16 : 24),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(height: espacamentoInicial),
+              padding: EdgeInsets.symmetric(horizontal: compacto ? 18 : 24),
+              child: Column(
+                children: [
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Column(
+                      children: [
+                        SizedBox(height: espacamentoInicial),
                             SizedBox(
                               width: double.infinity,
                               child: Stack(
@@ -105,30 +105,19 @@ class _LoginPageState extends State<LoginPage> {
                                           children: [
                                             Positioned(
                                               top: 0,
-                                              child: _pata(compacto ? 0.60 : 1.1
+                                              child: _pata(compacto ? 0.65 : 1.1
                                               ),
                                             ),
                                             Positioned(
-                                              bottom: 35,
+                                              bottom: 1,
                                               child: Container(
-                                                width: tamanhoLogo,
-                                                height: tamanhoLogo,
                                                 decoration: const BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.black54,
-                                                      blurRadius: 10,
-                                                      spreadRadius: 2,
-                                                      offset: Offset(0, 4),
-                                                    ),
-                                                  ],
+                                                  shape: BoxShape.circle,                
                                                 ),
                                                 clipBehavior: Clip.antiAlias,
                                                 child: Image.asset(
                                                   'assets/imagens/VetHome_logo_1.jpg',
                                                   width: tamanhoLogo,
-                                                  height: tamanhoLogo,
                                                   fit: BoxFit.contain,
                                                 ),
                                               ),
@@ -137,7 +126,7 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                       ),
 
-                                      SizedBox(height: compacto ? 1 : 26),
+                                      SizedBox(height: compacto ? 2 : 26),
 
                                       Center(
                                         child: SizedBox(
@@ -375,15 +364,15 @@ class _LoginPageState extends State<LoginPage> {
                       Center(
                         
                         child: Container(
-                          width: 200,
+                          width: larguraBotao,
                           height: alturaBotao,
                           decoration: const inset_shadow.BoxDecoration(
                             borderRadius: BorderRadius.all(Radius.circular(80)),
                             boxShadow: [
                               inset_shadow.BoxShadow(
                                 color: Color.fromARGB(150, 105, 66, 67),
-                                blurRadius: 8,
-                                offset: Offset(4, 5),
+                                blurRadius: 2,
+                                offset: Offset(1, 4),
                               ),
                             ],
                           ),
@@ -393,8 +382,8 @@ class _LoginPageState extends State<LoginPage> {
                               TextButton(
                                 onPressed: entrar,
                                 style: TextButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFAD3D5),
-                                  foregroundColor: const Color(0xFFFAD3D5),
+                                  backgroundColor: const Color(0xFFC08081),
+                                  foregroundColor: const Color(0xFF68442E),
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(80),
@@ -407,7 +396,7 @@ class _LoginPageState extends State<LoginPage> {
                                       'Entrar',
                                       style: GoogleFonts.montserratAlternates(
                                         fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF68442E),
+                                        color: Colors.white,
                                         fontSize: fonteBotao,
                                       ),
                                     ),
@@ -415,84 +404,26 @@ class _LoginPageState extends State<LoginPage> {
                                       padding: EdgeInsets.only(left: 20),
                                       child: Icon(
                                         Icons.login,
-                                        color: Color(0xFF68442E),
+                                        color: Colors.white,
                                         size: 30,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              Positioned(
-                                top: 0.7,
-                                left: 21,
-                                right: 30,
-                                child: Container(
-                                  height: 2,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.6),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 1,
-                                left: 25,
-                                right: 20,
-                                child: Container(
-                                  height: 2,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.4),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),
                       ),
-                      
-
+                    
                       SizedBox(height: compacto ? 8 : 10),
 
-                      Center(
-                        child: Container(
-                          width: 130,
-                          height: alturaBotao,
-                          decoration: const inset_shadow.BoxDecoration(
-                            borderRadius: BorderRadius.all(Radius.circular(80)),
-                            boxShadow: [
-                              inset_shadow.BoxShadow(
-                                color: Color.fromARGB(150, 105, 66, 67),
-                                blurRadius: 8,
-                                offset: Offset(4, 5),
-                              ),
-                            ],
-                          ),
-                          child: TextButton(
-                            onPressed: abrirCadastro,
-                            style: TextButton.styleFrom(
-                              backgroundColor: const Color(0xFFC08081),
-                              foregroundColor: const Color(0xFF68442E),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(80),
-                              ),
-                            ),
-                            child: Text(
-                              'Cadastrar',
-                              style: GoogleFonts.montserratAlternates(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: fonteBotao,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      
                     ],
                   ),
                 ),
-              ),
+                ],
+              ),   
             );
           },
         ),
@@ -574,7 +505,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _pata(double escala) {
   return SizedBox(
     width: 370 * escala,
-    height: 260 * escala,
+    height: 100 * escala,
     child: Stack(
       alignment: Alignment.center,
       clipBehavior: Clip.none,
