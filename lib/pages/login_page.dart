@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_vethome/pages/Informacoes_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
-import 'cadastro_page.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -33,10 +34,10 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void abrirCadastro() {
+  void abrirInformacoesCadastro(){
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const CadastroPage()),
+      MaterialPageRoute(builder: (context) => const InformacoesCadastroPage()),
     );
   }
 
@@ -416,16 +417,128 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     
-                      SizedBox(height: compacto ? 8 : 10),
+                      SizedBox(height: compacto ? 40 : 30),
 
-                      
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              color: Colors.black26,
+                            ),
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              'Ou continue com',
+                              style: GoogleFonts.montserratAlternates(
+                                color: const Color(0xFF68442E),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              color: Colors.black26,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _botaoRedeSocial(
+                            imagem: 'assets/imagens/google.png',
+                            onPressed: () {}
+                          ),
+
+                          const SizedBox(width: 20,),
+
+                          _botaoRedeSocial(
+                            imagem: 'assets/imagens/facebook.png',
+                            onPressed: () {},
+                          ),
+
+                          const SizedBox(width: 20),
+
+                          _botaoRedeSocial(
+                            imagem: 'assets/imagens/instagram.png',
+                            onPressed: () {},
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20,),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Não tem uma conta? ',
+                            style: GoogleFonts.montserratAlternates(
+                              color: const Color(0xFF68442E),
+                              fontSize: 10,
+                            ),
+                          ),
+
+                          TextButton(
+                            onPressed: abrirInformacoesCadastro,
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              'Cadastre-se',
+                              style: GoogleFonts.montserratAlternates(
+                                color: const Color(0xFF68442E),
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+
+
                     ],
                   ),
                 ),
-                ],
+               ],
               ),   
             );
           },
+        ),
+      ),
+    );
+  }
+  Widget _botaoRedeSocial({
+    required String imagem,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: const Color(0xFFFAD3D5),
+          side: const BorderSide(
+            color: Colors.black26,
+            width: 1,
+          ),
+          shape: const CircleBorder(),
+          padding: const EdgeInsets.all(10),
+        ),
+        child: Image.asset(
+          imagem,
+          fit: BoxFit.contain,
         ),
       ),
     );

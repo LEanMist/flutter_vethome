@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_vethome/pages/menuPet_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
@@ -10,6 +11,12 @@ class InformacoesCadastroPage extends StatefulWidget {
 }
 
 class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
+  void menu(){
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MenuPetPage()),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -377,7 +384,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
         children: [
 
           TextButton(
-            onPressed: () {},
+            onPressed: menu,
             style: TextButton.styleFrom(
               backgroundColor:
                   const Color(0xFFC08081),
