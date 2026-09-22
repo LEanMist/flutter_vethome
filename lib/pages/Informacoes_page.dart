@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_vethome/pages/menuPet_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'package:flutter_vethome/pages/carregamento.dart';
 
 class InformacoesCadastroPage extends StatefulWidget {
   const InformacoesCadastroPage({super.key});
@@ -14,7 +14,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
   void menu(){
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const MenuPetPage()),
+      MaterialPageRoute(builder: (context) => const Carregamento()),
     );
   }
   @override
