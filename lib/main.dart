@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/login_page.dart';
+import 'routes/app_routes.dart';
 
 void main() {
   runApp(const MeuApp());
@@ -18,6 +19,7 @@ class MeuApp extends StatelessWidget{
         colorSchemeSeed: Colors.blue,
         useMaterial3: true
       ),
+      routes: AppRoutes.routes,
       home: const LoginPage(),
     );
   }  

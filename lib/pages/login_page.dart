@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_vethome/pages/Informacoes_page.dart';
+import 'package:flutter_vethome/pages/informacoes_page.dart';
+import 'package:flutter_vethome/pages/menuPet_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
@@ -12,8 +13,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _senhaController = TextEditingController();
+  // final TextEditingController _emailController = TextEditingController();
+  // final TextEditingController _senhaController = TextEditingController();
 
   bool esconderSenha = true;
   bool lembrarDeMim = false;
@@ -25,13 +26,17 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void entrar() {
-    String email = _emailController.text.trim();
-    String senha = _senhaController.text;
+    Navigator.push(
+       context,
+      MaterialPageRoute(builder: (context) => const MenuPetPage())
+      );
+    // String email = _emailController.text.trim();
+    // String senha = _senhaController.text;
 
-    if (email.isEmpty || senha.isEmpty) {
-      mostrarMensagem('Preencha o e-mail e a senha.');
-      return;
-    }
+    // if (email.isEmpty || senha.isEmpty) {
+    //   mostrarMensagem('Preencha o e-mail e a senha.');
+    //   return;
+    // }
   }
 
   void abrirInformacoesCadastro(){
@@ -149,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                                               ],
                                             ),
                                             child: TextField(
-                                              controller: _emailController,
+                                              // controller: _emailController,
                                               keyboardType: TextInputType.emailAddress,
                                               style: GoogleFonts.montserratAlternates(
                                                 fontWeight: FontWeight.w500,
@@ -223,7 +228,7 @@ class _LoginPageState extends State<LoginPage> {
                                               ],
                                             ),
                                             child: TextField(
-                                              controller: _senhaController,
+                                              // controller: _senhaController,
                                               obscureText: esconderSenha,
                                               style: GoogleFonts.montserratAlternates(
                                                 fontWeight: FontWeight.w500,
