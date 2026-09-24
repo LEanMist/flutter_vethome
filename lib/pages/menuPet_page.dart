@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
@@ -202,12 +203,6 @@ class _MenuPetPage extends State<MenuPetPage> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   inset_shadow.BoxShadow(
-                    color: Color.fromARGB(150, 255, 255, 255),
-                    blurRadius: 2,
-                    offset: Offset(-5, -5),
-                    inset: true,
-                  ),
-                  inset_shadow.BoxShadow(
                     color: Color.fromARGB(190, 75, 42, 43),
                     blurRadius: 6,
                     offset: Offset(6, 7),
@@ -215,6 +210,11 @@ class _MenuPetPage extends State<MenuPetPage> {
                   ),
                 ],
               ),
+            ),
+          ),
+          Positioned.fill(
+            child: CustomPaint(
+              painter: ContornoLogoPainter(),
             ),
           ),
         ],
@@ -365,5 +365,40 @@ class _MenuPetPage extends State<MenuPetPage> {
         ],
       ),
     );
+  }
+}
+class ContornoLogoPainter extends CustomPainter {
+
+  @override
+  void paint(Canvas canvas, Size size) {
+
+    final Paint contorno = Paint()
+      ..color = Colors.white.withValues(alpha: 0.9)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    // Desenha a linha branca na parte inferior
+    // do círculo, começando pelo lado direito.
+
+    canvas.drawArc(
+      Rect.fromLTWH(
+        1,
+        1,
+        size.width - 2,
+        size.height - 2,
+      ),
+
+      pi / 6, // Ponto inicial
+      pi / 1, // Extensão da linha
+
+      false,
+      contorno,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }

@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'menuPet_page.dart';
 
 class Carregamento extends StatefulWidget {
@@ -26,12 +28,6 @@ class _Carregamento extends State<Carregamento>
       vsync: this,
       duration: const Duration(milliseconds: 3000),
     );
-
-    // MOVIMENTO DA LOGO
-    //
-    // 0.00 até 0.30 = logo sobe
-    // 0.30 até 0.65 = logo fica no centro
-    // 0.65 até 1.00 = logo cai
 
     _movimentoLogo = TweenSequence<double>([
       // Logo entrando de baixo
@@ -120,47 +116,164 @@ class _Carregamento extends State<Carregamento>
                 constraints.maxHeight < 700;
 
             final double tamanhoLogo =
-                compacto ? 120.0 : 180.0;
+                compacto ? 200.0 : 260.0;
 
             return SizedBox(
               width: double.infinity,
               height: double.infinity,
 
-              child: AnimatedBuilder(
-                animation: _controller,
+              child: Stack(
+                alignment: Alignment.center,
 
-                builder: (context, child) {
+                children: [
+                  Positioned(
+                    top: constraints.maxHeight * 0.18,
+                    child: Column(
+                      children: [
+                        Text(
+                          'Usuário Cadastrado!',
+                          textAlign: TextAlign.center,
 
-                  return Transform.translate(
-                    offset: Offset(
-                      0,
-                      _movimentoLogo.value *
-                          constraints.maxHeight,
-                    ),
-
-                    child: Transform.rotate(
-                      angle: _rotacaoLogo.value,
-
-                      child: child,
-                    ),
-                  );
-                },
-
-                child: Center(
-                  child: Image.asset(
-                    'assets/imagens/VetHome_logo_1.jpg',
-
-                    width: tamanhoLogo,
-                    height: tamanhoLogo,
-
-                    fit: BoxFit.contain,
+                          style: GoogleFonts.comfortaa(
+                            color: Color(0xFF68442E),
+                            fontSize: 25,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 30,),
+                        Text(
+                          'É um prazer te-lo(a)! \n conosco senhor(a)',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.comfortaa(
+                            color: Color(0xFF68442E),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        )
+                      ],
+                    )
                   ),
-                ),
+                    
+                  // LOGO ANIMADA
+                  AnimatedBuilder(
+                    animation: _controller,
+
+                    builder: (context, child) {
+
+                      return Transform.translate(
+                        offset: Offset(
+                          0,
+                          _movimentoLogo.value *
+                              constraints.maxHeight,
+                        ),
+
+                        child: Transform.rotate(
+                          angle: _rotacaoLogo.value,
+
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _logoAnimada(tamanhoLogo),
+                  ),
+                ],
               ),
             );
           },
         ),
       ),
     );
+  }
+  Widget _logoAnimada(double tamanhoLogo) {
+    return Container(
+      width: tamanhoLogo,
+      height: tamanhoLogo,
+
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+      ),
+
+      child: Stack(
+        children: [
+
+          // IMAGEM DA LOGO
+          ClipOval(
+            child: Image.asset(
+              'assets/imagens/VetHome_logo_1.jpg',
+              width: tamanhoLogo,
+              height: tamanhoLogo,
+              fit: BoxFit.cover,
+
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: tamanhoLogo,
+                  height: tamanhoLogo,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFAD3D5),
+                    shape: BoxShape.circle,
+                  ),
+                );
+              },
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: const inset_shadow.BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  inset_shadow.BoxShadow(
+                    color: Color.fromARGB(190, 75, 42, 43),
+                    blurRadius: 6,
+                    offset: Offset(6, 7),
+                    inset: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          Positioned.fill(
+            child: CustomPaint(
+              painter: ContornoLogoPainter(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+class ContornoLogoPainter extends CustomPainter {
+
+  @override
+  void paint(Canvas canvas, Size size) {
+
+    final Paint contorno = Paint()
+      ..color = Colors.white.withValues(alpha: 0.9)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    // Desenha a linha branca na parte inferior
+    // do círculo, começando pelo lado direito.
+
+    canvas.drawArc(
+      Rect.fromLTWH(
+        1,
+        1,
+        size.width - 2,
+        size.height - 2,
+      ),
+
+      pi / 1, // Ponto inicial
+      pi / 1, // Extensão da linha
+
+      false,
+      contorno,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }

@@ -454,38 +454,37 @@ class _LoginPageState extends State<LoginPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _botaoRedeSocial(
-                            imagem: 'assets/imagens/google.png',
+                            imagem: 'assets/imagens/google_logo.png',
                             onPressed: () {}
                           ),
 
                           const SizedBox(width: 20,),
 
                           _botaoRedeSocial(
-                            imagem: 'assets/imagens/facebook.png',
+                            imagem: 'assets/imagens/facebook_logo.png',
                             onPressed: () {},
                           ),
 
                           const SizedBox(width: 20),
 
                           _botaoRedeSocial(
-                            imagem: 'assets/imagens/instagram.png',
+                            imagem: 'assets/imagens/instagram_logo.png',
                             onPressed: () {},
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 20,),
-                      Row(
+                      const SizedBox(height: 25,),
+                      Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Não tem uma conta? ',
+                            'Ainda não possui uma conta? ',
                             style: GoogleFonts.montserratAlternates(
                               color: const Color(0xFF68442E),
-                              fontSize: 10,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-
                           TextButton(
                             onPressed: abrirInformacoesCadastro,
                             style: TextButton.styleFrom(
@@ -494,12 +493,11 @@ class _LoginPageState extends State<LoginPage> {
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             child: Text(
-                              'Cadastre-se',
+                              'CADASTRE-SE',
                               style: GoogleFonts.montserratAlternates(
-                                color: const Color(0xFF68442E),
-                                fontSize: 10,
+                                color: const Color(0xFFC08081),
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                decoration: TextDecoration.underline,
                               ),
                             ),
                           ),
@@ -539,6 +537,7 @@ class _LoginPageState extends State<LoginPage> {
         child: Image.asset(
           imagem,
           fit: BoxFit.contain,
+          width: 100,
         ),
       ),
     );
