@@ -423,8 +423,8 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           Expanded(
                             child: Container(
-                              height: 1,
-                              color: Colors.black26,
+                              height: 1.5,
+                              color: const Color(0xFF68442E),
                             ),
                           ),
 
@@ -435,14 +435,14 @@ class _LoginPageState extends State<LoginPage> {
                               style: GoogleFonts.montserratAlternates(
                                 color: const Color(0xFF68442E),
                                 fontSize: 10,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
                           Expanded(
                             child: Container(
-                              height: 1,
-                              color: Colors.black26,
+                              height: 1.5,
+                              color: const Color(0xFF68442E),
                             ),
                           ),
                         ],
@@ -523,21 +523,31 @@ class _LoginPageState extends State<LoginPage> {
     return SizedBox(
       width: 48,
       height: 48,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: const Color(0xFFFAD3D5),
-          side: const BorderSide(
-            color: Colors.black26,
-            width: 1,
-          ),
-          shape: const CircleBorder(),
-          padding: const EdgeInsets.all(10),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFFAD3D5),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Color.fromARGB(100, 105, 66, 67),
+              blurRadius: 4,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
-        child: Image.asset(
-          imagem,
-          fit: BoxFit.contain,
-          width: 100,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            side: BorderSide.none,
+            shape: const CircleBorder(),
+            padding: const EdgeInsets.all(10),
+          ),
+          child: Image.asset(
+            imagem,
+            fit: BoxFit.contain,
+            width: 100,
+          ),
         ),
       ),
     );
