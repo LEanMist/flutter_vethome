@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
-import 'menuPet_page.dart';
+import 'menu_pet_page.dart';
 
 class Carregamento extends StatefulWidget {
   const Carregamento({super.key});

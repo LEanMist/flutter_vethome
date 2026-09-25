@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_vethome/pages/Informacoes_page.dart';
+import 'package:flutter_vethome/pages/informacoes_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
