@@ -4,7 +4,6 @@ import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
-
 class MenuPetPage extends StatefulWidget {
   const MenuPetPage({super.key});
 
@@ -16,15 +15,14 @@ class _MenuPetPage extends State<MenuPetPage> {
   bool modoEscuro = false;
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 247, 245, 245),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final bool compacto = 
-            constraints.maxWidth < 500 ||
-            constraints.maxHeight < 700;
+            final bool compacto =
+                constraints.maxWidth < 500 || constraints.maxHeight < 700;
             final tamanhoLogo = compacto ? 120.0 : 180.0;
             final alturaBotao = compacto ? 60.0 : 70.0;
             final larguraBotoes = compacto ? 180.0 : 300.0;
@@ -38,20 +36,12 @@ class _MenuPetPage extends State<MenuPetPage> {
                     child: Stack(
                       clipBehavior: Clip.hardEdge,
                       children: [
-                        Positioned.fill(
-                          child: Image.asset(
-                            'assets/imagens/foto.png',
-                            fit: BoxFit.cover,
-                            alignment: Alignment.center,
-                          ),
-                        ),
-                        
                         Positioned(
                           top: 30,
                           left: 5,
                           child: _botaoEscuro(
-                            icone: modoEscuro 
-                                ? Icons.wb_sunny_outlined 
+                            icone: modoEscuro
+                                ? Icons.wb_sunny_outlined
                                 : Icons.nightlight_outlined,
                             texto: '',
                             onPressed: () {
@@ -63,7 +53,7 @@ class _MenuPetPage extends State<MenuPetPage> {
                         ),
                       ],
                     ),
-                  )
+                  ),
                 ),
                 Expanded(
                   flex: 3,
@@ -78,62 +68,63 @@ class _MenuPetPage extends State<MenuPetPage> {
                     ),
                     child: Column(
                       children: [
-                        const SizedBox(height: 30,),
+                        const SizedBox(height: 30),
                         _logo(tamanhoLogo),
-                        const SizedBox(height: 36,),
+                        const SizedBox(height: 36),
                         Text(
                           'Seja bem Vindo!',
-                           textAlign: TextAlign.center,
-                           style: GoogleFonts.comfortaa(
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.comfortaa(
                             color: const Color(0xFF68442E),
                             fontSize: compacto ? 30 : 35,
                             fontWeight: FontWeight.w900,
-                           ),
+                          ),
                         ),
                         Text(
                           'Escolha seu pet',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.comfortaa(
-                           color: const Color(0xFF68442E),
-                           fontSize: compacto ? 30 : 35,
-                           fontWeight: FontWeight.w900,
+                            color: const Color(0xFF68442E),
+                            fontSize: compacto ? 30 : 35,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const SizedBox(height: 30,),
+                        const SizedBox(height: 30),
                         _botaoPet(
                           texto: 'CÃO',
                           largura: larguraBotoes,
                           altura: alturaBotao,
-                          fonte: fonteBotao, 
-                          onPressed: (){}
+                          fonte: fonteBotao,
+                          onPressed: () {},
                         ),
-                        const SizedBox(height: 17,),
+                        const SizedBox(height: 17),
                         _botaoPet(
                           texto: 'GATO',
                           largura: larguraBotoes,
                           altura: alturaBotao,
-                          fonte: fonteBotao,  
-                          onPressed: (){}
+                          fonte: fonteBotao,
+                          onPressed: () {},
                         ),
-                        const SizedBox(height: 20,),
+                        const SizedBox(height: 20),
                         _botaoCadastrar(
                           texto: 'cadastrar seu animal',
                           largura: 280,
                           altura: alturaBotao,
                           fonte: fonteBotao,
-                          onPressed: (){}
+                          onPressed: () {},
                         ),
                       ],
-                    ),          
-                  ),  
+                    ),
+                  ),
                 ),
               ],
             );
-          }
+          },
         ),
       ),
     );
   }
+
   Widget _botaoEscuro({
     required IconData icone,
     required String texto,
@@ -145,11 +136,7 @@ class _MenuPetPage extends State<MenuPetPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 4,
-            offset: Offset(1, 2),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(1, 2)),
         ],
       ),
       child: TextButton(
@@ -161,11 +148,7 @@ class _MenuPetPage extends State<MenuPetPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icone,
-              size: 20,
-              color: const Color(0xFF68442E),
-            ),
+            Icon(icone, size: 20, color: const Color(0xFF68442E)),
 
             if (texto.isNotEmpty) ...[
               const SizedBox(width: 6),
@@ -183,6 +166,7 @@ class _MenuPetPage extends State<MenuPetPage> {
       ),
     );
   }
+
   Widget _logo(double tamanho) {
     return Container(
       width: tamanho,
@@ -203,25 +187,21 @@ class _MenuPetPage extends State<MenuPetPage> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   inset_shadow.BoxShadow(
-                    color: Color.fromARGB(190, 75, 42, 43),
-                    blurRadius: 6,
-                    offset: Offset(6, 7),
+                    color: Color.fromARGB(185, 109, 102, 102),
+                    blurRadius: 1,
+                    offset: Offset(2, 2),
                     inset: true,
                   ),
                 ],
               ),
             ),
           ),
-          Positioned.fill(
-            child: CustomPaint(
-              painter: ContornoLogoPainter(),
-            ),
-          ),
+          Positioned.fill(child: CustomPaint(painter: ContornoLogoPainter())),
         ],
       ),
     );
   }
-  
+
   Widget _botaoPet({
     required String texto,
     required double largura,
@@ -271,14 +251,10 @@ class _MenuPetPage extends State<MenuPetPage> {
                 ),
                 const Padding(
                   padding: EdgeInsets.only(left: 12),
-                  child: Icon(
-                    Icons.pets,
-                    color: Color(0xFF68442E),
-                    size: 35,
-                  ),
+                  child: Icon(Icons.pets, color: Color(0xFF68442E), size: 35),
                 ),
               ],
-            )
+            ),
           ),
           Positioned(
             top: 0.7,
@@ -287,9 +263,7 @@ class _MenuPetPage extends State<MenuPetPage> {
             child: Container(
               height: 2,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(
-                  alpha: 0.9,
-                ),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -298,6 +272,7 @@ class _MenuPetPage extends State<MenuPetPage> {
       ),
     );
   }
+
   Widget _botaoCadastrar({
     required String texto,
     required double largura,
@@ -346,7 +321,7 @@ class _MenuPetPage extends State<MenuPetPage> {
                   ),
                 ),
               ],
-            )
+            ),
           ),
           Positioned(
             top: 0.7,
@@ -355,9 +330,7 @@ class _MenuPetPage extends State<MenuPetPage> {
             child: Container(
               height: 2,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(
-                  alpha: 0.9,
-                ),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -367,11 +340,10 @@ class _MenuPetPage extends State<MenuPetPage> {
     );
   }
 }
-class ContornoLogoPainter extends CustomPainter {
 
+class ContornoLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-
     final Paint contorno = Paint()
       ..color = Colors.white.withValues(alpha: 0.9)
       ..style = PaintingStyle.stroke
@@ -382,15 +354,10 @@ class ContornoLogoPainter extends CustomPainter {
     // do círculo, começando pelo lado direito.
 
     canvas.drawArc(
-      Rect.fromLTWH(
-        1,
-        1,
-        size.width - 2,
-        size.height - 2,
-      ),
+      Rect.fromLTWH(1.5, 1.5, size.width - 2, size.height - 2),
 
-      pi / 6, // Ponto inicial
-      pi / 1, // Extensão da linha
+      pi / -13, // Ponto inicial
+      pi / 1.6, // Extensão da linha
 
       false,
       contorno,

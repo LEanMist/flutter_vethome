@@ -222,9 +222,9 @@ class _Carregamento extends State<Carregamento>
                 shape: BoxShape.circle,
                 boxShadow: [
                   inset_shadow.BoxShadow(
-                    color: Color.fromARGB(190, 75, 42, 43),
-                    blurRadius: 6,
-                    offset: Offset(6, 7),
+                    color: Color.fromARGB(184, 142, 135, 135),
+                    blurRadius: 1,
+                    offset: Offset(2, 2),
                     inset: true,
                   ),
                 ],
@@ -258,14 +258,14 @@ class ContornoLogoPainter extends CustomPainter {
 
     canvas.drawArc(
       Rect.fromLTWH(
-        1,
-        1,
+        1.5,
+        1.5,
         size.width - 2,
         size.height - 2,
       ),
 
-      pi / 1, // Ponto inicial
-      pi / 1, // Extensão da linha
+      pi / -13, // Ponto inicial
+      pi / 1.6, // Extensão da linha
 
       false,
       contorno,

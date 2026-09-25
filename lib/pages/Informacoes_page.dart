@@ -161,6 +161,51 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
 
                               SizedBox(height: espacamentoCampos,),
                               _campo(
+                                titulo: 'Endereço',
+                                icone: Icons.home,
+                                altura: alturaCampos,
+                                largura: larguraCampos,
+                                tamanhoIcone: tamanhoIcone,
+                                tamanhoIconeInterno: tamanhoIconeInterno,
+                                fonteLabel: fonteLabel,
+                              ),
+
+                              SizedBox(height: espacamentoCampos,),
+                              _campo(
+                                titulo: 'Numero',
+                                icone: Icons.numbers,
+                                altura: alturaCampos,
+                                largura: larguraCampos,
+                                tamanhoIcone: tamanhoIcone,
+                                tamanhoIconeInterno: tamanhoIconeInterno,
+                                fonteLabel: fonteLabel,
+                              ),
+
+                              SizedBox(height: espacamentoCampos,),
+                              _campo(
+                                titulo: 'Cidade',
+                                icone: Icons.location_city,
+                                altura: alturaCampos,
+                                largura: larguraCampos,
+                                tamanhoIcone: tamanhoIcone,
+                                tamanhoIconeInterno: tamanhoIconeInterno,
+                                fonteLabel: fonteLabel,
+                              ),
+
+                              SizedBox(height: espacamentoCampos,),
+                              _campo(
+                                titulo: 'Complemento',
+                                icone: Icons.home,
+                                altura: alturaCampos,
+                                largura: larguraCampos,
+                                tamanhoIcone: tamanhoIcone,
+                                tamanhoIconeInterno: tamanhoIconeInterno,
+                                fonteLabel: fonteLabel,
+                              ),
+
+
+                              SizedBox(height: espacamentoCampos,),
+                              _campo(
                                 titulo: 'E-mail',
                                 icone: Icons.email,
                                 altura: alturaCampos,
