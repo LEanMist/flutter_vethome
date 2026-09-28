@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import '../models/pet_model.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pets/pet_card_widget.dart';
-import '../widgets/pets/pets_image_view.dart';
 import '../widgets/pets/pets_theme.dart';
+import 'perfil_page.dart';
 
 class PetsPage extends StatelessWidget {
   const PetsPage({Key? key}) : super(key: key);
@@ -43,7 +43,7 @@ class PetsPage extends StatelessWidget {
               child: _buildPetListSection(context, s),
             ),
           ),
-          _buildBottomNav(s, safe.bottom),
+          _buildBottomNav(context, s, safe.bottom),
         ],
       ),
     );
@@ -153,7 +153,7 @@ class PetsPage extends StatelessWidget {
 
   // ── Barra de navegação inferior (4 botões) ────────────────────────────────
 
-  Widget _buildBottomNav(double s, double bottomInset) {
+  Widget _buildBottomNav(BuildContext context, double s, double bottomInset) {
     return Container(
       margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, 12 * s + bottomInset),
       padding: EdgeInsets.symmetric(vertical: 12 * s, horizontal: 10 * s),
@@ -172,7 +172,16 @@ class PetsPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _navButton(s, Icons.pets, selected: true, onTap: () {}),
-          _navButton(s, Icons.person, onTap: () {}),
+          _navButton(
+            s,
+            Icons.person,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PerfilPage()),
+              );
+            },
+          ),
           _navButton(s, Icons.calendar_month, onTap: () {}),
           _navButton(s, Icons.settings, onTap: () {}),
         ],

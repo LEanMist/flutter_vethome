@@ -1,9 +1,8 @@
 // lib/core/utils/image_constant.dart
-import 'package:flutter_svg/svg.dart';
 
 class ImageConstant {
   // Base path for all assets
-  static String _basePath = 'assets/images/';
+  static String _basePath = 'assets/imagens/pets/';
 
   // Placeholder image for fallback
   static String imgPlaceholder = '${_basePath}placeholder.png';
@@ -19,7 +18,7 @@ class ImageConstant {
   static String imgFrame51 = '${_basePath}img_frame_51.svg';
   static String imgImage2 = '${_basePath}img_image_2.png';
   static String imgVethomePng5 = '${_basePath}img_vethome_png_5.png';
-  static String VetHome_PNG_5 = '${_basePath}vet_home_png_5.svg';
+  static String VetHome_PNG_5 = '${_basePath}vethome_png_5.svg';
 
   // Custom Image View Screen
   static String imgImageNotFound = '${_basePath}image_not_found.png';

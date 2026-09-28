@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_vethome/pages/Informacoes_page.dart';
-import 'package:flutter_vethome/pages/login_page.dart';
 import 'pages/pets_page.dart';
 
 void main() {
