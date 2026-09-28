@@ -1,397 +1,16 @@
-// ignore_for_file: unused_element, unused_field, unused_parameter
-import 'dart:io';
+// lib/pages/perfil_page.dart
+// Requer: flutter pub add image_picker
 
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:io';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 
-// ---------------------------------------------------------------------------
-// SIZE UTILS (inline)
-// ---------------------------------------------------------------------------
-const num _kFigmaDesignWidth = 390;
+import '../theme/vet_colors.dart';
+import '../widgets/pets/pets_theme.dart';
+import '../widgets/vet_bottom_nav.dart';
 
-extension _ResponsiveExtension on num {
-  double get h => ((this * _SizeUtils.width) / _kFigmaDesignWidth);
-  double get fSize => ((this * _SizeUtils.width) / _kFigmaDesignWidth);
-}
-
-extension _FormatExtension on double {
-  double isNonZero({num defaultValue = 0.0}) =>
-      this > 0 ? this : defaultValue.toDouble();
-}
-
-class _SizeUtils {
-  static late BoxConstraints boxConstraints;
-  static late Orientation orientation;
-  static late double height;
-  static late double width;
-
-  static void setScreenSize(
-    BoxConstraints constraints,
-    Orientation currentOrientation,
-  ) {
-    boxConstraints = constraints;
-    orientation = currentOrientation;
-    if (orientation == Orientation.portrait) {
-      width = boxConstraints.maxWidth.isNonZero(
-        defaultValue: _kFigmaDesignWidth,
-      );
-      height = boxConstraints.maxHeight.isNonZero();
-    } else {
-      width = boxConstraints.maxHeight.isNonZero(
-        defaultValue: _kFigmaDesignWidth,
-      );
-      height = boxConstraints.maxWidth.isNonZero();
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// THEME COLORS (inline)
-// ---------------------------------------------------------------------------
-class _AppColors {
-  Color get white_A700 => const Color(0xFFFFFFFF);
-  Color get red_300 => const Color(0xFFC08081);
-  Color get gray_800 => const Color(0xFF68442E);
-  Color get red_100 => const Color(0xFFFAD3D5);
-  Color get black_900_3f => const Color(0x3F000000);
-  Color get transparentCustom => Colors.transparent;
-  Color get color7FFAD3 => const Color(0x7FFAD3D5);
-  Color get color7F6844 => const Color(0x7F68442E);
-  Color get color3F6844 => const Color(0x3F68442E);
-  Color get color7FC080 => const Color(0x7FC08081);
-  Color get grey200 => Colors.grey.shade200;
-  Color get grey100 => Colors.grey.shade100;
-}
-
-final _appTheme = _AppColors();
-
-// ---------------------------------------------------------------------------
-// IMAGE CONSTANTS (inline)
-// ---------------------------------------------------------------------------
-class _Img {
-  static const String _base = 'assets/imagens/pets/';
-  static const String frame48 = '${_base}img_frame_48_white_a700.svg';
-  static const String frame49 = '${_base}img_frame_49.svg';
-  static const String frame50 = '${_base}img_frame_50.svg';
-  static const String frame51 = '${_base}img_frame_51.svg';
-  static const String image6 = '${_base}image_not_found.png';
-  static const String images11 = '${_base}image_not_found.png';
-  static const String vector = '${_base}image_not_found.png';
-  static const String vectorGray800 = '${_base}image_not_found.png';
-  static const String vethomePng5 = '${_base}img_vethome_png_5.png';
-  static const String imageNotFound = '${_base}image_not_found.png';
-}
-
-// ---------------------------------------------------------------------------
-// TEXT STYLES (inline)
-// ---------------------------------------------------------------------------
-class _TS {
-  TextStyle get headline30BoldComfortaa => TextStyle(
-    fontSize: 30.fSize,
-    fontWeight: FontWeight.w700,
-    fontFamily: 'Comfortaa',
-    color: _appTheme.white_A700,
-  );
-
-  TextStyle get title22BoldComfortaa => TextStyle(
-    fontSize: 22.fSize,
-    fontWeight: FontWeight.w700,
-    fontFamily: 'Comfortaa',
-    color: _appTheme.gray_800,
-  );
-
-  TextStyle get title18BoldComfortaa => TextStyle(
-    fontSize: 18.fSize,
-    fontWeight: FontWeight.w700,
-    fontFamily: 'Comfortaa',
-    color: _appTheme.gray_800,
-  );
-
-  TextStyle get title16Comfortaa => TextStyle(
-    fontSize: 16.fSize,
-    fontFamily: 'Comfortaa',
-    color: _appTheme.gray_800,
-  );
-
-  TextStyle get body14Comfortaa =>
-      TextStyle(fontSize: 14.fSize, fontFamily: 'Comfortaa');
-
-  TextStyle get bodyTextComfortaa =>
-      TextStyle(fontFamily: 'Comfortaa', color: _appTheme.gray_800);
-}
-
-final _ts = _TS();
-
-// ---------------------------------------------------------------------------
-// IMAGE TYPE HELPERS (inline)
-// ---------------------------------------------------------------------------
-enum _ImageType { svg, png, network, networkSvg, file }
-
-extension _ImageTypeExtension on String {
-  _ImageType get imageType {
-    if (startsWith('http') || startsWith('https')) {
-      return endsWith('.svg') ? _ImageType.networkSvg : _ImageType.network;
-    } else if (endsWith('.svg')) {
-      return _ImageType.svg;
-    } else if (startsWith('file://')) {
-      return _ImageType.file;
-    } else {
-      return _ImageType.png;
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// CUSTOM IMAGE VIEW (inline)
-// ---------------------------------------------------------------------------
-class _CustomImageView extends StatelessWidget {
-  const _CustomImageView({
-    this.imagePath,
-    this.height,
-    this.width,
-    this.fit,
-    this.radius,
-    this.color,
-    this.placeHolder,
-    this.alignment,
-    this.onTap,
-    this.margin,
-    this.border,
-  });
-
-  final String? imagePath;
-  final double? height;
-  final double? width;
-  final Color? color;
-  final BoxFit? fit;
-  final String? placeHolder;
-  final Alignment? alignment;
-  final VoidCallback? onTap;
-  final EdgeInsetsGeometry? margin;
-  final BorderRadius? radius;
-  final BoxBorder? border;
-
-  String get _effectiveImagePath =>
-      (imagePath == null || imagePath!.isEmpty) ? _Img.imageNotFound : imagePath!;
-
-  @override
-  Widget build(BuildContext context) {
-    return alignment != null
-        ? Align(alignment: alignment!, child: _buildWidget())
-        : _buildWidget();
-  }
-
-  Widget _buildWidget() {
-    return Padding(
-      padding: margin ?? EdgeInsets.zero,
-      child: InkWell(onTap: onTap, child: _buildCircleImage()),
-    );
-  }
-
-  Widget _buildCircleImage() {
-    if (radius != null) {
-      return ClipRRect(
-        borderRadius: radius ?? BorderRadius.zero,
-        child: _buildImageWithBorder(),
-      );
-    }
-    return _buildImageWithBorder();
-  }
-
-  Widget _buildImageWithBorder() {
-    if (border != null) {
-      return Container(
-        decoration: BoxDecoration(border: border, borderRadius: radius),
-        child: _buildImageView(),
-      );
-    }
-    return _buildImageView();
-  }
-
-  Widget _buildImageView() {
-    switch (_effectiveImagePath.imageType) {
-      case _ImageType.svg:
-        return SizedBox(
-          height: height,
-          width: width,
-          child: SvgPicture.asset(
-            _effectiveImagePath,
-            height: height,
-            width: width,
-            fit: fit ?? BoxFit.contain,
-            colorFilter: color != null
-                ? ColorFilter.mode(color!, BlendMode.srcIn)
-                : null,
-          ),
-        );
-      case _ImageType.file:
-        return Image.file(
-          File(_effectiveImagePath),
-          height: height,
-          width: width,
-          fit: fit ?? BoxFit.cover,
-          color: color,
-        );
-      case _ImageType.networkSvg:
-        return SvgPicture.network(
-          _effectiveImagePath,
-          height: height,
-          width: width,
-          fit: fit ?? BoxFit.contain,
-          colorFilter: color != null
-              ? ColorFilter.mode(color!, BlendMode.srcIn)
-              : null,
-        );
-      case _ImageType.network:
-        return CachedNetworkImage(
-          height: height,
-          width: width,
-          fit: fit,
-          imageUrl: _effectiveImagePath,
-          color: color,
-          placeholder: (context, url) => SizedBox(
-            height: 30,
-            width: 30,
-            child: LinearProgressIndicator(
-              color: _appTheme.grey200,
-              backgroundColor: _appTheme.grey100,
-            ),
-          ),
-          errorWidget: (context, url, error) => Image.asset(
-            placeHolder ?? _Img.imageNotFound,
-            height: height,
-            width: width,
-            fit: fit ?? BoxFit.cover,
-          ),
-        );
-      case _ImageType.png:
-        return Image.asset(
-          _effectiveImagePath,
-          height: height,
-          width: width,
-          fit: fit ?? BoxFit.cover,
-          color: color,
-        );
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// CUSTOM ICON BUTTON (inline)
-// ---------------------------------------------------------------------------
-class _CustomIconButton extends StatelessWidget {
-  const _CustomIconButton({
-    required this.imagePath,
-    this.onTap,
-    this.backgroundColor,
-    this.padding,
-    this.margin,
-    this.buttonSize,
-    this.borderRadius,
-  });
-
-  final String imagePath;
-  final VoidCallback? onTap;
-  final Color? backgroundColor;
-  final double? buttonSize;
-  final EdgeInsetsGeometry? padding;
-  final double? borderRadius;
-  final EdgeInsetsGeometry? margin;
-
-  @override
-  Widget build(BuildContext context) {
-    final double resolvedSize = buttonSize ?? 66.h;
-    final double resolvedRadius = borderRadius ?? 32.h;
-    final Color resolvedBgColor = backgroundColor ?? _appTheme.red_100;
-    final EdgeInsetsGeometry resolvedPadding = padding ?? EdgeInsets.all(8.h);
-
-    return Container(
-      margin: margin,
-      child: Material(
-        color: _appTheme.transparentCustom,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(resolvedRadius),
-          child: Ink(
-            width: resolvedSize,
-            height: resolvedSize,
-            decoration: BoxDecoration(
-              color: resolvedBgColor,
-              borderRadius: BorderRadius.circular(resolvedRadius),
-              boxShadow: [
-                BoxShadow(
-                  color: _appTheme.black_900_3f,
-                  offset: Offset(2.h, 2.h),
-                  blurRadius: 2.h,
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: resolvedPadding,
-              child: _CustomImageView(
-                imagePath: imagePath,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// CUSTOM FAB BUTTON (inline)
-// ---------------------------------------------------------------------------
-class _CustomFabButton extends StatelessWidget {
-  const _CustomFabButton({
-    required this.onPressed,
-    this.imagePath,
-    this.backgroundColor,
-    this.buttonSize,
-    this.borderRadius,
-  });
-
-  final VoidCallback onPressed;
-  final String? imagePath;
-  final Color? backgroundColor;
-  final double? buttonSize;
-  final double? borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    final double resolvedSize = buttonSize ?? 66.h;
-    final double resolvedBorderRadius = borderRadius ?? 32.h;
-    final Color resolvedBackgroundColor = backgroundColor ?? _appTheme.red_100;
-
-    return SizedBox(
-      width: resolvedSize,
-      height: resolvedSize,
-      child: FloatingActionButton(
-        onPressed: onPressed,
-        backgroundColor: resolvedBackgroundColor,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(resolvedBorderRadius),
-        ),
-        child: imagePath != null
-            ? _CustomImageView(
-                imagePath: imagePath,
-                height: resolvedSize * 0.55,
-                width: resolvedSize * 0.55,
-                fit: BoxFit.contain,
-              )
-            : const SizedBox.shrink(),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// PERFIL PAGE (main screen)
-// ---------------------------------------------------------------------------
 class PerfilPage extends StatefulWidget {
   const PerfilPage({Key? key}) : super(key: key);
 
@@ -400,479 +19,359 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
-  String _profileName = "Liminha";
-  String _dateOfBirth = "05 / 02 / 2007";
-  String? _profileImagePath;
-  final ImagePicker _imagePicker = ImagePicker();
+  // TODO: carregar/salvar dados reais (API, SharedPreferences, etc.)
+  String _nome = 'Liminha';
+  DateTime _nascimento = DateTime(2007, 2, 5);
+  File? _foto;
 
-  void _showChangePhotoOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: _appTheme.red_100,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.h)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Mudar Foto de Perfil", style: _ts.title18BoldComfortaa),
-                SizedBox(height: 20.h),
-                ListTile(
-                  leading: Icon(Icons.camera_alt, color: _appTheme.gray_800),
-                  title: Text("Câmera", style: _ts.title16Comfortaa),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await _pickImage(ImageSource.camera);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.photo_library, color: _appTheme.gray_800),
-                  title: Text("Galeria", style: _ts.title16Comfortaa),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await _pickImage(ImageSource.gallery);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  final ImagePicker _picker = ImagePicker();
+
+  String get _nascimentoTexto {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(_nascimento.day)} / ${two(_nascimento.month)} / ${_nascimento.year}';
   }
 
-  Future<void> _pickImage(ImageSource source) async {
+  // ── Ações ─────────────────────────────────────────────────────────────────
+
+  Future<void> _mudarFoto() async {
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: VetColors.pink,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.photo_camera, color: VetColors.brown),
+              title: const Text('Tirar foto'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library, color: VetColors.brown),
+              title: const Text('Escolher da galeria'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
     try {
-      final XFile? pickedFile = await _imagePicker.pickImage(
-        source: source,
-        imageQuality: 85,
-      );
-      if (pickedFile != null) {
-        setState(() {
-          _profileImagePath = pickedFile.path;
-        });
+      final XFile? picked =
+          await _picker.pickImage(source: source, maxWidth: 800);
+      if (picked != null && mounted) {
+        setState(() => _foto = File(picked.path));
       }
-    } catch (e) {
-      _showErrorSnackBar("Não foi possível selecionar a foto.");
+    } catch (_) {
+      _aviso('Não foi possível abrir a imagem.');
     }
   }
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: _appTheme.red_300),
+  Future<void> _mudarNome() async {
+    final controller = TextEditingController(text: _nome);
+    final String? novo = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VetColors.pink,
+        title: const Text('Mudar nome de perfil'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 20,
+          decoration: const InputDecoration(hintText: 'Novo nome'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (novo != null && novo.isNotEmpty && mounted) {
+      setState(() => _nome = novo);
+    }
+  }
+
+  Future<void> _mudarNascimento() async {
+    final DateTime? data = await showDatePicker(
+      context: context,
+      initialDate: _nascimento,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (data != null && mounted) setState(() => _nascimento = data);
+  }
+
+  void _aviso(String msg) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    final double s = PetsTheme.scaleOf(context);
+    final double top = MediaQuery.paddingOf(context).top;
+
+    return Scaffold(
+      backgroundColor: VetColors.pink,
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // O Stack tem a altura total (header + avatar), então o
+                  // avatar fica DENTRO da área e recebe toques normalmente.
+                  SizedBox(
+                    width: double.infinity,
+                    height: top + 52 * s + 230 * s,
+                    child: Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          child: _buildHeader(s, top),
+                        ),
+                        Positioned(
+                          top: top + 52 * s,
+                          child: _buildAvatarTab(s),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 18 * s),
+                  _buildBirthday(s),
+                  SizedBox(height: 28 * s),
+                  _buildOptions(s),
+                ],
+              ),
+            ),
+          ),
+          VetBottomNav(
+            selectedIndex: 1,
+            onSelected: (i) {
+              if (i == 0) {
+                Navigator.of(context).pop();
+              } else if (i != 1) {
+                _aviso('Em breve');
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  void _showChangeNameDialog() {
-    final TextEditingController nameController = TextEditingController(
-      text: _profileName,
-    );
-    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  // ── Header ────────────────────────────────────────────────────────────────
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: _appTheme.red_100,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.h),
-          ),
-          title: Text("Mudar Nome de Perfil", style: _ts.title18BoldComfortaa),
-          content: Form(
-            key: formKey,
-            child: TextFormField(
-              controller: nameController,
-              style: _ts.title16Comfortaa,
-              decoration: InputDecoration(
-                hintText: "Digite o novo nome",
-                hintStyle: _ts.body14Comfortaa.copyWith(
-                  color: const Color(0xFF68442E).withAlpha(128),
-                ),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: _appTheme.red_300),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: _appTheme.gray_800),
-                ),
+  Widget _buildHeader(double s, double top) {
+    return Container(
+      width: double.infinity,
+      height: top + 100 * s,
+      alignment: Alignment.topCenter,
+      padding: EdgeInsets.only(top: top + 16 * s),
+      decoration: BoxDecoration(
+        color: VetColors.roseDark.withOpacity(0.85),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30 * s)),
+      ),
+      child: Text(
+        'Perfil',
+        style: TextStyle(
+          fontSize: 26 * s,
+          fontFamily: PetsTheme.fontComfortaa,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  // ── Aba com nome + avatar ─────────────────────────────────────────────────
+
+  Widget _buildAvatarTab(double s) {
+    return Container(
+      width: 200 * s,
+      height: 230 * s,
+      decoration: BoxDecoration(
+        color: VetColors.pink.withOpacity(0.9),
+        border: Border.all(color: VetColors.roseDark, width: 3 * s),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24 * s),
+          bottom: Radius.circular(100 * s),
+        ),
+      ),
+      child: Column(
+        children: [
+          SizedBox(height: 14 * s),
+          GestureDetector(
+            onTap: _mudarNome,
+            child: Text(
+              _nome,
+              style: TextStyle(
+                fontSize: 20 * s,
+                fontFamily: PetsTheme.fontComfortaa,
+                fontWeight: FontWeight.w600,
+                color: VetColors.brown,
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return "Por favor, insira um nome válido.";
-                }
-                return null;
-              },
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Cancelar", style: _ts.bodyTextComfortaa),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _appTheme.red_300,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.h),
+          SizedBox(height: 14 * s),
+          GestureDetector(
+            onTap: _mudarFoto,
+            child: SizedBox(
+              width: 140 * s,
+              height: 140 * s,
+              child: CustomPaint(
+                painter: _DashedCirclePainter(
+                  color: VetColors.roseDark,
+                  strokeWidth: 2 * s,
+                ),
+                child: Center(
+                  child: Container(
+                    width: 122 * s,
+                    height: 122 * s,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      color: VetColors.pink,
+                      shape: BoxShape.circle,
+                      boxShadow: const [
+                        BoxShadow(
+                          color: VetColors.shadowDark,
+                          offset: Offset(3, 3),
+                          blurRadius: 6,
+                        ),
+                        BoxShadow(
+                          color: VetColors.shadowLight,
+                          offset: Offset(-3, -3),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                    child: _foto != null
+                        ? Image.file(_foto!, fit: BoxFit.cover)
+                        : Icon(
+                            Icons.person,
+                            size: 70 * s,
+                            color: VetColors.roseDark,
+                          ),
+                  ),
                 ),
               ),
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  setState(() {
-                    _profileName = nameController.text.trim();
-                  });
-                  Navigator.pop(context);
-                }
-              },
-              child: Text(
-                "Salvar",
-                style: _ts.bodyTextComfortaa.copyWith(
-                  color: _appTheme.white_A700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Data de nascimento ────────────────────────────────────────────────────
+
+  Widget _buildBirthday(double s) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.cake_outlined, size: 16 * s, color: VetColors.brown),
+        SizedBox(width: 6 * s),
+        Text(
+          _nascimentoTexto,
+          style: TextStyle(
+            fontSize: 13 * s,
+            fontFamily: PetsTheme.fontComfortaa,
+            fontWeight: FontWeight.w600,
+            color: VetColors.brown,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Lista de opções ───────────────────────────────────────────────────────
+
+  Widget _buildOptions(double s) {
+    final items = <MapEntry<String, VoidCallback>>[
+      MapEntry('Mudar Foto de Perfil', _mudarFoto),
+      MapEntry('Mudar Nome de Perfil', _mudarNome),
+      MapEntry('Mudar Data de Nascimento', _mudarNascimento),
+    ];
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 22 * s),
+      child: Column(
+        children: [
+          for (int i = 0; i < items.length; i++) ...[
+            if (i > 0) Divider(height: 1, thickness: 1, color: VetColors.rose),
+            InkWell(
+              onTap: items[i].value,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 14 * s),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        items[i].key,
+                        style: TextStyle(
+                          fontSize: 14 * s,
+                          fontFamily: PetsTheme.fontComfortaa,
+                          fontWeight: FontWeight.w600,
+                          color: VetColors.brown,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right,
+                        size: 26 * s, color: VetColors.brown),
+                  ],
                 ),
               ),
             ),
           ],
-        );
-      },
+        ],
+      ),
     );
   }
+}
 
-  void _showChangeDateOfBirthPicker() async {
-    DateTime initialDate = DateTime(2007, 2, 5);
-    try {
-      final parts = _dateOfBirth.split('/');
-      if (parts.length == 3) {
-        final day = int.tryParse(parts[0].trim());
-        final month = int.tryParse(parts[1].trim());
-        final year = int.tryParse(parts[2].trim());
-        if (day != null && month != null && year != null) {
-          initialDate = DateTime(year, month, day);
-        }
-      }
-    } catch (_) {}
+/// Círculo tracejado ao redor do avatar.
+class _DashedCirclePainter extends CustomPainter {
+  _DashedCirclePainter({required this.color, required this.strokeWidth});
 
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: _appTheme.red_300,
-              onPrimary: _appTheme.white_A700,
-              onSurface: _appTheme.gray_800,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: _appTheme.gray_800),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
+  final Color color;
+  final double strokeWidth;
 
-    if (picked != null) {
-      setState(() {
-        _dateOfBirth =
-            "${picked.day.toString().padLeft(2, '0')} / ${picked.month.toString().padLeft(2, '0')} / ${picked.year}";
-      });
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final double r = size.width / 2 - strokeWidth;
+    final Rect rect =
+        Rect.fromCircle(center: size.center(Offset.zero), radius: r);
+    const int dashes = 36;
+    const double sweep = 2 * math.pi / dashes;
+    for (int i = 0; i < dashes; i++) {
+      canvas.drawArc(rect, i * sweep, sweep * 0.55, false, paint);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return OrientationBuilder(
-          builder: (context, orientation) {
-            _SizeUtils.setScreenSize(constraints, orientation);
-            return Scaffold(
-              backgroundColor: _appTheme.red_100,
-              body: Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  Column(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              _buildHeaderSection(),
-                              SizedBox(height: 12.h),
-                              _buildDateOfBirthRow(),
-                              SizedBox(height: 58.h),
-                              _buildMenuItems(),
-                              SizedBox(height: 96.h),
-                              _buildBottomNavBar(),
-                              _buildBottomImage(),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 30.h, bottom: 62.h),
-                      child: _CustomFabButton(
-                        onPressed: _showChangePhotoOptions,
-                        imagePath: _Img.frame49,
-                        backgroundColor: _appTheme.red_100,
-                        buttonSize: 66.h,
-                        borderRadius: 32.h,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildHeaderSection() {
-    return SizedBox(
-      width: double.infinity,
-      height: 368.h,
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          Align(
-            alignment: Alignment.topCenter,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: _appTheme.red_300,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30.h),
-                  bottomRight: Radius.circular(30.h),
-                ),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 12.h, vertical: 10.h),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    margin: EdgeInsets.only(bottom: 42.h),
-                    child: _CustomImageView(
-                      imagePath: _Img.vethomePng5,
-                      height: 86.h,
-                      width: 84.h,
-                      radius: BorderRadius.circular(42.h),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  SizedBox(width: 58.h),
-                  Padding(
-                    padding: EdgeInsets.only(top: 20.h),
-                    child: Text(
-                      "Perfil",
-                      style: _ts.headline30BoldComfortaa.copyWith(
-                        height: 34 / 30,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Align(alignment: Alignment.bottomCenter, child: _buildProfileCard()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileCard() {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.54,
-      decoration: BoxDecoration(
-        color: _appTheme.color7FFAD3,
-        border: Border.all(color: _appTheme.red_300, width: 5.h),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30.h),
-          topRight: Radius.circular(30.h),
-          bottomLeft: Radius.circular(100.h),
-          bottomRight: Radius.circular(100.h),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _appTheme.black_900_3f,
-            offset: const Offset(2, 2),
-            blurRadius: 2,
-          ),
-        ],
-      ),
-      padding: EdgeInsets.symmetric(horizontal: 10.h, vertical: 12.h),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(height: 2.h),
-          Text(
-            _profileName,
-            style: _ts.title22BoldComfortaa.copyWith(height: 25 / 22),
-          ),
-          SizedBox(height: 32.h),
-          _buildProfilePhotoCircle(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfilePhotoCircle() {
-    return GestureDetector(
-      onTap: _showChangePhotoOptions,
-      child: Container(
-        width: 182.h,
-        height: 182.h,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: _appTheme.color7F6844, width: 3.h),
-        ),
-        child: ClipOval(
-          child: _profileImagePath != null
-              ? Image.file(
-                  File(_profileImagePath!),
-                  width: 164.h,
-                  height: 164.h,
-                  fit: BoxFit.cover,
-                )
-              : _CustomImageView(
-                  imagePath: _Img.images11,
-                  height: 164.h,
-                  width: 164.h,
-                  fit: BoxFit.cover,
-                ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDateOfBirthRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _CustomImageView(imagePath: _Img.vector, height: 22.h, width: 18.h),
-        SizedBox(width: 8.h),
-        Text(
-          _dateOfBirth,
-          style: _ts.title18BoldComfortaa.copyWith(height: 21 / 18),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMenuItems() {
-    return Column(
-      children: [
-        _buildMenuItem(
-          title: "Mudar Foto de Perfil",
-          onTap: _showChangePhotoOptions,
-        ),
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: 12.h, vertical: 16.h),
-          height: 1.h,
-          color: _appTheme.color3F6844,
-        ),
-        _buildMenuItem(
-          title: "Mudar Nome de Perfil",
-          onTap: _showChangeNameDialog,
-        ),
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: 12.h, vertical: 16.h),
-          height: 1.h,
-          color: _appTheme.color3F6844,
-        ),
-        _buildMenuItem(
-          title: "Mudar Data de Nascimento",
-          onTap: _showChangeDateOfBirthPicker,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMenuItem({required String title, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 28.h),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: _ts.title18BoldComfortaa.copyWith(height: 21 / 18),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: _CustomImageView(
-                imagePath: _Img.vectorGray800,
-                height: 16.h,
-                width: 8.h,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.h),
-      padding: EdgeInsets.only(top: 12.h, bottom: 12.h, left: 16.h),
-      decoration: BoxDecoration(
-        color: _appTheme.color7FC080,
-        borderRadius: BorderRadius.circular(24.h),
-        boxShadow: [
-          BoxShadow(
-            color: _appTheme.black_900_3f,
-            offset: const Offset(2, 2),
-            blurRadius: 2,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _CustomIconButton(
-            imagePath: _Img.frame48,
-            backgroundColor: _appTheme.red_100,
-            padding: EdgeInsets.all(8.h),
-            onTap: () {},
-          ),
-          _CustomIconButton(
-            imagePath: _Img.frame51,
-            backgroundColor: _appTheme.color7FC080,
-            padding: EdgeInsets.all(18.h),
-            margin: EdgeInsets.only(left: 22.h),
-            onTap: () {},
-          ),
-          _CustomIconButton(
-            imagePath: _Img.frame50,
-            backgroundColor: _appTheme.red_100,
-            padding: EdgeInsets.all(14.h),
-            margin: EdgeInsets.only(left: 22.h),
-            onTap: () {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomImage() {
-    return _CustomImageView(
-      imagePath: _Img.image6,
-      width: double.infinity,
-      height: 50.h,
-      fit: BoxFit.cover,
-    );
-  }
+  bool shouldRepaint(covariant _DashedCirclePainter old) =>
+      old.color != color || old.strokeWidth != strokeWidth;
 }

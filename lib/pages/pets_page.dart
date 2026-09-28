@@ -7,6 +7,7 @@ import '../models/pet_model.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pets/pet_card_widget.dart';
 import '../widgets/pets/pets_theme.dart';
+import '../widgets/vet_bottom_nav.dart';
 import 'perfil_page.dart';
 
 class PetsPage extends StatelessWidget {
@@ -43,7 +44,19 @@ class PetsPage extends StatelessWidget {
               child: _buildPetListSection(context, s),
             ),
           ),
-          _buildBottomNav(context, s, safe.bottom),
+          VetBottomNav(
+            selectedIndex: 0,
+            onSelected: (i) {
+              if (i == 1) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PerfilPage()),
+                );
+              } else if (i != 0) {
+                _soon(context);
+              }
+            },
+          ),
         ],
       ),
     );
@@ -151,69 +164,17 @@ class PetsPage extends StatelessWidget {
     );
   }
 
-  // ── Barra de navegação inferior (4 botões) ────────────────────────────────
+  // ── Callbacks ─────────────────────────────────────────────────────────────
 
-  Widget _buildBottomNav(BuildContext context, double s, double bottomInset) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, 12 * s + bottomInset),
-      padding: EdgeInsets.symmetric(vertical: 12 * s, horizontal: 10 * s),
-      decoration: BoxDecoration(
-        color: VetColors.rose.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(24 * s),
-        boxShadow: const [
-          BoxShadow(
-            color: VetColors.shadowDark,
-            offset: Offset(2, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _navButton(s, Icons.pets, selected: true, onTap: () {}),
-          _navButton(
-            s,
-            Icons.person,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PerfilPage()),
-              );
-            },
-          ),
-          _navButton(s, Icons.calendar_month, onTap: () {}),
-          _navButton(s, Icons.settings, onTap: () {}),
-        ],
-      ),
-    );
+  void _soon(BuildContext context) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Em breve')));
   }
 
-  Widget _navButton(double s, IconData icon,
-      {bool selected = false, required VoidCallback onTap}) {
-    return _NeuButton(
-      width: 62 * s,
-      height: 62 * s,
-      radius: 31 * s,
-      color: selected ? VetColors.rose : VetColors.pink,
-      onTap: onTap,
-      child: Icon(
-        icon,
-        size: 32 * s,
-        color: selected ? Colors.white : VetColors.brown,
-      ),
-    );
-  }
+  void _onPetCardTapped(BuildContext context, PetModel pet) => _soon(context);
 
-  // ── Callbacks (ligue ao seu roteador) ─────────────────────────────────────
-
-  void _onPetCardTapped(BuildContext context, PetModel pet) {
-    // TODO: detalhes do pet
-  }
-
-  void _onAddPetTapped(BuildContext context) {
-    // TODO: tela de adicionar pet
-  }
+  void _onAddPetTapped(BuildContext context) => _soon(context);
 }
 
 /// Botão com sombra neumórfica (escura embaixo/direita, clara em cima/esquerda).
