@@ -2,10 +2,18 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
-import 'menu_pet_page.dart';
 
 class Carregamento extends StatefulWidget {
-  const Carregamento({super.key});
+  const Carregamento({
+    super.key,
+    required this.destinoBuilder,
+    this.titulo = 'Usuário Cadastrado!',
+    this.mensagem = 'É um prazer te-lo(a)! \n conosco senhor(a)',
+  });
+
+  final WidgetBuilder destinoBuilder;
+  final String titulo;
+  final String? mensagem;
 
   @override
   State<Carregamento> createState() => _Carregamento();
@@ -86,7 +94,7 @@ class _Carregamento extends State<Carregamento>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const MenuPetPage(),
+            builder: widget.destinoBuilder,
           ),
         );
       }
@@ -131,7 +139,7 @@ class _Carregamento extends State<Carregamento>
                     child: Column(
                       children: [
                         Text(
-                          'Usuário Cadastrado!',
+                          widget.titulo,
                           textAlign: TextAlign.center,
 
                           style: GoogleFonts.comfortaa(
@@ -140,16 +148,18 @@ class _Carregamento extends State<Carregamento>
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const SizedBox(height: 30,),
-                        Text(
-                          'É um prazer te-lo(a)! \n conosco senhor(a)',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.comfortaa(
-                            color: Color(0xFF68442E),
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
+                        if (widget.mensagem != null) ...[
+                          const SizedBox(height: 30),
+                          Text(
+                            widget.mensagem!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.comfortaa(
+                              color: const Color(0xFF68442E),
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        )
+                        ],
                       ],
                     )
                   ),

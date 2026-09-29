@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_vethome/pages/carregamento.dart';
+import 'package:flutter_vethome/pages/escolha_pet_page.dart';
+import 'package:flutter_vethome/widgets/campo_cadastro.dart';
+import 'package:flutter_vethome/widgets/botao_cadastrar.dart';
 
 class InformacoesCadastroPage extends StatefulWidget {
   const InformacoesCadastroPage({super.key});
@@ -11,10 +13,14 @@ class InformacoesCadastroPage extends StatefulWidget {
 }
 
 class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
-  void menu(){
+  void escolhapet(){
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const Carregamento()),
+      MaterialPageRoute(
+        builder: (context) => Carregamento(
+          destinoBuilder: (context) => const EscolhaPetPage(),
+        ),
+      ),
     );
   }
   @override
@@ -83,7 +89,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Nome Completo',
                                 icone: Icons.person,
                                 altura: alturaCampos,
@@ -94,7 +100,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Data de Nascimento',
                                 icone: Icons.calendar_month,
                                 altura: alturaCampos,
@@ -105,7 +111,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Gênero/Sexo',
                                 icone: Icons.wc,
                                 altura: alturaCampos,
@@ -116,7 +122,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'CPF',
                                 icone: Icons.badge,
                                 altura: alturaCampos,
@@ -127,7 +133,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Telefone/Celular',
                                 icone: Icons.phone,
                                 altura: alturaCampos,
@@ -138,7 +144,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Confirmar Telefone/Celular',
                                 icone: Icons.phone,
                                 altura: alturaCampos,
@@ -149,7 +155,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'CEP',
                                 icone: Icons.home,
                                 altura: alturaCampos,
@@ -160,7 +166,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Endereço',
                                 icone: Icons.home,
                                 altura: alturaCampos,
@@ -171,7 +177,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Numero',
                                 icone: Icons.numbers,
                                 altura: alturaCampos,
@@ -182,7 +188,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Cidade',
                                 icone: Icons.location_city,
                                 altura: alturaCampos,
@@ -193,7 +199,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Complemento',
                                 icone: Icons.home,
                                 altura: alturaCampos,
@@ -205,7 +211,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
 
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'E-mail',
                                 icone: Icons.email,
                                 altura: alturaCampos,
@@ -216,7 +222,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Confirmar E-mail',
                                 icone: Icons.email,
                                 altura: alturaCampos,
@@ -227,7 +233,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Senha',
                                 icone: Icons.lock,
                                 altura: alturaCampos,
@@ -238,7 +244,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                               ),
 
                               SizedBox(height: espacamentoCampos,),
-                              _campo(
+                              CampoCadastro(
                                 titulo: 'Confirmar Senha',
                                 icone: Icons.lock,
                                 altura: alturaCampos,
@@ -252,12 +258,12 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                         ),
                         const SizedBox(height: 30,),
 
-                        _botaoCadastrar(
+                        BotaoCadastro(
                         largura: larguraBotao,
                         altura: alturaBotao,
                         fonte: fonteBotao,
+                        onPressed: escolhapet,
                       ),
-                        const SizedBox(height: 30,),
                     ],
                   ),
                 )
@@ -266,194 +272,6 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
           }
         )
       )
-    );
-  }
-
-  Widget _campo({
-    required String titulo,
-    required IconData icone,
-    required double altura,
-    required double largura,
-    required double tamanhoIcone,
-    required double tamanhoIconeInterno,
-    required double fonteLabel,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 0, bottom: 1),
-          child: Text(
-            titulo,
-            style: GoogleFonts.montserratAlternates(
-              color: const Color(0xFF68442E),
-              fontWeight: FontWeight.w500,
-              fontSize: fonteLabel,
-            ),
-          ),
-        ),
-
-        SizedBox(
-          height: altura,
-          width: largura,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              SizedBox(
-                height: altura,
-                child: Container(
-                decoration: const inset_shadow.BoxDecoration(
-                  color: Color.fromRGBO(192, 128, 129, 0.28),
-                  borderRadius: BorderRadius.all(Radius.circular(80)),
-                  boxShadow: [
-                    inset_shadow.BoxShadow(
-                      color: Color.fromARGB(60, 0, 0, 0),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                      inset: true,
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  expands: true,
-                  maxLines: null,
-                  minLines: null,
-                  textAlignVertical: TextAlignVertical.center,
-
-                  style: GoogleFonts.montserratAlternates(
-                    color: const Color(0xFF68442E),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.transparent,
-                    isDense: true,
-                    contentPadding: EdgeInsets.only(
-                      left: tamanhoIcone + 12,
-                      right: 16,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(80),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(80),
-                      borderSide: const BorderSide(
-                        color: Colors.transparent,
-                        width: 1.5,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(80),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF68442E),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              ),
-              Positioned(
-                left: 0,
-                top: (altura - tamanhoIcone) / 2,
-                child: Container(
-                  width: tamanhoIcone,
-                  height: tamanhoIcone,
-                  decoration: inset_shadow.BoxDecoration(
-                    color: const Color(0xFFFAD3D5),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFC08081).withValues(alpha: 0.80),
-                      width: 3,
-                    ),
-                    boxShadow: const [
-                      inset_shadow.BoxShadow(
-                        color: Color.fromARGB(50, 255, 255, 255),
-                        blurRadius: 4,
-                        offset: Offset(-2, -2),
-                        inset: true,
-                      ),
-                      inset_shadow.BoxShadow(
-                        color: Color.fromARGB(70, 105, 66, 67),
-                        blurRadius: 5,
-                        offset: Offset(3, 4),
-                        inset: true,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    icone,
-                    color: const Color(0xFFC08081),
-                    size: tamanhoIconeInterno,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        )
-        ],
-      ),
-    );
-  }
-  Widget _botaoCadastrar({
-    required double largura,
-    required double altura,
-    required double fonte,
-  }) {
-    return Container(
-      width: largura,
-      height: altura,
-
-      decoration:
-          const inset_shadow.BoxDecoration(
-        borderRadius:
-            BorderRadius.all(
-          Radius.circular(80),
-        ),
-
-        boxShadow: [
-          inset_shadow.BoxShadow(
-            color: Color.fromARGB(149, 17, 12, 12),
-            blurRadius: 10,
-            offset: Offset(2, 2),
-          ),
-        ],
-      ),
-
-      child: Stack(
-        fit: StackFit.expand,
-
-        children: [
-
-          TextButton(
-            onPressed: menu,
-            style: TextButton.styleFrom(
-              backgroundColor:
-                  const Color(0xFFC08081),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(80),
-              ),
-            ),
-
-            child: Text(
-              'Cadastrar',
-              style:
-                  GoogleFonts.montserratAlternates(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: fonte,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

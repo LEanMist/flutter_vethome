@@ -1,17 +1,18 @@
+import 'menu_pet_page.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'cadastro_pet_page.dart';
 
-class MenuPetPage extends StatefulWidget {
-  const MenuPetPage({super.key});
+class EscolhaPetPage extends StatefulWidget {
+  const EscolhaPetPage({super.key});
 
   @override
-  State<MenuPetPage> createState() => _MenuPetPage();
+  State<EscolhaPetPage> createState() => _EscolhaPetPage();
 }
 
-class _MenuPetPage extends State<MenuPetPage> {
+class _EscolhaPetPage extends State<EscolhaPetPage> {
   bool modoEscuro = false;
 
   void cadastropet(){

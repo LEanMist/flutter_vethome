@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_vethome/pages/informacoes_page.dart';
+import 'package:flutter_vethome/pages/cadastro_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
@@ -533,6 +533,7 @@ class _LoginPageState extends State<LoginPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            const SizedBox(height: 11,),
                             TextButton(
                               onPressed: abrirInformacoesCadastro,
                               style: TextButton.styleFrom(
