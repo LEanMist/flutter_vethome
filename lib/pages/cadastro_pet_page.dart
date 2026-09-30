@@ -22,7 +22,7 @@ class _CadastroPetPage extends State<CadastroPetPage> {
       context,
       MaterialPageRoute(
         builder: (context) => Carregamento(
-          titulo: 'Pet cadastrado com sucesso!',
+          titulo: 'Pet Cadastrado!',
           mensagem: null,
           destinoBuilder: widget.destinoBuilder,
         ),

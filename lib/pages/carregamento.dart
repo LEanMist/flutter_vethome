@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'package:flutter_vethome/widgets/logo_tematico.dart';
 
 class Carregamento extends StatefulWidget {
   const Carregamento({
@@ -184,7 +184,9 @@ class _Carregamento extends State<Carregamento>
                         ),
                       );
                     },
-                    child: _logoAnimada(tamanhoLogo),
+                    child: LogoTematico(
+                      tamanho: tamanhoLogo
+                    ),
                   ),
                 ],
               ),
@@ -193,97 +195,5 @@ class _Carregamento extends State<Carregamento>
         ),
       ),
     );
-  }
-  Widget _logoAnimada(double tamanhoLogo) {
-    return Container(
-      width: tamanhoLogo,
-      height: tamanhoLogo,
-
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-      ),
-
-      child: Stack(
-        children: [
-
-          // IMAGEM DA LOGO
-          ClipOval(
-            child: Image.asset(
-              'assets/imagens/VetHome_logo_1.jpg',
-              width: tamanhoLogo,
-              height: tamanhoLogo,
-              fit: BoxFit.cover,
-
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: tamanhoLogo,
-                  height: tamanhoLogo,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFAD3D5),
-                    shape: BoxShape.circle,
-                  ),
-                );
-              },
-            ),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: const inset_shadow.BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  inset_shadow.BoxShadow(
-                    color: Color.fromARGB(184, 142, 135, 135),
-                    blurRadius: 1,
-                    offset: Offset(2, 2),
-                    inset: true,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          Positioned.fill(
-            child: CustomPaint(
-              painter: ContornoLogoPainter(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-class ContornoLogoPainter extends CustomPainter {
-
-  @override
-  void paint(Canvas canvas, Size size) {
-
-    final Paint contorno = Paint()
-      ..color = Colors.white.withValues(alpha: 0.9)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-
-    // Desenha a linha branca na parte inferior
-    // do círculo, começando pelo lado direito.
-
-    canvas.drawArc(
-      Rect.fromLTWH(
-        1.5,
-        1.5,
-        size.width - 2,
-        size.height - 2,
-      ),
-
-      pi / -13, // Ponto inicial
-      pi / 1.6, // Extensão da linha
-
-      false,
-      contorno,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
   }
 }

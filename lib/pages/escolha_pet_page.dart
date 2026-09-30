@@ -1,9 +1,11 @@
-import 'menu_pet_page.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'cadastro_pet_page.dart';
+import 'menu_page.dart';
+import 'package:flutter_vethome/widgets/logo_tematico.dart';
+
+
 
 class EscolhaPetPage extends StatefulWidget {
   const EscolhaPetPage({super.key});
@@ -20,7 +22,7 @@ class _EscolhaPetPage extends State<EscolhaPetPage> {
       context,
       MaterialPageRoute(
         builder: (context) => CadastroPetPage(
-          destinoBuilder: (context) => const MenuPetPage(),
+          destinoBuilder: (context) => const MenuPage(),
         ),
       ),
     );
@@ -85,15 +87,16 @@ class _EscolhaPetPage extends State<EscolhaPetPage> {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: const Color(0xFFFAD3D5),
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(18),
-                            topRight: Radius.circular(18),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(18)
                           ),
                         ),
                         child: Column(
                           children: [
                             const SizedBox(height: 30),
-                            _logo(tamanhoLogo),
+                            LogoTematico(
+                              tamanho: tamanhoLogo
+                            ),
                             const SizedBox(height: 36),
                             Text(
                               'Seja bem Vindo!',
@@ -175,42 +178,6 @@ class _EscolhaPetPage extends State<EscolhaPetPage> {
       ),
     );
   }
-
-  Widget _logo(double tamanho) {
-    return Container(
-      width: tamanho,
-      height: tamanho,
-      decoration: const inset_shadow.BoxDecoration(shape: BoxShape.circle),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          Image.asset(
-            'assets/imagens/VetHome_logo_1.jpg',
-            width: tamanho,
-            height: tamanho,
-            fit: BoxFit.contain,
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: const inset_shadow.BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  inset_shadow.BoxShadow(
-                    color: Color.fromARGB(185, 109, 102, 102),
-                    blurRadius: 1,
-                    offset: Offset(2, 2),
-                    inset: true,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned.fill(child: CustomPaint(painter: ContornoLogoPainter())),
-        ],
-      ),
-    );
-  }
-
   Widget _botaoPet({
     required String texto,
     required double largura,
@@ -347,34 +314,5 @@ class _EscolhaPetPage extends State<EscolhaPetPage> {
         ],
       ),
     );
-  }
-}
-
-class ContornoLogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint contorno = Paint()
-      ..color = Colors.white.withValues(alpha: 0.9)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-
-    // Desenha a linha branca na parte inferior
-    // do círculo, começando pelo lado direito.
-
-    canvas.drawArc(
-      Rect.fromLTWH(1.5, 1.5, size.width - 2, size.height - 2),
-
-      pi / -13, // Ponto inicial
-      pi / 1.6, // Extensão da linha
-
-      false,
-      contorno,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
   }
 }
