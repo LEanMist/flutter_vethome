@@ -1,94 +1,44 @@
 // lib/pages/pets_page.dart
-// Tela de Pets do VetHome, com a paleta D9D9D9 / F9D2D3 / C08081 / 68442E.
 import 'package:flutter/material.dart';
 
+import '../core/utils/vet_nav.dart';
+import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pets/pet_card_widget.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet_bottom_nav.dart';
-import 'agendamentos_page.dart';
 import 'detalhes_pet_page.dart';
-import 'perfil_page.dart';
-import 'saude_page.dart';
-import 'vacinacao_page.dart';
 
 class PetsPage extends StatelessWidget {
-  const PetsPage({Key? key}) : super(key: key);
-
-  static const List<PetModel> _pets = [
-    PetModel(
-      name: 'Fernando',
-      imagePath: PetsTheme.imgCachorroegatoPng,
-      description:
-          'Que tal experimentar um clássico feito na sua própria casa? Veja como preparar um brownie simples e rápido.',
-    ),
-    PetModel(
-      name: 'Kelly',
-      imagePath: PetsTheme.imgCachorroegatoPng36x32,
-      description:
-          'Que tal experimentar um clássico feito na sua própria casa? Veja como preparar um brownie simples e rápido.',
-    ),
-  ];
+  const PetsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final EdgeInsets safe = MediaQuery.paddingOf(context);
+    final double top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
       backgroundColor: VetColors.pink,
       body: Column(
         children: [
-          _buildHeader(s, safe.top),
+          _buildHeader(s, top),
           Expanded(
             child: SingleChildScrollView(
               child: _buildPetListSection(context, s),
             ),
           ),
-          VetBottomNav(
-            selectedIndex: 0,
-            onSelected: (i) {
-              if (i == 1) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const PerfilPage()),
-                );
-              } else if (i == 2) {
-                final pet = _pets.first;
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        SaudePage(petName: pet.name, petImage: pet.imagePath),
-                  ),
-                );
-              } else if (i == 3) {
-                final pet = _pets.first;
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => VacinacaoPage(
-                      petName: pet.name,
-                      petImage: pet.imagePath,
-                    ),
-                  ),
-                );
-              } else if (i == 4) {
-                final pet = _pets.first;
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AgendamentosPage(
-                      petName: pet.name,
-                      petImage: pet.imagePath,
-                    ),
-                  ),
-                );
-              } else if (i == 0) {
-                return;
-              }
-            },
+          SafeArea(
+            top: false,
+            child: VetBottomNav(
+              selectedIndex: 0,
+              onSelected: (i) => vetNavigate(
+                context,
+                i,
+                selected: 0,
+                isTabRoot: true,
+              ),
+            ),
           ),
         ],
       ),
@@ -119,6 +69,7 @@ class PetsPage extends StatelessWidget {
                 width: 84 * s,
                 height: 92 * s,
                 fit: BoxFit.contain,
+                cacheWidth: 252,
               ),
               const Spacer(),
               Text(
@@ -139,7 +90,7 @@ class PetsPage extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 8 * s),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: VetColors.roseDark.withOpacity(0.6),
+              color: VetColors.roseDark.withValues(alpha: 0.6),
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(28 * s),
                 bottom: Radius.circular(10 * s),
@@ -161,54 +112,43 @@ class PetsPage extends StatelessWidget {
   }
 
   Widget _buildPetListSection(BuildContext context, double s) {
+    final List<PetModel> pets = VetRepository.pets;
+
     return Container(
       width: double.infinity,
       margin: EdgeInsets.fromLTRB(12 * s, 18 * s, 12 * s, 18 * s),
       padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 14 * s),
       decoration: BoxDecoration(
-        color: VetColors.rose.withOpacity(0.3),
+        color: VetColors.rose.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(24 * s),
       ),
       child: Column(
         children: [
-          for (int i = 0; i < _pets.length; i++) ...[
+          for (int i = 0; i < pets.length; i++) ...[
             if (i > 0) SizedBox(height: 18 * s),
             PetCardWidget(
-              pet: _pets[i],
-              onTap: () => _onPetCardTapped(context, _pets[i]),
+              pet: pets[i],
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DetalhesPetPage(pet: pets[i]),
+                ),
+              ),
             ),
           ],
-          SizedBox(height: 60 * s),
+          SizedBox(height: 40 * s),
           _NeuButton(
             width: 106 * s,
             height: 46 * s,
             radius: 23 * s,
             color: VetColors.pink,
-            onTap: () => _onAddPetTapped(context),
+            onTap: () => vetSoon(context),
             child: Icon(Icons.add, size: 30 * s, color: VetColors.brown),
           ),
         ],
       ),
     );
   }
-
-  void _soon(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Em breve')));
-  }
-
-  void _onPetCardTapped(BuildContext context, PetModel pet) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            DetalhesPetPage(petName: pet.name, petImage: pet.imagePath),
-      ),
-    );
-  }
-
-  void _onAddPetTapped(BuildContext context) => _soon(context);
 }
 
 class _NeuButton extends StatelessWidget {

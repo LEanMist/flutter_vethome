@@ -1,236 +1,112 @@
 import 'package:flutter/material.dart';
 
+import '../core/utils/formatters.dart';
+import '../data/vet_repository.dart';
+import '../models/pet_model.dart';
+import '../models/vet_models.dart';
 import '../theme/vet_colors.dart';
+import '../theme/vet_tones.dart';
+import '../widgets/pet_avatar.dart';
 import '../widgets/pets/pets_theme.dart';
-import '../widgets/vet_bottom_nav.dart';
-import 'despesas_page.dart';
-import 'vacinacao_page.dart';
+import '../widgets/status_chip.dart';
+import '../widgets/vet_card.dart';
+import '../widgets/vet_page_scaffold.dart';
 
 class SaudePage extends StatelessWidget {
-  final String petName;
-  final String petImage;
+  const SaudePage({required this.pet, super.key});
 
-  const SaudePage({required this.petName, required this.petImage, super.key});
+  final PetModel pet;
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final String safeImage = petImage.isNotEmpty
-        ? petImage
-        : 'assets/imagens/VetHome_logo_1.jpg';
+    final perfil = VetRepository.perfil(pet.name);
+    final historico = VetRepository.consultas(pet.name);
+    final vacinas = VetRepository.vacinas(pet.name);
 
-    final List<Map<String, String>> historico = [
-      {
-        'data': '15/09/2024',
-        'tipo': 'Consulta Geral',
-        'veterinario': 'Dra. Ana Silva',
-        'descricao': 'Checkup completo. Tudo normal.',
-        'status': 'Concluído',
-      },
-      {
-        'data': '02/08/2024',
-        'tipo': 'Vermifugação',
-        'veterinario': 'Dr. João Mendes',
-        'descricao': 'Tratamento realizado com sucesso.',
-        'status': 'Concluído',
-      },
-      {
-        'data': '12/07/2024',
-        'tipo': 'Pesagem e avaliação',
-        'veterinario': 'Dra. Clara Lima',
-        'descricao': 'Peso está estável e bem hidratado.',
-        'status': 'Concluído',
-      },
-    ];
+    final vermif = historico
+        .where((c) => c.tipo == 'Vermifugação')
+        .map((c) => fmtDiaMes(c.data))
+        .firstOrNull;
+    final emDia = vacinasEmDia(vacinas);
 
-    return Scaffold(
-      backgroundColor: VetColors.pink,
-      body: SafeArea(
-        child: Column(
+    return VetPageScaffold(
+      title: 'Saúde',
+      pet: pet,
+      selectedIndex: 0,
+      headerBottom: Row(
+        children: [
+          PetAvatar(image: pet.imagePath, size: 72, radius: 18),
+          SizedBox(width: 16 * s),
+          Expanded(
+            child: Text(
+              pet.name,
+              style: TextStyle(
+                fontSize: 22 * s,
+                fontWeight: FontWeight.w700,
+                fontFamily: PetsTheme.fontComfortaa,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+      children: [
+        Row(
           children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.fromLTRB(18 * s, 18 * s, 18 * s, 24 * s),
-              decoration: BoxDecoration(
-                color: VetColors.rose,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(26 * s),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          width: 40 * s,
-                          height: 40 * s,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        'Saúde',
-                        style: TextStyle(
-                          fontSize: 26 * s,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: PetsTheme.fontComfortaa,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Spacer(),
-                      SizedBox(width: 40 * s),
-                    ],
-                  ),
-                  SizedBox(height: 16 * s),
-                  Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(18 * s),
-                        child: Image.asset(
-                          safeImage,
-                          width: 72 * s,
-                          height: 72 * s,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      SizedBox(width: 16 * s),
-                      Expanded(
-                        child: Text(
-                          petName,
-                          style: TextStyle(
-                            fontSize: 22 * s,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: PetsTheme.fontComfortaa,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16 * s),
-                child: Column(
-                  children: [
-                    _statusRow(s),
-                    SizedBox(height: 18 * s),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Histórico',
-                        style: TextStyle(
-                          fontSize: 20 * s,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: PetsTheme.fontComfortaa,
-                          color: VetColors.brown,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 12 * s),
-                    for (final item in historico) ...[
-                      _consultaCard(item, s),
-                      SizedBox(height: 12 * s),
-                    ],
-                  ],
-                ),
+              child: _MiniStatus(
+                icon: emDia ? Icons.check_circle : Icons.warning_amber,
+                title: 'Vacinação',
+                value: emDia ? 'Em dia' : 'Atenção',
+                color: emDia ? VetTones.success : VetTones.warning,
               ),
             ),
-            VetBottomNav(
-              selectedIndex: 2,
-              onSelected: (i) {
-                if (i == 1) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const _PerfilPlaceholder(),
-                    ),
-                  );
-                } else if (i == 3) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          VacinacaoPage(petName: petName, petImage: safeImage),
-                    ),
-                  );
-                } else if (i == 4) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          DespesasPage(petName: petName, petImage: safeImage),
-                    ),
-                  );
-                }
-              },
+            SizedBox(width: 12 * s),
+            Expanded(
+              child: _MiniStatus(
+                icon: Icons.monitor_weight,
+                title: 'Peso',
+                value: fmtPeso(perfil.pesoKg),
+                color: VetTones.warning,
+              ),
+            ),
+            SizedBox(width: 12 * s),
+            Expanded(
+              child: _MiniStatus(
+                icon: Icons.medical_services,
+                title: 'Vermif.',
+                value: vermif ?? '—',
+                color: VetTones.info,
+              ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _statusRow(double s) {
-    return Row(
-      children: [
-        Expanded(
-          child: _miniStatus(
-            icon: Icons.check_circle,
-            title: 'Vacinação',
-            value: 'Em dia',
-            color: Colors.green,
-            s: s,
-          ),
-        ),
-        SizedBox(width: 12 * s),
-        Expanded(
-          child: _miniStatus(
-            icon: Icons.monitor_weight,
-            title: 'Peso',
-            value: '12,5 kg',
-            color: Colors.orange,
-            s: s,
-          ),
-        ),
-        SizedBox(width: 12 * s),
-        Expanded(
-          child: _miniStatus(
-            icon: Icons.medical_services,
-            title: 'Vermif',
-            value: 'OK',
-            color: Colors.blue,
-            s: s,
-          ),
-        ),
+        const VetSectionTitle('Histórico'),
+        for (final c in historico) _ConsultaCard(c),
       ],
     );
   }
+}
 
-  Widget _miniStatus({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-    required double s,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(12 * s),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18 * s),
-      ),
+class _MiniStatus extends StatelessWidget {
+  const _MiniStatus({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final double s = PetsTheme.scaleOf(context);
+    return VetCard(
+      padding: EdgeInsets.symmetric(vertical: 12 * s, horizontal: 6 * s),
       child: Column(
         children: [
           Icon(icon, color: color, size: 24 * s),
@@ -239,81 +115,15 @@ class SaudePage extends StatelessWidget {
             title,
             style: TextStyle(fontSize: 11 * s, color: VetColors.brown),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12 * s,
-              fontWeight: FontWeight.w700,
-              color: VetColors.brown,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _consultaCard(Map<String, String> item, double s) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(14 * s),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20 * s),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                item['data'] ?? '',
-                style: TextStyle(
-                  fontSize: 13 * s,
-                  fontWeight: FontWeight.w700,
-                  color: VetColors.brown,
-                ),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12 * s,
+                fontWeight: FontWeight.w700,
+                color: VetColors.brown,
               ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDBF6E5),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  item['status'] ?? '',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.green,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8 * s),
-          Text(
-            item['tipo'] ?? '',
-            style: TextStyle(
-              fontSize: 16 * s,
-              fontWeight: FontWeight.w700,
-              color: VetColors.brown,
-            ),
-          ),
-          SizedBox(height: 4 * s),
-          Text(
-            'Veterinário: ${item['veterinario']}',
-            style: TextStyle(fontSize: 12 * s, color: VetColors.brown),
-          ),
-          SizedBox(height: 8 * s),
-          Text(
-            item['descricao'] ?? '',
-            style: TextStyle(
-              fontSize: 12 * s,
-              color: VetColors.brown.withOpacity(0.8),
             ),
           ),
         ],
@@ -322,14 +132,55 @@ class SaudePage extends StatelessWidget {
   }
 }
 
-class _PerfilPlaceholder extends StatelessWidget {
-  const _PerfilPlaceholder();
+class _ConsultaCard extends StatelessWidget {
+  const _ConsultaCard(this.c);
+  final Consulta c;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Perfil')),
-      body: const Center(child: Text('Perfil do usuário')),
+    final double s = PetsTheme.scaleOf(context);
+    return VetCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                fmtData(c.data),
+                style: TextStyle(
+                  fontSize: 13 * s,
+                  fontWeight: FontWeight.w700,
+                  color: VetColors.brown,
+                ),
+              ),
+              const Spacer(),
+              const StatusChip('Concluído', VetTones.success),
+            ],
+          ),
+          SizedBox(height: 8 * s),
+          Text(
+            c.tipo,
+            style: TextStyle(
+              fontSize: 16 * s,
+              fontWeight: FontWeight.w700,
+              color: VetColors.brown,
+            ),
+          ),
+          SizedBox(height: 4 * s),
+          Text(
+            'Veterinário: ${c.veterinario}',
+            style: TextStyle(fontSize: 12 * s, color: VetColors.brown),
+          ),
+          SizedBox(height: 8 * s),
+          Text(
+            c.descricao,
+            style: TextStyle(
+              fontSize: 12 * s,
+              color: VetColors.brown.withValues(alpha: 0.8),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

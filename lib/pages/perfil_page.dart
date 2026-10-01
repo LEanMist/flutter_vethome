@@ -6,12 +6,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../core/utils/formatters.dart';
+import '../core/utils/vet_nav.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet_bottom_nav.dart';
 
 class PerfilPage extends StatefulWidget {
-  const PerfilPage({Key? key}) : super(key: key);
+  const PerfilPage({super.key});
 
   @override
   State<PerfilPage> createState() => _PerfilPageState();
@@ -25,12 +27,7 @@ class _PerfilPageState extends State<PerfilPage> {
 
   final ImagePicker _picker = ImagePicker();
 
-  String get _nascimentoTexto {
-    String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(_nascimento.day)} / ${two(_nascimento.month)} / ${_nascimento.year}';
-  }
-
-  // ── Ações ─────────────────────────────────────────────────────────────────
+  String get _nascimentoTexto => fmtData(_nascimento).replaceAll('/', ' / ');
 
   Future<void> _mudarFoto() async {
     final ImageSource? source = await showModalBottomSheet<ImageSource>(
@@ -68,37 +65,15 @@ class _PerfilPageState extends State<PerfilPage> {
         setState(() => _foto = File(picked.path));
       }
     } catch (_) {
-      _aviso('Não foi possível abrir a imagem.');
+      if (mounted) vetSoon(context, 'Não foi possível abrir a imagem.');
     }
   }
 
   Future<void> _mudarNome() async {
-    final controller = TextEditingController(text: _nome);
     final String? novo = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: VetColors.pink,
-        title: const Text('Mudar nome de perfil'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 20,
-          decoration: const InputDecoration(hintText: 'Novo nome'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
+      builder: (_) => _NomeDialog(inicial: _nome),
     );
-    controller.dispose();
-
     if (novo != null && novo.isNotEmpty && mounted) {
       setState(() => _nome = novo);
     }
@@ -114,14 +89,6 @@ class _PerfilPageState extends State<PerfilPage> {
     if (data != null && mounted) setState(() => _nascimento = data);
   }
 
-  void _aviso(String msg) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg)));
-  }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
@@ -135,8 +102,6 @@ class _PerfilPageState extends State<PerfilPage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // O Stack tem a altura total (header + avatar), então o
-                  // avatar fica DENTRO da área e recebe toques normalmente.
                   SizedBox(
                     width: double.infinity,
                     height: top + 52 * s + 230 * s,
@@ -164,22 +129,22 @@ class _PerfilPageState extends State<PerfilPage> {
               ),
             ),
           ),
-          VetBottomNav(
-            selectedIndex: 1,
-            onSelected: (i) {
-              if (i == 0) {
-                Navigator.of(context).pop();
-              } else if (i != 1) {
-                _aviso('Em breve');
-              }
-            },
+          SafeArea(
+            top: false,
+            child: VetBottomNav(
+              selectedIndex: 1,
+              onSelected: (i) => vetNavigate(
+                context,
+                i,
+                selected: 1,
+                isTabRoot: true,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
-
-  // ── Header ────────────────────────────────────────────────────────────────
 
   Widget _buildHeader(double s, double top) {
     return Container(
@@ -188,7 +153,7 @@ class _PerfilPageState extends State<PerfilPage> {
       alignment: Alignment.topCenter,
       padding: EdgeInsets.only(top: top + 16 * s),
       decoration: BoxDecoration(
-        color: VetColors.roseDark.withOpacity(0.85),
+        color: VetColors.roseDark.withValues(alpha: 0.85),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(30 * s)),
       ),
       child: Text(
@@ -203,14 +168,12 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 
-  // ── Aba com nome + avatar ─────────────────────────────────────────────────
-
   Widget _buildAvatarTab(double s) {
     return Container(
       width: 200 * s,
       height: 230 * s,
       decoration: BoxDecoration(
-        color: VetColors.pink.withOpacity(0.9),
+        color: VetColors.pink.withValues(alpha: 0.9),
         border: Border.all(color: VetColors.roseDark, width: 3 * s),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(24 * s),
@@ -265,7 +228,7 @@ class _PerfilPageState extends State<PerfilPage> {
                       ],
                     ),
                     child: _foto != null
-                        ? Image.file(_foto!, fit: BoxFit.cover)
+                        ? Image.file(_foto!, fit: BoxFit.cover, cacheWidth: 400)
                         : Icon(
                             Icons.person,
                             size: 70 * s,
@@ -280,8 +243,6 @@ class _PerfilPageState extends State<PerfilPage> {
       ),
     );
   }
-
-  // ── Data de nascimento ────────────────────────────────────────────────────
 
   Widget _buildBirthday(double s) {
     return Row(
@@ -301,8 +262,6 @@ class _PerfilPageState extends State<PerfilPage> {
       ],
     );
   }
-
-  // ── Lista de opções ───────────────────────────────────────────────────────
 
   Widget _buildOptions(double s) {
     final items = <MapEntry<String, VoidCallback>>[
@@ -346,6 +305,52 @@ class _PerfilPageState extends State<PerfilPage> {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Diálogo próprio: o controller nasce e morre junto com o widget,
+/// então `dispose()` é seguro (sem crash na animação de fechar).
+class _NomeDialog extends StatefulWidget {
+  const _NomeDialog({required this.inicial});
+  final String inicial;
+
+  @override
+  State<_NomeDialog> createState() => _NomeDialogState();
+}
+
+class _NomeDialogState extends State<_NomeDialog> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.inicial);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: VetColors.pink,
+      title: const Text('Mudar nome de perfil'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLength: 20,
+        decoration: const InputDecoration(hintText: 'Novo nome'),
+        onSubmitted: (v) => Navigator.pop(context, v.trim()),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          child: const Text('Salvar'),
+        ),
+      ],
     );
   }
 }

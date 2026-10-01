@@ -1,225 +1,157 @@
 import 'package:flutter/material.dart';
 
+import '../core/utils/formatters.dart';
+import '../core/utils/vet_nav.dart';
+import '../data/vet_repository.dart';
+import '../models/pet_model.dart';
+import '../models/vet_models.dart';
 import '../theme/vet_colors.dart';
+import '../widgets/pet_avatar.dart';
 import '../widgets/pets/pets_theme.dart';
-import '../widgets/vet_bottom_nav.dart';
-import 'despesas_page.dart';
+import '../widgets/vet_card.dart';
+import '../widgets/vet_page_scaffold.dart';
 import 'saude_page.dart';
 import 'vacinacao_page.dart';
 
 class DetalhesPetPage extends StatelessWidget {
-  final String petName;
-  final String petImage;
+  const DetalhesPetPage({required this.pet, super.key});
 
-  const DetalhesPetPage({
-    required this.petName,
-    required this.petImage,
-    super.key,
-  });
+  final PetModel pet;
+
+  void _open(BuildContext context, Widget page) =>
+      Navigator.push(context, MaterialPageRoute(builder: (_) => page));
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final String safeImage = petImage.isNotEmpty
-        ? petImage
-        : 'assets/imagens/VetHome_logo_1.jpg';
+    final PetProfile perfil = VetRepository.perfil(pet.name);
+    final consultas = VetRepository.consultas(pet.name);
+    final vacinas = VetRepository.vacinas(pet.name);
+    final proximo = proximoAgendamento(VetRepository.agendamentos(pet.name));
 
-    return Scaffold(
-      backgroundColor: VetColors.pink,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.fromLTRB(18 * s, 18 * s, 18 * s, 22 * s),
-              decoration: BoxDecoration(
-                color: VetColors.rose,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(28 * s),
-                ),
-              ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 42 * s,
-                      height: 42 * s,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.arrow_back, color: Colors.white),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    'Detalhes',
-                    style: TextStyle(
-                      fontSize: 26 * s,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: PetsTheme.fontComfortaa,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const Spacer(),
-                  SizedBox(width: 42 * s),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16 * s),
+    return VetPageScaffold(
+      title: 'Detalhes',
+      pet: pet,
+      selectedIndex: 0,
+      children: [
+        VetCard(
+          padding: EdgeInsets.all(18 * s),
+          child: Row(
+            children: [
+              PetAvatar(image: pet.imagePath, size: 76, radius: 20),
+              SizedBox(width: 16 * s),
+              Expanded(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(18 * s),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(26 * s),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: VetColors.shadowDark,
-                            offset: Offset(0, 4),
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(20 * s),
-                            child: Image.asset(
-                              safeImage,
-                              width: 76 * s,
-                              height: 76 * s,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          SizedBox(width: 16 * s),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  petName,
-                                  style: TextStyle(
-                                    fontSize: 22 * s,
-                                    fontWeight: FontWeight.w700,
-                                    fontFamily: PetsTheme.fontComfortaa,
-                                    color: VetColors.brown,
-                                  ),
-                                ),
-                                SizedBox(height: 4 * s),
-                                Text(
-                                  'Cachorro • 4 anos • Castrado',
-                                  style: TextStyle(
-                                    fontSize: 13 * s,
-                                    color: VetColors.brown.withOpacity(0.8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                    Text(
+                      pet.name,
+                      style: TextStyle(
+                        fontSize: 22 * s,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: PetsTheme.fontComfortaa,
+                        color: VetColors.brown,
                       ),
                     ),
-                    SizedBox(height: 18 * s),
-                    _infoCard(
-                      icon: Icons.favorite,
-                      title: 'Saúde',
-                      value: 'Ótima condição',
-                    ),
-                    SizedBox(height: 12 * s),
-                    _infoCard(
-                      icon: Icons.vaccines,
-                      title: 'Vacinação',
-                      value: 'Em dia',
-                    ),
-                    SizedBox(height: 12 * s),
-                    _infoCard(
-                      icon: Icons.calendar_month,
-                      title: 'Próximo agendamento',
-                      value: '22/10 às 14:30',
-                    ),
-                    SizedBox(height: 12 * s),
-                    _infoCard(
-                      icon: Icons.paid,
-                      title: 'Despesas do mês',
-                      value: 'R\$ 280,00',
+                    SizedBox(height: 4 * s),
+                    Text(
+                      '${perfil.resumo} • ${fmtPeso(perfil.pesoKg)}',
+                      style: TextStyle(
+                        fontSize: 13 * s,
+                        color: VetColors.brown.withValues(alpha: 0.8),
+                      ),
                     ),
                   ],
                 ),
               ),
+            ],
+          ),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => vetSoon(context),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: VetColors.brown,
+                  side: const BorderSide(color: VetColors.roseDark),
+                  shape: const StadiumBorder(),
+                  padding: EdgeInsets.symmetric(vertical: 14 * s),
+                ),
+                child: const Text('Editar'),
+              ),
             ),
-            VetBottomNav(
-              selectedIndex: 0,
-              onSelected: (i) {
-                if (i == 1) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const _PerfilPlaceholder(),
-                    ),
-                  );
-                } else if (i == 2) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          SaudePage(petName: petName, petImage: safeImage),
-                    ),
-                  );
-                } else if (i == 3) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          VacinacaoPage(petName: petName, petImage: safeImage),
-                    ),
-                  );
-                } else if (i == 4) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          DespesasPage(petName: petName, petImage: safeImage),
-                    ),
-                  );
-                }
-              },
+            SizedBox(width: 12 * s),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => vetNavigate(context, 3, pet: pet),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: VetColors.brown,
+                  foregroundColor: Colors.white,
+                  shape: const StadiumBorder(),
+                  padding: EdgeInsets.symmetric(vertical: 14 * s),
+                ),
+                child: const Text('Nova Consulta'),
+              ),
             ),
           ],
         ),
-      ),
+        _Atalho(
+          icon: Icons.favorite,
+          title: 'Saúde',
+          value: 'Última consulta: ${fmtData(consultas.first.data)}',
+          onTap: () => _open(context, SaudePage(pet: pet)),
+        ),
+        _Atalho(
+          icon: Icons.vaccines,
+          title: 'Vacinação',
+          value: vacinasEmDia(vacinas) ? 'Em dia' : resumoVacinas(vacinas),
+          onTap: () => _open(context, VacinacaoPage(pet: pet)),
+        ),
+        _Atalho(
+          icon: Icons.calendar_month,
+          title: 'Próximo agendamento',
+          value: proximo == null
+              ? 'Nenhum agendamento'
+              : '${fmtDiaMes(proximo.data)} às ${fmtHora(proximo.data)}',
+          onTap: () => vetNavigate(context, 3, pet: pet),
+        ),
+      ],
     );
   }
+}
 
-  Widget _infoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDECEC),
-        borderRadius: BorderRadius.circular(20),
-      ),
+class _Atalho extends StatelessWidget {
+  const _Atalho({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final double s = PetsTheme.scaleOf(context);
+    return VetCard(
+      onTap: onTap,
+      padding: EdgeInsets.all(16 * s),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 42 * s,
+            height: 42 * s,
             decoration: BoxDecoration(
               color: VetColors.rose,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12 * s),
             ),
-            child: Icon(icon, color: Colors.white),
+            child: Icon(icon, color: Colors.white, size: 22 * s),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12 * s),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +159,7 @@ class DetalhesPetPage extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 14 * s,
                     fontWeight: FontWeight.w700,
                     color: VetColors.brown,
                   ),
@@ -235,27 +167,16 @@ class DetalhesPetPage extends StatelessWidget {
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 14,
-                    color: VetColors.brown.withOpacity(0.8),
+                    fontSize: 13 * s,
+                    color: VetColors.brown.withValues(alpha: 0.8),
                   ),
                 ),
               ],
             ),
           ),
+          Icon(Icons.chevron_right, color: VetColors.brown, size: 24 * s),
         ],
       ),
-    );
-  }
-}
-
-class _PerfilPlaceholder extends StatelessWidget {
-  const _PerfilPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Perfil')),
-      body: const Center(child: Text('Perfil do usuário')),
     );
   }
 }

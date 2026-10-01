@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_vethome/pages/Informacoes_page.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_vethome/pages/menuPet_page.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
 class LoginPage extends StatefulWidget {
@@ -35,17 +33,7 @@ class _LoginPageState extends State<LoginPage> {
   // }
 
   void entrar() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const MenuPetPage()),
-    );
-  }
-
-  void abrirInformacoesCadastro() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const InformacoesCadastroPage()),
-    );
+    Navigator.pushReplacementNamed(context, '/pets');
   }
 
   @override
@@ -530,37 +518,19 @@ class _LoginPageState extends State<LoginPage> {
                           ],
                         ),
 
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Não tem uma conta? ',
-                              style: GoogleFonts.montserratAlternates(
-                                color: const Color(0xFF68442E),
-                                fontSize: 10,
-                              ),
+                        const SizedBox(height: 14),
+                        TextButton(
+                          onPressed: () => Navigator.pushNamed(context, '/cadastro'),
+                          child: Text(
+                            'Ainda não possui uma conta? Cadastre-se',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.montserratAlternates(
+                              color: const Color(0xFF68442E),
+                              fontSize: 11,
                             ),
-
-                            TextButton(
-                              onPressed: abrirInformacoesCadastro,
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                'Cadastre-se',
-                                style: GoogleFonts.montserratAlternates(
-                                  color: const Color(0xFF68442E),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
+
                       ],
                     ),
                   ),
