@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
+import 'Informacoes_page.dart';
+import 'perfil_page.dart';
+import 'pets_page.dart';
 
 class MenuPetPage extends StatefulWidget {
   const MenuPetPage({super.key});
@@ -15,15 +17,14 @@ class _MenuPetPage extends State<MenuPetPage> {
   bool modoEscuro = false;
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 247, 245, 245),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final bool compacto = 
-            constraints.maxWidth < 500 ||
-            constraints.maxHeight < 700;
+            final bool compacto =
+                constraints.maxWidth < 500 || constraints.maxHeight < 700;
             final tamanhoLogo = compacto ? 120.0 : 180.0;
 
             return Column(
@@ -35,24 +36,24 @@ class _MenuPetPage extends State<MenuPetPage> {
                       Positioned.fill(
                         child: Padding(
                           padding: EdgeInsets.only(
-                            top: compacto ? 10: 65,
+                            top: compacto ? 10 : 65,
                             bottom: 10,
                             left: 15,
                             right: 15,
                           ),
                           child: Image.asset(
-                            'assets/imagens/foto.png',
+                            'assets/imagens/VetHome_logo_1.jpg',
                             fit: BoxFit.contain,
                           ),
                         ),
                       ),
-                      
+
                       Positioned(
                         top: 5,
                         left: 5,
                         child: _botaoEscuro(
-                          icone: modoEscuro 
-                              ? Icons.wb_sunny_outlined 
+                          icone: modoEscuro
+                              ? Icons.wb_sunny_outlined
                               : Icons.nightlight_outlined,
                           texto: '',
                           onPressed: () {
@@ -78,19 +79,68 @@ class _MenuPetPage extends State<MenuPetPage> {
                     ),
                     child: Column(
                       children: [
-                        const SizedBox(height: 30,),
+                        const SizedBox(height: 30),
                         _logo(tamanhoLogo),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Menu',
+                          style: GoogleFonts.comfortaa(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF68442E),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _menuButton(
+                          label: 'Pets',
+                          icon: Icons.pets,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PetsPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _menuButton(
+                          label: 'Perfil',
+                          icon: Icons.person,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PerfilPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _menuButton(
+                          label: 'Informações',
+                          icon: Icons.info_outline,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const InformacoesPage(),
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
-                  )
-                )
+                  ),
+                ),
               ],
             );
-          }
+          },
         ),
       ),
     );
   }
+
   Widget _logo(double tamanho) {
     return Container(
       width: tamanho,
@@ -130,6 +180,36 @@ class _MenuPetPage extends State<MenuPetPage> {
       ),
     );
   }
+
+  Widget _menuButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: 260,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFC08081),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+        icon: Icon(icon, size: 22),
+        label: Text(
+          label,
+          style: GoogleFonts.montserratAlternates(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _botaoEscuro({
     required IconData icone,
     required String texto,
@@ -141,11 +221,7 @@ class _MenuPetPage extends State<MenuPetPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 4,
-            offset: Offset(1, 2),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(1, 2)),
         ],
       ),
       child: TextButton(
@@ -157,11 +233,7 @@ class _MenuPetPage extends State<MenuPetPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icone,
-              size: 20,
-              color: const Color(0xFF68442E),
-            ),
+            Icon(icone, size: 20, color: const Color(0xFF68442E)),
 
             if (texto.isNotEmpty) ...[
               const SizedBox(width: 6),

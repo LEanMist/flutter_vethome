@@ -1,6 +1,5 @@
 // lib/pages/pets_page.dart
 // Tela de Pets do VetHome, com a paleta D9D9D9 / F9D2D3 / C08081 / 68442E.
-
 import 'package:flutter/material.dart';
 
 import '../models/pet_model.dart';
@@ -8,7 +7,11 @@ import '../theme/vet_colors.dart';
 import '../widgets/pets/pet_card_widget.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet_bottom_nav.dart';
+import 'agendamentos_page.dart';
+import 'detalhes_pet_page.dart';
 import 'perfil_page.dart';
+import 'saude_page.dart';
+import 'vacinacao_page.dart';
 
 class PetsPage extends StatelessWidget {
   const PetsPage({Key? key}) : super(key: key);
@@ -17,7 +20,6 @@ class PetsPage extends StatelessWidget {
     PetModel(
       name: 'Fernando',
       imagePath: PetsTheme.imgCachorroegatoPng,
-      // TODO: trocar este texto de exemplo pela descrição real do pet.
       description:
           'Que tal experimentar um clássico feito na sua própria casa? Veja como preparar um brownie simples e rápido.',
     ),
@@ -52,8 +54,39 @@ class PetsPage extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (_) => const PerfilPage()),
                 );
-              } else if (i != 0) {
-                _soon(context);
+              } else if (i == 2) {
+                final pet = _pets.first;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        SaudePage(petName: pet.name, petImage: pet.imagePath),
+                  ),
+                );
+              } else if (i == 3) {
+                final pet = _pets.first;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VacinacaoPage(
+                      petName: pet.name,
+                      petImage: pet.imagePath,
+                    ),
+                  ),
+                );
+              } else if (i == 4) {
+                final pet = _pets.first;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AgendamentosPage(
+                      petName: pet.name,
+                      petImage: pet.imagePath,
+                    ),
+                  ),
+                );
+              } else if (i == 0) {
+                return;
               }
             },
           ),
@@ -61,8 +94,6 @@ class PetsPage extends StatelessWidget {
       ),
     );
   }
-
-  // ── Header ────────────────────────────────────────────────────────────────
 
   Widget _buildHeader(double s, double topInset) {
     return Container(
@@ -103,7 +134,6 @@ class PetsPage extends StatelessWidget {
             ],
           ),
           SizedBox(height: 4 * s),
-          // Aba central "° ω °"
           Container(
             width: 220 * s,
             padding: EdgeInsets.symmetric(vertical: 8 * s),
@@ -129,8 +159,6 @@ class PetsPage extends StatelessWidget {
       ),
     );
   }
-
-  // ── Lista de pets + botão "+" ─────────────────────────────────────────────
 
   Widget _buildPetListSection(BuildContext context, double s) {
     return Container(
@@ -164,20 +192,25 @@ class PetsPage extends StatelessWidget {
     );
   }
 
-  // ── Callbacks ─────────────────────────────────────────────────────────────
-
   void _soon(BuildContext context) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(const SnackBar(content: Text('Em breve')));
   }
 
-  void _onPetCardTapped(BuildContext context, PetModel pet) => _soon(context);
+  void _onPetCardTapped(BuildContext context, PetModel pet) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            DetalhesPetPage(petName: pet.name, petImage: pet.imagePath),
+      ),
+    );
+  }
 
   void _onAddPetTapped(BuildContext context) => _soon(context);
 }
 
-/// Botão com sombra neumórfica (escura embaixo/direita, clara em cima/esquerda).
 class _NeuButton extends StatelessWidget {
   const _NeuButton({
     required this.width,

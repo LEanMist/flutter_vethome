@@ -1,6 +1,5 @@
 // lib/pages/perfil_page.dart
 // Requer: flutter pub add image_picker
-
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -61,8 +60,10 @@ class _PerfilPageState extends State<PerfilPage> {
     if (source == null) return;
 
     try {
-      final XFile? picked =
-          await _picker.pickImage(source: source, maxWidth: 800);
+      final XFile? picked = await _picker.pickImage(
+        source: source,
+        maxWidth: 800,
+      );
       if (picked != null && mounted) {
         setState(() => _foto = File(picked.path));
       }
@@ -333,8 +334,11 @@ class _PerfilPageState extends State<PerfilPage> {
                         ),
                       ),
                     ),
-                    Icon(Icons.chevron_right,
-                        size: 26 * s, color: VetColors.brown),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 26 * s,
+                      color: VetColors.brown,
+                    ),
                   ],
                 ),
               ),
@@ -362,8 +366,10 @@ class _DashedCirclePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final double r = size.width / 2 - strokeWidth;
-    final Rect rect =
-        Rect.fromCircle(center: size.center(Offset.zero), radius: r);
+    final Rect rect = Rect.fromCircle(
+      center: size.center(Offset.zero),
+      radius: r,
+    );
     const int dashes = 36;
     const double sweep = 2 * math.pi / dashes;
     for (int i = 0; i < dashes; i++) {
