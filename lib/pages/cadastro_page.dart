@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_vethome/pages/carregamento.dart';
-import 'package:flutter_vethome/pages/escolha_pet_page.dart';
+import 'menu_page.dart';
 import 'package:flutter_vethome/widgets/campo_cadastro.dart';
 import 'package:flutter_vethome/widgets/botao_cadastrar.dart';
 
@@ -18,7 +18,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
       context,
       MaterialPageRoute(
         builder: (context) => Carregamento(
-          destinoBuilder: (context) => const EscolhaPetPage(),
+          destinoBuilder: (context) => const MenuPage(),
         ),
       ),
     );

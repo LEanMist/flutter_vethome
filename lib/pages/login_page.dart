@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_vethome/pages/cadastro_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'menu_page.dart';
+import 'package:flutter_vethome/widgets/circulo_clicavel.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,13 +26,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void entrar() {
-    String email = _emailController.text.trim();
-    String senha = _senhaController.text;
-
-    if (email.isEmpty || senha.isEmpty) {
-      mostrarMensagem('Preencha o e-mail e a senha.');
-      return;
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const MenuPage()),
+    );
   }
 
   void abrirInformacoesCadastro() {
@@ -501,21 +500,21 @@ class _LoginPageState extends State<LoginPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _botaoRedeSocial(
+                            CirculoClicavel(
                               imagem: 'assets/imagens/google_logo.png',
                               onPressed: () {},
                             ),
 
                             const SizedBox(width: 20),
 
-                            _botaoRedeSocial(
+                            CirculoClicavel(
                               imagem: 'assets/imagens/facebook_logo.png',
                               onPressed: () {},
                             ),
 
                             const SizedBox(width: 20),
 
-                            _botaoRedeSocial(
+                            CirculoClicavel(
                               imagem: 'assets/imagens/instagram_logo.png',
                               onPressed: () {},
                             ),
@@ -559,39 +558,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             );
           },
-        ),
-      ),
-    );
-  }
-
-  Widget _botaoRedeSocial({
-    required String imagem,
-    required VoidCallback onPressed,
-  }) {
-    return SizedBox(
-      width: 48,
-      height: 48,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFFAD3D5),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Color.fromARGB(100, 105, 66, 67),
-              blurRadius: 1,
-              offset: Offset(2, 3),
-            ),
-          ],
-        ),
-        child: OutlinedButton(
-          onPressed: onPressed,
-          style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            side: BorderSide.none,
-            shape: const CircleBorder(),
-            padding: const EdgeInsets.all(10),
-          ),
-          child: Image.asset(imagem, fit: BoxFit.contain, width: 100),
         ),
       ),
     );
