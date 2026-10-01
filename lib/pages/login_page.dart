@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vethome/pages/cadastro_page.dart';
+import 'package:flutter_vethome/pages/teste_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'menu_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,10 +29,12 @@ class _LoginPageState extends State<LoginPage> {
     String email = _emailController.text.trim();
     String senha = _senhaController.text;
 
-    if (email.isEmpty || senha.isEmpty) {
-      mostrarMensagem('Preencha o e-mail e a senha.');
-      return;
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MenuPage()),
+    );
+
+
   }
 
   void abrirInformacoesCadastro() {
@@ -408,54 +412,81 @@ class _LoginPageState extends State<LoginPage> {
                         SizedBox(height: compacto ? 40 : 50),
 
                         Center(
-                          child: Container(
+                          child: SizedBox(
                             width: larguraBotao,
-                            height: alturaBotao,
-                            decoration: const inset_shadow.BoxDecoration(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(80),
-                              ),
-                              boxShadow: [
-                                inset_shadow.BoxShadow(
-                                  color: Color.fromARGB(150, 105, 66, 67),
-                                  blurRadius: 2,
-                                  offset: Offset(1, 4),
-                                ),
-                              ],
-                            ),
-                            child: Stack(
-                              fit: StackFit.expand,
+                            child: Row(
                               children: [
-                                TextButton(
-                                  onPressed: entrar,
-                                  style: TextButton.styleFrom(
-                                    backgroundColor: const Color(0xFFC08081),
-                                    foregroundColor: const Color(0xFF68442E),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(80),
+                                Expanded(
+                                  child: Container(
+                                    height: alturaBotao,
+                                    decoration:
+                                        const inset_shadow.BoxDecoration(
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(80),
+                                      ),
+                                      boxShadow: [
+                                        inset_shadow.BoxShadow(
+                                          color: Color.fromARGB(150, 105, 66, 67),
+                                          blurRadius: 2,
+                                          offset: Offset(1, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextButton(
+                                      onPressed: entrar,
+                                      style: TextButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFFC08081),
+                                        foregroundColor:
+                                            const Color(0xFF68442E),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(80),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Entrar',
+                                            style: GoogleFonts
+                                                .montserratAlternates(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              fontSize: fonteBotao,
+                                            ),
+                                          ),
+                                          const Padding(
+                                            padding: EdgeInsets.only(left: 20),
+                                            child: Icon(
+                                              Icons.login,
+                                              color: Colors.white,
+                                              size: 30,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Entrar',
-                                        style: GoogleFonts.montserratAlternates(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          fontSize: fonteBotao,
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: alturaBotao,
+                                  height: alturaBotao,
+                                  child: IconButton.filledTonal(
+                                    tooltip: 'Telas de teste',
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const TestePage(),
                                         ),
-                                      ),
-                                      const Padding(
-                                        padding: EdgeInsets.only(left: 20),
-                                        child: Icon(
-                                          Icons.login,
-                                          color: Colors.white,
-                                          size: 30,
-                                        ),
-                                      ),
-                                    ],
+                                      );
+                                    },
+                                    icon: const Icon(Icons.developer_mode),
                                   ),
                                 ),
                               ],
