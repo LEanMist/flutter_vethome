@@ -130,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
                                             ),
                                             clipBehavior: Clip.antiAlias,
                                             child: Image.asset(
-                                              'assets/imagens/client_logo.png',
+                                              'assets/imagens/figma/vethomepng-2.png',
                                               width: tamanhoLogo,
                                               fit: BoxFit.contain,
                                             ),
@@ -519,7 +519,8 @@ class _LoginPageState extends State<LoginPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _botaoRedeSocial(
-                              asset: 'assets/imagens/social_google.png',
+                              asset:
+                                  'assets/imagens/figma/icons8-google-logo-96-1.png',
                               onPressed: () => mostrarMensagem(
                                 'Login social ainda não está conectado.',
                               ),
@@ -528,7 +529,8 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(width: 20),
 
                             _botaoRedeSocial(
-                              asset: 'assets/imagens/social_facebook.png',
+                              asset:
+                                  'assets/imagens/figma/icons8-facebook-novo-96-1.png',
                               onPressed: () => mostrarMensagem(
                                 'Login social ainda não está conectado.',
                               ),
@@ -537,7 +539,8 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(width: 20),
 
                             _botaoRedeSocial(
-                              asset: 'assets/imagens/social_instagram.png',
+                              asset:
+                                  'assets/imagens/figma/icons8-instagram-96-1.png',
                               onPressed: () => mostrarMensagem(
                                 'Login social ainda não está conectado.',
                               ),

@@ -8,9 +8,10 @@ import '../widgets/vet_page_scaffold.dart';
 import '../widgets/vet_card.dart';
 
 class EditarPetPage extends StatefulWidget {
-  const EditarPetPage({required this.pet, super.key});
+  const EditarPetPage({required this.pet, this.modal = false, super.key});
 
   final PetModel pet;
+  final bool modal;
 
   @override
   State<EditarPetPage> createState() => _EditarPetPageState();
@@ -86,68 +87,147 @@ class _EditarPetPageState extends State<EditarPetPage> {
     Navigator.pop(context, updated);
   }
 
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Excluir pet?'),
+        content: Text('Deseja excluir ${widget.pet.name} da sua lista?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+    VetRepository.removePet(widget.pet);
+    Navigator.pop(context, 'deleted');
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = PetsTheme.scaleOf(context);
+    final form = VetCard(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _field(
+              _name,
+              'Nome do pet',
+              validator: (value) {
+                final name = value?.trim() ?? '';
+                if (name.isEmpty) return 'Preencha este campo';
+                if (VetRepository.petNameExists(
+                  name,
+                  except: widget.pet.name,
+                )) {
+                  return 'Já existe um pet com esse nome';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 12 * scale),
+            _field(_species, 'Espécie', validator: _required),
+            SizedBox(height: 12 * scale),
+            _field(_sex, 'Sexo', validator: _required),
+            SizedBox(height: 12 * scale),
+            _field(
+              _weight,
+              'Peso (kg)',
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              validator: (value) {
+                final number = double.tryParse(
+                  (value ?? '').replaceAll(',', '.'),
+                );
+                return number == null || number <= 0
+                    ? 'Informe um peso válido'
+                    : null;
+              },
+            ),
+            SizedBox(height: 12 * scale),
+            _field(
+              _birth,
+              'Nascimento (DD/MM/AAAA)',
+              validator: (value) => _parseDate(value ?? '') == null
+                  ? 'Informe uma data válida'
+                  : null,
+            ),
+            SizedBox(height: 12 * scale),
+            _field(_breed, 'Raça', validator: _required),
+          ],
+        ),
+      ),
+    );
+
+    if (widget.modal) {
+      return Dialog(
+        backgroundColor: VetColors.pink,
+        insetPadding: const EdgeInsets.all(20),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+          ),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(18 * scale),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Editar pet',
+                  style: TextStyle(
+                    color: VetColors.brown,
+                    fontSize: 22 * scale,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: PetsTheme.fontComfortaa,
+                  ),
+                ),
+                SizedBox(height: 12 * scale),
+                form,
+                SizedBox(height: 12 * scale),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: _delete,
+                      child: const Text('Excluir'),
+                    ),
+                    const Spacer(),
+                    OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancelar'),
+                    ),
+                    SizedBox(width: 8 * scale),
+                    ElevatedButton(
+                      onPressed: _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VetColors.brown,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Salvar'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return VetPageScaffold(
       title: 'Editar pet',
       pet: widget.pet,
       selectedIndex: 0,
       children: [
-        VetCard(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                _field(
-                  _name,
-                  'Nome do pet',
-                  validator: (value) {
-                    final name = value?.trim() ?? '';
-                    if (name.isEmpty) return 'Preencha este campo';
-                    if (VetRepository.petNameExists(
-                      name,
-                      except: widget.pet.name,
-                    )) {
-                      return 'Já existe um pet com esse nome';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 12 * scale),
-                _field(_species, 'Espécie', validator: _required),
-                SizedBox(height: 12 * scale),
-                _field(_sex, 'Sexo', validator: _required),
-                SizedBox(height: 12 * scale),
-                _field(
-                  _weight,
-                  'Peso (kg)',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  validator: (value) {
-                    final number = double.tryParse(
-                      (value ?? '').replaceAll(',', '.'),
-                    );
-                    return number == null || number <= 0
-                        ? 'Informe um peso válido'
-                        : null;
-                  },
-                ),
-                SizedBox(height: 12 * scale),
-                _field(
-                  _birth,
-                  'Nascimento (DD/MM/AAAA)',
-                  validator: (value) => _parseDate(value ?? '') == null
-                      ? 'Informe uma data válida'
-                      : null,
-                ),
-                SizedBox(height: 12 * scale),
-                _field(_breed, 'Raça', validator: _required),
-              ],
-            ),
-          ),
-        ),
+        form,
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(

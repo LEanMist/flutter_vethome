@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/vet_repository.dart';
 import 'models/pet_model.dart';
@@ -51,63 +52,69 @@ class VetHomeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Vet Home',
-      theme: ThemeData(
-        scaffoldBackgroundColor: VH.background,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: VH.secondary,
-          primary: VH.primary,
+    return ValueListenableBuilder<Color>(
+      valueListenable: VH.themeSeed,
+      builder: (context, themeSeed, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Vet Home',
+        locale: const Locale('pt', 'BR'),
+        supportedLocales: const [Locale('pt', 'BR')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        theme: ThemeData(
+          scaffoldBackgroundColor: VH.background,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: themeSeed,
+            primary: themeSeed,
+          ),
+          textTheme: GoogleFonts.montserratAlternatesTextTheme().apply(
+            bodyColor: VH.foreground,
+            displayColor: VH.foreground,
+          ),
+          useMaterial3: true,
         ),
-        textTheme: GoogleFonts.comfortaaTextTheme().apply(
-          bodyColor: VH.foreground,
-          displayColor: VH.foreground,
-        ),
-        useMaterial3: true,
-      ),
-      initialRoute: '/',
-      routes: {
-        '/': (_) => const SplashScreen(),
-        '/login': (_) => const LoginPage(),
-        '/cadastro': (_) => const CadastroScreen(),
-        '/endereco': (context) =>
-            EnderecoScreen(initialData: _formDataFromRoute(context)),
-        '/cadastroPet': (context) =>
-            CadastroPetScreen(initialData: _formDataFromRoute(context)),
-        '/sucesso': (_) => const SucessoScreen(),
-        '/pets': (_) => const PetsPage(),
-        '/pet': (context) => DetalhesPetPage(pet: _petFromRoute(context)),
-        '/editPet': (context) => EditarPetPage(pet: _petFromRoute(context)),
-        '/escolhaPet': (_) => const EscolhaPetScreen(),
-        '/servicos': (_) => const ServicosScreen(),
-        '/convenio': (_) => const ConvenioScreen(),
-        '/perfil': (_) => const PerfilPage(),
-        '/chat': (_) => const ChatScreen(),
-        '/sobre': (_) => const SobreScreen(),
-        '/agenda': (_) => const AgendaScreen(),
-        '/detalhes-pet': (context) =>
-            DetalhesPetPage(pet: _petFromRoute(context)),
-        '/saude': (context) => SaudePage(pet: _petFromRoute(context)),
-        '/vacinacao': (context) => VacinacaoPage(pet: _petFromRoute(context)),
-        '/agendamentos': (context) =>
-            AgendamentosPage(pet: _petFromRoute(context)),
-        '/nova-consulta': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          final values = args is Map ? args : const <String, dynamic>{};
-          final pet = values['pet'] is PetModel
-              ? values['pet'] as PetModel
-              : VetRepository.pets.first;
-          final service = values['service'];
-          final plan = values['plan'];
-          return NovaConsultaPage(
-            pet: pet,
-            service: service is String ? service : 'Consulta Geral',
-            plan: plan is String ? plan : 'Particular',
-          );
+        initialRoute: '/',
+        routes: {
+          '/': (_) => const SplashScreen(),
+          '/login': (_) => const LoginPage(),
+          '/cadastro': (_) => const CadastroScreen(),
+          '/endereco': (context) =>
+              EnderecoScreen(initialData: _formDataFromRoute(context)),
+          '/cadastroPet': (context) =>
+              CadastroPetScreen(initialData: _formDataFromRoute(context)),
+          '/sucesso': (_) => const SucessoScreen(),
+          '/pets': (_) => const PetsPage(),
+          '/pet': (context) => DetalhesPetPage(pet: _petFromRoute(context)),
+          '/editPet': (context) => EditarPetPage(pet: _petFromRoute(context)),
+          '/escolhaPet': (_) => const EscolhaPetScreen(),
+          '/servicos': (_) => const ServicosScreen(),
+          '/convenio': (_) => const ConvenioScreen(),
+          '/perfil': (_) => const PerfilPage(),
+          '/chat': (_) => const ChatScreen(),
+          '/sobre': (_) => const SobreScreen(),
+          '/agenda': (_) => const AgendaScreen(),
+          '/detalhes-pet': (context) =>
+              DetalhesPetPage(pet: _petFromRoute(context)),
+          '/saude': (context) => SaudePage(pet: _petFromRoute(context)),
+          '/vacinacao': (context) => VacinacaoPage(pet: _petFromRoute(context)),
+          '/agendamentos': (context) =>
+              AgendamentosPage(pet: _petFromRoute(context)),
+          '/nova-consulta': (context) {
+            final args = ModalRoute.of(context)?.settings.arguments;
+            final values = args is Map ? args : const <String, dynamic>{};
+            final pet = values['pet'] is PetModel
+                ? values['pet'] as PetModel
+                : VetRepository.pets.first;
+            final service = values['service'];
+            final plan = values['plan'];
+            return NovaConsultaPage(
+              pet: pet,
+              service: service is String ? service : 'Consulta Geral',
+              plan: plan is String ? plan : 'Particular',
+            );
+          },
+          '/config': (_) => const ConfigScreen(),
         },
-        '/config': (_) => const ConfigScreen(),
-      },
+      ),
     );
   }
 }

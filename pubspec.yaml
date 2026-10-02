@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   google_fonts: ^6.2.1
   flutter_inset_shadow: ^2.0.3
@@ -31,6 +33,7 @@ flutter:
   assets:
     - assets/imagens/
     - assets/imagens/pets/
+    - assets/imagens/figma/
 
   fonts:
     - family: Comfortaa

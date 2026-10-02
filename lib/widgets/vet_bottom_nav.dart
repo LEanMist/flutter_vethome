@@ -5,32 +5,46 @@ import 'pets/pets_theme.dart';
 
 class VetBottomNav extends StatelessWidget {
   const VetBottomNav({
-    Key? key,
+    super.key,
     required this.selectedIndex,
     required this.onSelected,
-  }) : super(key: key);
+  });
 
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
-  static const List<IconData> _icons = [
-    Icons.pets,
-    Icons.person,
-    Icons.phone,
-    Icons.calendar_month,
-    Icons.settings,
+  static const List<String> _icons = [
+    'assets/imagens/figma/pets.png',
+    'assets/imagens/figma/frame-53.png',
+    'assets/imagens/figma/frame-51-2.png',
+    'assets/imagens/figma/frame-50.png',
+    'assets/imagens/figma/frame-49-2.png',
+  ];
+
+  static const List<String> _selectedIcons = [
+    'assets/imagens/figma/pets.png',
+    'assets/imagens/figma/frame-52.png',
+    'assets/imagens/figma/frame-52-5.png',
+    'assets/imagens/figma/frame-52-6.png',
+    'assets/imagens/figma/frame-49.png',
+  ];
+
+  static const List<String> _labels = [
+    'Pets',
+    'Perfil',
+    'Whatsapp',
+    'Agenda',
+    'Configurações',
   ];
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final double bottom = MediaQuery.paddingOf(context).bottom;
-
     return Container(
-      margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, 12 * s + bottom),
+      margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, 12 * s),
       padding: EdgeInsets.symmetric(vertical: 8 * s, horizontal: 8 * s),
       decoration: BoxDecoration(
-        color: VetColors.rose.withOpacity(0.5),
+        color: VetColors.rose.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(24 * s),
         boxShadow: const [
           BoxShadow(
@@ -44,33 +58,39 @@ class VetBottomNav extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           for (int i = 0; i < _icons.length; i++)
-            GestureDetector(
+            InkWell(
               onTap: () => onSelected(i),
-              child: Container(
-                width: 46 * s,
-                height: 46 * s,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: i == selectedIndex ? VetColors.rose : VetColors.pink,
-                  shape: BoxShape.circle,
-                  boxShadow: const [
-                    BoxShadow(
-                      color: VetColors.shadowDark,
-                      offset: Offset(2, 2),
-                      blurRadius: 4,
-                    ),
-                    BoxShadow(
-                      color: VetColors.shadowLight,
-                      offset: Offset(-2, -2),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  _icons[i],
-                  size: 26 * s,
-                  color: i == selectedIndex ? Colors.white : VetColors.brown,
-                ),
+              customBorder: const CircleBorder(),
+              child: Semantics(
+                button: true,
+                label: _labels[i],
+                child: i == 0
+                    ? Container(
+                        width: 50 * s,
+                        height: 50 * s,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: VetColors.pink,
+                          shape: BoxShape.circle,
+                          boxShadow: const [
+                            BoxShadow(
+                              color: VetColors.shadowDark,
+                              offset: Offset(2, 2),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          _icons[i],
+                          width: 36 * s,
+                          height: 36 * s,
+                        ),
+                      )
+                    : Image.asset(
+                        i == selectedIndex ? _selectedIcons[i] : _icons[i],
+                        width: 50 * s,
+                        height: 50 * s,
+                      ),
               ),
             ),
         ],

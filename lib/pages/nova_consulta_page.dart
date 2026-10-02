@@ -27,7 +27,14 @@ class NovaConsultaPage extends StatefulWidget {
 
 class _NovaConsultaPageState extends State<NovaConsultaPage> {
   DateTime _date = DateTime.now().add(const Duration(days: 1));
-  TimeOfDay _time = const TimeOfDay(hour: 10, minute: 0);
+  TimeOfDay _time = const TimeOfDay(hour: 12, minute: 0);
+  final _description = TextEditingController();
+
+  @override
+  void dispose() {
+    _description.dispose();
+    super.dispose();
+  }
 
   Future<void> _chooseDate() async {
     final now = DateTime.now();
@@ -41,7 +48,39 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   }
 
   Future<void> _chooseTime() async {
-    final time = await showTimePicker(context: context, initialTime: _time);
+    const options = [12, 13, 14, 15, 16];
+    final time = await showDialog<TimeOfDay>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VetColors.pink,
+        title: const Text('Escolha o horário'),
+        content: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final hour in options)
+              ChoiceChip(
+                label: Text('${hour.toString().padLeft(2, '0')}:00'),
+                selected: _time.hour == hour && _time.minute == 0,
+                selectedColor: VetColors.roseDark,
+                labelStyle: TextStyle(
+                  color: _time.hour == hour && _time.minute == 0
+                      ? Colors.white
+                      : VetColors.brown,
+                ),
+                onSelected: (_) =>
+                    Navigator.pop(context, TimeOfDay(hour: hour, minute: 0)),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
     if (time != null && mounted) setState(() => _time = time);
   }
 
@@ -67,6 +106,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
         veterinario: 'Dra. Ana Silva',
         local: 'VetHome · ${widget.plan}',
         status: StatusAgendamento.pendente,
+        descricao: _description.text.trim(),
       ),
     );
     Navigator.pushNamedAndRemoveUntil(
@@ -108,6 +148,14 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
                         fontSize: 13 * scale,
                       ),
                     ),
+                    SizedBox(height: 4 * scale),
+                    Text(
+                      'Exame veterinário para acompanhamento da saúde.',
+                      style: TextStyle(
+                        color: VetColors.brown.withValues(alpha: 0.75),
+                        fontSize: 12 * scale,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -132,10 +180,43 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.schedule),
-                title: const Text('Horário'),
+                title: const Text('Horário inicial'),
                 subtitle: Text(_time.format(context)),
                 trailing: const Icon(Icons.edit),
                 onTap: _chooseTime,
+              ),
+              const Divider(),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.schedule_outlined),
+                title: const Text('Horário final'),
+                subtitle: Text(
+                  TimeOfDay(
+                    hour: (_time.hour + 1) % 24,
+                    minute: _time.minute,
+                  ).format(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+        VetCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _description,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Adicionar uma descrição',
+                  alignLabelWithHint: true,
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 10 * scale),
+              Text(
+                'Agendamento para ${VetRepository.clientName}',
+                style: TextStyle(color: VetColors.brown, fontSize: 13 * scale),
               ),
             ],
           ),

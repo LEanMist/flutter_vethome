@@ -9,6 +9,7 @@ import '../widgets/pets/pet_card_widget.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet_bottom_nav.dart';
 import 'detalhes_pet_page.dart';
+import 'teste_page.dart';
 
 class PetsPage extends StatefulWidget {
   const PetsPage({super.key});
@@ -49,10 +50,10 @@ class _PetsPageState extends State<PetsPage> {
   Widget _buildHeader(double s, double topInset) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(12 * s, topInset + 10 * s, 12 * s, 0),
+      padding: EdgeInsets.fromLTRB(12 * s, topInset + 8 * s, 12 * s, 12 * s),
       decoration: BoxDecoration(
         color: VetColors.rose,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30 * s)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28 * s)),
         boxShadow: const [
           BoxShadow(
             color: VetColors.shadowDark,
@@ -65,13 +66,7 @@ class _PetsPageState extends State<PetsPage> {
         children: [
           Row(
             children: [
-              Image.asset(
-                'assets/imagens/client_logo.png',
-                width: 84 * s,
-                height: 92 * s,
-                fit: BoxFit.contain,
-                cacheWidth: 252,
-              ),
+              SizedBox(width: 42 * s),
               const Spacer(),
               Text(
                 'Pets',
@@ -82,29 +77,40 @@ class _PetsPageState extends State<PetsPage> {
                   color: Colors.white,
                 ),
               ),
-              const Spacer(flex: 2),
+              const Spacer(),
+              IconButton(
+                tooltip: 'Telas de teste',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TestePage()),
+                  );
+                },
+                icon: Icon(
+                  Icons.dashboard_outlined,
+                  color: Colors.white,
+                  size: 23 * s,
+                ),
+              ),
             ],
           ),
-          SizedBox(height: 4 * s),
           Container(
-            width: 220 * s,
-            padding: EdgeInsets.symmetric(vertical: 8 * s),
-            alignment: Alignment.center,
+            width: 202 * s,
+            height: 52 * s,
             decoration: BoxDecoration(
-              color: VetColors.roseDark.withValues(alpha: 0.6),
+              color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(28 * s),
-                bottom: Radius.circular(10 * s),
+                top: Radius.circular(18 * s),
+                bottom: Radius.circular(7 * s),
               ),
-            ),
-            child: Text(
-              '°  ω  °',
-              style: TextStyle(
-                fontSize: 30 * s,
-                fontWeight: FontWeight.w700,
-                fontFamily: PetsTheme.fontMontserratAlternates,
-                color: Colors.white,
-              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: VetColors.shadowDark,
+                  offset: Offset(2, 2),
+                  blurRadius: 4,
+                  spreadRadius: -1,
+                ),
+              ],
             ),
           ),
         ],
@@ -126,7 +132,7 @@ class _PetsPageState extends State<PetsPage> {
       child: Column(
         children: [
           for (int i = 0; i < pets.length; i++) ...[
-            if (i > 0) SizedBox(height: 18 * s),
+            if (i > 0) SizedBox(height: 10 * s),
             PetCardWidget(
               pet: pets[i],
               onTap: () async {
@@ -140,63 +146,17 @@ class _PetsPageState extends State<PetsPage> {
               },
             ),
           ],
-          SizedBox(height: 40 * s),
-          _NeuButton(
-            width: 106 * s,
-            height: 46 * s,
-            radius: 23 * s,
-            color: VetColors.pink,
+          SizedBox(height: 18 * s),
+          GestureDetector(
             onTap: () => Navigator.pushNamed(context, '/cadastroPet'),
-            child: Icon(Icons.add, size: 30 * s, color: VetColors.brown),
+            child: Image.asset(
+              'assets/imagens/figma/frame-48.png',
+              width: 110 * s,
+              height: 51 * s,
+              fit: BoxFit.contain,
+            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _NeuButton extends StatelessWidget {
-  const _NeuButton({
-    required this.width,
-    required this.height,
-    required this.radius,
-    required this.color,
-    required this.child,
-    this.onTap,
-  });
-
-  final double width;
-  final double height;
-  final double radius;
-  final Color color;
-  final Widget child;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: width,
-        height: height,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(radius),
-          boxShadow: const [
-            BoxShadow(
-              color: VetColors.shadowDark,
-              offset: Offset(3, 3),
-              blurRadius: 6,
-            ),
-            BoxShadow(
-              color: VetColors.shadowLight,
-              offset: Offset(-2, -2),
-              blurRadius: 5,
-            ),
-          ],
-        ),
-        child: child,
       ),
     );
   }

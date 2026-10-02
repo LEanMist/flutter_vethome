@@ -3,6 +3,7 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
 import 'data/vet_repository.dart';
 import 'models/pet_model.dart';
+import 'pages/teste_page.dart';
 import 'theme.dart';
 import 'widgets/vet_bottom_nav.dart';
 
@@ -43,26 +44,86 @@ class VHField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      initialValue: controller == null ? value : null,
-      obscureText: password,
-      keyboardType: keyboardType,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: VH.foreground),
-        filled: true,
-        fillColor: VH.background.withValues(alpha: 0.55),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 10, bottom: 3),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'MontserratAlternates',
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: VH.foreground,
+            ),
+          ),
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide.none,
+        Container(
+          height: 56,
+          decoration: inset_shadow.BoxDecoration(
+            color: VH.background.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: const [
+              inset_shadow.BoxShadow(
+                color: Color(0x33683F40),
+                offset: Offset(2, 3),
+                blurRadius: 5,
+                inset: true,
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            initialValue: controller == null ? value : null,
+            obscureText: password,
+            keyboardType: keyboardType,
+            validator: validator,
+            decoration: InputDecoration(
+              hintText: controller == null ? null : value,
+              hintStyle: const TextStyle(
+                fontFamily: 'MontserratAlternates',
+                fontSize: 15,
+                color: VH.mutedText,
+              ),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.all(2),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: VH.background,
+                    border: Border.all(color: VH.secondary, width: 3),
+                  ),
+                  child: Icon(icon, color: VH.secondary, size: 23),
+                ),
+              ),
+              filled: true,
+              fillColor: Colors.transparent,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 15,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(999),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(999),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(999),
+                borderSide: const BorderSide(color: VH.primary, width: 1),
+              ),
+            ),
+            style: const TextStyle(
+              fontFamily: 'MontserratAlternates',
+              fontSize: 15,
+              color: VH.foreground,
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -109,84 +170,128 @@ class PillButton extends StatelessWidget {
 }
 
 class VHHeader extends StatelessWidget {
-  const VHHeader(this.title, {super.key, this.sub, this.face});
+  const VHHeader(
+    this.title, {
+    super.key,
+    this.sub,
+    this.showBack = true,
+    this.bottom,
+  });
 
   final String title;
   final String? sub;
-  final String? face;
+  final bool showBack;
+  final Widget? bottom;
 
   @override
   Widget build(BuildContext context) {
+    const double headerHeight = 125;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+      padding: EdgeInsets.zero,
+      height: headerHeight,
       decoration: const BoxDecoration(
         color: VH.secondary,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
         boxShadow: VH.raise,
       ),
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Row(
-              children: [
-                if (Navigator.of(context).canPop())
-                  IconButton(
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.arrow_back, color: VH.onSecondary),
-                  )
-                else
-                  const SizedBox(width: 48),
-                Expanded(
-                  child: Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: VH.onSecondary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 48,
-                  child: face == null
-                      ? null
-                      : Text(
-                          face!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            color: VH.onSecondary,
-                          ),
-                        ),
-                ),
-              ],
+      child: Stack(
+        children: [
+          Positioned(
+            top: 18,
+            left: 50,
+            right: 50,
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: VH.onSecondary,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Comfortaa',
+              ),
             ),
-            if (sub != null) ...[
-              const SizedBox(height: 4),
-              Text(
+          ),
+          if (showBack && Navigator.of(context).canPop())
+            Positioned(
+              top: 8,
+              left: 10,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(Icons.arrow_back, color: VH.onSecondary),
+              ),
+            ),
+          Positioned(
+            top: 8,
+            right: 10,
+            child: IconButton(
+              tooltip: 'Telas de teste',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TestePage()),
+                );
+              },
+              icon: const Icon(Icons.dashboard_outlined, color: VH.onSecondary),
+            ),
+          ),
+          if (sub != null)
+            Positioned(
+              top: 54,
+              left: 0,
+              right: 0,
+              child: Text(
                 sub!,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: VH.onSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
-          ],
-        ),
+            ),
+          Positioned(
+            top: 72,
+            left: 94,
+            right: 94,
+            height: 52,
+            child: Container(
+              decoration: BoxDecoration(
+                color: VH.background.withValues(alpha: 0.16),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                  bottom: Radius.circular(10),
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x22683F40),
+                    offset: Offset(2, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: bottom,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class VHPage extends StatelessWidget {
-  const VHPage({super.key, required this.tab, required this.children});
+  const VHPage({
+    super.key,
+    required this.tab,
+    required this.children,
+    this.footer,
+  });
 
   final String tab;
   final List<Widget> children;
+  final Widget? footer;
 
   static const _tabRoutes = ['/pets', '/perfil', '/chat', '/agenda', '/config'];
 
@@ -206,6 +311,7 @@ class VHPage extends StatelessWidget {
                 ),
               ),
             ),
+            ?footer,
             VetBottomNav(
               selectedIndex: _tabRoutes.indexOf(tab).clamp(0, 4),
               onSelected: (index) {
@@ -261,8 +367,6 @@ Pet _toPet(PetModel model) {
     isDog: !(model.species?.toLowerCase().contains('gato') ?? false),
   );
 }
-
-int petAtual = 0;
 
 class PetRow extends StatelessWidget {
   const PetRow(this.pet, {super.key, required this.onTap});
@@ -342,18 +446,46 @@ class VHMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-      child: Column(
-        children: [
-          for (var i = 0; i < items.length; i++)
-            Card(
-              color: VH.card,
-              child: ListTile(
-                title: Text(items[i]),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => onTap?.call(i),
-              ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: VH.card,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: VH.raise,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Material(
+            color: VH.card,
+            child: Column(
+              children: [
+                for (var i = 0; i < items.length; i++) ...[
+                  if (i > 0)
+                    const Divider(height: 1, indent: 18, endIndent: 18),
+                  ListTile(
+                    dense: true,
+                    visualDensity: const VisualDensity(vertical: -1),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      items[i],
+                      style: const TextStyle(
+                        fontFamily: 'MontserratAlternates',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: VH.foreground,
+                      ),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: VH.foreground,
+                      size: 20,
+                    ),
+                    onTap: () => onTap?.call(i),
+                  ),
+                ],
+              ],
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
@@ -369,21 +501,65 @@ class SidePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+    final asset = switch (label) {
+      'Exames' => 'assets/imagens/figma/coisademedico-1.png',
+      'Atestados' => 'assets/imagens/figma/atestado-1.png',
+      _ => null,
+    };
+    return SizedBox(
+      width: 264,
+      height: 59,
       child: Material(
-        color: VH.card,
-        borderRadius: BorderRadius.circular(28),
-        child: ListTile(
+        color: Colors.transparent,
+        child: InkWell(
           onTap: onTap,
-          leading: Icon(icon, color: VH.foreground),
-          title: Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          borderRadius: const BorderRadius.horizontal(
+            right: Radius.circular(30),
           ),
-          trailing: extra ?? const Icon(Icons.chevron_right),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [VH.secondary, VH.background],
+              ),
+              borderRadius: const BorderRadius.horizontal(
+                right: Radius.circular(30),
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33683F40),
+                  offset: Offset(2, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 14),
+                if (asset != null)
+                  Image.asset(asset, width: 30, height: 30)
+                else
+                  Icon(icon, color: Colors.white, size: 30),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontFamily: 'MontserratAlternates',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                extra ??
+                    const Icon(
+                      Icons.chevron_right,
+                      color: Colors.white,
+                      size: 21,
+                    ),
+                const SizedBox(width: 15),
+              ],
+            ),
           ),
         ),
       ),

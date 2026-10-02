@@ -4,82 +4,70 @@ import 'package:flutter/material.dart';
 
 import '../../models/pet_model.dart';
 import '../../theme/vet_colors.dart';
-import './pets_image_view.dart';
 import './pets_theme.dart';
 
 class PetCardWidget extends StatelessWidget {
   final PetModel pet;
   final VoidCallback? onTap;
 
-  const PetCardWidget({Key? key, required this.pet, this.onTap})
-      : super(key: key);
+  const PetCardWidget({super.key, required this.pet, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
+    final bool isCat = pet.species?.toLowerCase().contains('gato') ?? false;
+    final String petIllustration = isCat
+        ? 'assets/imagens/figma/cachorroegatopng-2.png'
+        : 'assets/imagens/figma/cachorroegatopng-3.png';
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 18 * s),
+        padding: EdgeInsets.symmetric(vertical: 8 * s, horizontal: 14 * s),
         decoration: BoxDecoration(
-          color: VetColors.rose.withOpacity(0.85),
-          borderRadius: BorderRadius.circular(24 * s),
+          color: VetColors.rose,
+          borderRadius: BorderRadius.circular(18 * s),
           boxShadow: const [
             BoxShadow(
               color: VetColors.shadowDark,
-              offset: Offset(3, 3),
-              blurRadius: 6,
-            ),
-            BoxShadow(
-              color: VetColors.shadowLight,
-              offset: Offset(-2, -2),
-              blurRadius: 5,
+              offset: Offset(2, 2),
+              blurRadius: 4,
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                PetsImageView(
-                  imagePath: pet.imagePath,
-                  width: 32 * s,
-                  height: 36 * s,
-                  fit: BoxFit.contain,
-                ),
-                SizedBox(width: 10 * s),
-                Expanded(
-                  child: Text(
-                    pet.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 20 * s,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: PetsTheme.fontComfortaa,
-                      color: Colors.white,
-                      height: 23 / 20,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12 * s),
-            Text(
-              pet.description,
-              style: TextStyle(
-                fontSize: 10 * s,
-                fontWeight: FontWeight.w700,
-                fontFamily: PetsTheme.fontComfortaa,
-                color: Colors.white,
-                height: 11 / 10,
+            Container(
+              width: 34 * s,
+              height: 34 * s,
+              decoration: const BoxDecoration(
+                color: VetColors.pink,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Image.asset(
+                petIllustration,
+                width: 22 * s,
+                height: 25 * s,
+                fit: BoxFit.contain,
               ),
             ),
-            SizedBox(height: 8 * s),
+            SizedBox(width: 10 * s),
+            Expanded(
+              child: Text(
+                pet.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14 * s,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: PetsTheme.fontMontserratAlternates,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 21 * s, color: Colors.white),
           ],
         ),
       ),

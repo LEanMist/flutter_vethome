@@ -12,14 +12,15 @@ class VetRepository {
   static String clientAddress = '';
   static String clientPhone = '';
   static String? clientPhotoPath;
+  static int selectedPetIndex = 0;
 
   static final List<PetModel> pets = [
     PetModel(
       name: 'Fernando',
-      imagePath: PetsTheme.imgCachorroegatoPng,
+      imagePath: 'assets/imagens/figma/cachorroegatopng-3.png',
       description: _petSummary('Cachorro', 14, true),
       species: 'Cachorro',
-      sex: 'Macho',
+      sex: 'M',
       weightKg: 24,
       birthDate: DateTime(2012, 3, 23),
       breed: 'Lulu-da-Pomerânia',
@@ -27,7 +28,7 @@ class VetRepository {
     ),
     PetModel(
       name: 'Kelly',
-      imagePath: PetsTheme.imgCachorroegatoPng36x32,
+      imagePath: 'assets/imagens/figma/cachorroegatopng-2.png',
       description: _petSummary('Gato', 2, false),
       species: 'Gato',
       sex: 'Fêmea',
@@ -37,7 +38,7 @@ class VetRepository {
     ),
     PetModel(
       name: 'Escarola',
-      imagePath: PetsTheme.imgCachorroegatoPng,
+      imagePath: 'assets/imagens/figma/cachorroegatopng-3.png',
       description: _petSummary('Cachorro', 6, true),
       species: 'Cachorro',
       sex: 'Fêmea',
@@ -46,8 +47,8 @@ class VetRepository {
       neutered: true,
     ),
     PetModel(
-      name: 'Eduardo',
-      imagePath: PetsTheme.imgCachorroegatoPng36x32,
+      name: 'Eduardido',
+      imagePath: 'assets/imagens/figma/cachorroegatopng-2.png',
       description: _petSummary('Gato', 1, false),
       species: 'Gato',
       sex: 'Macho',
@@ -77,7 +78,7 @@ class VetRepository {
       castrado: true,
       pesoKg: 18.0,
     ),
-    'Eduardo': PetProfile(
+    'Eduardido': PetProfile(
       especie: 'Gato',
       idadeAnos: 1,
       castrado: false,
@@ -223,6 +224,9 @@ class VetRepository {
     pets.remove(pet);
     _perfis.remove(pet.name);
     _novosAgendamentos.remove(pet.name);
+    selectedPetIndex = pets.isEmpty
+        ? 0
+        : selectedPetIndex.clamp(0, pets.length - 1).toInt();
   }
 
   static void addAgendamento(String pet, Agendamento agendamento) {

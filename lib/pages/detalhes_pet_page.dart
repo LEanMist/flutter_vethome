@@ -30,11 +30,16 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
       Navigator.push(context, MaterialPageRoute(builder: (_) => page));
 
   Future<void> _edit() async {
-    final updated = await Navigator.push<PetModel>(
-      context,
-      MaterialPageRoute(builder: (_) => EditarPetPage(pet: pet)),
+    final result = await showDialog<Object?>(
+      context: context,
+      builder: (_) => EditarPetPage(pet: pet, modal: true),
     );
-    if (updated != null && mounted) setState(() => pet = updated);
+    if (!mounted) return;
+    if (result is PetModel) {
+      setState(() => pet = result);
+    } else if (result == 'deleted') {
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _delete() async {
@@ -78,7 +83,7 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
           padding: EdgeInsets.all(18 * s),
           child: Row(
             children: [
-              PetAvatar(image: pet.imagePath, size: 76, radius: 20),
+              PetAvatar(image: pet.imagePath, size: 76),
               SizedBox(width: 16 * s),
               Expanded(
                 child: Column(
@@ -107,6 +112,37 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
             ],
           ),
         ),
+        VetCard(
+          child: Column(
+            children: [
+              _PetInfoRow(
+                icon: Icons.person_outline,
+                label: 'Gênero/Sexo',
+                value: pet.sex ?? 'Não informado',
+              ),
+              const Divider(height: 18),
+              _PetInfoRow(
+                icon: Icons.scale_outlined,
+                label: 'Peso',
+                value: fmtPeso(pet.weightKg ?? perfil.pesoKg),
+              ),
+              const Divider(height: 18),
+              _PetInfoRow(
+                icon: Icons.cake_outlined,
+                label: 'Data de Nascimento',
+                value: pet.birthDate == null
+                    ? 'Não informado'
+                    : fmtData(pet.birthDate!),
+              ),
+              const Divider(height: 18),
+              _PetInfoRow(
+                icon: Icons.pets_outlined,
+                label: 'Raça',
+                value: pet.breed ?? 'Não informada',
+              ),
+            ],
+          ),
+        ),
         Row(
           children: [
             Expanded(
@@ -124,7 +160,15 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
             SizedBox(width: 12 * s),
             Expanded(
               child: ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/escolhaPet'),
+                onPressed: () {
+                  final index = VetRepository.pets.indexWhere(
+                    (item) => item.name == pet.name,
+                  );
+                  if (index >= 0) {
+                    VetRepository.selectedPetIndex = index;
+                  }
+                  Navigator.pushNamed(context, '/servicos');
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VetColors.brown,
                   foregroundColor: Colors.white,
@@ -164,6 +208,46 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
               ? 'Nenhum agendamento'
               : '${fmtDiaMes(proximo.data)} às ${fmtHora(proximo.data)}',
           onTap: () => vetNavigate(context, 3, pet: pet),
+        ),
+      ],
+    );
+  }
+}
+
+class _PetInfoRow extends StatelessWidget {
+  const _PetInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = PetsTheme.scaleOf(context);
+    return Row(
+      children: [
+        Icon(icon, color: VetColors.roseDark, size: 20 * scale),
+        SizedBox(width: 10 * scale),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: VetColors.brown.withValues(alpha: 0.75),
+              fontSize: 13 * scale,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: VetColors.brown,
+            fontWeight: FontWeight.w700,
+            fontSize: 13 * scale,
+          ),
         ),
       ],
     );

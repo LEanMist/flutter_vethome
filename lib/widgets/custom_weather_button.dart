@@ -65,7 +65,7 @@ class CustomWeatherButton extends StatelessWidget {
           ],
         ),
         child: Text(
-          text ?? '°  w  °',
+          text ?? '',
           style: TextStyleHelper.instance.headline30BoldMontserratAlternates
               .copyWith(color: resolvedTextColor, height: 37 / 30),
           textAlign: TextAlign.left,

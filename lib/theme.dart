@@ -5,6 +5,8 @@ import 'theme/vet_colors.dart';
 class VH {
   VH._();
 
+  static final ValueNotifier<Color> themeSeed = ValueNotifier(VetColors.brown);
+
   static const Color background = VetColors.pink;
   static const Color card = Color(0xFFFFEEEE);
   static const Color muted = Color(0xFFF4C4C6);
@@ -16,15 +18,7 @@ class VH {
   static const Color mutedText = Color(0xFF8F7777);
 
   static const List<BoxShadow> raise = [
-    BoxShadow(
-      color: Color(0x33683F40),
-      offset: Offset(3, 4),
-      blurRadius: 8,
-    ),
-    BoxShadow(
-      color: Color(0x99FFFFFF),
-      offset: Offset(-2, -2),
-      blurRadius: 6,
-    ),
+    BoxShadow(color: Color(0x33683F40), offset: Offset(3, 4), blurRadius: 8),
+    BoxShadow(color: Color(0x99FFFFFF), offset: Offset(-2, -2), blurRadius: 6),
   ];
 }

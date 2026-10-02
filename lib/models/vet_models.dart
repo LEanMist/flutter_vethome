@@ -84,12 +84,14 @@ class Agendamento {
     required this.veterinario,
     required this.local,
     required this.status,
+    this.descricao,
   });
   final DateTime data; // data + hora
   final String tipo;
   final String veterinario;
   final String local;
   final StatusAgendamento status;
+  final String? descricao;
 }
 
 class ChatMessage {

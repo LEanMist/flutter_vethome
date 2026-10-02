@@ -66,13 +66,13 @@ class SobreScreen extends StatelessWidget {
               SizedBox(height: 16),
               Text('CONTATO:', style: TextStyle(fontWeight: FontWeight.bold)),
               Text(
-                'Telefone não informado',
+                '11 93244-4392',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13),
               ),
               SizedBox(height: 8),
               Text(
-                'Email não informado',
+                'Gabriela@gmail.com',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13),
               ),
@@ -111,66 +111,10 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return VHPage(
       tab: '/chat',
-      children: [
-        const VHHeader('Whatsapp', face: 'ω'),
-        Container(
-          margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          padding: const EdgeInsets.all(12),
-          decoration: insetBox(color: VH.muted),
-          child: Column(
-            children: [
-              for (final message in VetRepository.chatMessages)
-                Align(
-                  alignment: message.fromClient
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Column(
-                    crossAxisAlignment: message.fromClient
-                        ? CrossAxisAlignment.end
-                        : CrossAxisAlignment.start,
-                    children: [
-                      GestureDetector(
-                        onTap: message.fromClient
-                            ? null
-                            : () => Navigator.pushNamed(context, '/sobre'),
-                        child: Text(
-                          message.fromClient
-                              ? VetRepository.clientName
-                              : 'Gabriella Falcão',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.sizeOf(context).width * 0.72,
-                        ),
-                        margin: const EdgeInsets.only(top: 4, bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: message.fromClient ? VH.secondary : VH.card,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: VH.raise,
-                        ),
-                        child: Text(
-                          message.text,
-                          style: TextStyle(
-                            color: message.fromClient
-                                ? VH.onSecondary
-                                : VH.foreground,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      footer: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Row(
             children: [
               Expanded(
@@ -195,6 +139,101 @@ class _ChatScreenState extends State<ChatScreen> {
             ],
           ),
         ),
+      ),
+      children: [
+        const VHHeader('Whatsapp'),
+        Container(
+          margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          padding: const EdgeInsets.all(12),
+          decoration: insetBox(color: VH.muted),
+          child: Column(
+            children: [
+              for (final message in VetRepository.chatMessages)
+                Align(
+                  alignment: message.fromClient
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!message.fromClient) ...[
+                        const CircleAvatar(
+                          radius: 15,
+                          backgroundColor: VH.secondary,
+                          child: Icon(
+                            Icons.medical_services_outlined,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: message.fromClient
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
+                          children: [
+                            GestureDetector(
+                              onTap: message.fromClient
+                                  ? null
+                                  : () =>
+                                        Navigator.pushNamed(context, '/sobre'),
+                              child: Text(
+                                message.fromClient
+                                    ? VetRepository.clientName
+                                    : 'Gabriella Falcão',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              constraints: BoxConstraints(
+                                maxWidth:
+                                    MediaQuery.sizeOf(context).width * 0.66,
+                              ),
+                              margin: const EdgeInsets.only(top: 4, bottom: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: message.fromClient
+                                    ? VH.secondary
+                                    : VH.card,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: VH.raise,
+                              ),
+                              child: Text(
+                                message.text,
+                                style: TextStyle(
+                                  color: message.fromClient
+                                      ? VH.onSecondary
+                                      : VH.foreground,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (message.fromClient) ...[
+                        const SizedBox(width: 8),
+                        const CircleAvatar(
+                          radius: 15,
+                          backgroundColor: VH.accent,
+                          child: Icon(
+                            Icons.person_outline,
+                            size: 17,
+                            color: VH.foreground,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -208,12 +247,8 @@ class AgendaScreen extends StatefulWidget {
 }
 
 class _AgendaScreenState extends State<AgendaScreen> {
-  late DateTime _mes = DateTime(DateTime.now().year, DateTime.now().month);
-  late DateTime _selecionado = DateTime(
-    DateTime.now().year,
-    DateTime.now().month,
-    DateTime.now().day,
-  );
+  DateTime _mes = DateTime(2026, 1);
+  DateTime _selecionado = DateTime(2026, 1, 13);
 
   static const meses = [
     'Janeiro',
@@ -347,9 +382,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                 ),
                               ),
                             ),
-                            if (_hasAppointment(
-                              DateTime(_mes.year, _mes.month, date),
-                            ))
+                            if (_isDemoDate(
+                                  DateTime(_mes.year, _mes.month, date),
+                                ) ||
+                                _hasAppointment(
+                                  DateTime(_mes.year, _mes.month, date),
+                                ))
                               const Positioned(
                                 bottom: 1,
                                 child: CircleAvatar(
@@ -389,11 +427,66 @@ class _AgendaScreenState extends State<AgendaScreen> {
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           child: Column(
             children: [
+              if (_isDemoDate(_selecionado))
+                for (final consulta in const [
+                  (hora: '10:00', tipo: 'Hemograma'),
+                  (hora: '13:00', tipo: 'Urina'),
+                  (hora: '16:00', tipo: 'Creatinina'),
+                ])
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: VH.card,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: VH.raise,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            consulta.hora,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  consulta.tipo,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const Text(
+                                  'Fernando · VetHome',
+                                  style: TextStyle(fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            '${(int.parse(consulta.hora.substring(0, 2)) + 1).toString().padLeft(2, '0')}:00',
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               if (consultasDoDia.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 22),
-                  child: Text('Não há consultas neste dia.'),
-                ),
+                if (!_isDemoDate(_selecionado))
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 22),
+                    child: Text('Não há consultas neste dia.'),
+                  ),
               for (final item in consultasDoDia)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 14),
@@ -467,6 +560,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
+  bool _isDemoDate(DateTime date) =>
+      date.year == 2026 && date.month == 1 && date.day == 13;
+
   bool _hasAppointment(DateTime date) => VetRepository.pets.any(
     (pet) => VetRepository.agendamentos(
       pet.name,
@@ -494,7 +590,7 @@ class ConfigScreen extends StatelessWidget {
     return VHPage(
       tab: '/config',
       children: [
-        const VHHeader('Configurações', face: '^'),
+        const VHHeader('Configurações', showBack: false),
         VHMenu(
           const [
             'Tema do Aplicativo',
@@ -504,16 +600,247 @@ class ConfigScreen extends StatelessWidget {
             'Sair',
           ],
           onTap: (index) {
-            if (index == 4) {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (_) => false,
-              );
+            switch (index) {
+              case 0:
+                _chooseTheme(context);
+                break;
+              case 1:
+                _editAddress(context);
+                break;
+              case 2:
+                _showSupport(context);
+                break;
+              case 3:
+                _showHistory(context);
+                break;
+              case 4:
+                _signOut(context);
+                break;
             }
           },
         ),
       ],
     );
   }
+
+  Future<void> _chooseTheme(BuildContext context) async {
+    const colors = [
+      Color(0xFF68442E),
+      Color(0xFFC08081),
+      Color(0xFF718B70),
+      Color(0xFF6B8FA3),
+      Color(0xFF9477A8),
+    ];
+    var selected = VH.themeSeed.value;
+    final color = await showDialog<Color>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: VH.background,
+          title: const Text('Tema do Aplicativo'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 132,
+                height: 132,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/imagens/figma/image-8.png',
+                      width: 132,
+                      height: 132,
+                    ),
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: selected,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 12,
+                children: [
+                  for (final color in colors)
+                    InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => setDialogState(() => selected = color),
+                      child: CircleAvatar(
+                        radius: selected == color ? 19 : 16,
+                        backgroundColor: color,
+                        child: selected == color
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 18,
+                              )
+                            : null,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, selected),
+              child: const Text('Confirmar'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (color != null) VH.themeSeed.value = color;
+  }
+
+  Future<void> _editAddress(BuildContext context) async {
+    final address = await showDialog<String>(
+      context: context,
+      builder: (_) =>
+          _AddressDialog(initialAddress: VetRepository.clientAddress),
+    );
+    if (address != null) {
+      VetRepository.updateClient(address: address);
+    }
+  }
+
+  void _showSupport(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VH.background,
+        title: const Text('Suporte VetHome'),
+        content: const Text(
+          'Estamos aqui para ajudar.\n'
+          'Telefone: 11 93244-4392\n'
+          'E-mail: Gabriela@gmail.com',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHistory(BuildContext context) {
+    final appointments = [
+      for (final pet in VetRepository.pets)
+        for (final appointment in VetRepository.agendamentos(pet.name))
+          (pet: pet, appointment: appointment),
+    ]..sort((a, b) => b.appointment.data.compareTo(a.appointment.data));
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VH.background,
+        title: const Text('Histórico'),
+        content: SizedBox(
+          width: 320,
+          child: appointments.isEmpty
+              ? const Text('Nenhuma consulta registrada.')
+              : ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final item in appointments)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(item.appointment.tipo),
+                        subtitle: Text(
+                          '${item.pet.name} · ${fmtData(item.appointment.data)}',
+                        ),
+                        trailing: Text(fmtHora(item.appointment.data)),
+                      ),
+                  ],
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VH.background,
+        title: const Text('Sair do VetHome?'),
+        content: const Text('Você poderá entrar novamente quando quiser.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+    }
+  }
+}
+
+class _AddressDialog extends StatefulWidget {
+  const _AddressDialog({required this.initialAddress});
+
+  final String initialAddress;
+
+  @override
+  State<_AddressDialog> createState() => _AddressDialogState();
+}
+
+class _AddressDialogState extends State<_AddressDialog> {
+  late final _controller = TextEditingController(text: widget.initialAddress);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    backgroundColor: VH.background,
+    title: const Text('Meus Endereços'),
+    content: TextField(
+      controller: _controller,
+      autofocus: true,
+      maxLines: 2,
+      decoration: const InputDecoration(
+        labelText: 'Endereço',
+        hintText: 'Rua, número, cidade e CEP',
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancelar'),
+      ),
+      ElevatedButton(
+        onPressed: () => Navigator.pop(context, _controller.text.trim()),
+        child: const Text('Salvar'),
+      ),
+    ],
+  );
 }

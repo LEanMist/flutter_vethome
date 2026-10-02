@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../pages/teste_page.dart';
 import '../theme/vet_colors.dart';
 import 'pets/pets_theme.dart';
 
@@ -42,8 +43,8 @@ class VetHeader extends StatelessWidget {
           Row(
             children: [
               SizedBox(
-                width: 42 * s,
-                height: 42 * s,
+                width: 48 * s,
+                height: 48 * s,
                 child: showBack
                     ? Material(
                         color: Colors.white.withValues(alpha: 0.2),
@@ -74,10 +75,49 @@ class VetHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(width: 42 * s),
+              SizedBox(
+                width: 48 * s,
+                child: IconButton(
+                  tooltip: 'Telas de teste',
+                  constraints: BoxConstraints.tightFor(
+                    width: 48 * s,
+                    height: 48 * s,
+                  ),
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TestePage()),
+                    );
+                  },
+                  icon: Icon(
+                    Icons.dashboard_outlined,
+                    color: Colors.white,
+                    size: 22 * s,
+                  ),
+                ),
+              ),
             ],
           ),
-          if (bottom != null) ...[SizedBox(height: 16 * s), bottom!],
+          Container(
+            width: 202 * s,
+            height: 52 * s,
+            decoration: BoxDecoration(
+              color: VetColors.pink.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(30 * s),
+                bottom: Radius.circular(10 * s),
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: VetColors.shadowDark,
+                  offset: Offset(2, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            child: bottom,
+          ),
         ],
       ),
     );

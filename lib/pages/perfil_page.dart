@@ -158,7 +158,7 @@ class _PerfilPageState extends State<PerfilPage> {
                 children: [
                   SizedBox(
                     width: double.infinity,
-                    height: top + 52 * s + 230 * s,
+                    height: top + 72 * s + 280 * s,
                     child: Stack(
                       alignment: Alignment.topCenter,
                       children: [
@@ -169,7 +169,7 @@ class _PerfilPageState extends State<PerfilPage> {
                           child: _buildHeader(s, top),
                         ),
                         Positioned(
-                          top: top + 52 * s,
+                          top: top + 72 * s,
                           child: _buildAvatarTab(s),
                         ),
                       ],
@@ -199,40 +199,56 @@ class _PerfilPageState extends State<PerfilPage> {
   Widget _buildHeader(double s, double top) {
     return Container(
       width: double.infinity,
-      height: top + 100 * s,
+      height: top + 131 * s,
       alignment: Alignment.topCenter,
       padding: EdgeInsets.only(top: top + 16 * s),
       decoration: BoxDecoration(
         color: VetColors.roseDark.withValues(alpha: 0.85),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(30 * s)),
       ),
-      child: Text(
-        'Perfil',
-        style: TextStyle(
-          fontSize: 26 * s,
-          fontFamily: PetsTheme.fontComfortaa,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
+      child: Column(
+        children: [
+          Text(
+            'Perfil',
+            style: TextStyle(
+              fontSize: 26 * s,
+              fontFamily: PetsTheme.fontComfortaa,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: 18 * s),
+          Container(
+            width: 220 * s,
+            height: 59 * s,
+            decoration: BoxDecoration(
+              color: VetColors.pink.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(30 * s),
+                bottom: Radius.circular(10 * s),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildAvatarTab(double s) {
     return Container(
-      width: 200 * s,
-      height: 230 * s,
+      width: 220 * s,
+      height: 280 * s,
       decoration: BoxDecoration(
         color: VetColors.pink.withValues(alpha: 0.9),
-        border: Border.all(color: VetColors.roseDark, width: 3 * s),
+        border: Border.all(color: VetColors.rose, width: 3 * s),
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(24 * s),
-          bottom: Radius.circular(100 * s),
+          top: Radius.circular(30 * s),
+          bottom: Radius.circular(200 * s),
         ),
       ),
       child: Column(
         children: [
-          SizedBox(height: 14 * s),
+          SizedBox(height: 15 * s),
           GestureDetector(
             onTap: _mudarNome,
             child: Text(
@@ -245,12 +261,12 @@ class _PerfilPageState extends State<PerfilPage> {
               ),
             ),
           ),
-          SizedBox(height: 14 * s),
+          SizedBox(height: 12 * s),
           GestureDetector(
             onTap: _mudarFoto,
             child: SizedBox(
-              width: 140 * s,
-              height: 140 * s,
+              width: 178 * s,
+              height: 178 * s,
               child: CustomPaint(
                 painter: _DashedCirclePainter(
                   color: VetColors.roseDark,
@@ -258,8 +274,8 @@ class _PerfilPageState extends State<PerfilPage> {
                 ),
                 child: Center(
                   child: Container(
-                    width: 122 * s,
-                    height: 122 * s,
+                    width: 156 * s,
+                    height: 156 * s,
                     clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: VetColors.pink,
@@ -280,7 +296,7 @@ class _PerfilPageState extends State<PerfilPage> {
                     child: _foto != null
                         ? Image.file(_foto!, fit: BoxFit.cover, cacheWidth: 400)
                         : Image.asset(
-                            'assets/imagens/client_logo.png',
+                            'assets/imagens/figma/frame-53.png',
                             fit: BoxFit.contain,
                           ),
                   ),

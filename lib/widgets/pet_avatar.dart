@@ -10,7 +10,7 @@ class PetAvatar extends StatelessWidget {
     super.key,
     required this.image,
     this.size = 60,
-    this.radius = 16,
+    this.radius = 999,
   });
 
   final String image;
@@ -33,7 +33,7 @@ class PetAvatar extends StatelessWidget {
         height: px,
         fit: BoxFit.cover,
         cacheWidth: (px * dpr).round(),
-        errorBuilder: (_, __, ___) => Container(
+        errorBuilder: (_, _, _) => Container(
           width: px,
           height: px,
           color: VetColors.rose.withValues(alpha: 0.3),

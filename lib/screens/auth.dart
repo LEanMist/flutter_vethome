@@ -4,7 +4,7 @@ import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-const _logo = 'assets/imagens/client_logo.png';
+const _logo = 'assets/imagens/figma/vethomepng-2.png';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -25,12 +25,17 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: VH.background,
       body: Center(
         child: Container(
-          width: 224,
-          padding: const EdgeInsets.all(16),
-          decoration: insetBox(color: VH.card, radius: 999),
-          child: ClipOval(child: Image.asset(_logo)),
+          width: 136,
+          height: 136,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: VH.secondary.withValues(alpha: 0.45)),
+          ),
+          child: Image.asset(_logo, width: 108, height: 108),
         ),
       ),
     );
@@ -50,9 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: VH.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Column(
             children: [
               Image.asset(_logo, width: 164, height: 164, fit: BoxFit.contain),
@@ -201,9 +207,7 @@ class _VHFormState extends State<VHForm> {
 
   List<TextEditingController> _makeControllers() => [
     for (final field in widget.fields)
-      TextEditingController(
-        text: widget.initialData[field.label] ?? field.value ?? '',
-      ),
+      TextEditingController(text: widget.initialData[field.label] ?? ''),
   ];
 
   @override
@@ -278,22 +282,37 @@ class _VHFormState extends State<VHForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: VH.background,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           children: [
             Text(
               widget.title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Comfortaa',
+                color: VH.foreground,
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
+            if (widget.title == 'Cadastro Pet') ...[
+              Image.asset(
+                'assets/imagens/figma/cachorroegatopng-3.png',
+                width: 58,
+                height: 66,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 10),
+            ],
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
               decoration: BoxDecoration(
-                color: VH.card,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: VH.secondary, width: 3),
+                color: VH.background.withValues(alpha: 0.46),
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: VH.secondary, width: 1.5),
               ),
               child: Form(
                 key: _formKey,
@@ -309,15 +328,23 @@ class _VHFormState extends State<VHForm> {
                         validator: (value) =>
                             _validate(widget.fields[i], value),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 7),
                     ],
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 14),
             Center(
-              child: PillButton(label: 'Cadastrar', onTap: _continue),
+              child: PillButton(
+                label: 'Cadastrar',
+                color: VH.secondary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 11,
+                ),
+                onTap: _continue,
+              ),
             ),
           ],
         ),
@@ -334,12 +361,12 @@ class CadastroScreen extends StatelessWidget {
     title: 'Cadastro',
     next: '/endereco',
     fields: [
-      VHField('Nome Completo', Icons.person),
-      VHField('Data de Nascimento', Icons.cake),
-      VHField('Gênero/Sexo', Icons.person_outline),
-      VHField('CPF', Icons.badge),
-      VHField('Telefone/Celular', Icons.phone),
-      VHField('E-mail', Icons.mail),
+      VHField('Nome Completo', Icons.person, value: 'Matheus Santana Lima'),
+      VHField('Data de Nascimento', Icons.cake, value: '05/02/2007'),
+      VHField('Gênero/Sexo', Icons.person_outline, value: 'Masculino'),
+      VHField('CPF', Icons.badge, value: '534.356.874-94'),
+      VHField('Telefone/Celular', Icons.phone, value: '11 94345-3266'),
+      VHField('E-mail', Icons.mail, value: 'Kelvin231@gmail.com'),
       VHField('Senha', Icons.lock, password: true),
       VHField('Confirmar Senha', Icons.lock, password: true),
     ],
@@ -357,9 +384,19 @@ class EnderecoScreen extends StatelessWidget {
     next: '/cadastroPet',
     initialData: initialData,
     fields: const [
-      VHField('CEP', Icons.home, keyboardType: TextInputType.number),
-      VHField('Endereço', Icons.home),
-      VHField('Número', Icons.tag, keyboardType: TextInputType.number),
+      VHField(
+        'CEP',
+        Icons.home,
+        value: '34556-234',
+        keyboardType: TextInputType.number,
+      ),
+      VHField('Endereço', Icons.home, value: 'R. Carcino'),
+      VHField(
+        'Número',
+        Icons.tag,
+        value: '73',
+        keyboardType: TextInputType.number,
+      ),
       VHField('Complemento', Icons.home),
       VHField('Cidade', Icons.location_city),
     ],
@@ -377,12 +414,17 @@ class CadastroPetScreen extends StatelessWidget {
     next: '/sucesso',
     initialData: initialData,
     fields: [
-      VHField('Tipo de Animal', Icons.pets),
-      VHField('Nome do Pet', Icons.person),
-      VHField('Gênero/Sexo', Icons.person_outline),
-      VHField('Peso', Icons.scale, keyboardType: TextInputType.number),
-      VHField('Data de Nascimento', Icons.cake),
-      VHField('Raça', Icons.pets),
+      VHField('Tipo de Animal', Icons.pets, value: 'Cachorro'),
+      VHField('Nome do Pet', Icons.person, value: 'Fernando'),
+      VHField('Gênero/Sexo', Icons.person_outline, value: 'M'),
+      VHField(
+        'Peso',
+        Icons.scale,
+        value: '24',
+        keyboardType: TextInputType.number,
+      ),
+      VHField('Data de Nascimento', Icons.cake, value: '23/03/2012'),
+      VHField('Raça', Icons.pets, value: 'Lulu-da-Pomerânia'),
     ],
     onSubmit: (data) {
       final weight = double.parse(data['Peso']!.replaceAll(',', '.'));
@@ -422,21 +464,33 @@ class SucessoScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'É um prazer ter você conosco!',
+                Text(
+                  'É um prazer tê-lo(a) conosco, senhor(a) '
+                  '${VetRepository.clientName}.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'MontserratAlternates',
+                  ),
                 ),
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 28),
-                  width: 176,
-                  padding: const EdgeInsets.all(12),
-                  decoration: insetBox(color: VH.card, radius: 999),
-                  child: ClipOval(child: Image.asset(_logo)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Image.asset(
+                    'assets/imagens/figma/vethomepng-1.png',
+                    width: 226,
+                    height: 226,
+                    fit: BoxFit.contain,
+                  ),
                 ),
                 const Text(
-                  'Cadastro concluído!',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  'Usuário e Pets Cadastrados!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Comfortaa',
+                  ),
                 ),
                 const SizedBox(height: 28),
                 PillButton(

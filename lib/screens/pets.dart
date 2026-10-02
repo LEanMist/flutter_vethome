@@ -15,7 +15,7 @@ class PetsScreen extends StatelessWidget {
     return VHPage(
       tab: '/pets',
       children: [
-        const VHHeader('Pets', face: 'ω'),
+        const VHHeader('Pets'),
         Container(
           margin: const EdgeInsets.fromLTRB(20, 24, 20, 0),
           constraints: const BoxConstraints(minHeight: 240),
@@ -27,7 +27,7 @@ class PetsScreen extends StatelessWidget {
                 PetRow(
                   pets[i],
                   onTap: () {
-                    petAtual = i;
+                    VetRepository.selectedPetIndex = i;
                     Navigator.pushNamed(context, '/pet');
                   },
                 ),
@@ -97,7 +97,7 @@ class PetScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pet = pets[petAtual];
+    final pet = pets[VetRepository.selectedPetIndex];
     return VHPage(
       tab: '/pets',
       children: [
@@ -138,7 +138,7 @@ class EditPetScreen extends StatelessWidget {
       tab: '/pets',
       children: [
         const VHHeader('Editar Pet'),
-        PetInfo(pets[petAtual], editable: true),
+        PetInfo(pets[VetRepository.selectedPetIndex], editable: true),
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
           child: Align(
@@ -171,7 +171,7 @@ class EscolhaPetScreen extends StatelessWidget {
                 PetRow(
                   pets[i],
                   onTap: () {
-                    petAtual = i;
+                    VetRepository.selectedPetIndex = i;
                     Navigator.pushNamed(context, '/servicos');
                   },
                 ),
@@ -195,7 +195,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cao = pets[petAtual].isDog;
+    final cao = pets[VetRepository.selectedPetIndex].isDog;
     void convenio([String? service]) {
       if (service != null) servicoAtual = service;
       Navigator.pushNamed(context, '/convenio');
@@ -204,49 +204,74 @@ class _ServicosScreenState extends State<ServicosScreen> {
     return VHPage(
       tab: '/pets',
       children: [
-        VHHeader('Serviços', sub: cao ? 'CÃO' : 'GATO'),
-        const SizedBox(height: 24),
+        VHHeader('Serviços', bottom: _PetTypeTag(isDog: cao)),
+        const SizedBox(height: 122),
         SidePill(
           Icons.medical_services,
           'Exames',
           onTap: () => setState(() => aberto = !aberto),
-          extra: Icon(aberto ? Icons.expand_less : Icons.expand_more, size: 18),
+          extra: Icon(
+            aberto ? Icons.expand_less : Icons.expand_more,
+            size: 18,
+            color: Colors.white,
+          ),
         ),
         if (aberto)
-          Container(
-            margin: const EdgeInsets.only(left: 44, top: 8, right: 44),
-            padding: const EdgeInsets.all(8),
-            decoration: insetBox(color: VH.card, radius: 12),
-            child: Column(
-              children: [
-                for (final exame in ['Hemograma', 'Creatinina', 'Urina'])
-                  ListTile(
-                    dense: true,
-                    title: Text(exame, textAlign: TextAlign.center),
-                    onTap: () => convenio(exame),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Container(
+              width: 210,
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              decoration: BoxDecoration(
+                color: VH.background.withValues(alpha: 0.8),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(18),
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33683F40),
+                    offset: Offset(2, 2),
+                    blurRadius: 4,
                   ),
-              ],
+                ],
+              ),
+              child: Column(
+                children: [
+                  for (final exame in ['Hemograma', 'Creatinina', 'Urina'])
+                    SizedBox(
+                      height: 25,
+                      child: InkWell(
+                        onTap: () => convenio(exame),
+                        child: Center(
+                          child: Text(
+                            exame,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: VH.foreground,
+                              fontFamily: 'MontserratAlternates',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 38),
         SidePill(Icons.vaccines, 'Vacinas', onTap: () => convenio('Vacinação')),
-        const SizedBox(height: 16),
+        const SizedBox(height: 39),
         SidePill(
           Icons.memory,
           'Microchipagem',
           onTap: () => convenio('Microchipagem'),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 39),
         SidePill(
           Icons.description,
           'Atestados',
           onTap: () => convenio('Atestado'),
-        ),
-        const SizedBox(height: 16),
-        SidePill(
-          Icons.schedule,
-          'Ver agenda',
-          onTap: () => Navigator.pushReplacementNamed(context, '/agenda'),
         ),
         const SizedBox(height: 24),
       ],
@@ -254,21 +279,33 @@ class _ServicosScreenState extends State<ServicosScreen> {
   }
 }
 
-class ConvenioScreen extends StatelessWidget {
+class ConvenioScreen extends StatefulWidget {
   const ConvenioScreen({super.key});
 
   @override
+  State<ConvenioScreen> createState() => _ConvenioScreenState();
+}
+
+class _ConvenioScreenState extends State<ConvenioScreen> {
+  String _selectedPlan = convenioAtual;
+
+  @override
   Widget build(BuildContext context) {
-    final cao = pets[petAtual].isDog;
-    void agendar(String plan) {
-      convenioAtual = plan;
+    final cao = pets[VetRepository.selectedPetIndex].isDog;
+    const plans = [
+      (name: 'PetLove', icon: Icons.favorite_outline),
+      (name: 'Doglife', icon: Icons.health_and_safety_outlined),
+      (name: 'Particular', icon: Icons.person_outline),
+    ];
+    void agendar() {
+      convenioAtual = _selectedPlan;
       Navigator.pushNamed(
         context,
         '/nova-consulta',
         arguments: {
-          'pet': VetRepository.pets[petAtual],
+          'pet': VetRepository.pets[VetRepository.selectedPetIndex],
           'service': servicoAtual,
-          'plan': convenioAtual,
+          'plan': _selectedPlan,
         },
       );
     }
@@ -276,23 +313,124 @@ class ConvenioScreen extends StatelessWidget {
     return VHPage(
       tab: '/pets',
       children: [
-        VHHeader('Convênio', sub: cao ? 'CÃO' : 'GATO'),
-        const SizedBox(height: 28),
-        SidePill(Icons.favorite, 'PetLove', onTap: () => agendar('PetLove')),
-        const SizedBox(height: 16),
-        SidePill(
-          Icons.health_and_safety,
-          'Doglife',
-          onTap: () => agendar('Doglife'),
-        ),
-        const SizedBox(height: 16),
-        SidePill(
-          Icons.person,
-          'Particular',
-          onTap: () => agendar('Particular'),
+        VHHeader('Convênio', bottom: _PetTypeTag(isDog: cao)),
+        const SizedBox(height: 185),
+        for (var i = 0; i < plans.length; i++)
+          Padding(
+            padding: EdgeInsets.only(bottom: i == plans.length - 1 ? 14 : 60),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: InkWell(
+                onTap: () => setState(() => _selectedPlan = plans[i].name),
+                borderRadius: const BorderRadius.horizontal(
+                  right: Radius.circular(30),
+                ),
+                child: Ink(
+                  width: 254,
+                  height: 59,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [VH.secondary, VH.background],
+                    ),
+                    borderRadius: BorderRadius.horizontal(
+                      right: Radius.circular(i == 0 ? 50 : 25),
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x33683F40),
+                        offset: Offset(2, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 15),
+                      Icon(plans[i].icon, color: Colors.white, size: 29),
+                      const SizedBox(width: 17),
+                      Expanded(
+                        child: Text(
+                          plans[i].name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            fontFamily: 'MontserratAlternates',
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        _selectedPlan == plans[i].name
+                            ? Icons.radio_button_checked
+                            : Icons.chevron_right,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 18, 28, 8),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: agendar,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VH.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                shape: const StadiumBorder(),
+              ),
+              child: const Text('Continuar'),
+            ),
+          ),
         ),
         const SizedBox(height: 24),
       ],
+    );
+  }
+}
+
+class _PetTypeTag extends StatelessWidget {
+  const _PetTypeTag({required this.isDog});
+
+  final bool isDog;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isDog) {
+      return Image.asset(
+        'assets/imagens/figma/frame-20.png',
+        width: 173,
+        height: 52,
+        fit: BoxFit.contain,
+      );
+    }
+
+    return Container(
+      width: 173,
+      height: 52,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: VH.background.withValues(alpha: 0.55),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(30),
+          bottom: Radius.circular(10),
+        ),
+      ),
+      child: const Text(
+        'GATO',
+        style: TextStyle(
+          color: VH.foreground,
+          fontFamily: 'Comfortaa',
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
+      ),
     );
   }
 }
