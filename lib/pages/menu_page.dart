@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'agendamento_page.dart';
 import 'contato_page.dart';
 import 'configuracoes_page.dart';
@@ -15,17 +16,16 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPage extends State<MenuPage> {
-
-  void cadastropet(){
+  void cadastropet() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CadastroPetPage(
-          destinoBuilder: (context) => const MenuPage(),
-        ),
+        builder: (context) =>
+            CadastroPetPage(destinoBuilder: (context) => const MenuPage()),
       ),
     );
   }
+
   int indiceAtual = 0;
 
   final List<Widget> telas = const [
@@ -86,12 +86,9 @@ class _MenuPage extends State<MenuPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(35),
                 ),
-                padding: EdgeInsets.zero,
-              ),
-              child: const Tooltip(
-                message: 'Adicionar pet',
-                child: Icon(Icons.add, size: 40, color: Colors.white),
-              ),
+                padding: EdgeInsets.zero,      
+              ),          
+                child: Icon(Icons.add, size: 40, color: Colors.white),     
             ),
           ],
         );
@@ -107,13 +104,6 @@ class _MenuPage extends State<MenuPage> {
       Icons.calendar_month,
       Icons.settings,
     ];
-    const rotulos = [
-      'Pets',
-      'Perfil',
-      'Contato',
-      'Agendamentos',
-      'Configurações',
-    ];
 
     return SafeArea(
       top: false,
@@ -121,16 +111,23 @@ class _MenuPage extends State<MenuPage> {
         height: 75,
         margin: const EdgeInsets.fromLTRB(10, 0, 10, 17),
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-        decoration: BoxDecoration(
+        decoration: inset_shadow.BoxDecoration(
           color: const Color(0xFFD9A4A5),
           borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            inset_shadow.BoxShadow(
+              color: Colors.black26,
+              blurRadius: 2,
+              offset: Offset(3, 2),
+              inset: true,
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(icones.length, (index) {
             return CirculoClicavel(
               icone: icones[index],
-              tooltip: rotulos[index],
               selecionado: indiceAtual == index,
               onPressed: () => setState(() => indiceAtual = index),
             );

@@ -34,7 +34,7 @@ class _Carregamento extends State<Carregamento>
     // CONTROLADOR DA ANIMAÇÃO
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(milliseconds: 2000),
     );
 
     _movimentoLogo = TweenSequence<double>([
