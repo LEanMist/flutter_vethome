@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-const _logo = 'assets/imagens/VetHome_logo_1.jpg';
+const _logo = 'assets/imagens/client_logo.png';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -74,14 +75,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           onChanged: (value) =>
                               setState(() => lembrar = value ?? false),
                         ),
-                        const Text('Lembrar de mim', style: TextStyle(fontSize: 12)),
+                        const Text(
+                          'Lembrar de mim',
+                          style: TextStyle(fontSize: 12),
+                        ),
                         const Spacer(),
                         TextButton(
                           onPressed: () => ScaffoldMessenger.of(context)
                             ..hideCurrentSnackBar()
                             ..showSnackBar(
                               const SnackBar(
-                                content: Text('Entre em contato com o suporte para recuperar o acesso.'),
+                                content: Text(
+                                  'Entre em contato com o suporte para recuperar o acesso.',
+                                ),
                               ),
                             ),
                           child: const Text('Esqueceu a senha?'),
@@ -102,13 +108,22 @@ class _LoginScreenState extends State<LoginScreen> {
               const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _SocialIcon(icon: Icons.g_mobiledata, color: Color(0xFF4285F4)),
+                  _SocialIcon(
+                    icon: Icons.g_mobiledata,
+                    color: Color(0xFF4285F4),
+                  ),
                   _SocialIcon(icon: Icons.facebook, color: Color(0xFF1877F2)),
-                  _SocialIcon(icon: Icons.camera_alt_outlined, color: Color(0xFFC13584)),
+                  _SocialIcon(
+                    icon: Icons.camera_alt_outlined,
+                    color: Color(0xFFC13584),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
-              const Text('Ainda não possui uma conta?', style: TextStyle(fontSize: 12)),
+              const Text(
+                'Ainda não possui uma conta?',
+                style: TextStyle(fontSize: 12),
+              ),
               TextButton(
                 onPressed: () => Navigator.pushNamed(context, '/cadastro'),
                 child: const Text(
@@ -142,17 +157,123 @@ class _SocialIcon extends StatelessWidget {
   }
 }
 
-class VHForm extends StatelessWidget {
+class VHForm extends StatefulWidget {
   const VHForm({
     super.key,
     required this.title,
     required this.fields,
     required this.next,
+    this.initialData = const {},
+    this.onSubmit,
   });
 
   final String title;
   final List<VHField> fields;
   final String next;
+  final Map<String, String> initialData;
+  final ValueChanged<Map<String, String>>? onSubmit;
+
+  @override
+  State<VHForm> createState() => _VHFormState();
+}
+
+class _VHFormState extends State<VHForm> {
+  final _formKey = GlobalKey<FormState>();
+  late List<TextEditingController> _controllers;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = _makeControllers();
+  }
+
+  @override
+  void didUpdateWidget(covariant VHForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialData != widget.initialData ||
+        oldWidget.fields != widget.fields) {
+      for (final controller in _controllers) {
+        controller.dispose();
+      }
+      _controllers = _makeControllers();
+    }
+  }
+
+  List<TextEditingController> _makeControllers() => [
+    for (final field in widget.fields)
+      TextEditingController(
+        text: widget.initialData[field.label] ?? field.value ?? '',
+      ),
+  ];
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  String? _validate(VHField field, String? rawValue) {
+    final value = rawValue?.trim() ?? '';
+    if (value.isEmpty) {
+      return field.label == 'Complemento' ? null : 'Preencha este campo';
+    }
+    if (field.label == 'E-mail' &&
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
+      return 'Informe um e-mail válido';
+    }
+    if (field.label == 'Senha' && value.length < 6) {
+      return 'Use ao menos 6 caracteres';
+    }
+    if (field.label == 'Confirmar Senha' &&
+        widget.fields.any((item) => item.label == 'Senha') &&
+        value !=
+            _controllers[widget.fields.indexWhere(
+                  (item) => item.label == 'Senha',
+                )]
+                .text) {
+      return 'As senhas não coincidem';
+    }
+    if (field.label == 'Nome do Pet' && VetRepository.petNameExists(value)) {
+      return 'Já existe um pet com esse nome';
+    }
+    if (field.label == 'Peso') {
+      final weight = double.tryParse(value.replaceAll(',', '.'));
+      if (weight == null || weight <= 0) return 'Informe um peso válido';
+    }
+    if (field.label.contains('Nascimento') && !_isValidDate(value)) {
+      return 'Use uma data válida (DD/MM/AAAA)';
+    }
+    return null;
+  }
+
+  bool _isValidDate(String value) {
+    final parts = value.split(RegExp(r'[/.-]'));
+    if (parts.length != 3) return false;
+    final first = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final last = int.tryParse(parts[2]);
+    if (first == null || month == null || last == null) return false;
+    final date = first > 31
+        ? DateTime(first, month, last)
+        : DateTime(last, month, first);
+    return date.year >= 1900 &&
+        date.month == month &&
+        date.day == (first > 31 ? last : first) &&
+        !date.isAfter(DateTime.now());
+  }
+
+  void _continue() {
+    if (!_formKey.currentState!.validate()) return;
+    final data = <String, String>{
+      ...widget.initialData,
+      for (var i = 0; i < widget.fields.length; i++)
+        widget.fields[i].label: _controllers[i].text.trim(),
+    };
+    widget.onSubmit?.call(data);
+    Navigator.pushNamed(context, widget.next, arguments: data);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +283,7 @@ class VHForm extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
           children: [
             Text(
-              title,
+              widget.title,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
@@ -174,21 +295,29 @@ class VHForm extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: VH.secondary, width: 3),
               ),
-              child: Column(
-                children: [
-                  for (final field in fields) ...[
-                    field,
-                    const SizedBox(height: 12),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    for (var i = 0; i < widget.fields.length; i++) ...[
+                      VHField(
+                        widget.fields[i].label,
+                        widget.fields[i].icon,
+                        password: widget.fields[i].password,
+                        controller: _controllers[i],
+                        keyboardType: widget.fields[i].keyboardType,
+                        validator: (value) =>
+                            _validate(widget.fields[i], value),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
             const SizedBox(height: 24),
             Center(
-              child: PillButton(
-                label: 'Continuar',
-                onTap: () => Navigator.pushNamed(context, next),
-              ),
+              child: PillButton(label: 'Cadastrar', onTap: _continue),
             ),
           ],
         ),
@@ -218,16 +347,19 @@ class CadastroScreen extends StatelessWidget {
 }
 
 class EnderecoScreen extends StatelessWidget {
-  const EnderecoScreen({super.key});
+  const EnderecoScreen({super.key, this.initialData = const {}});
+
+  final Map<String, String> initialData;
 
   @override
-  Widget build(BuildContext context) => const VHForm(
+  Widget build(BuildContext context) => VHForm(
     title: 'Endereço',
     next: '/cadastroPet',
-    fields: [
-      VHField('CEP', Icons.home),
+    initialData: initialData,
+    fields: const [
+      VHField('CEP', Icons.home, keyboardType: TextInputType.number),
       VHField('Endereço', Icons.home),
-      VHField('Número', Icons.tag),
+      VHField('Número', Icons.tag, keyboardType: TextInputType.number),
       VHField('Complemento', Icons.home),
       VHField('Cidade', Icons.location_city),
     ],
@@ -235,21 +367,46 @@ class EnderecoScreen extends StatelessWidget {
 }
 
 class CadastroPetScreen extends StatelessWidget {
-  const CadastroPetScreen({super.key});
+  const CadastroPetScreen({super.key, this.initialData = const {}});
+
+  final Map<String, String> initialData;
 
   @override
-  Widget build(BuildContext context) => const VHForm(
+  Widget build(BuildContext context) => VHForm(
     title: 'Cadastro Pet',
     next: '/sucesso',
+    initialData: initialData,
     fields: [
       VHField('Tipo de Animal', Icons.pets),
       VHField('Nome do Pet', Icons.person),
       VHField('Gênero/Sexo', Icons.person_outline),
-      VHField('Peso', Icons.scale),
+      VHField('Peso', Icons.scale, keyboardType: TextInputType.number),
       VHField('Data de Nascimento', Icons.cake),
       VHField('Raça', Icons.pets),
     ],
+    onSubmit: (data) {
+      final weight = double.parse(data['Peso']!.replaceAll(',', '.'));
+      final birth = _parseDate(data['Data de Nascimento']!);
+      VetRepository.addPet(
+        name: data['Nome do Pet']!,
+        species: data['Tipo de Animal']!,
+        sex: data['Gênero/Sexo']!,
+        weightKg: weight,
+        birthDate: birth,
+        breed: data['Raça']!,
+      );
+      if (data.containsKey('E-mail')) {
+        VetRepository.registerClient(data);
+      }
+    },
   );
+
+  static DateTime _parseDate(String value) {
+    final parts = value.split(RegExp(r'[/.-]')).map(int.parse).toList();
+    return parts[0] > 31
+        ? DateTime(parts[0], parts[1], parts[2])
+        : DateTime(parts[2], parts[1], parts[0]);
+  }
 }
 
 class SucessoScreen extends StatelessWidget {

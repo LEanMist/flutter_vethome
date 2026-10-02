@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
+import 'data/vet_repository.dart';
+import 'models/pet_model.dart';
 import 'theme.dart';
 import 'widgets/vet_bottom_nav.dart';
 
@@ -26,24 +28,36 @@ class VHField extends StatelessWidget {
     super.key,
     this.value,
     this.password = false,
+    this.controller,
+    this.validator,
+    this.keyboardType,
   });
 
   final String label;
   final IconData icon;
   final String? value;
   final bool password;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      initialValue: value,
+      controller: controller,
+      initialValue: controller == null ? value : null,
       obscureText: password,
+      keyboardType: keyboardType,
+      validator: validator,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: VH.foreground),
         filled: true,
         fillColor: VH.background.withValues(alpha: 0.55),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
           borderSide: BorderSide.none,
@@ -82,7 +96,8 @@ class PillButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         child: Padding(
           padding: padding,
-          child: child ??
+          child:
+              child ??
               Text(
                 label!,
                 style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
@@ -229,23 +244,23 @@ class Pet {
   final bool isDog;
 }
 
-final List<Pet> pets = [
-  const Pet(
-    name: 'Fernando',
-    sex: 'Macho',
-    weight: '24 kg',
-    birth: '23 / 03 / 2012',
-    breed: 'Lulu-da-Pomerânia',
-  ),
-  const Pet(
-    name: 'Mimi',
-    sex: 'Fêmea',
-    weight: '4 kg',
-    birth: '11 / 06 / 2020',
-    breed: 'Sem raça definida',
-    isDog: false,
-  ),
-];
+List<Pet> get pets => VetRepository.pets.map(_toPet).toList();
+
+Pet _toPet(PetModel model) {
+  final birth = model.birthDate;
+  final weight = model.weightKg;
+  return Pet(
+    name: model.name,
+    sex: model.sex ?? 'Não informado',
+    weight: weight == null ? 'Não informado' : '${weight.toString()} kg',
+    birth: birth == null
+        ? 'Não informado'
+        : '${birth.day.toString().padLeft(2, '0')} / '
+              '${birth.month.toString().padLeft(2, '0')} / ${birth.year}',
+    breed: model.breed ?? 'Sem raça definida',
+    isDog: !(model.species?.toLowerCase().contains('gato') ?? false),
+  );
+}
 
 int petAtual = 0;
 
@@ -266,7 +281,10 @@ class PetRow extends StatelessWidget {
           backgroundColor: VH.muted,
           child: Icon(Icons.pets, color: VH.foreground),
         ),
-        title: Text(pet.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          pet.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Text('${pet.isDog ? 'Cão' : 'Gato'} · ${pet.breed}'),
         trailing: const Icon(Icons.chevron_right),
       ),
@@ -284,7 +302,9 @@ class VHBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final asset = imagePath.contains('pet-badge')
         ? 'assets/imagens/pets/img_cachorroegato_png.png'
-        : 'assets/imagens/pets/vethome_logo.png';
+        : imagePath.contains('user-badge')
+        ? 'assets/imagens/client_logo.png'
+        : 'assets/imagens/VetHome_logo_1.jpg';
 
     return Padding(
       padding: const EdgeInsets.only(top: 20),
@@ -299,11 +319,8 @@ class VHBadge extends StatelessWidget {
                 width: 82,
                 height: 82,
                 fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Icon(
-                  Icons.pets,
-                  size: 48,
-                  color: VH.foreground,
-                ),
+                errorBuilder: (_, _, _) =>
+                    const Icon(Icons.pets, size: 48, color: VH.foreground),
               ),
             ),
           ),
@@ -360,9 +377,14 @@ class SidePill extends StatelessWidget {
         child: ListTile(
           onTap: onTap,
           leading: Icon(icon, color: VH.foreground),
-          title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           trailing: extra ?? const Icon(Icons.chevron_right),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
         ),
       ),
     );

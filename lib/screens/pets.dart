@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../widgets.dart';
+
+String servicoAtual = 'Consulta Geral';
+String convenioAtual = 'Particular';
 
 class PetsScreen extends StatelessWidget {
   const PetsScreen({super.key});
@@ -67,7 +71,13 @@ class PetInfo extends StatelessWidget {
           ],
           Row(
             children: [
-              Expanded(child: VHField('Gênero/Sexo', Icons.person_outline, value: pet.sex)),
+              Expanded(
+                child: VHField(
+                  'Gênero/Sexo',
+                  Icons.person_outline,
+                  value: pet.sex,
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(child: VHField('Peso', Icons.scale, value: pet.weight)),
             ],
@@ -133,7 +143,10 @@ class EditPetScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
           child: Align(
             alignment: Alignment.centerRight,
-            child: PillButton(label: 'Salvar', onTap: () => Navigator.pop(context)),
+            child: PillButton(
+              label: 'Salvar',
+              onTap: () => Navigator.pop(context),
+            ),
           ),
         ),
       ],
@@ -183,7 +196,10 @@ class _ServicosScreenState extends State<ServicosScreen> {
   @override
   Widget build(BuildContext context) {
     final cao = pets[petAtual].isDog;
-    void convenio() => Navigator.pushNamed(context, '/convenio');
+    void convenio([String? service]) {
+      if (service != null) servicoAtual = service;
+      Navigator.pushNamed(context, '/convenio');
+    }
 
     return VHPage(
       tab: '/pets',
@@ -207,17 +223,25 @@ class _ServicosScreenState extends State<ServicosScreen> {
                   ListTile(
                     dense: true,
                     title: Text(exame, textAlign: TextAlign.center),
-                    onTap: convenio,
+                    onTap: () => convenio(exame),
                   ),
               ],
             ),
           ),
         const SizedBox(height: 16),
-        SidePill(Icons.vaccines, 'Vacinas', onTap: convenio),
+        SidePill(Icons.vaccines, 'Vacinas', onTap: () => convenio('Vacinação')),
         const SizedBox(height: 16),
-        SidePill(Icons.memory, 'Microchipagem', onTap: convenio),
+        SidePill(
+          Icons.memory,
+          'Microchipagem',
+          onTap: () => convenio('Microchipagem'),
+        ),
         const SizedBox(height: 16),
-        SidePill(Icons.description, 'Atestados', onTap: convenio),
+        SidePill(
+          Icons.description,
+          'Atestados',
+          onTap: () => convenio('Atestado'),
+        ),
         const SizedBox(height: 16),
         SidePill(
           Icons.schedule,
@@ -236,18 +260,37 @@ class ConvenioScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cao = pets[petAtual].isDog;
-    void agenda() => Navigator.pushReplacementNamed(context, '/agenda');
+    void agendar(String plan) {
+      convenioAtual = plan;
+      Navigator.pushNamed(
+        context,
+        '/nova-consulta',
+        arguments: {
+          'pet': VetRepository.pets[petAtual],
+          'service': servicoAtual,
+          'plan': convenioAtual,
+        },
+      );
+    }
 
     return VHPage(
       tab: '/pets',
       children: [
         VHHeader('Convênio', sub: cao ? 'CÃO' : 'GATO'),
         const SizedBox(height: 28),
-        SidePill(Icons.favorite, 'PetLove', onTap: agenda),
+        SidePill(Icons.favorite, 'PetLove', onTap: () => agendar('PetLove')),
         const SizedBox(height: 16),
-        SidePill(Icons.health_and_safety, 'Doglife', onTap: agenda),
+        SidePill(
+          Icons.health_and_safety,
+          'Doglife',
+          onTap: () => agendar('Doglife'),
+        ),
         const SizedBox(height: 16),
-        SidePill(Icons.person, 'Particular', onTap: agenda),
+        SidePill(
+          Icons.person,
+          'Particular',
+          onTap: () => agendar('Particular'),
+        ),
         const SizedBox(height: 24),
       ],
     );

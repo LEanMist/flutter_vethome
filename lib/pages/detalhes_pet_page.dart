@@ -5,6 +5,7 @@ import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
+import '../pages/editar_pet_page.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/pets/pets_theme.dart';
@@ -13,13 +14,52 @@ import '../widgets/vet_page_scaffold.dart';
 import 'saude_page.dart';
 import 'vacinacao_page.dart';
 
-class DetalhesPetPage extends StatelessWidget {
+class DetalhesPetPage extends StatefulWidget {
   const DetalhesPetPage({required this.pet, super.key});
 
   final PetModel pet;
 
+  @override
+  State<DetalhesPetPage> createState() => _DetalhesPetPageState();
+}
+
+class _DetalhesPetPageState extends State<DetalhesPetPage> {
+  late PetModel pet = widget.pet;
+
   void _open(BuildContext context, Widget page) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+
+  Future<void> _edit() async {
+    final updated = await Navigator.push<PetModel>(
+      context,
+      MaterialPageRoute(builder: (_) => EditarPetPage(pet: pet)),
+    );
+    if (updated != null && mounted) setState(() => pet = updated);
+  }
+
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remover pet?'),
+        content: Text('Deseja remover ${pet.name} da sua lista?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Remover'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      VetRepository.removePet(pet);
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +111,7 @@ class DetalhesPetPage extends StatelessWidget {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () => vetSoon(context),
+                onPressed: _edit,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: VetColors.brown,
                   side: const BorderSide(color: VetColors.roseDark),
@@ -84,7 +124,7 @@ class DetalhesPetPage extends StatelessWidget {
             SizedBox(width: 12 * s),
             Expanded(
               child: ElevatedButton(
-                onPressed: () => vetNavigate(context, 3, pet: pet),
+                onPressed: () => Navigator.pushNamed(context, '/escolhaPet'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VetColors.brown,
                   foregroundColor: Colors.white,
@@ -95,6 +135,15 @@ class DetalhesPetPage extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: _delete,
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Remover pet'),
+            style: TextButton.styleFrom(foregroundColor: VetColors.brown),
+          ),
         ),
         _Atalho(
           icon: Icons.favorite,

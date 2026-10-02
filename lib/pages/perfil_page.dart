@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../core/utils/formatters.dart';
 import '../core/utils/vet_nav.dart';
+import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet_bottom_nav.dart';
@@ -21,11 +22,18 @@ class PerfilPage extends StatefulWidget {
 
 class _PerfilPageState extends State<PerfilPage> {
   // TODO: carregar/salvar dados reais (API, SharedPreferences, etc.)
-  String _nome = 'Liminha';
-  DateTime _nascimento = DateTime(2007, 2, 5);
+  String _nome = VetRepository.clientName;
+  DateTime _nascimento = VetRepository.clientBirthDate;
   File? _foto;
 
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    final path = VetRepository.clientPhotoPath;
+    if (path != null) _foto = File(path);
+  }
 
   String get _nascimentoTexto => fmtData(_nascimento).replaceAll('/', ' / ');
 
@@ -62,7 +70,10 @@ class _PerfilPageState extends State<PerfilPage> {
         maxWidth: 800,
       );
       if (picked != null && mounted) {
-        setState(() => _foto = File(picked.path));
+        setState(() {
+          _foto = File(picked.path);
+          VetRepository.clientPhotoPath = picked.path;
+        });
       }
     } catch (_) {
       if (mounted) vetSoon(context, 'Não foi possível abrir a imagem.');
@@ -75,7 +86,10 @@ class _PerfilPageState extends State<PerfilPage> {
       builder: (_) => _NomeDialog(inicial: _nome),
     );
     if (novo != null && novo.isNotEmpty && mounted) {
-      setState(() => _nome = novo);
+      setState(() {
+        _nome = novo;
+        VetRepository.updateClient(name: novo);
+      });
     }
   }
 
@@ -86,7 +100,47 @@ class _PerfilPageState extends State<PerfilPage> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (data != null && mounted) setState(() => _nascimento = data);
+    if (data != null && mounted) {
+      setState(() {
+        _nascimento = data;
+        VetRepository.updateClient(birthDate: data);
+      });
+    }
+  }
+
+  Future<void> _mudarEndereco() async {
+    final controller = TextEditingController(text: VetRepository.clientAddress);
+    try {
+      final String? value = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: VetColors.pink,
+          title: const Text('Alterar endereço'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLines: 2,
+            decoration: const InputDecoration(hintText: 'Endereço completo'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text('Salvar'),
+            ),
+          ],
+        ),
+      );
+      if (value != null && value.isNotEmpty && mounted) {
+        VetRepository.updateClient(address: value);
+        vetSoon(context, 'Endereço atualizado');
+      }
+    } finally {
+      controller.dispose();
+    }
   }
 
   @override
@@ -133,12 +187,8 @@ class _PerfilPageState extends State<PerfilPage> {
             top: false,
             child: VetBottomNav(
               selectedIndex: 1,
-              onSelected: (i) => vetNavigate(
-                context,
-                i,
-                selected: 1,
-                isTabRoot: true,
-              ),
+              onSelected: (i) =>
+                  vetNavigate(context, i, selected: 1, isTabRoot: true),
             ),
           ),
         ],
@@ -229,10 +279,9 @@ class _PerfilPageState extends State<PerfilPage> {
                     ),
                     child: _foto != null
                         ? Image.file(_foto!, fit: BoxFit.cover, cacheWidth: 400)
-                        : Icon(
-                            Icons.person,
-                            size: 70 * s,
-                            color: VetColors.roseDark,
+                        : Image.asset(
+                            'assets/imagens/client_logo.png',
+                            fit: BoxFit.contain,
                           ),
                   ),
                 ),
@@ -268,6 +317,7 @@ class _PerfilPageState extends State<PerfilPage> {
       MapEntry('Mudar Foto de Perfil', _mudarFoto),
       MapEntry('Mudar Nome de Perfil', _mudarNome),
       MapEntry('Mudar Data de Nascimento', _mudarNascimento),
+      MapEntry('Alterar endereço', _mudarEndereco),
     ];
 
     return Padding(
@@ -320,8 +370,9 @@ class _NomeDialog extends StatefulWidget {
 }
 
 class _NomeDialogState extends State<_NomeDialog> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.inicial);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.inicial,
+  );
 
   @override
   void dispose() {

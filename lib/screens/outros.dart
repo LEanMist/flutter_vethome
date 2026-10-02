@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/utils/formatters.dart';
+import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -19,10 +21,17 @@ class PerfilScreen extends StatelessWidget {
           children: [
             Icon(Icons.cake, size: 16),
             SizedBox(width: 4),
-            Text('Data de nascimento não informada', style: TextStyle(fontSize: 13)),
+            Text(
+              'Data de nascimento não informada',
+              style: TextStyle(fontSize: 13),
+            ),
           ],
         ),
-        VHMenu(['Mudar Foto de Perfil', 'Mudar Nome de Perfil', 'Mudar Data de Nascimento']),
+        VHMenu([
+          'Mudar Foto de Perfil',
+          'Mudar Nome de Perfil',
+          'Mudar Data de Nascimento',
+        ]),
       ],
     );
   }
@@ -44,7 +53,10 @@ class SobreScreen extends StatelessWidget {
           decoration: insetBox(color: VH.muted),
           child: const Column(
             children: [
-              Text('Sobre Mim', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                'Sobre Mim',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               SizedBox(height: 12),
               Text(
                 'Sou veterinária há mais de 8 anos, apaixonada por cães e gatos. Atendo em domicílio para que seu pet fique tranquilo no lar.',
@@ -53,22 +65,23 @@ class SobreScreen extends StatelessWidget {
               ),
               SizedBox(height: 16),
               Text('CONTATO:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text('Telefone não informado', textAlign: TextAlign.center, style: TextStyle(fontSize: 13)),
+              Text(
+                'Telefone não informado',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13),
+              ),
               SizedBox(height: 8),
-              Text('Email não informado', textAlign: TextAlign.center, style: TextStyle(fontSize: 13)),
+              Text(
+                'Email não informado',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13),
+              ),
             ],
           ),
         ),
       ],
     );
   }
-}
-
-class Msg {
-  const Msg(this.me, this.text);
-
-  final bool me;
-  final String text;
 }
 
 class ChatScreen extends StatefulWidget {
@@ -80,11 +93,6 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final ctrl = TextEditingController();
-  final msgs = <Msg>[
-    const Msg(false, 'Olá! Como está seu pet depois da última consulta?'),
-    const Msg(true, 'Está ótimo, comendo bem e brincando.'),
-    const Msg(false, 'Que bom! Lembre-se de agendar o retorno.'),
-  ];
 
   @override
   void dispose() {
@@ -95,7 +103,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void enviar() {
     final text = ctrl.text.trim();
     if (text.isEmpty) return;
-    setState(() => msgs.add(Msg(true, text)));
+    setState(() => VetRepository.sendChatMessage(text));
     ctrl.clear();
   }
 
@@ -111,31 +119,48 @@ class _ChatScreenState extends State<ChatScreen> {
           decoration: insetBox(color: VH.muted),
           child: Column(
             children: [
-              for (final message in msgs)
+              for (final message in VetRepository.chatMessages)
                 Align(
-                  alignment: message.me ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: message.fromClient
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Column(
-                    crossAxisAlignment: message.me ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                    crossAxisAlignment: message.fromClient
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
                     children: [
                       GestureDetector(
-                        onTap: message.me ? null : () => Navigator.pushNamed(context, '/sobre'),
+                        onTap: message.fromClient
+                            ? null
+                            : () => Navigator.pushNamed(context, '/sobre'),
                         child: Text(
-                          message.me ? 'Você' : 'Gabriella Falcão',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          message.fromClient
+                              ? VetRepository.clientName
+                              : 'Gabriella Falcão',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       Container(
-                        constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.72),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.sizeOf(context).width * 0.72,
+                        ),
                         margin: const EdgeInsets.only(top: 4, bottom: 12),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: message.me ? VH.secondary : VH.card,
+                          color: message.fromClient ? VH.secondary : VH.card,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: VH.raise,
                         ),
                         child: Text(
                           message.text,
-                          style: TextStyle(color: message.me ? VH.onSecondary : VH.foreground),
+                          style: TextStyle(
+                            color: message.fromClient
+                                ? VH.onSecondary
+                                : VH.foreground,
+                          ),
                         ),
                       ),
                     ],
@@ -183,25 +208,38 @@ class AgendaScreen extends StatefulWidget {
 }
 
 class _AgendaScreenState extends State<AgendaScreen> {
-  late int dia = DateTime.now().day;
+  late DateTime _mes = DateTime(DateTime.now().year, DateTime.now().month);
+  late DateTime _selecionado = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
 
-  static const nomes = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-  static const consultas = [
-    ['10:00', '11:00', 'Hemograma'],
-    ['16:00', '17:00', 'Creatinina'],
-    ['13:00', '14:00', 'Urina'],
-  ];
   static const meses = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
   ];
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month, 1);
-    final firstOffset = monthStart.weekday % 7;
-    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+    final firstOffset = DateTime(_mes.year, _mes.month, 1).weekday % 7;
+    final daysInMonth = DateTime(_mes.year, _mes.month + 1, 0).day;
+    final consultasDoDia = [
+      for (final pet in VetRepository.pets)
+        for (final agendamento in VetRepository.agendamentos(pet.name))
+          if (_sameDay(agendamento.data, _selecionado))
+            (pet: pet, agendamento: agendamento),
+    ]..sort((a, b) => a.agendamento.data.compareTo(b.agendamento.data));
 
     return VHPage(
       tab: '/agenda',
@@ -217,9 +255,33 @@ class _AgendaScreenState extends State<AgendaScreen> {
             bottom: false,
             child: Column(
               children: [
-                Text(
-                  '${meses[now.month - 1]} ${now.year}',
-                  style: const TextStyle(color: VH.onSecondary, fontWeight: FontWeight.bold),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      tooltip: 'Mês anterior',
+                      onPressed: () => _changeMonth(-1),
+                      icon: const Icon(
+                        Icons.chevron_left,
+                        color: VH.onSecondary,
+                      ),
+                    ),
+                    Text(
+                      '${meses[_mes.month - 1]} ${_mes.year}',
+                      style: const TextStyle(
+                        color: VH.onSecondary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Próximo mês',
+                      onPressed: () => _changeMonth(1),
+                      icon: const Icon(
+                        Icons.chevron_right,
+                        color: VH.onSecondary,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 GridView.count(
@@ -227,32 +289,75 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    for (final weekday in ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'])
+                    for (final weekday in [
+                      'Dom',
+                      'Seg',
+                      'Ter',
+                      'Qua',
+                      'Qui',
+                      'Sex',
+                      'Sáb',
+                    ])
                       Center(
                         child: Text(
                           weekday,
-                          style: const TextStyle(color: VH.onSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: VH.onSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     for (var i = 0; i < firstOffset; i++) const SizedBox(),
                     for (var date = 1; date <= daysInMonth; date++)
                       GestureDetector(
-                        onTap: () => setState(() => dia = date),
-                        child: Container(
-                          margin: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: date == dia ? VH.background : Colors.transparent,
+                        onTap: () => setState(
+                          () => _selecionado = DateTime(
+                            _mes.year,
+                            _mes.month,
+                            date,
                           ),
-                          child: Center(
-                            child: Text(
-                              '$date',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: date == dia ? VH.foreground : VH.onSecondary,
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    date == _selecionado.day &&
+                                        _mes.year == _selecionado.year &&
+                                        _mes.month == _selecionado.month
+                                    ? VH.background
+                                    : Colors.transparent,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '$date',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color:
+                                        date == _selecionado.day &&
+                                            _mes.year == _selecionado.year &&
+                                            _mes.month == _selecionado.month
+                                        ? VH.foreground
+                                        : VH.onSecondary,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            if (_hasAppointment(
+                              DateTime(_mes.year, _mes.month, date),
+                            ))
+                              const Positioned(
+                                bottom: 1,
+                                child: CircleAvatar(
+                                  radius: 2,
+                                  backgroundColor: VH.onSecondary,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                   ],
@@ -273,7 +378,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
               border: Border.all(color: VH.secondary, width: 3),
             ),
             child: Text(
-              '$dia - ${nomes[DateTime(now.year, now.month, dia).weekday % 7]}',
+              '${_selecionado.day} - '
+              '${_weekdayNames[_selecionado.weekday % 7]}',
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
@@ -283,29 +389,54 @@ class _AgendaScreenState extends State<AgendaScreen> {
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           child: Column(
             children: [
-              for (final consulta in consultas)
+              if (consultasDoDia.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 22),
+                  child: Text('Não há consultas neste dia.'),
+                ),
+              for (final item in consultasDoDia)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    children: [
-                      Text('${consulta[0]}\n${consulta[1]}', style: const TextStyle(fontSize: 11)),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: VH.secondary,
-                            borderRadius: BorderRadius.circular(999),
-                            boxShadow: VH.raise,
-                          ),
-                          child: Text(
-                            consulta[2],
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: VH.onSecondary, fontSize: 13),
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: VH.card,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: VH.raise,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          fmtHora(item.agendamento.data),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.agendamento.tipo,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '${item.pet.name} · ${item.agendamento.local}',
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
             ],
@@ -322,6 +453,37 @@ class _AgendaScreenState extends State<AgendaScreen> {
       ],
     );
   }
+
+  static const _weekdayNames = [
+    'Domingo',
+    'Segunda',
+    'Terça',
+    'Quarta',
+    'Quinta',
+    'Sexta',
+    'Sábado',
+  ];
+
+  bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  bool _hasAppointment(DateTime date) => VetRepository.pets.any(
+    (pet) => VetRepository.agendamentos(
+      pet.name,
+    ).any((appointment) => _sameDay(appointment.data, date)),
+  );
+
+  void _changeMonth(int amount) {
+    setState(() {
+      _mes = DateTime(_mes.year, _mes.month + amount);
+      final lastDay = DateTime(_mes.year, _mes.month + 1, 0).day;
+      _selecionado = DateTime(
+        _mes.year,
+        _mes.month,
+        _selecionado.day.clamp(1, lastDay),
+      );
+    });
+  }
 }
 
 class ConfigScreen extends StatelessWidget {
@@ -334,10 +496,20 @@ class ConfigScreen extends StatelessWidget {
       children: [
         const VHHeader('Configurações', face: '^'),
         VHMenu(
-          const ['Tema do Aplicativo', 'Meus Endereços', 'Suporte', 'Histórico', 'Sair'],
+          const [
+            'Tema do Aplicativo',
+            'Meus Endereços',
+            'Suporte',
+            'Histórico',
+            'Sair',
+          ],
           onTap: (index) {
             if (index == 4) {
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (_) => false,
+              );
             }
           },
         ),

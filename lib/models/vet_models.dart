@@ -92,6 +92,13 @@ class Agendamento {
   final StatusAgendamento status;
 }
 
+class ChatMessage {
+  const ChatMessage({required this.fromClient, required this.text});
+
+  final bool fromClient;
+  final String text;
+}
+
 // ── Cálculos derivados (nada de texto fixo nas telas) ───────────────────────
 
 bool vacinasEmDia(List<Vacina> v) =>
@@ -100,7 +107,9 @@ bool vacinasEmDia(List<Vacina> v) =>
 String resumoVacinas(List<Vacina> v) {
   final n = v.where((e) => e.status != VacinaStatus.emDia).length;
   if (n == 0) return 'Todas as vacinas estão em dia';
-  return n == 1 ? '1 vacina precisa de atenção' : '$n vacinas precisam de atenção';
+  return n == 1
+      ? '1 vacina precisa de atenção'
+      : '$n vacinas precisam de atenção';
 }
 
 Agendamento? proximoAgendamento(List<Agendamento> l) {

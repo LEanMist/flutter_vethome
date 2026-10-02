@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../data/vet_repository.dart';
 import '../../models/pet_model.dart';
-import '../../pages/agendamentos_page.dart';
 import '../../pages/perfil_page.dart';
 import '../../pages/pets_page.dart';
+import '../../screens/outros.dart' show AgendaScreen, ChatScreen, ConfigScreen;
 
 /// Barra inferior (igual ao Figma):
 /// 0 Pets · 1 Perfil · 2 WhatsApp · 3 Agenda · 4 Configurações
@@ -21,11 +20,12 @@ void vetNavigate(
 }) {
   if (isTabRoot && index == selected) return;
 
-  final PetModel p = pet ?? VetRepository.pets.first;
   final Widget? page = switch (index) {
     0 => const PetsPage(),
     1 => const PerfilPage(),
-    3 => AgendamentosPage(pet: p),
+    2 => const ChatScreen(),
+    3 => const AgendaScreen(),
+    4 => const ConfigScreen(),
     _ => null,
   };
 

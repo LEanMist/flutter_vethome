@@ -10,9 +10,14 @@ import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet_bottom_nav.dart';
 import 'detalhes_pet_page.dart';
 
-class PetsPage extends StatelessWidget {
+class PetsPage extends StatefulWidget {
   const PetsPage({super.key});
 
+  @override
+  State<PetsPage> createState() => _PetsPageState();
+}
+
+class _PetsPageState extends State<PetsPage> {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
@@ -32,12 +37,8 @@ class PetsPage extends StatelessWidget {
             top: false,
             child: VetBottomNav(
               selectedIndex: 0,
-              onSelected: (i) => vetNavigate(
-                context,
-                i,
-                selected: 0,
-                isTabRoot: true,
-              ),
+              onSelected: (i) =>
+                  vetNavigate(context, i, selected: 0, isTabRoot: true),
             ),
           ),
         ],
@@ -65,7 +66,7 @@ class PetsPage extends StatelessWidget {
           Row(
             children: [
               Image.asset(
-                'assets/imagens/pets/vethome_logo.png',
+                'assets/imagens/client_logo.png',
                 width: 84 * s,
                 height: 92 * s,
                 fit: BoxFit.contain,
@@ -128,12 +129,15 @@ class PetsPage extends StatelessWidget {
             if (i > 0) SizedBox(height: 18 * s),
             PetCardWidget(
               pet: pets[i],
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => DetalhesPetPage(pet: pets[i]),
-                ),
-              ),
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DetalhesPetPage(pet: pets[i]),
+                  ),
+                );
+                if (mounted) setState(() {});
+              },
             ),
           ],
           SizedBox(height: 40 * s),
@@ -142,7 +146,7 @@ class PetsPage extends StatelessWidget {
             height: 46 * s,
             radius: 23 * s,
             color: VetColors.pink,
-            onTap: () => vetSoon(context),
+            onTap: () => Navigator.pushNamed(context, '/cadastroPet'),
             child: Icon(Icons.add, size: 30 * s, color: VetColors.brown),
           ),
         ],
