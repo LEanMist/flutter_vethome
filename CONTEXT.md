@@ -79,11 +79,11 @@ git diff --cached --check
 
 O SDK deve ser localizado no PC em uso; não presumir um caminho fixo de instalação.
 
-## Problema preexistente no Flutter Web
+## Foto de Perfil no Flutter Web
 
-Em `lib/pages/perfil_page.dart`, o avatar usa `Image.file(_foto!, ...)` quando `_foto` não é nula. Esse caminho falha no Flutter Web com a mensagem `Image.file is not supported on Flutter Web`.
+Antes do Passo 3B, `lib/pages/perfil_page.dart` usava `Image.file(_foto!, ...)` também no navegador, causando `Image.file is not supported on Flutter Web`.
 
-A foto pode vir de `VetRepository.clientPhotoPath` ou da seleção via `image_picker`. O teste atual de perfil não cobre esse caminho com foto carregada no navegador. O problema está apenas documentado e não foi corrigido nesta etapa.
+A partir do Passo 3B, o Web lê os bytes do `XFile` retornado pelo `image_picker` e renderiza com `Image.memory`. `VetRepository.clientPhotoBytes` conserva a foto durante a sessão e ao retornar à tela; `clientPhotoPath` continua disponível. Se só houver caminho no Web, tenta recuperar os bytes via `XFile`, mantendo o avatar padrão se o caminho expirou. Plataformas nativas continuam usando `File`/`Image.file` e o caminho existente.
 
 ## Preservação e próximos passos
 
@@ -92,7 +92,7 @@ A foto pode vir de `VetRepository.clientPhotoPath` ou da seleção via `image_pi
 - Preservar mudanças locais do usuário. A alteração preexistente em `.gitignore` para `.widget_preview/` pertence ao usuário e deve ficar fora do commit do Passo 1.
 - Não aplicar automaticamente stashes ou branches de backup antigos.
 - Quando o acesso ao Figma estiver disponível, conferir o tema global e a barra inferior contra os nós e screenshots reais, incluindo as cinco abas e a área segura mobile.
-- Tratar a incompatibilidade de foto no Flutter Web em tarefa separada, após autorização.
+- A incompatibilidade de foto no Flutter Web foi corrigida no Passo 3B. Persistência de fotos entre sessões/recarregamentos e validação física de câmera/dispositivos nativos são trabalhos separados.
 - Para recuperar novas etapas em outro PC pelo GitHub, as alterações precisam de commit e push autorizados na branch `kelvin`; arquivos apenas locais ou no stage não são publicados.
 
 ## Passo 2 — ajustes locais em Pets e Perfil
@@ -119,7 +119,7 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 
 ## Passo 3A — correções objetivas da auditoria
 
-- Implementado localmente na branch `kelvin`, sem commit ou push autorizado nesta etapa. O Passo 2 continua aprovado e publicado em `origin/kelvin` no commit `fbbe9104f214c1b5d2606a0ef911c30173d5dd1d`.
+- O Passo 3A foi aprovado, commitado e publicado em `origin/kelvin` no commit `b712cc136d793072dbee58d8c46c3a118a80bc1a` (`Corrige problemas visuais e responsivos do Passo 3A`). O Passo 2 continua publicado no commit `fbbe9104f214c1b5d2606a0ef911c30173d5dd1d`.
 - `lib/pages/login_page.dart`: o conteúdo passou a ser rolável, preservando elementos, dimensões visuais existentes, autenticação, validações e navegação. Capturas Web em 320 × 640 e 320 × 480 não apresentaram overflow vertical; o link de cadastro continua acessível por rolagem.
 - `lib/widgets/vet_header.dart`: a caixa inferior só existe quando `bottom != null`. Sem conteúdo, sua altura não é reservada. Com conteúdo, mantém largura e decoração existentes e usa a altura anterior como mínimo, permitindo acomodar conteúdo maior. Isso corrige as caixas vazias de Detalhes, Editar pet, Vacinação, Agendamentos e Novo agendamento.
 - `lib/pages/saude_page.dart`: avatar e nome organizados em coluna centralizada, com nome completo permitindo quebra de linha e altura adaptável do slot. Captura em 390 × 844 e teste com nome longo não apresentaram corte do conteúdo.
@@ -129,3 +129,13 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - `test/vet_home_step3a_test.dart`: cinco testes de regressão para ausência da caixa vazia, altura adaptável, Saúde com nome longo, mapeamento de espécies e contraste dos avatares sem alteração dos dados. A suíte existente `test/vet_home_screens_test.dart` mantém os oito testes passando.
 - Análise dos seis arquivos de código e do novo teste: sem ocorrências. Não foram alteradas rotas, lógica de negócio, navegação, dados, dependências, arquivos de assets, tema global ou `.gitignore`.
 - Limitações preservadas: fidelidade exata ao Figma continua pendente por limite do MCP; `Image.file` no Perfil Web não foi corrigido; detalhes decorativos laterais do Login em largura estreita e o título truncado de Novo agendamento permanecem fora destas correções. Não foi feita padronização geral de sombras ou formulários.
+
+## Passo 3B — Login estreito, título e foto Web
+
+- Implementado localmente na branch `kelvin`, sem commit ou push nesta etapa. As três pendências de Login, título e foto Web registradas no Passo 3A foram tratadas aqui.
+- `lib/pages/login_page.dart`: a escala da decoração da pata agora considera a largura disponível, incluindo os dedos laterais posicionados fora da caixa, suas rotações e sombras. Elementos, campos, botões, textos, autenticação e rolagem permanecem iguais. Validado visualmente em 320 × 480, 320 × 640 e 390 × 844, sem cortes laterais problemáticos ou overflow vertical. O cálculo é uma escolha local, não uma medida do Figma.
+- `lib/widgets/vet_header.dart`: o título completo mantém fonte/texto existentes, com `FittedBox` e `BoxFit.scaleDown` apenas quando a largura entre os botões não é suficiente. Voltar, diagnóstico, slot inferior e ausência da caixa vazia permanecem preservados. Novo agendamento foi conferido em larguras de 320 e 390 px; Detalhes, Editar pet, Saúde, Vacinação e Agendamentos também foram conferidos.
+- `lib/pages/perfil_page.dart` e `lib/data/vet_repository.dart`: adaptação mínima para bytes no navegador, descrita acima. O picker, avatar padrão, moldura, dimensões e ações do Perfil foram mantidos. Nenhuma dependência ou asset novo foi adicionado.
+- `test/vet_home_step3b_test.dart`: regressões para escala da decoração do Login, títulos completos/botões em dois tamanhos, avatar padrão, restauração em memória no Web sem `FileImage`, manutenção de `FileImage` nativo e seleção nativa via picker simulado. Os testes específicos de cada plataforma são executados somente nela.
+- Validação: oito testes existentes, cinco do Passo 3A e cinco do Passo 3B passando no runner nativo; o teste exclusivo do Web é ignorado nesse runner. Análise dos arquivos alterados sem ocorrências e `git diff --check` aprovado. No app Web, a seleção real pelo `image_picker`, o avatar padrão e a manutenção da foto ao reabrir Perfil foram conferidos por capturas. A execução da suíte pelo runner Chrome ficou bloqueada antes dos testes por erros 404 nos arquivos locais do motor gráfico (CanvasKit e skwasm); isso não impediu executar e validar o app no navegador.
+- Limitações: cache da foto é apenas da sessão, como os demais dados do repositório de exemplo; câmera e permissões precisam de validação em dispositivos físicos. Fidelidade exata ao Figma permanece pendente pelo limite do MCP. Não foram alterados Pets, Escolha de Pet, paleta, fontes globais, sombras ou formulários.

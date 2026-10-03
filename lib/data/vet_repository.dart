@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../widgets/pets/pets_theme.dart';
@@ -12,6 +14,8 @@ class VetRepository {
   static String clientAddress = '';
   static String clientPhone = '';
   static String? clientPhotoPath;
+  // No Web, o caminho do picker é temporário; conserva a foto nesta sessão.
+  static Uint8List? clientPhotoBytes;
   static int selectedPetIndex = 0;
 
   static final List<PetModel> pets = [

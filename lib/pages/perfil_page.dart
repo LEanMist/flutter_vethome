@@ -3,6 +3,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -25,6 +26,7 @@ class _PerfilPageState extends State<PerfilPage> {
   String _nome = VetRepository.clientName;
   DateTime _nascimento = VetRepository.clientBirthDate;
   File? _foto;
+  Uint8List? _fotoBytes;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -32,7 +34,25 @@ class _PerfilPageState extends State<PerfilPage> {
   void initState() {
     super.initState();
     final path = VetRepository.clientPhotoPath;
-    if (path != null) _foto = File(path);
+    if (kIsWeb) {
+      _fotoBytes = VetRepository.clientPhotoBytes;
+      if (_fotoBytes == null && path != null) _carregarFotoWeb(path);
+    } else if (path != null) {
+      _foto = File(path);
+    }
+  }
+
+  Future<void> _carregarFotoWeb(String path) async {
+    try {
+      final bytes = await XFile(path).readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _fotoBytes = bytes;
+        VetRepository.clientPhotoBytes = bytes;
+      });
+    } catch (_) {
+      // Caminhos blob expirados mantêm o avatar padrão, sem usar File no Web.
+    }
   }
 
   String get _nascimentoTexto => fmtData(_nascimento).replaceAll('/', ' / ');
@@ -70,8 +90,15 @@ class _PerfilPageState extends State<PerfilPage> {
         maxWidth: 800,
       );
       if (picked != null && mounted) {
+        final bytes = kIsWeb ? await picked.readAsBytes() : null;
+        if (!mounted) return;
         setState(() {
-          _foto = File(picked.path);
+          if (kIsWeb) {
+            _fotoBytes = bytes;
+            VetRepository.clientPhotoBytes = bytes;
+          } else {
+            _foto = File(picked.path);
+          }
           VetRepository.clientPhotoPath = picked.path;
         });
       }
@@ -281,12 +308,7 @@ class _PerfilPageState extends State<PerfilPage> {
                       color: VetColors.pink,
                       shape: BoxShape.circle,
                     ),
-                    child: _foto != null
-                        ? Image.file(_foto!, fit: BoxFit.cover, cacheWidth: 400)
-                        : Image.asset(
-                            'assets/imagens/figma/frame-53-3.png',
-                            fit: BoxFit.contain,
-                          ),
+                    child: _buildProfileImage(),
                   ),
                 ),
               ),
@@ -294,6 +316,19 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProfileImage() {
+    if (kIsWeb && _fotoBytes != null) {
+      return Image.memory(_fotoBytes!, fit: BoxFit.cover, cacheWidth: 400);
+    }
+    if (!kIsWeb && _foto != null) {
+      return Image.file(_foto!, fit: BoxFit.cover, cacheWidth: 400);
+    }
+    return Image.asset(
+      'assets/imagens/figma/frame-53-3.png',
+      fit: BoxFit.contain,
     );
   }
 

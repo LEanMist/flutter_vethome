@@ -5,6 +5,11 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import '../data/vet_repository.dart';
 import 'teste_page.dart';
 
+double loginPawScaleForWidth(double preferredScale, double availableWidth) {
+  // Inclui os dedos laterais, suas rotações e sombras na largura útil.
+  return ((availableWidth - 36) / 540).clamp(0.0, preferredScale).toDouble();
+}
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -121,7 +126,10 @@ class _LoginPageState extends State<LoginPage> {
                                       children: [
                                         Positioned(
                                           top: 0,
-                                          child: _pata(compacto ? 0.65 : 1.1),
+                                          child: _pata(
+                                            compacto ? 0.65 : 1.1,
+                                            constraints.maxWidth,
+                                          ),
                                         ),
                                         Positioned(
                                           bottom: 1,
@@ -660,7 +668,8 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _pata(double escala) {
+  Widget _pata(double escala, double larguraDisponivel) {
+    escala = loginPawScaleForWidth(escala, larguraDisponivel);
     return SizedBox(
       width: 370 * escala,
       height: 100 * escala,

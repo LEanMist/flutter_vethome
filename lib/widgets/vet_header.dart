@@ -62,16 +62,19 @@ class VetHeader extends StatelessWidget {
                     : null,
               ),
               Expanded(
-                child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 26 * s,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: PetsTheme.fontComfortaa,
-                    color: Colors.white,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      fontSize: 26 * s,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: PetsTheme.fontComfortaa,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
