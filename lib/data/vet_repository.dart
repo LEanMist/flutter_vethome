@@ -1,12 +1,81 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show debugPrint;
+
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../widgets/pets/pets_theme.dart';
+import 'local_storage.dart';
 
-/// Dados em memória. Persistência e API ainda não implementadas.
+/// Interface de dados das telas, com snapshot local após cada mutação suportada.
 class VetRepository {
   VetRepository._();
+
+  static LocalStorage? _storage;
+  static Future<bool> _pendingSave = Future.value(true);
+  static Object? lastPersistenceError;
+
+  /// Deve terminar antes de runApp. Também permite simular reinício nos testes.
+  static Future<void> initialize({LocalStorage? storage}) async {
+    await flush();
+    _storage = null;
+    final local = storage ?? LocalStorage();
+    final state = await local.load();
+    clientName = state?.client.name ?? 'Liminha';
+    clientBirthDate = state?.client.birthDate ?? DateTime(2007, 2, 5);
+    clientAddress = state?.client.address ?? '';
+    clientPhone = state?.client.phone ?? '';
+    clientEmail = state?.client.email ?? '';
+    clientGender = state?.client.gender ?? '';
+    clientPhotoPath = null;
+    clientPhotoBytes = null;
+    selectedPetId = null;
+    pets
+      ..clear()
+      ..addAll(state?.pets ?? _demoPets());
+    _novosAgendamentos
+      ..clear()
+      ..addAll(state?.appointments ?? {});
+    lastPersistenceError = null;
+    _pendingSave = Future.value(true);
+    _storage = local;
+  }
+
+  /// Aguarda a fila; false indica falha, sem lançar erro assíncrono nas telas.
+  static Future<bool> flush() => _pendingSave;
+
+  static void _save() {
+    final storage = _storage;
+    // Testes/telas isolados continuam podendo usar o repositório em memória.
+    if (storage == null) return;
+    final state = LocalState(
+      client: ClientData(
+        name: clientName,
+        birthDate: clientBirthDate,
+        address: clientAddress,
+        phone: clientPhone,
+        email: clientEmail,
+        gender: clientGender,
+      ),
+      pets: List.of(pets),
+      appointments: {
+        for (final entry in _novosAgendamentos.entries)
+          entry.key: List.of(entry.value),
+      },
+    );
+    // Captura cada estado e serializa as gravações para evitar inversão de ordem.
+    _pendingSave = _pendingSave.then((_) async {
+      try {
+        await storage.save(state);
+        lastPersistenceError = null;
+        return true;
+      } catch (error) {
+        lastPersistenceError = error;
+        debugPrint('VetHome: falha ao salvar estado local.');
+        return false;
+      }
+    });
+  }
 
   static String clientName = 'Liminha';
   static DateTime clientBirthDate = DateTime(2007, 2, 5);
@@ -34,7 +103,9 @@ class VetRepository {
     selectedPetId = index >= 0 && index < pets.length ? pets[index].id : null;
   }
 
-  static final List<PetModel> pets = [
+  static final List<PetModel> pets = _demoPets();
+
+  static List<PetModel> _demoPets() => [
     PetModel(
       id: 'pet-demo-1',
       name: 'Fernando',
@@ -150,6 +221,7 @@ class VetRepository {
     ].where((part) => part != null && part.trim().isNotEmpty).join(', ');
     final birth = values['client.Data de Nascimento'];
     if (birth != null) clientBirthDate = _parseDate(birth) ?? clientBirthDate;
+    _save();
   }
 
   static void updateClient({
@@ -157,11 +229,14 @@ class VetRepository {
     DateTime? birthDate,
     String? address,
     String? phone,
+    String? email,
   }) {
     if (name != null) clientName = name;
     if (birthDate != null) clientBirthDate = birthDate;
     if (address != null) clientAddress = address;
     if (phone != null) clientPhone = phone;
+    if (email != null) clientEmail = email;
+    _save();
   }
 
   static PetModel addPet({
@@ -193,6 +268,7 @@ class VetRepository {
       neutered: false,
     );
     pets.add(pet);
+    _save();
     return pet;
   }
 
@@ -209,6 +285,7 @@ class VetRepository {
       throw ArgumentError('A edição deve preservar o ID do pet.');
     }
     pets[index] = updated;
+    _save();
   }
 
   static void removePet(PetModel pet) {
@@ -216,6 +293,7 @@ class VetRepository {
     pets.removeWhere((item) => item.id == pet.id);
     _novosAgendamentos.remove(pet.id);
     selectedPetId = selectedId == pet.id ? pets.firstOrNull?.id : selectedId;
+    _save();
   }
 
   static void addAgendamento(String petId, Agendamento agendamento) {
@@ -223,6 +301,7 @@ class VetRepository {
       throw ArgumentError('Pet não encontrado.');
     }
     _novosAgendamentos.putIfAbsent(petId, () => []).add(agendamento);
+    _save();
   }
 
   static DateTime? _parseDate(String value) {

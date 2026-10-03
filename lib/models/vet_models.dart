@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'json_fields.dart';
+
 class PetProfile {
   const PetProfile({
     required this.especie,
@@ -92,6 +94,33 @@ class Agendamento {
   final String local;
   final StatusAgendamento status;
   final String? descricao;
+
+  // O proprietário continua sendo a chave por ID no repositório.
+  Map<String, dynamic> toJson({required String petId}) => {
+    'petId': petId,
+    'data': data.toIso8601String(),
+    'tipo': tipo,
+    'veterinario': veterinario,
+    'local': local,
+    'status': status.name,
+    'descricao': descricao,
+  };
+
+  factory Agendamento.fromJson(Map<String, dynamic> json) {
+    final statusName = jsonString(json, 'status');
+    final status = StatusAgendamento.values
+        .where((value) => value.name == statusName)
+        .firstOrNull;
+    if (status == null) throw const FormatException('Status inválido');
+    return Agendamento(
+      data: jsonDate(json, 'data'),
+      tipo: jsonString(json, 'tipo'),
+      veterinario: jsonString(json, 'veterinario'),
+      local: jsonString(json, 'local'),
+      status: status,
+      descricao: jsonOptionalString(json, 'descricao'),
+    );
+  }
 }
 
 class ChatMessage {

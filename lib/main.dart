@@ -18,7 +18,9 @@ import 'screens/pets.dart'
     show ConvenioScreen, EscolhaPetScreen, ServicosScreen;
 import 'theme.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await VetRepository.initialize();
   runApp(const VetHomeApp());
 }
 

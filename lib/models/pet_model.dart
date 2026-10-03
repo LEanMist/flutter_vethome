@@ -1,6 +1,8 @@
 // lib/models/pet_model.dart
 // Modelo simples usado pela PetsPage e pelo PetCardWidget.
 
+import 'json_fields.dart';
+
 class PetModel {
   static int _nextId = 0;
 
@@ -30,6 +32,38 @@ class PetModel {
     this.neutered,
     this.ageYears,
   }) : id = id ?? 'pet-${DateTime.now().microsecondsSinceEpoch}-${_nextId++}';
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'imagePath': imagePath,
+    'description': description,
+    'species': species,
+    'sex': sex,
+    'weightKg': weightKg,
+    'birthDate': birthDate?.toIso8601String(),
+    'breed': breed,
+    'neutered': neutered,
+    'ageYears': ageYears,
+  };
+
+  factory PetModel.fromJson(Map<String, dynamic> json) {
+    final id = jsonString(json, 'id');
+    if (id.trim().isEmpty) throw const FormatException('ID do pet vazio');
+    return PetModel(
+      id: id,
+      name: jsonString(json, 'name'),
+      imagePath: jsonString(json, 'imagePath'),
+      description: jsonString(json, 'description'),
+      species: jsonOptionalString(json, 'species'),
+      sex: jsonOptionalString(json, 'sex'),
+      weightKg: jsonOptionalDouble(json, 'weightKg'),
+      birthDate: json['birthDate'] == null ? null : jsonDate(json, 'birthDate'),
+      breed: jsonOptionalString(json, 'breed'),
+      neutered: jsonOptionalBool(json, 'neutered'),
+      ageYears: jsonOptionalInt(json, 'ageYears'),
+    );
+  }
 
   PetModel copyWith({
     String? name,
