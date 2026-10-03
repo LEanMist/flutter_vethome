@@ -300,7 +300,7 @@ class _VHFormState extends State<VHForm> {
             const SizedBox(height: 18),
             if (widget.title == 'Cadastro Pet') ...[
               Image.asset(
-                'assets/imagens/figma/cachorroegatopng-3.png',
+                'assets/imagens/figma/cachorroegatopng-2.png',
                 width: 58,
                 height: 66,
                 fit: BoxFit.contain,

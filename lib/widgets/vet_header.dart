@@ -99,25 +99,26 @@ class VetHeader extends StatelessWidget {
               ),
             ],
           ),
-          Container(
-            width: 202 * s,
-            height: 52 * s,
-            decoration: BoxDecoration(
-              color: VetColors.pink.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(30 * s),
-                bottom: Radius.circular(10 * s),
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: VetColors.shadowDark,
-                  offset: Offset(2, 2),
-                  blurRadius: 4,
+          if (bottom != null)
+            Container(
+              width: 202 * s,
+              constraints: BoxConstraints(minHeight: 52 * s),
+              decoration: BoxDecoration(
+                color: VetColors.pink.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(30 * s),
+                  bottom: Radius.circular(10 * s),
                 ),
-              ],
+                boxShadow: const [
+                  BoxShadow(
+                    color: VetColors.shadowDark,
+                    offset: Offset(2, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: bottom,
             ),
-            child: bottom,
-          ),
         ],
       ),
     );

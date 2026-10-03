@@ -17,8 +17,8 @@ class PetCardWidget extends StatelessWidget {
     final double s = PetsTheme.scaleOf(context);
     final bool isCat = pet.species?.toLowerCase().contains('gato') ?? false;
     final String petIllustration = isCat
-        ? 'assets/imagens/figma/cachorroegatopng-2.png'
-        : 'assets/imagens/figma/cachorroegatopng-3.png';
+        ? 'assets/imagens/figma/cachorroegatopng-3.png'
+        : 'assets/imagens/figma/cachorroegatopng-2.png';
 
     return GestureDetector(
       onTap: onTap,

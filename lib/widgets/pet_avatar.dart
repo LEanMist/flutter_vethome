@@ -24,20 +24,35 @@ class PetAvatar extends StatelessWidget {
     final double s = PetsTheme.scaleOf(context);
     final double px = size * s;
     final double dpr = MediaQuery.devicePixelRatioOf(context);
+    // Corrige apenas a apresentação dos caminhos legados invertidos,
+    // sem modificar imagePath ou a espécie armazenados no modelo.
+    final visualImage = switch (image) {
+      'assets/imagens/figma/cachorroegatopng-3.png' =>
+        'assets/imagens/figma/cachorroegatopng-2.png',
+      'assets/imagens/figma/cachorroegatopng-2.png' =>
+        'assets/imagens/figma/cachorroegatopng-3.png',
+      _ => image,
+    };
+    final isSpeciesIllustration =
+        visualImage == 'assets/imagens/figma/cachorroegatopng-2.png' ||
+        visualImage == 'assets/imagens/figma/cachorroegatopng-3.png';
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius * s),
-      child: Image.asset(
-        image.isNotEmpty ? image : fallback,
-        width: px,
-        height: px,
-        fit: BoxFit.cover,
-        cacheWidth: (px * dpr).round(),
-        errorBuilder: (_, _, _) => Container(
+      child: ColoredBox(
+        color: isSpeciesIllustration ? VetColors.rose : Colors.transparent,
+        child: Image.asset(
+          visualImage.isNotEmpty ? visualImage : fallback,
           width: px,
           height: px,
-          color: VetColors.rose.withValues(alpha: 0.3),
-          child: Icon(Icons.pets, color: VetColors.brown, size: px * 0.5),
+          fit: BoxFit.cover,
+          cacheWidth: (px * dpr).round(),
+          errorBuilder: (_, _, _) => Container(
+            width: px,
+            height: px,
+            color: VetColors.rose.withValues(alpha: 0.3),
+            child: Icon(Icons.pets, color: VetColors.brown, size: px * 0.5),
+          ),
         ),
       ),
     );

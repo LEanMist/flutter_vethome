@@ -87,7 +87,8 @@ class _LoginPageState extends State<LoginPage> {
             final double alturacampos = compacto ? 40.0 : 60.0;
             final double larguraCampos = compacto ? 220.0 : 270.0;
 
-            return Padding(
+            return SingleChildScrollView(
+              clipBehavior: Clip.none,
               padding: EdgeInsets.symmetric(horizontal: compacto ? 18 : 24),
               child: Column(
                 children: [

@@ -106,7 +106,7 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - `dart format` foi executado nos quatro arquivos de código, incluindo `lib/widgets.dart` após a correção compartilhada. `flutter test test/vet_home_screens_test.dart`: 8 testes passando.
 - `flutter analyze` nos quatro arquivos de código desta etapa: sem ocorrências. `git diff --check`: sem problemas de whitespace.
 - A comparação exata com o Figma permanece pendente; estes ajustes seguem as orientações visuais do usuário e reutilizam assets existentes.
-- Próximo passo: conferir visualmente Pets e Perfil em dispositivo mobile e, quando o MCP estiver disponível, comparar com o Figma antes de autorizar a publicação desta etapa.
+- O Passo 2 foi aprovado, commitado e publicado em `origin/kelvin` no commit `fbbe9104f214c1b5d2606a0ef911c30173d5dd1d` (`Ajusta detalhes visuais de Pets e Perfil`). A conferência visual em dispositivo mobile e a comparação exata com o Figma, quando o MCP estiver disponível, permanecem como validações futuras, não como pendências de publicação desta etapa.
 
 ### Correção compartilhada de `VHHeader`
 
@@ -116,3 +116,16 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - Os consumidores sem `bottom` corrigidos são `SobreScreen`, `ChatScreen` (Whatsapp), `ConfigScreen`, `EscolhaPetScreen` e as implementações legadas `PetsScreen`, `PetScreen`, `EditPetScreen` e `PerfilScreen`.
 - `PetsPage` e `PerfilPage` têm cabeçalhos próprios. A remoção do bloco vazio de `PetsPage` continua necessária e foi mantida; a correção de `VHHeader` não substitui esse ajuste. Também foram preservados os ícones de animais sem círculo e o avatar plano de Perfil.
 - Rotas, callbacks, lógica de negócio e navegação permanecem inalterados. Nenhum arquivo de outras telas foi editado para aplicar a correção compartilhada.
+
+## Passo 3A — correções objetivas da auditoria
+
+- Implementado localmente na branch `kelvin`, sem commit ou push autorizado nesta etapa. O Passo 2 continua aprovado e publicado em `origin/kelvin` no commit `fbbe9104f214c1b5d2606a0ef911c30173d5dd1d`.
+- `lib/pages/login_page.dart`: o conteúdo passou a ser rolável, preservando elementos, dimensões visuais existentes, autenticação, validações e navegação. Capturas Web em 320 × 640 e 320 × 480 não apresentaram overflow vertical; o link de cadastro continua acessível por rolagem.
+- `lib/widgets/vet_header.dart`: a caixa inferior só existe quando `bottom != null`. Sem conteúdo, sua altura não é reservada. Com conteúdo, mantém largura e decoração existentes e usa a altura anterior como mínimo, permitindo acomodar conteúdo maior. Isso corrige as caixas vazias de Detalhes, Editar pet, Vacinação, Agendamentos e Novo agendamento.
+- `lib/pages/saude_page.dart`: avatar e nome organizados em coluna centralizada, com nome completo permitindo quebra de linha e altura adaptável do slot. Captura em 390 × 844 e teste com nome longo não apresentaram corte do conteúdo.
+- Os assets foram inspecionados: `assets/imagens/figma/cachorroegatopng-2.png` representa cachorro; `cachorroegatopng-3.png` representa gato. `lib/widgets/pets/pet_card_widget.dart` agora associa esses assets às espécies corretas, mantendo a regra de identificação de espécie existente e os ícones sem círculo.
+- `lib/screens/auth.dart`: a ilustração fixa de Cadastro Pet usa o asset de cachorro, correspondente ao tipo padrão do formulário, em vez do gato anterior. Campos, validações e cadastro permanecem inalterados.
+- `lib/widgets/pet_avatar.dart`: corrige na apresentação os dois caminhos legados invertidos, sem modificar `PetModel.imagePath` ou dados em `VetRepository`. Para essas duas silhuetas, aplica fundo `VetColors.rose`, dando contraste nos cards de Detalhes, Vacinação, Agendamentos e Novo agendamento, e também no avatar de Saúde. Outros assets/fotos mantêm o caminho original e não recebem esse fundo colorido.
+- `test/vet_home_step3a_test.dart`: cinco testes de regressão para ausência da caixa vazia, altura adaptável, Saúde com nome longo, mapeamento de espécies e contraste dos avatares sem alteração dos dados. A suíte existente `test/vet_home_screens_test.dart` mantém os oito testes passando.
+- Análise dos seis arquivos de código e do novo teste: sem ocorrências. Não foram alteradas rotas, lógica de negócio, navegação, dados, dependências, arquivos de assets, tema global ou `.gitignore`.
+- Limitações preservadas: fidelidade exata ao Figma continua pendente por limite do MCP; `Image.file` no Perfil Web não foi corrigido; detalhes decorativos laterais do Login em largura estreita e o título truncado de Novo agendamento permanecem fora destas correções. Não foi feita padronização geral de sombras ou formulários.
