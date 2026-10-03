@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_vethome/pages/cadastro_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
-import 'menu_page.dart';
-import 'package:flutter_vethome/widgets/circulo_clicavel.dart';
+
+import '../data/vet_repository.dart';
+import 'teste_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,8 +13,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _senhaController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   bool esconderSenha = true;
   bool lembrarDeMim = false;
@@ -26,17 +26,21 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void entrar() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const MenuPage()),
-    );
+    if (!VetRepository.authenticate(
+      _emailController.text,
+      _passwordController.text,
+    )) {
+      mostrarMensagem('Informe um e-mail válido e uma senha com 6 caracteres.');
+      return;
+    }
+    Navigator.pushReplacementNamed(context, '/pets');
   }
 
-  void abrirInformacoesCadastro() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const InformacoesCadastroPage()),
-    );
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -46,6 +50,18 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFAD3D5),
         foregroundColor: const Color(0xFF68442E),
+        actions: [
+          IconButton.filledTonal(
+            tooltip: 'Telas de teste',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TestePage()),
+              );
+            },
+            icon: const Icon(Icons.dashboard_outlined),
+          ),
+        ],
         title: Text(
           'Login',
           style: GoogleFonts.comfortaa(
@@ -114,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
                                             ),
                                             clipBehavior: Clip.antiAlias,
                                             child: Image.asset(
-                                              'assets/imagens/VetHome_logo_1.jpg',
+                                              'assets/imagens/figma/vethomepng-2.png',
                                               width: tamanhoLogo,
                                               fit: BoxFit.contain,
                                             ),
@@ -248,7 +264,7 @@ class _LoginPageState extends State<LoginPage> {
                                               ],
                                             ),
                                         child: TextField(
-                                          controller: _senhaController,
+                                          controller: _passwordController,
                                           obscureText: esconderSenha,
                                           style:
                                               GoogleFonts.montserratAlternates(
@@ -374,7 +390,9 @@ class _LoginPageState extends State<LoginPage> {
                                             ],
                                           ),
                                           TextButton(
-                                            onPressed: () {},
+                                            onPressed: () => mostrarMensagem(
+                                              'Procure o suporte para recuperar o acesso.',
+                                            ),
                                             style: TextButton.styleFrom(
                                               padding: EdgeInsets.all(11),
                                               minimumSize: Size.zero,
@@ -404,7 +422,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
 
-                        SizedBox(height: compacto ? 40 : 50),
+                        SizedBox(height: compacto ? 35 : 50),
 
                         Center(
                           child: Container(
@@ -468,8 +486,8 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             Expanded(
                               child: Container(
-                                height: 1.5,
-                                color: const Color(0xFF68442E),
+                                height: 1,
+                                color: Colors.black26,
                               ),
                             ),
 
@@ -482,14 +500,14 @@ class _LoginPageState extends State<LoginPage> {
                                 style: GoogleFonts.montserratAlternates(
                                   color: const Color(0xFF68442E),
                                   fontSize: 10,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
                             Expanded(
                               child: Container(
-                                height: 1.5,
-                                color: const Color(0xFF68442E),
+                                height: 1,
+                                color: Colors.black26,
                               ),
                             ),
                           ],
@@ -500,56 +518,48 @@ class _LoginPageState extends State<LoginPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CirculoClicavel(
-                              imagem: 'assets/imagens/google_logo.png',
-                              onPressed: () {},
+                            _botaoRedeSocial(
+                              asset:
+                                  'assets/imagens/figma/icons8-google-logo-96-1.png',
+                              onPressed: () => mostrarMensagem(
+                                'Login social ainda não está conectado.',
+                              ),
                             ),
 
                             const SizedBox(width: 20),
 
-                            CirculoClicavel(
-                              imagem: 'assets/imagens/facebook_logo.png',
-                              onPressed: () {},
+                            _botaoRedeSocial(
+                              asset:
+                                  'assets/imagens/figma/icons8-facebook-novo-96-1.png',
+                              onPressed: () => mostrarMensagem(
+                                'Login social ainda não está conectado.',
+                              ),
                             ),
 
                             const SizedBox(width: 20),
 
-                            CirculoClicavel(
-                              imagem: 'assets/imagens/instagram_logo.png',
-                              onPressed: () {},
+                            _botaoRedeSocial(
+                              asset:
+                                  'assets/imagens/figma/icons8-instagram-96-1.png',
+                              onPressed: () => mostrarMensagem(
+                                'Login social ainda não está conectado.',
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 25),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Ainda não possui uma conta? ',
-                              style: GoogleFonts.montserratAlternates(
-                                color: const Color(0xFF68442E),
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
+
+                        const SizedBox(height: 14),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/cadastro'),
+                          child: Text(
+                            'Ainda não possui uma conta? Cadastre-se',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.montserratAlternates(
+                              color: const Color(0xFF68442E),
+                              fontSize: 11,
                             ),
-                            const SizedBox(height: 11,),
-                            TextButton(
-                              onPressed: abrirInformacoesCadastro,
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                'CADASTRE-SE',
-                                style: GoogleFonts.montserratAlternates(
-                                  color: const Color(0xFFC08081),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -559,6 +569,26 @@ class _LoginPageState extends State<LoginPage> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _botaoRedeSocial({
+    required String asset,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: const Color(0xFFFAD3D5),
+          side: const BorderSide(color: Colors.black26, width: 1),
+          shape: const CircleBorder(),
+          padding: const EdgeInsets.all(10),
+        ),
+        child: Image.asset(asset, width: 26, height: 26, fit: BoxFit.contain),
       ),
     );
   }
