@@ -18,15 +18,19 @@ class VacinacaoPage extends StatelessWidget {
   final PetModel pet;
 
   static (Color, IconData, String) _visual(VacinaStatus st) => switch (st) {
-        VacinaStatus.emDia => (VetTones.success, Icons.check_circle, 'Em dia'),
-        VacinaStatus.vencendo => (VetTones.warning, Icons.schedule, 'Vence em breve'),
-        VacinaStatus.atrasada => (VetTones.danger, Icons.error, 'Atrasada'),
-      };
+    VacinaStatus.emDia => (VetTones.success, Icons.check_circle, 'Em dia'),
+    VacinaStatus.vencendo => (
+      VetTones.warning,
+      Icons.schedule,
+      'Vence em breve',
+    ),
+    VacinaStatus.atrasada => (VetTones.danger, Icons.error, 'Atrasada'),
+  };
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final vacinas = VetRepository.vacinas(pet.name);
+    final vacinas = VetRepository.vacinas(pet.id);
 
     return VetPageScaffold(
       title: 'Vacinação',

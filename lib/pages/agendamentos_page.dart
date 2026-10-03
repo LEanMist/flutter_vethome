@@ -19,14 +19,14 @@ class AgendamentosPage extends StatelessWidget {
   final PetModel pet;
 
   static (Color, String) _status(StatusAgendamento st) => switch (st) {
-        StatusAgendamento.confirmado => (VetTones.success, 'Confirmado'),
-        StatusAgendamento.pendente => (VetTones.warning, 'Pendente'),
-      };
+    StatusAgendamento.confirmado => (VetTones.success, 'Confirmado'),
+    StatusAgendamento.pendente => (VetTones.warning, 'Pendente'),
+  };
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final lista = [...VetRepository.agendamentos(pet.name)]
+    final lista = [...VetRepository.agendamentos(pet.id)]
       ..sort((a, b) => a.data.compareTo(b.data));
     final proximo = proximoAgendamento(lista);
 

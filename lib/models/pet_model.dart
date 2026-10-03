@@ -2,6 +2,9 @@
 // Modelo simples usado pela PetsPage e pelo PetCardWidget.
 
 class PetModel {
+  static int _nextId = 0;
+
+  final String id;
   final String name;
   final String imagePath;
   final String description;
@@ -11,8 +14,11 @@ class PetModel {
   final DateTime? birthDate;
   final String? breed;
   final bool? neutered;
+  // Apenas para exemplos antigos sem nascimento conhecido.
+  final int? ageYears;
 
-  const PetModel({
+  PetModel({
+    String? id,
     required this.name,
     required this.imagePath,
     required this.description,
@@ -22,5 +28,30 @@ class PetModel {
     this.birthDate,
     this.breed,
     this.neutered,
-  });
+    this.ageYears,
+  }) : id = id ?? 'pet-${DateTime.now().microsecondsSinceEpoch}-${_nextId++}';
+
+  PetModel copyWith({
+    String? name,
+    String? imagePath,
+    String? description,
+    String? species,
+    String? sex,
+    double? weightKg,
+    DateTime? birthDate,
+    String? breed,
+    bool? neutered,
+  }) => PetModel(
+    id: id,
+    name: name ?? this.name,
+    imagePath: imagePath ?? this.imagePath,
+    description: description ?? this.description,
+    species: species ?? this.species,
+    sex: sex ?? this.sex,
+    weightKg: weightKg ?? this.weightKg,
+    birthDate: birthDate ?? this.birthDate,
+    breed: breed ?? this.breed,
+    neutered: neutered ?? this.neutered,
+    ageYears: ageYears,
+  );
 }

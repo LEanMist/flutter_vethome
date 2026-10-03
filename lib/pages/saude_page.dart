@@ -20,9 +20,9 @@ class SaudePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final perfil = VetRepository.perfil(pet.name);
-    final historico = VetRepository.consultas(pet.name);
-    final vacinas = VetRepository.vacinas(pet.name);
+    final perfil = VetRepository.perfil(pet.id);
+    final historico = VetRepository.consultas(pet.id);
+    final vacinas = VetRepository.vacinas(pet.id);
 
     final vermif = historico
         .where((c) => c.tipo == 'Vermifugação')

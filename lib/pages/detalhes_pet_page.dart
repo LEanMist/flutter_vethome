@@ -69,10 +69,10 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final PetProfile perfil = VetRepository.perfil(pet.name);
-    final consultas = VetRepository.consultas(pet.name);
-    final vacinas = VetRepository.vacinas(pet.name);
-    final proximo = proximoAgendamento(VetRepository.agendamentos(pet.name));
+    final PetProfile perfil = VetRepository.perfil(pet.id);
+    final consultas = VetRepository.consultas(pet.id);
+    final vacinas = VetRepository.vacinas(pet.id);
+    final proximo = proximoAgendamento(VetRepository.agendamentos(pet.id));
 
     return VetPageScaffold(
       title: 'Detalhes',
@@ -162,7 +162,7 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
               child: ElevatedButton(
                 onPressed: () {
                   final index = VetRepository.pets.indexWhere(
-                    (item) => item.name == pet.name,
+                    (item) => item.id == pet.id,
                   );
                   if (index >= 0) {
                     VetRepository.selectedPetIndex = index;

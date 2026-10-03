@@ -271,7 +271,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final daysInMonth = DateTime(_mes.year, _mes.month + 1, 0).day;
     final consultasDoDia = [
       for (final pet in VetRepository.pets)
-        for (final agendamento in VetRepository.agendamentos(pet.name))
+        for (final agendamento in VetRepository.agendamentos(pet.id))
           if (_sameDay(agendamento.data, _selecionado))
             (pet: pet, agendamento: agendamento),
     ]..sort((a, b) => a.agendamento.data.compareTo(b.agendamento.data));
@@ -565,7 +565,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
   bool _hasAppointment(DateTime date) => VetRepository.pets.any(
     (pet) => VetRepository.agendamentos(
-      pet.name,
+      pet.id,
     ).any((appointment) => _sameDay(appointment.data, date)),
   );
 
@@ -739,7 +739,7 @@ class ConfigScreen extends StatelessWidget {
   void _showHistory(BuildContext context) {
     final appointments = [
       for (final pet in VetRepository.pets)
-        for (final appointment in VetRepository.agendamentos(pet.name))
+        for (final appointment in VetRepository.agendamentos(pet.id))
           (pet: pet, appointment: appointment),
     ]..sort((a, b) => b.appointment.data.compareTo(a.appointment.data));
     showDialog<void>(

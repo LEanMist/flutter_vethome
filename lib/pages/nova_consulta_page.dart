@@ -99,7 +99,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       return;
     }
     VetRepository.addAgendamento(
-      widget.pet.name,
+      widget.pet.id,
       Agendamento(
         data: dateTime,
         tipo: widget.service,

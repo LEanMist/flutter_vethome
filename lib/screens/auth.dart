@@ -171,6 +171,7 @@ class VHForm extends StatefulWidget {
     required this.next,
     this.initialData = const {},
     this.onSubmit,
+    this.dataPrefix = '',
   });
 
   final String title;
@@ -178,6 +179,7 @@ class VHForm extends StatefulWidget {
   final String next;
   final Map<String, String> initialData;
   final ValueChanged<Map<String, String>>? onSubmit;
+  final String dataPrefix;
 
   @override
   State<VHForm> createState() => _VHFormState();
@@ -207,7 +209,9 @@ class _VHFormState extends State<VHForm> {
 
   List<TextEditingController> _makeControllers() => [
     for (final field in widget.fields)
-      TextEditingController(text: widget.initialData[field.label] ?? ''),
+      TextEditingController(
+        text: widget.initialData['${widget.dataPrefix}${field.label}'] ?? '',
+      ),
   ];
 
   @override
@@ -273,7 +277,8 @@ class _VHFormState extends State<VHForm> {
     final data = <String, String>{
       ...widget.initialData,
       for (var i = 0; i < widget.fields.length; i++)
-        widget.fields[i].label: _controllers[i].text.trim(),
+        '${widget.dataPrefix}${widget.fields[i].label}': _controllers[i].text
+            .trim(),
     };
     widget.onSubmit?.call(data);
     Navigator.pushNamed(context, widget.next, arguments: data);
@@ -359,6 +364,7 @@ class CadastroScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const VHForm(
     title: 'Cadastro',
+    dataPrefix: 'client.',
     next: '/endereco',
     fields: [
       VHField('Nome Completo', Icons.person, value: 'Matheus Santana Lima'),
@@ -381,6 +387,7 @@ class EnderecoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => VHForm(
     title: 'Endereço',
+    dataPrefix: 'client.',
     next: '/cadastroPet',
     initialData: initialData,
     fields: const [
@@ -411,6 +418,7 @@ class CadastroPetScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => VHForm(
     title: 'Cadastro Pet',
+    dataPrefix: 'pet.',
     next: '/sucesso',
     initialData: initialData,
     fields: [
@@ -427,17 +435,17 @@ class CadastroPetScreen extends StatelessWidget {
       VHField('Raça', Icons.pets, value: 'Lulu-da-Pomerânia'),
     ],
     onSubmit: (data) {
-      final weight = double.parse(data['Peso']!.replaceAll(',', '.'));
-      final birth = _parseDate(data['Data de Nascimento']!);
+      final weight = double.parse(data['pet.Peso']!.replaceAll(',', '.'));
+      final birth = _parseDate(data['pet.Data de Nascimento']!);
       VetRepository.addPet(
-        name: data['Nome do Pet']!,
-        species: data['Tipo de Animal']!,
-        sex: data['Gênero/Sexo']!,
+        name: data['pet.Nome do Pet']!,
+        species: data['pet.Tipo de Animal']!,
+        sex: data['pet.Gênero/Sexo']!,
         weightKg: weight,
         birthDate: birth,
-        breed: data['Raça']!,
+        breed: data['pet.Raça']!,
       );
-      if (data.containsKey('E-mail')) {
+      if (data.containsKey('client.E-mail')) {
         VetRepository.registerClient(data);
       }
     },

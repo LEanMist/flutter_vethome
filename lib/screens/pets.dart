@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
+import '../pages/pets_page.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -159,6 +160,7 @@ class EscolhaPetScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (VetRepository.pets.isEmpty) return const PetsPage();
     return VHPage(
       tab: '/agenda',
       children: [
@@ -195,7 +197,9 @@ class _ServicosScreenState extends State<ServicosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cao = pets[VetRepository.selectedPetIndex].isDog;
+    final pet = VetRepository.selectedPet;
+    if (pet == null) return const PetsPage();
+    final cao = !(pet.species?.toLowerCase().contains('gato') ?? false);
     void convenio([String? service]) {
       if (service != null) servicoAtual = service;
       Navigator.pushNamed(context, '/convenio');
@@ -291,7 +295,9 @@ class _ConvenioScreenState extends State<ConvenioScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cao = pets[VetRepository.selectedPetIndex].isDog;
+    final pet = VetRepository.selectedPet;
+    if (pet == null) return const PetsPage();
+    final cao = !(pet.species?.toLowerCase().contains('gato') ?? false);
     const plans = [
       (name: 'PetLove', icon: Icons.favorite_outline),
       (name: 'Doglife', icon: Icons.health_and_safety_outlined),
@@ -302,11 +308,7 @@ class _ConvenioScreenState extends State<ConvenioScreen> {
       Navigator.pushNamed(
         context,
         '/nova-consulta',
-        arguments: {
-          'pet': VetRepository.pets[VetRepository.selectedPetIndex],
-          'service': servicoAtual,
-          'plan': _selectedPlan,
-        },
+        arguments: {'pet': pet, 'service': servicoAtual, 'plan': _selectedPlan},
       );
     }
 

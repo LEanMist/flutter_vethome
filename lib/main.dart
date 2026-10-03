@@ -30,20 +30,24 @@ Map<String, String> _formDataFromRoute(BuildContext context) {
   );
 }
 
-PetModel _petFromRoute(BuildContext context) {
+PetModel? _petFromRoute(BuildContext context) {
   final arguments = ModalRoute.of(context)?.settings.arguments;
-  if (arguments is PetModel) return arguments;
+  if (arguments is PetModel) return VetRepository.petById(arguments.id);
 
   final args = arguments is Map ? arguments : const <String, dynamic>{};
   final name = args['petName'];
-  final image = args['petImage'];
-  final description = args['description'];
+  final id = args['petId'];
+  if (id is String) return VetRepository.petById(id);
+  // Compatibilidade de entrada com argumentos antigos, sem criar outro pet.
+  if (name is String) {
+    return VetRepository.pets.where((pet) => pet.name == name).firstOrNull;
+  }
+  return VetRepository.selectedPet;
+}
 
-  return PetModel(
-    name: name is String ? name : VetRepository.pets.first.name,
-    imagePath: image is String ? image : VetRepository.pets.first.imagePath,
-    description: description is String ? description : '',
-  );
+Widget _petPage(BuildContext context, Widget Function(PetModel) builder) {
+  final pet = _petFromRoute(context);
+  return pet == null ? const PetsPage() : builder(pet);
 }
 
 class VetHomeApp extends StatelessWidget {
@@ -71,8 +75,10 @@ class VetHomeApp extends StatelessWidget {
               CadastroPetScreen(initialData: _formDataFromRoute(context)),
           '/sucesso': (_) => const SucessoScreen(),
           '/pets': (_) => const PetsPage(),
-          '/pet': (context) => DetalhesPetPage(pet: _petFromRoute(context)),
-          '/editPet': (context) => EditarPetPage(pet: _petFromRoute(context)),
+          '/pet': (context) =>
+              _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
+          '/editPet': (context) =>
+              _petPage(context, (pet) => EditarPetPage(pet: pet)),
           '/escolhaPet': (_) => const EscolhaPetScreen(),
           '/servicos': (_) => const ServicosScreen(),
           '/convenio': (_) => const ConvenioScreen(),
@@ -81,17 +87,20 @@ class VetHomeApp extends StatelessWidget {
           '/sobre': (_) => const SobreScreen(),
           '/agenda': (_) => const AgendaScreen(),
           '/detalhes-pet': (context) =>
-              DetalhesPetPage(pet: _petFromRoute(context)),
-          '/saude': (context) => SaudePage(pet: _petFromRoute(context)),
-          '/vacinacao': (context) => VacinacaoPage(pet: _petFromRoute(context)),
+              _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
+          '/saude': (context) =>
+              _petPage(context, (pet) => SaudePage(pet: pet)),
+          '/vacinacao': (context) =>
+              _petPage(context, (pet) => VacinacaoPage(pet: pet)),
           '/agendamentos': (context) =>
-              AgendamentosPage(pet: _petFromRoute(context)),
+              _petPage(context, (pet) => AgendamentosPage(pet: pet)),
           '/nova-consulta': (context) {
             final args = ModalRoute.of(context)?.settings.arguments;
             final values = args is Map ? args : const <String, dynamic>{};
             final pet = values['pet'] is PetModel
-                ? values['pet'] as PetModel
-                : VetRepository.pets.first;
+                ? VetRepository.petById((values['pet'] as PetModel).id)
+                : VetRepository.selectedPet;
+            if (pet == null) return const PetsPage();
             final service = values['service'];
             final plan = values['plan'];
             return NovaConsultaPage(

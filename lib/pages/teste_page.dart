@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
+import '../models/pet_model.dart';
 import '../pages/agendamentos_page.dart';
 import '../pages/detalhes_pet_page.dart';
 import '../pages/editar_pet_page.dart';
@@ -20,9 +21,13 @@ import '../screens/pets.dart'
 class TestePage extends StatelessWidget {
   const TestePage({super.key});
 
+  Widget _withSelectedPet(Widget Function(PetModel) builder) {
+    final pet = VetRepository.selectedPet;
+    return pet == null ? const PetsPage() : builder(pet);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pet = VetRepository.pets.first;
     final telas = <({String titulo, IconData icone, WidgetBuilder pagina})>[
       (titulo: 'Login', icone: Icons.login, pagina: (_) => const LoginPage()),
       (
@@ -49,12 +54,12 @@ class TestePage extends StatelessWidget {
       (
         titulo: 'Detalhes do pet',
         icone: Icons.info_outline,
-        pagina: (_) => DetalhesPetPage(pet: pet),
+        pagina: (_) => _withSelectedPet((pet) => DetalhesPetPage(pet: pet)),
       ),
       (
         titulo: 'Editar pet',
         icone: Icons.edit_outlined,
-        pagina: (_) => EditarPetPage(pet: pet),
+        pagina: (_) => _withSelectedPet((pet) => EditarPetPage(pet: pet)),
       ),
       (
         titulo: 'Escolha de pet',
@@ -94,25 +99,27 @@ class TestePage extends StatelessWidget {
       (
         titulo: 'Saúde do pet',
         icone: Icons.favorite_border,
-        pagina: (_) => SaudePage(pet: pet),
+        pagina: (_) => _withSelectedPet((pet) => SaudePage(pet: pet)),
       ),
       (
         titulo: 'Vacinação',
         icone: Icons.vaccines_outlined,
-        pagina: (_) => VacinacaoPage(pet: pet),
+        pagina: (_) => _withSelectedPet((pet) => VacinacaoPage(pet: pet)),
       ),
       (
         titulo: 'Agendamentos',
         icone: Icons.event_note_outlined,
-        pagina: (_) => AgendamentosPage(pet: pet),
+        pagina: (_) => _withSelectedPet((pet) => AgendamentosPage(pet: pet)),
       ),
       (
         titulo: 'Nova consulta',
         icone: Icons.add_task,
-        pagina: (_) => NovaConsultaPage(
-          pet: pet,
-          service: 'Consulta Geral',
-          plan: 'Particular',
+        pagina: (_) => _withSelectedPet(
+          (pet) => NovaConsultaPage(
+            pet: pet,
+            service: 'Consulta Geral',
+            plan: 'Particular',
+          ),
         ),
       ),
       (

@@ -70,7 +70,7 @@ class _EditarPetPageState extends State<EditarPetPage> {
     final birthDate = _parseDate(_birth.text)!;
     final weight = double.parse(_weight.text.replaceAll(',', '.'));
     final species = _species.text.trim();
-    final updated = PetModel(
+    final updated = widget.pet.copyWith(
       name: _name.text.trim(),
       imagePath: species.toLowerCase().contains('gato')
           ? PetsTheme.imgCachorroegatoPng36x32

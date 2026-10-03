@@ -4,7 +4,7 @@ import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../widgets/pets/pets_theme.dart';
 
-/// Dados de exemplo. Quando houver API, só este arquivo muda.
+/// Dados em memória. Persistência e API ainda não implementadas.
 class VetRepository {
   VetRepository._();
 
@@ -13,13 +13,30 @@ class VetRepository {
   static String clientEmail = '';
   static String clientAddress = '';
   static String clientPhone = '';
+  static String clientGender = '';
   static String? clientPhotoPath;
   // No Web, o caminho do picker é temporário; conserva a foto nesta sessão.
   static Uint8List? clientPhotoBytes;
-  static int selectedPetIndex = 0;
+  static String? selectedPetId;
+
+  static PetModel? petById(String id) =>
+      pets.where((pet) => pet.id == id).firstOrNull;
+
+  static PetModel? get selectedPet =>
+      (selectedPetId == null ? null : petById(selectedPetId!)) ??
+      pets.firstOrNull;
+
+  // Compatibilidade com as telas antigas; a seleção é armazenada por ID.
+  static int get selectedPetIndex =>
+      pets.indexWhere((pet) => pet.id == selectedPet?.id);
+
+  static set selectedPetIndex(int index) {
+    selectedPetId = index >= 0 && index < pets.length ? pets[index].id : null;
+  }
 
   static final List<PetModel> pets = [
     PetModel(
+      id: 'pet-demo-1',
       name: 'Fernando',
       imagePath: 'assets/imagens/figma/cachorroegatopng-3.png',
       description: _petSummary('Cachorro', 14, true),
@@ -31,6 +48,7 @@ class VetRepository {
       neutered: true,
     ),
     PetModel(
+      id: 'pet-demo-2',
       name: 'Kelly',
       imagePath: 'assets/imagens/figma/cachorroegatopng-2.png',
       description: _petSummary('Gato', 2, false),
@@ -39,8 +57,10 @@ class VetRepository {
       weightKg: 4.2,
       breed: 'Sem raça definida',
       neutered: false,
+      ageYears: 2,
     ),
     PetModel(
+      id: 'pet-demo-3',
       name: 'Escarola',
       imagePath: 'assets/imagens/figma/cachorroegatopng-3.png',
       description: _petSummary('Cachorro', 6, true),
@@ -49,8 +69,10 @@ class VetRepository {
       weightKg: 18,
       breed: 'Sem raça definida',
       neutered: true,
+      ageYears: 6,
     ),
     PetModel(
+      id: 'pet-demo-4',
       name: 'Eduardido',
       imagePath: 'assets/imagens/figma/cachorroegatopng-2.png',
       description: _petSummary('Gato', 1, false),
@@ -59,6 +81,7 @@ class VetRepository {
       weightKg: 3.4,
       breed: 'Sem raça definida',
       neutered: false,
+      ageYears: 1,
     ),
   ];
 
@@ -68,27 +91,6 @@ class VetRepository {
     castrado: true,
     pesoKg: 12.5,
   );
-
-  static final Map<String, PetProfile> _perfis = {
-    'Kelly': PetProfile(
-      especie: 'Gato',
-      idadeAnos: 2,
-      castrado: false,
-      pesoKg: 4.2,
-    ),
-    'Escarola': PetProfile(
-      especie: 'Cachorro',
-      idadeAnos: 6,
-      castrado: true,
-      pesoKg: 18.0,
-    ),
-    'Eduardido': PetProfile(
-      especie: 'Gato',
-      idadeAnos: 1,
-      castrado: false,
-      pesoKg: 3.4,
-    ),
-  };
 
   static final Map<String, List<Agendamento>> _novosAgendamentos = {};
   static final List<ChatMessage> chatMessages = [
@@ -113,14 +115,12 @@ class VetRepository {
     }
   }
 
-  static PetProfile perfil(String pet) {
-    final saved = _perfis[pet];
-    if (saved != null) return saved;
-    final model = pets.where((item) => item.name == pet).firstOrNull;
+  static PetProfile perfil(String petId) {
+    final model = petById(petId);
     if (model == null) return _padrao;
     final age = model.birthDate == null
-        ? _padrao.idadeAnos
-        : DateTime.now().year - model.birthDate!.year;
+        ? model.ageYears ?? _padrao.idadeAnos
+        : _age(model.birthDate!);
     return PetProfile(
       especie: model.species ?? _padrao.especie,
       idadeAnos: age,
@@ -134,19 +134,21 @@ class VetRepository {
       password.trim().length >= 6;
 
   static void registerClient(Map<String, String> values) {
-    clientName = values['Nome Completo']?.trim().isNotEmpty == true
-        ? values['Nome Completo']!.trim()
+    if (!values.keys.any((key) => key.startsWith('client.'))) return;
+    clientName = values['client.Nome Completo']?.trim().isNotEmpty == true
+        ? values['client.Nome Completo']!.trim()
         : clientName;
-    clientEmail = values['E-mail']?.trim() ?? clientEmail;
-    clientPhone = values['Telefone/Celular']?.trim() ?? clientPhone;
+    clientEmail = values['client.E-mail']?.trim() ?? clientEmail;
+    clientPhone = values['client.Telefone/Celular']?.trim() ?? clientPhone;
+    clientGender = values['client.Gênero/Sexo']?.trim() ?? clientGender;
     clientAddress = [
-      values['Endereço'],
-      values['Número'],
-      values['Complemento'],
-      values['Cidade'],
-      values['CEP'],
+      values['client.Endereço'],
+      values['client.Número'],
+      values['client.Complemento'],
+      values['client.Cidade'],
+      values['client.CEP'],
     ].where((part) => part != null && part.trim().isNotEmpty).join(', ');
-    final birth = values['Data de Nascimento'];
+    final birth = values['client.Data de Nascimento'];
     if (birth != null) clientBirthDate = _parseDate(birth) ?? clientBirthDate;
   }
 
@@ -188,14 +190,9 @@ class VetRepository {
       weightKg: weightKg,
       birthDate: birthDate,
       breed: breed,
+      neutered: false,
     );
     pets.add(pet);
-    _perfis[pet.name] = PetProfile(
-      especie: species,
-      idadeAnos: _age(birthDate),
-      castrado: false,
-      pesoKg: weightKg,
-    );
     return pet;
   }
 
@@ -206,35 +203,26 @@ class VetRepository {
   );
 
   static void updatePet(PetModel previous, PetModel updated) {
-    final index = pets.indexOf(previous);
+    final index = pets.indexWhere((pet) => pet.id == previous.id);
     if (index < 0) return;
+    if (updated.id != previous.id) {
+      throw ArgumentError('A edição deve preservar o ID do pet.');
+    }
     pets[index] = updated;
-    _perfis.remove(previous.name);
-    final appointments = _novosAgendamentos.remove(previous.name);
-    if (appointments != null) {
-      _novosAgendamentos[updated.name] = appointments;
-    }
-    if (updated.weightKg != null) {
-      _perfis[updated.name] = PetProfile(
-        especie: updated.species ?? 'Cachorro',
-        idadeAnos: updated.birthDate == null ? 0 : _age(updated.birthDate!),
-        castrado: updated.neutered ?? false,
-        pesoKg: updated.weightKg!,
-      );
-    }
   }
 
   static void removePet(PetModel pet) {
-    pets.remove(pet);
-    _perfis.remove(pet.name);
-    _novosAgendamentos.remove(pet.name);
-    selectedPetIndex = pets.isEmpty
-        ? 0
-        : selectedPetIndex.clamp(0, pets.length - 1).toInt();
+    final selectedId = selectedPet?.id;
+    pets.removeWhere((item) => item.id == pet.id);
+    _novosAgendamentos.remove(pet.id);
+    selectedPetId = selectedId == pet.id ? pets.firstOrNull?.id : selectedId;
   }
 
-  static void addAgendamento(String pet, Agendamento agendamento) {
-    _novosAgendamentos.putIfAbsent(pet, () => []).add(agendamento);
+  static void addAgendamento(String petId, Agendamento agendamento) {
+    if (petById(petId) == null) {
+      throw ArgumentError('Pet não encontrado.');
+    }
+    _novosAgendamentos.putIfAbsent(petId, () => []).add(agendamento);
   }
 
   static DateTime? _parseDate(String value) {
@@ -276,7 +264,7 @@ class VetRepository {
     return DateTime(n.year, n.month, n.day);
   }
 
-  static List<Consulta> consultas(String pet) => [
+  static List<Consulta> consultas(String petId) => [
     Consulta(
       data: _hoje.subtract(const Duration(days: 15)),
       tipo: 'Consulta Geral',
@@ -297,7 +285,7 @@ class VetRepository {
     ),
   ];
 
-  static List<Vacina> vacinas(String pet) => [
+  static List<Vacina> vacinas(String petId) => [
     Vacina(
       nome: 'V10',
       aplicada: _hoje.subtract(const Duration(days: 200)),
@@ -315,7 +303,7 @@ class VetRepository {
     ),
   ];
 
-  static List<Despesa> despesas(String pet) {
+  static List<Despesa> despesas(String petId) {
     final n = DateTime.now();
     final inicio = DateTime(n.year, n.month, 1);
     final lista = [
@@ -348,21 +336,23 @@ class VetRepository {
     return lista;
   }
 
-  static List<Agendamento> agendamentos(String pet) => [
-    Agendamento(
-      data: _hoje.add(const Duration(days: 5, hours: 14, minutes: 30)),
-      tipo: 'Consulta Geral',
-      veterinario: 'Dra. Ana Silva',
-      local: 'Clínica VetHome',
-      status: StatusAgendamento.confirmado,
-    ),
-    Agendamento(
-      data: _hoje.add(const Duration(days: 20, hours: 10)),
-      tipo: 'Vacinação',
-      veterinario: 'Dr. João Mendes',
-      local: 'Unidade Central',
-      status: StatusAgendamento.pendente,
-    ),
-    ...?_novosAgendamentos[pet],
-  ];
+  static List<Agendamento> agendamentos(String petId) => petById(petId) == null
+      ? []
+      : [
+          Agendamento(
+            data: _hoje.add(const Duration(days: 5, hours: 14, minutes: 30)),
+            tipo: 'Consulta Geral',
+            veterinario: 'Dra. Ana Silva',
+            local: 'Clínica VetHome',
+            status: StatusAgendamento.confirmado,
+          ),
+          Agendamento(
+            data: _hoje.add(const Duration(days: 20, hours: 10)),
+            tipo: 'Vacinação',
+            veterinario: 'Dr. João Mendes',
+            local: 'Unidade Central',
+            status: StatusAgendamento.pendente,
+          ),
+          ...?_novosAgendamentos[petId],
+        ];
 }
