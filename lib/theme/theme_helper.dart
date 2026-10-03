@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'vet_colors.dart';
+
 String _appTheme = "lightCode";
 LightCodeColors get appTheme => ThemeHelper().themeColor();
 ThemeData get theme => ThemeHelper().themeData();
@@ -46,16 +48,24 @@ class ThemeHelper {
 }
 
 class ColorSchemes {
-  static final lightCodeColorScheme = ColorScheme.light();
+  static final lightCodeColorScheme = ColorScheme.light(
+    primary: VetColors.brown,
+    onPrimary: Colors.white,
+    secondary: VetColors.rose,
+    onSecondary: Colors.white,
+    surface: VetColors.pink,
+    onSurface: VetColors.brown,
+    outline: VetColors.rose,
+  );
 }
 
 class LightCodeColors {
   // App Colors
   Color get white_A700 => Color(0xFFFFFFFF);
-  Color get red_300 => Color(0xFFC08081);
+  Color get red_300 => VetColors.rose;
   Color get black_900_3f => Color(0x3F000000);
-  Color get gray_800 => Color(0xFF68442E);
-  Color get red_100 => Color(0xFFFAD3D5);
+  Color get gray_800 => VetColors.brown;
+  Color get red_100 => VetColors.pink;
 
   // Additional Colors
   Color get transparentCustom => Colors.transparent;

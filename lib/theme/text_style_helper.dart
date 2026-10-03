@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../core/app_export.dart';
+import '../theme.dart';
 
 /// A helper class for managing text styles in the application
 class TextStyleHelper {
@@ -18,14 +20,14 @@ class TextStyleHelper {
   TextStyle get headline30BoldComfortaa => TextStyle(
     fontSize: 30.fSize,
     fontWeight: FontWeight.w700,
-    fontFamily: 'Comfortaa',
+    fontFamily: VH.headingFontFamily,
     color: appTheme.white_A700,
   );
 
   TextStyle get headline30BoldMontserratAlternates => TextStyle(
     fontSize: 30.fSize,
     fontWeight: FontWeight.w700,
-    fontFamily: 'MontserratAlternates',
+    fontFamily: VH.bodyFontFamily,
   );
 
   // Title Styles
@@ -40,7 +42,7 @@ class TextStyleHelper {
   TextStyle get title20BoldComfortaa => TextStyle(
     fontSize: 20.fSize,
     fontWeight: FontWeight.w700,
-    fontFamily: 'Comfortaa',
+    fontFamily: VH.headingFontFamily,
     color: appTheme.white_A700,
   );
 
@@ -50,7 +52,7 @@ class TextStyleHelper {
   TextStyle get label10BoldComfortaa => TextStyle(
     fontSize: 10.fSize,
     fontWeight: FontWeight.w700,
-    fontFamily: 'Comfortaa',
+    fontFamily: VH.headingFontFamily,
     color: appTheme.white_A700,
   );
 }

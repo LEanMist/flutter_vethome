@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/vet_repository.dart';
@@ -60,18 +59,7 @@ class VetHomeApp extends StatelessWidget {
         locale: const Locale('pt', 'BR'),
         supportedLocales: const [Locale('pt', 'BR')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        theme: ThemeData(
-          scaffoldBackgroundColor: VH.background,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: themeSeed,
-            primary: themeSeed,
-          ),
-          textTheme: GoogleFonts.montserratAlternatesTextTheme().apply(
-            bodyColor: VH.foreground,
-            displayColor: VH.foreground,
-          ),
-          useMaterial3: true,
-        ),
+        theme: VetTheme.light(themeSeed),
         initialRoute: '/',
         routes: {
           '/': (_) => const SplashScreen(),

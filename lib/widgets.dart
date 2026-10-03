@@ -7,13 +7,13 @@ import 'pages/teste_page.dart';
 import 'theme.dart';
 import 'widgets/vet_bottom_nav.dart';
 
-BoxDecoration insetBox({required Color color, double radius = 20}) {
+BoxDecoration insetBox({required Color color, double radius = VH.radiusCard}) {
   return inset_shadow.BoxDecoration(
     color: color,
     borderRadius: BorderRadius.circular(radius),
     boxShadow: const [
       inset_shadow.BoxShadow(
-        color: Color(0x22683F40),
+        color: VH.shadowSubtle,
         offset: Offset(2, 3),
         blurRadius: 7,
         inset: true,
@@ -52,7 +52,7 @@ class VHField extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              fontFamily: 'MontserratAlternates',
+              fontFamily: VH.bodyFontFamily,
               fontWeight: FontWeight.w600,
               fontSize: 14,
               color: VH.foreground,
@@ -60,13 +60,13 @@ class VHField extends StatelessWidget {
           ),
         ),
         Container(
-          height: 56,
+          height: VH.fieldHeight,
           decoration: inset_shadow.BoxDecoration(
             color: VH.background.withValues(alpha: 0.72),
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: VH.pillBorderRadius,
             boxShadow: const [
               inset_shadow.BoxShadow(
-                color: Color(0x33683F40),
+                color: VH.shadowSoft,
                 offset: Offset(2, 3),
                 blurRadius: 5,
                 inset: true,
@@ -82,7 +82,7 @@ class VHField extends StatelessWidget {
             decoration: InputDecoration(
               hintText: controller == null ? null : value,
               hintStyle: const TextStyle(
-                fontFamily: 'MontserratAlternates',
+                fontFamily: VH.bodyFontFamily,
                 fontSize: 15,
                 color: VH.mutedText,
               ),
@@ -104,20 +104,20 @@ class VHField extends StatelessWidget {
                 vertical: 15,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: VH.pillBorderRadius,
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: VH.pillBorderRadius,
                 borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: VH.pillBorderRadius,
                 borderSide: const BorderSide(color: VH.primary, width: 1),
               ),
             ),
             style: const TextStyle(
-              fontFamily: 'MontserratAlternates',
+              fontFamily: VH.bodyFontFamily,
               fontSize: 15,
               color: VH.foreground,
             ),
@@ -134,7 +134,7 @@ class PillButton extends StatelessWidget {
     this.label,
     this.child,
     this.color = VH.primary,
-    this.textColor = Colors.white,
+    this.textColor = VH.onSecondary,
     this.padding = const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
     this.onTap,
   }) : assert(label != null || child != null);
@@ -150,11 +150,11 @@ class PillButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: color,
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: VH.pillBorderRadius,
       elevation: 2,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: VH.pillBorderRadius,
         child: Padding(
           padding: padding,
           child:
@@ -185,14 +185,13 @@ class VHHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double headerHeight = 125;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.zero,
-      height: headerHeight,
+      height: VH.headerHeight,
       decoration: const BoxDecoration(
         color: VH.secondary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+        borderRadius: VH.headerBorderRadius,
         boxShadow: VH.raise,
       ),
       child: Stack(
@@ -210,7 +209,7 @@ class VHHeader extends StatelessWidget {
                 color: VH.onSecondary,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'Comfortaa',
+                fontFamily: VH.headingFontFamily,
               ),
             ),
           ),
@@ -260,13 +259,10 @@ class VHHeader extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: VH.background.withValues(alpha: 0.16),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(30),
-                  bottom: Radius.circular(10),
-                ),
+                borderRadius: VH.headerInsetBorderRadius,
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x22683F40),
+                    color: VH.shadowSubtle,
                     offset: Offset(2, 2),
                     blurRadius: 4,
                   ),
@@ -449,11 +445,11 @@ class VHMenu extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: VH.card,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: VH.cardBorderRadius,
           boxShadow: VH.raise,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: VH.cardBorderRadius,
           child: Material(
             color: VH.card,
             child: Column(
@@ -468,7 +464,7 @@ class VHMenu extends StatelessWidget {
                     title: Text(
                       items[i],
                       style: const TextStyle(
-                        fontFamily: 'MontserratAlternates',
+                        fontFamily: VH.bodyFontFamily,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: VH.foreground,
@@ -513,20 +509,14 @@ class SidePill extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: const BorderRadius.horizontal(
-            right: Radius.circular(30),
-          ),
+          borderRadius: VH.sidePillBorderRadius,
           child: Ink(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [VH.secondary, VH.background],
-              ),
-              borderRadius: const BorderRadius.horizontal(
-                right: Radius.circular(30),
-              ),
+              gradient: VH.softGradient,
+              borderRadius: VH.sidePillBorderRadius,
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x33683F40),
+                  color: VH.shadowSoft,
                   offset: Offset(2, 2),
                   blurRadius: 4,
                 ),
@@ -538,23 +528,23 @@ class SidePill extends StatelessWidget {
                 if (asset != null)
                   Image.asset(asset, width: 30, height: 30)
                 else
-                  Icon(icon, color: Colors.white, size: 30),
+                  Icon(icon, color: VH.onSecondary, size: 30),
                 const SizedBox(width: 18),
                 Expanded(
                   child: Text(
                     label,
                     style: const TextStyle(
-                      fontFamily: 'MontserratAlternates',
+                      fontFamily: VH.bodyFontFamily,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: Colors.white,
+                      color: VH.onSecondary,
                     ),
                   ),
                 ),
                 extra ??
                     const Icon(
                       Icons.chevron_right,
-                      color: Colors.white,
+                      color: VH.onSecondary,
                       size: 21,
                     ),
                 const SizedBox(width: 15),
