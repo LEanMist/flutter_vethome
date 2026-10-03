@@ -94,25 +94,6 @@ class _PetsPageState extends State<PetsPage> {
               ),
             ],
           ),
-          Container(
-            width: 202 * s,
-            height: 52 * s,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(18 * s),
-                bottom: Radius.circular(7 * s),
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: VetColors.shadowDark,
-                  offset: Offset(2, 2),
-                  blurRadius: 4,
-                  spreadRadius: -1,
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

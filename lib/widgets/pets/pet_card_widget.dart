@@ -38,19 +38,16 @@ class PetCardWidget extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
+            SizedBox(
               width: 34 * s,
               height: 34 * s,
-              decoration: const BoxDecoration(
-                color: VetColors.pink,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Image.asset(
-                petIllustration,
-                width: 22 * s,
-                height: 25 * s,
-                fit: BoxFit.contain,
+              child: Center(
+                child: Image.asset(
+                  petIllustration,
+                  width: 22 * s,
+                  height: 25 * s,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             SizedBox(width: 10 * s),

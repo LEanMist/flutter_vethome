@@ -12,6 +12,8 @@
 
 O Passo 1 de padronização visual global foi realizado no código. A conferência de fidelidade exata com o Figma permanece pendente por falta de acesso ao contexto e aos screenshots do design via MCP.
 
+O Passo 1 foi publicado na branch `kelvin` no commit `e0b4b1cd00a8ccac86fc1f5281d884a003b3d532` (`Padroniza visual global conforme Figma`).
+
 Os seis arquivos de código alterados nesta etapa são:
 
 | Arquivo | Alteração aplicada |
@@ -91,4 +93,26 @@ A foto pode vir de `VetRepository.clientPhotoPath` ou da seleção via `image_pi
 - Não aplicar automaticamente stashes ou branches de backup antigos.
 - Quando o acesso ao Figma estiver disponível, conferir o tema global e a barra inferior contra os nós e screenshots reais, incluindo as cinco abas e a área segura mobile.
 - Tratar a incompatibilidade de foto no Flutter Web em tarefa separada, após autorização.
-- Após revisão e autorização, incluir estes seis arquivos de código e `CONTEXT.md` em um commit na branch `kelvin` e publicar essa branch. Um arquivo apenas no stage não estará disponível em outro PC pelo GitHub até commit e push.
+- Para recuperar novas etapas em outro PC pelo GitHub, as alterações precisam de commit e push autorizados na branch `kelvin`; arquivos apenas locais ou no stage não são publicados.
+
+## Passo 2 — ajustes locais em Pets e Perfil
+
+O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi autorizada a correção compartilhada de áreas inferiores vazias em `VHHeader`, com atualização deste documento. A paleta e a tipografia globais permanecem intactas.
+
+- `lib/pages/pets_page.dart`: removido o retângulo arredondado vazio abaixo do título Pets. A lista, seus dados, ações e navegação permanecem iguais.
+- `lib/widgets/pets/pet_card_widget.dart`: removido o fundo circular rosa claro dos ícones de cachorro/gato. Os assets, o tamanho dos ícones, o espaço reservado na linha e o comportamento dos itens foram preservados. Este widget é consumido somente pela tela Pets.
+- `lib/pages/perfil_page.dart`: removidas as duas sombras do círculo da foto. O avatar padrão usa o asset plano existente `assets/imagens/figma/frame-53-3.png`, sem a sombra embutida de `frame-53.png`. Foram preservados o alinhamento central, as dimensões, a moldura, o contorno tracejado, as opções e os toques para editar nome e foto.
+- Nenhum asset novo foi criado. Nenhuma rota, lógica de negócio ou navegação foi alterada. A incompatibilidade preexistente de `Image.file` no Web permanece apenas documentada.
+- `dart format` foi executado nos quatro arquivos de código, incluindo `lib/widgets.dart` após a correção compartilhada. `flutter test test/vet_home_screens_test.dart`: 8 testes passando.
+- `flutter analyze` nos quatro arquivos de código desta etapa: sem ocorrências. `git diff --check`: sem problemas de whitespace.
+- A comparação exata com o Figma permanece pendente; estes ajustes seguem as orientações visuais do usuário e reutilizam assets existentes.
+- Próximo passo: conferir visualmente Pets e Perfil em dispositivo mobile e, quando o MCP estiver disponível, comparar com o Figma antes de autorizar a publicação desta etapa.
+
+### Correção compartilhada de `VHHeader`
+
+- Em `lib/widgets.dart`, a caixa inferior arredondada, sua decoração e sombra só são renderizadas quando `bottom != null`.
+- Sem `bottom`, o cabeçalho deixa de reservar a altura dessa área: tem 64 px com título e botões, ou 80 px quando também existe subtítulo. Essas alturas são escolhas de layout locais; não são medidas confirmadas do Figma.
+- Com `bottom`, permanecem a altura original de 125 px, posição, dimensões, decoração e conteúdo da caixa. Serviços e Convênio fornecem `_PetTypeTag` nesse slot e conservam o layout anterior.
+- Os consumidores sem `bottom` corrigidos são `SobreScreen`, `ChatScreen` (Whatsapp), `ConfigScreen`, `EscolhaPetScreen` e as implementações legadas `PetsScreen`, `PetScreen`, `EditPetScreen` e `PerfilScreen`.
+- `PetsPage` e `PerfilPage` têm cabeçalhos próprios. A remoção do bloco vazio de `PetsPage` continua necessária e foi mantida; a correção de `VHHeader` não substitui esse ajuste. Também foram preservados os ícones de animais sem círculo e o avatar plano de Perfil.
+- Rotas, callbacks, lógica de negócio e navegação permanecem inalterados. Nenhum arquivo de outras telas foi editado para aplicar a correção compartilhada.

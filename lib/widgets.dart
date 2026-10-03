@@ -188,7 +188,7 @@ class VHHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.zero,
-      height: VH.headerHeight,
+      height: bottom != null ? VH.headerHeight : (sub != null ? 80 : 64),
       decoration: const BoxDecoration(
         color: VH.secondary,
         borderRadius: VH.headerBorderRadius,
@@ -251,26 +251,27 @@ class VHHeader extends StatelessWidget {
                 ),
               ),
             ),
-          Positioned(
-            top: 72,
-            left: 94,
-            right: 94,
-            height: 52,
-            child: Container(
-              decoration: BoxDecoration(
-                color: VH.background.withValues(alpha: 0.16),
-                borderRadius: VH.headerInsetBorderRadius,
-                boxShadow: const [
-                  BoxShadow(
-                    color: VH.shadowSubtle,
-                    offset: Offset(2, 2),
-                    blurRadius: 4,
-                  ),
-                ],
+          if (bottom != null)
+            Positioned(
+              top: 72,
+              left: 94,
+              right: 94,
+              height: 52,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: VH.background.withValues(alpha: 0.16),
+                  borderRadius: VH.headerInsetBorderRadius,
+                  boxShadow: const [
+                    BoxShadow(
+                      color: VH.shadowSubtle,
+                      offset: Offset(2, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                child: bottom,
               ),
-              child: bottom,
             ),
-          ),
         ],
       ),
     );

@@ -280,23 +280,11 @@ class _PerfilPageState extends State<PerfilPage> {
                     decoration: BoxDecoration(
                       color: VetColors.pink,
                       shape: BoxShape.circle,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: VetColors.shadowDark,
-                          offset: Offset(3, 3),
-                          blurRadius: 6,
-                        ),
-                        BoxShadow(
-                          color: VetColors.shadowLight,
-                          offset: Offset(-3, -3),
-                          blurRadius: 6,
-                        ),
-                      ],
                     ),
                     child: _foto != null
                         ? Image.file(_foto!, fit: BoxFit.cover, cacheWidth: 400)
                         : Image.asset(
-                            'assets/imagens/figma/frame-53.png',
+                            'assets/imagens/figma/frame-53-3.png',
                             fit: BoxFit.contain,
                           ),
                   ),
