@@ -65,6 +65,7 @@ class _VHFieldState extends State<VHField> {
   final _focus = FocusNode();
   final _link = LayerLink();
   OverlayEntry? _options;
+  bool _openAbove = false;
   static _VHFieldState? _opened;
   bool get isOpen => _options != null;
   void _closeChoices({bool rebuild = true}) {
@@ -85,17 +86,28 @@ class _VHFieldState extends State<VHField> {
     _focus.unfocus();
     final box = context.findRenderObject() as RenderBox;
     final width = box.size.width;
+    final top = box.localToGlobal(Offset.zero).dy;
     final bottom = box.localToGlobal(Offset(0, box.size.height)).dy;
-    final availableHeight = (MediaQuery.sizeOf(context).height - bottom - 8)
-        .clamp(0.0, 192.0);
+    final media = MediaQuery.of(context);
+    final availableBelow =
+        media.size.height -
+        media.padding.bottom -
+        media.viewInsets.bottom -
+        bottom;
+    final availableAbove = top - media.padding.top;
+    final desiredHeight = (widget.choices!.length * 48.0).clamp(48.0, 192.0);
+    _openAbove =
+        availableBelow < desiredHeight && availableAbove > availableBelow;
+    final availableHeight = (_openAbove ? availableAbove : availableBelow)
+        .clamp(0.0, desiredHeight);
     _options = OverlayEntry(
       builder: (ctx) => Positioned(
         width: width,
         child: CompositedTransformFollower(
           link: _link,
           showWhenUnlinked: false,
-          targetAnchor: Alignment.bottomLeft,
-          followerAnchor: Alignment.topLeft,
+          targetAnchor: _openAbove ? Alignment.topLeft : Alignment.bottomLeft,
+          followerAnchor: _openAbove ? Alignment.bottomLeft : Alignment.topLeft,
           offset: Offset.zero,
           child: TapRegion(
             groupId: this,
@@ -108,9 +120,11 @@ class _VHFieldState extends State<VHField> {
                 color: VH.background,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(20),
-                  ),
+                  borderRadius: _openAbove
+                      ? const BorderRadius.vertical(top: Radius.circular(20))
+                      : const BorderRadius.vertical(
+                          bottom: Radius.circular(20),
+                        ),
                   side: BorderSide(color: VH.secondary.withValues(alpha: .65)),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -211,9 +225,11 @@ class _VHFieldState extends State<VHField> {
     );
   }
 
-  BorderRadius get fieldRadius => isOpen
-      ? const BorderRadius.vertical(top: Radius.circular(24))
-      : VH.pillBorderRadius;
+  BorderRadius get fieldRadius => !isOpen
+      ? VH.pillBorderRadius
+      : _openAbove
+      ? const BorderRadius.vertical(bottom: Radius.circular(24))
+      : const BorderRadius.vertical(top: Radius.circular(24));
 
   double _fontSize(double? width) {
     final base = widget.compact

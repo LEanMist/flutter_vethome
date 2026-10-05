@@ -127,6 +127,10 @@ void main() {
       await t.pumpAndSettle();
       expect(
         t.getBottomRight(find.byType(ListView)).dy,
+        closeTo(t.getTopLeft(field('Gênero/Sexo')).dy, 1),
+      );
+      expect(
+        t.getBottomRight(find.byType(ListView)).dy,
         lessThanOrEqualTo(632),
       );
       await t.drag(find.byType(ListView), const Offset(0, -180));
