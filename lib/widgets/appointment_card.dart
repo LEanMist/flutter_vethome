@@ -70,6 +70,7 @@ class AppointmentCard extends StatelessWidget {
                   StatusChip(
                     confirmed ? 'Confirmado' : 'Pendente',
                     confirmed ? VetTones.success : VetTones.warning,
+                    dense: true,
                   ),
                 ],
               ),
@@ -82,7 +83,7 @@ class AppointmentCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${fmtData(event.data)} · ${fmtHora(event.data)}',
+                '${fmtData(event.data)} · ${fmtHorario(event.data, event.endDate)}',
                 style: const TextStyle(color: VetColors.brown),
               ),
               const SizedBox(height: 5),

@@ -6,6 +6,7 @@ import '../data/cep_service.dart';
 import '../core/utils/form_fields.dart';
 import '../widgets/address_form.dart';
 import '../widgets/pet_form.dart';
+import '../widgets/client_gender_fields.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -300,6 +301,14 @@ class _VHFormState extends State<VHForm> {
       _controllers[widget.fields.indexWhere((f) => f.label == label)].text;
   Widget _buildField(int i) {
     final field = widget.fields[i];
+    if (widget.dataPrefix == 'client.' && field.label == 'Gênero/Sexo') {
+      return ClientGenderFields(
+        gender: _controllers[i],
+        custom: _genderCustom,
+        figmaForm: true,
+        validator: (v) => _validate(field, v),
+      );
+    }
     return VHField(
       field.label,
       field.icon,
@@ -399,14 +408,6 @@ class _VHFormState extends State<VHForm> {
                                 i != widget.fields.length - 1)
                               const SizedBox(height: 14),
                           ],
-                          if (widget.dataPrefix == 'client.' &&
-                              _value('Gênero/Sexo') == 'Outro')
-                            VHField(
-                              'Como prefere se identificar? (opcional)',
-                              Icons.person_outline,
-                              controller: _genderCustom,
-                              figmaForm: true,
-                            ),
                         ],
                       ),
                     ),
@@ -539,7 +540,7 @@ class CadastroPetScreen extends StatelessWidget {
           child: PetForm(
             title: 'Cadastro Pet',
             onSaved: (v) async {
-              VetRepository.addPet(
+              final pet = VetRepository.addPet(
                 name: v.name,
                 species: v.species,
                 sex: v.sex,
@@ -547,6 +548,7 @@ class CadastroPetScreen extends StatelessWidget {
                 birthDate: v.birth,
                 breed: v.breed,
                 photoBase64: v.photo,
+                neutered: v.neutered,
               );
               _client();
               final saved = await VetRepository.flush();
@@ -560,11 +562,20 @@ class CadastroPetScreen extends StatelessWidget {
                   ),
                 );
               }
-              Navigator.pushNamed(context, '/sucesso');
+              if (initialData['flow'] == 'addPet') {
+                VetRepository.selectedPetId = pet.id;
+                Navigator.pop(context, pet);
+              } else {
+                Navigator.pushNamed(context, '/sucesso');
+              }
             },
             onSkip: () {
               _client();
-              Navigator.pushNamed(context, '/sucesso');
+              if (initialData['flow'] == 'addPet') {
+                Navigator.pop(context);
+              } else {
+                Navigator.pushNamed(context, '/sucesso');
+              }
             },
           ),
         ),

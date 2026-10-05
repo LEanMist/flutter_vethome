@@ -7,6 +7,7 @@ import '../models/pet_model.dart';
 import '../theme/vet_colors.dart';
 import '../widgets.dart';
 import 'pet_avatar.dart';
+import 'pet_photo_button.dart';
 
 class PetFormValue {
   const PetFormValue(
@@ -17,11 +18,13 @@ class PetFormValue {
     this.birth,
     this.breed,
     this.photo,
+    this.neutered,
   );
   final String name, species, sex, breed;
   final double weight;
   final DateTime birth;
   final String? photo;
+  final bool? neutered;
 }
 
 /// The same compact form for registration and editing, including modal editing.
@@ -59,12 +62,19 @@ class _PetFormState extends State<PetForm> {
         : '${widget.pet!.birthDate!.day.toString().padLeft(2, '0')}/${widget.pet!.birthDate!.month.toString().padLeft(2, '0')}/${widget.pet!.birthDate!.year}',
   );
   late final breed = TextEditingController(text: widget.pet?.breed ?? '');
+  late final neutered = TextEditingController(
+    text: widget.pet?.neutered == null
+        ? ''
+        : widget.pet!.neutered!
+        ? 'Castrado'
+        : 'Não castrado',
+  );
   late String? photo = widget.pet?.photoBase64;
   bool busy = false;
   bool validationFailed = false;
   @override
   void dispose() {
-    for (final c in [name, species, sex, weight, birth, breed]) {
+    for (final c in [name, species, sex, weight, birth, breed, neutered]) {
       c.dispose();
     }
     super.dispose();
@@ -107,6 +117,7 @@ class _PetFormState extends State<PetForm> {
     icon,
     compact: true,
     controller: c,
+    value: label == 'Castração' ? 'Não informado' : null,
     choices: choices,
     suggestions: suggestions,
     onChanged: onChanged,
@@ -124,10 +135,11 @@ class _PetFormState extends State<PetForm> {
           name.text.trim(),
           species.text,
           sex.text,
-          double.parse(weight.text.replaceAll(',', '.')),
+          parsePetWeight(weight.text)!,
           parseBirthDate(birth.text)!,
           breed.text.trim(),
           photo,
+          neutered.text.isEmpty ? null : neutered.text == 'Castrado',
         ),
       );
     } on FormatException catch (e) {
@@ -167,6 +179,7 @@ class _PetFormState extends State<PetForm> {
                 width: small ? 80 : 96,
                 height: small ? 72 : 90,
                 child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     Align(
                       alignment: Alignment.center,
@@ -180,20 +193,9 @@ class _PetFormState extends State<PetForm> {
                       ),
                     ),
                     Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: IconButton.filled(
-                        tooltip: 'Alterar foto do pet',
-                        onPressed: busy ? null : choosePhoto,
-                        style: IconButton.styleFrom(
-                          backgroundColor: VetColors.brown,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(44, 44),
-                        ),
-                        icon: busy
-                            ? const Icon(Icons.hourglass_top, size: 19)
-                            : const Icon(Icons.photo_camera_outlined, size: 19),
-                      ),
+                      right: -2,
+                      bottom: -2,
+                      child: PetPhotoButton(onPressed: choosePhoto, busy: busy),
                     ),
                   ],
                 ),
@@ -247,11 +249,8 @@ class _PetFormState extends State<PetForm> {
                           Icons.scale_outlined,
                           weight,
                           validator: (v) {
-                            final n = double.tryParse(
-                              (v ?? '').replaceAll(',', '.'),
-                            );
-                            return n == null || !n.isFinite || n <= 0
-                                ? 'Peso inválido'
+                            return parsePetWeight(v ?? '') == null
+                                ? 'Peso inválido (kg)'
                                 : null;
                           },
                         ),
@@ -260,11 +259,19 @@ class _PetFormState extends State<PetForm> {
                   ),
                   const SizedBox(height: 8),
                   field(
+                    'Castração',
+                    Icons.health_and_safety_outlined,
+                    neutered,
+                    choices: const ['Castrado', 'Não castrado'],
+                    validator: (_) => null,
+                  ),
+                  const SizedBox(height: 8),
+                  field(
                     editing ? 'Nascimento (DD/MM/AAAA)' : 'Data de Nascimento',
                     Icons.cake_outlined,
                     birth,
                     validator: (v) => parseBirthDate(v ?? '') == null
-                        ? 'Informe uma data válida'
+                        ? 'Data inválida'
                         : null,
                   ),
                   const SizedBox(height: 8),
@@ -324,7 +331,7 @@ class _PetFormState extends State<PetForm> {
       );
       // Normal 320x640/390x844 uses the compact column. Only keyboard/validation
       // messages or unusually short windows need a scrollable fallback.
-      return constraints.maxHeight < 540 ||
+      return constraints.maxHeight < 560 ||
               validationFailed ||
               MediaQuery.viewInsetsOf(context).bottom > 0
           ? SingleChildScrollView(child: content)

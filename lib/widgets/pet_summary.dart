@@ -4,6 +4,7 @@ import '../models/pet_model.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
 import 'pet_avatar.dart';
+import 'pet_photo_button.dart';
 
 enum PetSummarySize { compact, medium, detailed }
 
@@ -85,25 +86,14 @@ class _PetSummaryState extends State<PetSummary> {
                         ),
                         if (widget.onPhoto != null)
                           Positioned(
-                            right: -4,
-                            bottom: -4,
-                            child: IconButton.filled(
-                              tooltip: 'Alterar foto do pet',
-                              onPressed: widget.onPhoto,
-                              style: IconButton.styleFrom(
-                                backgroundColor: VetColors.brown,
-                                foregroundColor: Colors.white,
-                              ),
-                              icon: const Icon(
-                                Icons.photo_camera_outlined,
-                                size: 18,
-                              ),
-                            ),
+                            right: -10,
+                            bottom: -10,
+                            child: PetPhotoButton(onPressed: widget.onPhoto),
                           ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 20),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,11 +163,14 @@ class _PetSummaryState extends State<PetSummary> {
                                   ? 'Não informado'
                                   : fmtPeso(pet.weightKg!),
                             ),
-                            if (pet.neutered != null)
-                              datum(
-                                'Castração',
-                                pet.neutered! ? 'Castrado' : 'Não castrado',
-                              ),
+                            datum(
+                              'Castração',
+                              pet.neutered == null
+                                  ? 'Não informado'
+                                  : pet.neutered!
+                                  ? 'Castrado'
+                                  : 'Não castrado',
+                            ),
                           ],
                         )
                       : const SizedBox(width: double.infinity),

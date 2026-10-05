@@ -11,6 +11,7 @@ import '../core/utils/formatters.dart';
 import '../core/utils/form_fields.dart';
 import '../core/utils/photo_picker.dart';
 import '../widgets.dart';
+import '../widgets/client_gender_fields.dart';
 import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
@@ -29,6 +30,33 @@ class _PerfilPageState extends State<PerfilPage> {
   DateTime _nascimento = VetRepository.clientBirthDate;
   File? _foto;
   Uint8List? _fotoBytes;
+  bool _editingGender = false;
+  final _gender = TextEditingController(text: VetRepository.clientGender);
+  final _genderCustom = TextEditingController(
+    text: VetRepository.clientGenderCustom,
+  );
+  @override
+  void dispose() {
+    _gender.dispose();
+    _genderCustom.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveGender() async {
+    VetRepository.registerClient({
+      'client.Gênero/Sexo': _gender.text,
+      'client.Gênero personalizado': _genderCustom.text,
+    });
+    final saved = await VetRepository.flush();
+    if (!mounted) return;
+    setState(() => _editingGender = false);
+    if (!saved) {
+      vetSoon(
+        context,
+        'Dados atualizados nesta sessão. Não foi possível salvar localmente.',
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -301,6 +329,10 @@ class _PerfilPageState extends State<PerfilPage> {
       MapEntry('Mudar Nome de Perfil', _mudarNome),
       MapEntry('Mudar Data de Nascimento', _mudarNascimento),
       MapEntry('Alterar endereço', _mudarEndereco),
+      MapEntry(
+        'Mudar gênero',
+        () => setState(() => _editingGender = !_editingGender),
+      ),
     ];
 
     return Padding(
@@ -333,6 +365,17 @@ class _PerfilPageState extends State<PerfilPage> {
                     ),
                   ],
                 ),
+              ),
+            ),
+          ],
+          if (_editingGender) ...[
+            const SizedBox(height: 10),
+            ClientGenderFields(gender: _gender, custom: _genderCustom),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _saveGender,
+                child: const Text('Salvar gênero'),
               ),
             ),
           ],

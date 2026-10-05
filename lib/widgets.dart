@@ -40,9 +40,11 @@ class VHField extends StatefulWidget {
     this.inputFormatters,
     this.figmaForm = false,
     this.compact = false,
+    this.fitSingleLine = false,
   });
   final bool figmaForm;
   final bool compact;
+  final bool fitSingleLine;
   final String label;
   final IconData icon;
   final String? value;
@@ -83,6 +85,9 @@ class _VHFieldState extends State<VHField> {
     _focus.unfocus();
     final box = context.findRenderObject() as RenderBox;
     final width = box.size.width;
+    final bottom = box.localToGlobal(Offset(0, box.size.height)).dy;
+    final availableHeight = (MediaQuery.sizeOf(context).height - bottom - 8)
+        .clamp(0.0, 192.0);
     _options = OverlayEntry(
       builder: (ctx) => Positioned(
         width: width,
@@ -91,7 +96,7 @@ class _VHFieldState extends State<VHField> {
           showWhenUnlinked: false,
           targetAnchor: Alignment.bottomLeft,
           followerAnchor: Alignment.topLeft,
-          offset: const Offset(0, 4),
+          offset: Offset.zero,
           child: TapRegion(
             groupId: this,
             child: TweenAnimationBuilder<double>(
@@ -101,28 +106,39 @@ class _VHFieldState extends State<VHField> {
                   Opacity(opacity: value, child: child),
               child: Material(
                 color: VH.background,
-                elevation: 3,
-                borderRadius: BorderRadius.circular(16),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(20),
+                  ),
+                  side: BorderSide(color: VH.secondary.withValues(alpha: .65)),
+                ),
                 clipBehavior: Clip.antiAlias,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 192),
-                  child: ListView(
+                  constraints: BoxConstraints(maxHeight: availableHeight),
+                  child: ListView.separated(
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
-                    children: [
-                      for (final value in widget.choices!)
-                        ListTile(
-                          minTileHeight: 48,
-                          dense: true,
-                          title: Text(value),
-                          selected: controller.text == value,
-                          onTap: () {
-                            controller.text = value;
-                            _closeChoices();
-                            widget.onChanged?.call(value);
-                          },
-                        ),
-                    ],
+                    itemCount: widget.choices!.length,
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      thickness: .5,
+                      color: VH.secondary.withValues(alpha: .35),
+                    ),
+                    itemBuilder: (_, index) {
+                      final value = widget.choices![index];
+                      return ListTile(
+                        minTileHeight: 48,
+                        dense: true,
+                        title: Text(value),
+                        selected: controller.text == value,
+                        onTap: () {
+                          controller.text = value;
+                          _closeChoices();
+                          widget.onChanged?.call(value);
+                        },
+                      );
+                    },
                   ),
                 ),
               ),
@@ -195,13 +211,45 @@ class _VHFieldState extends State<VHField> {
     );
   }
 
-  Widget input(TextEditingController c, FocusNode focus) => TextFormField(
+  BorderRadius get fieldRadius => isOpen
+      ? const BorderRadius.vertical(top: Radius.circular(24))
+      : VH.pillBorderRadius;
+
+  double _fontSize(double? width) {
+    final base = widget.compact
+        ? 13.0
+        : widget.figmaForm
+        ? 15.0
+        : 14.0;
+    if (!widget.fitSingleLine || width == null || controller.text.isEmpty) {
+      return base;
+    }
+    final style = Theme.of(
+      context,
+    ).textTheme.bodyLarge!.copyWith(fontSize: base);
+    final painter = TextPainter(
+      text: TextSpan(text: controller.text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final available = width - (widget.compact ? 32 : 58) - 20;
+    return (base * available / painter.width).clamp(12.0, base);
+  }
+
+  Widget input(
+    TextEditingController c,
+    FocusNode focus, {
+    double? width,
+  }) => TextFormField(
     controller: c,
     focusNode: focus,
     obscureText: widget.password,
     readOnly: widget.choices != null,
     onTap: widget.choices == null ? null : _toggleChoices,
-    onChanged: widget.onChanged,
+    onChanged: (value) {
+      widget.onChanged?.call(value);
+      if (widget.fitSingleLine) setState(() {});
+    },
+    selectAllOnFocus: const ['Peso', 'Peso (kg)'].contains(widget.label),
     inputFormatters: formatters,
     keyboardType:
         widget.keyboardType ??
@@ -214,11 +262,7 @@ class _VHFieldState extends State<VHField> {
             : TextInputType.text),
     validator: widget.validator,
     style: TextStyle(
-      fontSize: widget.compact
-          ? 13
-          : widget.figmaForm
-          ? 15
-          : 14,
+      fontSize: _fontSize(width),
       fontFamily: widget.figmaForm ? VH.headingFontFamily : null,
       fontWeight: widget.figmaForm ? FontWeight.w500 : null,
       color: VH.foreground,
@@ -268,15 +312,17 @@ class _VHFieldState extends State<VHField> {
       ),
       suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 48),
       border: OutlineInputBorder(
-        borderRadius: VH.pillBorderRadius,
+        borderRadius: fieldRadius,
         borderSide: const BorderSide(color: VH.secondary),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: VH.pillBorderRadius,
-        borderSide: BorderSide(color: VH.secondary.withValues(alpha: .5)),
+        borderRadius: fieldRadius,
+        borderSide: BorderSide(
+          color: VH.secondary.withValues(alpha: isOpen ? .65 : .5),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: VH.pillBorderRadius,
+        borderRadius: fieldRadius,
         borderSide: const BorderSide(color: VH.foreground, width: 2),
       ),
     ),
@@ -311,9 +357,14 @@ class _VHFieldState extends State<VHField> {
                   VH.background,
                 ],
               ),
-              borderRadius: VH.pillBorderRadius,
+              borderRadius: fieldRadius,
             ),
-            child: widget.suggestions.isEmpty
+            child: widget.fitSingleLine
+                ? LayoutBuilder(
+                    builder: (context, constraints) =>
+                        input(controller, _focus, width: constraints.maxWidth),
+                  )
+                : widget.suggestions.isEmpty
                 ? input(controller, _focus)
                 : RawAutocomplete<String>(
                     textEditingController: controller,

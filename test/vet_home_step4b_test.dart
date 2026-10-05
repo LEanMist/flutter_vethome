@@ -282,8 +282,10 @@ void main() {
         'client',
         'pets',
         'appointments',
+        'vaccinations',
       });
       expect(json['appointments'], isEmpty);
+      expect(json['vaccinations'], isEmpty);
       expect(
         VetRepository.agendamentos(VetRepository.pets.first.id),
         hasLength(2),

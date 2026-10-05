@@ -127,127 +127,142 @@ class _AddressFormState extends State<AddressForm> {
     );
   }
 
+  Widget _field(
+    String label,
+    IconData icon,
+    TextEditingController controller, {
+    FormFieldValidator<String>? validator,
+    ValueChanged<String>? onChanged,
+  }) => VHField(
+    label,
+    icon,
+    compact: true,
+    fitSingleLine: true,
+    controller: controller,
+    validator: validator,
+    onChanged: onChanged,
+  );
+
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.topCenter,
+  Widget build(BuildContext context) => Center(
     child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 390),
-      child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          49 * (MediaQuery.sizeOf(context).width / 390).clamp(.8, 1.0),
-          31,
-          49 * (MediaQuery.sizeOf(context).width / 390).clamp(.8, 1.0),
-          24,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              widget.title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Comfortaa',
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: VH.secondary, width: 3),
-              ),
-              child: Form(
-                key: _key,
-                child: Column(
-                  children: [
-                    VHField(
-                      'CEP',
-                      Icons.local_post_office_outlined,
-                      figmaForm: true,
-                      controller: _cep,
-                      onChanged: _lookup,
-                      validator: (v) =>
-                          (v ?? '').replaceAll(RegExp(r'\D'), '').length == 8
-                          ? null
-                          : 'Informe um CEP com 8 números',
+      constraints: const BoxConstraints(maxWidth: 440),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final content = Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  widget.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Comfortaa',
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: VH.secondary.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: VH.secondary.withValues(alpha: .3),
                     ),
-                    if (_status.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Text(
-                          _status,
-                          style: const TextStyle(fontSize: 12),
+                  ),
+                  child: Form(
+                    key: _key,
+                    child: Column(
+                      children: [
+                        _field(
+                          'CEP',
+                          Icons.pin_drop_outlined,
+                          _cep,
+                          onChanged: _lookup,
+                          validator: (v) =>
+                              (v ?? '').replaceAll(RegExp(r'\D'), '').length ==
+                                  8
+                              ? null
+                              : 'Informe um CEP com 8 números',
                         ),
+                        if (_status.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              _status,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        const SizedBox(height: 10),
+                        _field(
+                          'Endereço',
+                          Icons.location_on_outlined,
+                          _street,
+                          validator: _required,
+                        ),
+                        const SizedBox(height: 10),
+                        _field(
+                          'Número',
+                          Icons.tag,
+                          _number,
+                          validator: _required,
+                        ),
+                        const SizedBox(height: 10),
+                        _field(
+                          'Complemento (opcional)',
+                          Icons.home_outlined,
+                          _complement,
+                        ),
+                        const SizedBox(height: 10),
+                        _field(
+                          'Cidade',
+                          Icons.location_city_outlined,
+                          _city,
+                          validator: _required,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VH.secondary,
+                      foregroundColor: Colors.white,
+                      shape: const StadiumBorder(),
+                      textStyle: const TextStyle(
+                        fontFamily: VH.headingFontFamily,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
                       ),
-                    const SizedBox(height: 14),
-                    VHField(
-                      'Endereço',
-                      Icons.location_on_outlined,
-                      figmaForm: true,
-                      controller: _street,
-                      validator: _required,
                     ),
-                    const SizedBox(height: 14),
-                    VHField(
-                      'Cidade',
-                      Icons.location_city,
-                      figmaForm: true,
-                      controller: _city,
-                      validator: _required,
-                    ),
-                    const SizedBox(height: 14),
-                    VHField(
-                      'Número',
-                      Icons.tag,
-                      figmaForm: true,
-                      controller: _number,
-                      keyboardType: TextInputType.number,
-                      validator: _required,
-                    ),
-                    const SizedBox(height: 14),
-                    VHField(
-                      'Complemento',
-                      Icons.home_outlined,
-                      figmaForm: true,
-                      controller: _complement,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            Center(
-              child: SizedBox(
-                width: 181,
-                height: 65,
-                child: ElevatedButton(
-                  onPressed: _loading ? null : _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VH.secondary,
-                    foregroundColor: Colors.white,
-                    shape: const StadiumBorder(),
-                    textStyle: const TextStyle(
-                      fontFamily: VH.headingFontFamily,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    child: Text(
+                      widget.onSkip == null ? 'Salvar endereço' : 'Cadastrar',
+                      maxLines: 1,
+                      softWrap: false,
                     ),
                   ),
-                  child: Text(
-                    widget.onSkip == null ? 'Salvar endereço' : 'Cadastrar',
-                  ),
                 ),
-              ),
+                if (widget.onSkip != null)
+                  TextButton(
+                    onPressed: widget.onSkip,
+                    child: const Text('Pular por enquanto'),
+                  ),
+              ],
             ),
-            if (widget.onSkip != null)
-              TextButton(
-                onPressed: widget.onSkip,
-                child: const Text('Pular por enquanto'),
-              ),
-          ],
-        ),
+          );
+          return constraints.maxHeight < 520 ||
+                  MediaQuery.viewInsetsOf(context).bottom > 0
+              ? SingleChildScrollView(child: content)
+              : Align(alignment: Alignment.topCenter, child: content);
+        },
       ),
     ),
   );

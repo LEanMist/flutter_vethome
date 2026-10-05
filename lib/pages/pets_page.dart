@@ -17,6 +17,13 @@ class PetsPage extends StatefulWidget {
 }
 
 class _PetsPageState extends State<PetsPage> {
+  final _listScroll = ScrollController();
+  @override
+  void dispose() {
+    _listScroll.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
@@ -123,6 +130,7 @@ class _PetsPageState extends State<PetsPage> {
             child: VetRepository.pets.isEmpty
                 ? const Center(child: Text('Nenhum pet cadastrado'))
                 : ListView.separated(
+                    controller: _listScroll,
                     padding: EdgeInsets.zero,
                     itemCount: VetRepository.pets.length,
                     separatorBuilder: (_, _) => SizedBox(height: 18 * s),
@@ -147,8 +155,27 @@ class _PetsPageState extends State<PetsPage> {
             child: IconButton.filled(
               tooltip: 'Adicionar pet',
               onPressed: () async {
-                await Navigator.pushNamed(context, '/cadastroPet');
-                if (mounted) setState(() {});
+                final created = await Navigator.pushNamed(
+                  context,
+                  '/cadastroPet',
+                  arguments: {'flow': 'addPet'},
+                );
+                if (!mounted) return;
+                setState(() {});
+                if (created != null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && _listScroll.hasClients) {
+                      _listScroll.animateTo(
+                        _listScroll.position.maxScrollExtent,
+                        duration: const Duration(milliseconds: 240),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  });
+                  ScaffoldMessenger.of(this.context).showSnackBar(
+                    const SnackBar(content: Text('Pet cadastrado.')),
+                  );
+                }
               },
               style: IconButton.styleFrom(
                 backgroundColor: VetColors.brown,

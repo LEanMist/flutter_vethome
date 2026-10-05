@@ -244,6 +244,18 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
+/// Complete weeks starting on Sunday, including adjacent months.
+List<DateTime> calendarMonthDays(DateTime month) {
+  final first = DateTime(month.year, month.month);
+  final offset = first.weekday % 7;
+  // Six complete weeks keep the calendar height stable during navigation.
+  const cells = 42;
+  return List.generate(
+    cells,
+    (i) => DateTime(month.year, month.month, 1 - offset + i),
+  );
+}
+
 class AgendaScreen extends StatefulWidget {
   const AgendaScreen({super.key, this.initialDate});
 
@@ -281,8 +293,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final firstOffset = DateTime(_mes.year, _mes.month, 1).weekday % 7;
-    final daysInMonth = DateTime(_mes.year, _mes.month + 1, 0).day;
+    final calendarDays = calendarMonthDays(_mes);
     final consultasDoDia = [
       for (final pet in VetRepository.pets)
         for (final agendamento in VetRepository.agendamentos(pet.id))
@@ -364,7 +375,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       ),
                       GridView.count(
                         crossAxisCount: 7,
-                        mainAxisExtent: 44,
+                        mainAxisExtent: 37,
                         padding: EdgeInsets.zero,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -388,17 +399,15 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                 ),
                               ),
                             ),
-                          for (var i = 0; i < firstOffset; i++)
-                            const SizedBox(),
-                          for (var date = 1; date <= daysInMonth; date++)
+                          for (final date in calendarDays)
                             GestureDetector(
-                              onTap: () => setState(
-                                () => _selecionado = DateTime(
-                                  _mes.year,
-                                  _mes.month,
-                                  date,
-                                ),
+                              key: ValueKey(
+                                'calendar-${date.year}-${date.month}-${date.day}',
                               ),
+                              onTap: () => setState(() {
+                                _selecionado = date;
+                                _mes = DateTime(date.year, date.month);
+                              }),
                               child: Stack(
                                 alignment: Alignment.center,
                                 children: [
@@ -406,29 +415,26 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                     margin: const EdgeInsets.all(2),
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color:
-                                          date == _selecionado.day &&
-                                              _mes.year == _selecionado.year &&
-                                              _mes.month == _selecionado.month
+                                      color: _sameDay(date, _selecionado)
                                           ? VH.background
                                           : Colors.transparent,
                                     ),
                                     child: Center(
                                       child: Text(
-                                        '$date',
+                                        '${date.day}',
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: VH.foreground,
+                                          color: VH.foreground.withValues(
+                                            alpha: date.month == _mes.month
+                                                ? 1
+                                                : .55,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                  if (_isDemoDate(
-                                        DateTime(_mes.year, _mes.month, date),
-                                      ) ||
-                                      _hasAppointment(
-                                        DateTime(_mes.year, _mes.month, date),
-                                      ))
+                                  if (_isDemoDate(date) ||
+                                      _hasAppointment(date))
                                     const Positioned(
                                       bottom: 1,
                                       child: CircleAvatar(
@@ -456,7 +462,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   height: 41,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Color.lerp(VH.background, Colors.white, .75),
+                    color: Color.lerp(
+                      VH.background,
+                      Colors.white,
+                      .2,
+                    )!.withValues(alpha: .88),
                     border: Border.all(
                       color: VH.secondary.withValues(alpha: .35),
                     ),
@@ -508,17 +518,14 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       decoration: BoxDecoration(
                         color: VH.secondary,
                         borderRadius: BorderRadius.circular(18),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: VH.foreground.withValues(alpha: .25),
+                          ),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Text(
-                            fmtHora(item.agendamento.data),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -531,17 +538,19 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                   ),
                                 ),
                                 Text(
+                                  fmtHorario(
+                                    item.agendamento.data,
+                                    item.agendamento.endDate,
+                                  ),
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                Text(
                                   '${item.demo ? 'Demonstração · ' : ''}${item.name} · ${item.agendamento.local}',
                                   style: const TextStyle(fontSize: 11),
                                 ),
                               ],
                             ),
                           ),
-                          if (item.agendamento.endDate != null)
-                            Text(
-                              fmtHora(item.agendamento.endDate!),
-                              style: const TextStyle(fontSize: 11),
-                            ),
                         ],
                       ),
                     ),
@@ -796,7 +805,7 @@ class ConfigScreen extends StatelessWidget {
                             );
                           },
                         ),
-                      const SizedBox(height: 20),
+                      const Divider(height: 24),
                       const Text(
                         'Histórico de agendamentos',
                         style: TextStyle(
@@ -810,9 +819,11 @@ class ConfigScreen extends StatelessWidget {
                       for (final item in events)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: AppointmentCard(
-                            pet: item.pet,
-                            event: item.event,
+                          child: Column(
+                            children: [
+                              AppointmentCard(pet: item.pet, event: item.event),
+                              const Divider(height: 8, thickness: .5),
+                            ],
                           ),
                         ),
                     ],

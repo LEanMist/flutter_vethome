@@ -202,12 +202,9 @@ void main() {
       isTrue,
     );
     await choose(tester, 'Gênero/Sexo', 'Outro');
-    expect(
-      find.text('Como prefere se identificar? (opcional)'),
-      findsOneWidget,
-    );
+    expect(find.text('Como deseja informar? (opcional)'), findsOneWidget);
     await choose(tester, 'Gênero/Sexo', 'Prefiro não informar');
-    expect(find.text('Como prefere se identificar? (opcional)'), findsNothing);
+    expect(find.text('Como deseja informar? (opcional)'), findsNothing);
   });
   testWidgets('pular endereço não cria registro vazio', (tester) async {
     await tester.pumpWidget(
@@ -451,8 +448,8 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Horário inicial'));
-    await tester.tap(find.text('Horário inicial'));
+    await tester.ensureVisible(find.text('Início'));
+    await tester.tap(find.text('Início'));
     await tester.pumpAndSettle();
     for (final hour in [12, 13, 14, 15, 16]) {
       final chip = tester.widget<ChoiceChip>(

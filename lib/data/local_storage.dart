@@ -76,11 +76,13 @@ class LocalState {
     required this.client,
     required this.pets,
     required this.appointments,
+    this.vaccinations = const {},
   });
 
   final ClientData client;
   final List<PetModel> pets;
   final Map<String, List<Agendamento>> appointments;
+  final Map<String, List<Vacina>> vaccinations;
 
   Map<String, dynamic> toJson() => {
     'schemaVersion': 1,
@@ -89,6 +91,10 @@ class LocalState {
     'appointments': [
       for (final entry in appointments.entries)
         for (final event in entry.value) event.toJson(petId: entry.key),
+    ],
+    'vaccinations': [
+      for (final entry in vaccinations.entries)
+        for (final vaccine in entry.value) vaccine.toJson(petId: entry.key),
     ],
   };
 
@@ -117,10 +123,26 @@ class LocalState {
           .putIfAbsent(petId, () => [])
           .add(Agendamento.fromJson(event));
     }
+    final rawVaccinations = json['vaccinations'] ?? const [];
+    if (rawVaccinations is! List) {
+      throw const FormatException('Lista de vacinas inválida');
+    }
+    final vaccinations = <String, List<Vacina>>{};
+    final vaccineIds = <String>{};
+    for (final value in rawVaccinations) {
+      final item = _object(value);
+      final petId = jsonString(item, 'petId');
+      final vaccine = Vacina.fromJson(item);
+      if (!ids.contains(petId) || !vaccineIds.add(vaccine.id!)) {
+        throw const FormatException('Vacina sem pet ou ID duplicado');
+      }
+      vaccinations.putIfAbsent(petId, () => []).add(vaccine);
+    }
     return LocalState(
       client: ClientData.fromJson(json['client'] as Map<String, dynamic>),
       pets: pets,
       appointments: appointments,
+      vaccinations: vaccinations,
     );
   }
 
@@ -132,7 +154,7 @@ class LocalState {
   }
 }
 
-/// Única fronteira com preferências: não armazena fotos, senha ou mocks clínicos.
+/// Snapshot local; não grava senha, foto do cliente ou mocks clínicos.
 class LocalStorage {
   static const stateKey = 'vethome.state.v1';
 

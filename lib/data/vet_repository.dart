@@ -7,6 +7,7 @@ import '../models/vet_models.dart';
 import '../models/saved_address.dart';
 import '../core/utils/pet_images.dart';
 import '../core/utils/pet_photo.dart';
+import '../core/utils/form_fields.dart';
 import 'local_storage.dart';
 
 /// Interface de dados das telas, com snapshot local após cada mutação suportada.
@@ -42,6 +43,9 @@ class VetRepository {
     _novosAgendamentos
       ..clear()
       ..addAll(state?.appointments ?? {});
+    _vaccines
+      ..clear()
+      ..addAll(state?.vaccinations ?? {});
     lastPersistenceError = null;
     _pendingSave = Future.value(true);
     _storage = local;
@@ -69,6 +73,9 @@ class VetRepository {
       appointments: {
         for (final entry in _novosAgendamentos.entries)
           entry.key: List.of(entry.value),
+      },
+      vaccinations: {
+        for (final entry in _vaccines.entries) entry.key: List.of(entry.value),
       },
     );
     // Captura cada estado e serializa as gravações para evitar inversão de ordem.
@@ -205,8 +212,8 @@ class VetRepository {
     return PetProfile(
       especie: model.species ?? _padrao.especie,
       idadeAnos: age,
-      castrado: model.neutered ?? _padrao.castrado,
-      pesoKg: model.weightKg ?? _padrao.pesoKg,
+      castrado: model.neutered,
+      pesoKg: model.weightKg,
     );
   }
 
@@ -327,6 +334,7 @@ class VetRepository {
 
   static PetModel addPet({
     String? photoBase64,
+    bool? neutered,
     required String name,
     required String species,
     required String sex,
@@ -341,6 +349,9 @@ class VetRepository {
         'Já existe um pet com esse nome.',
       );
     }
+    if (!isValidPetWeight(weightKg)) {
+      throw const FormatException('Informe um peso válido em kg (até 250).');
+    }
     _checkPhoto(photoBase64);
     final pet = PetModel(
       photoBase64: photoBase64,
@@ -352,7 +363,7 @@ class VetRepository {
       weightKg: weightKg,
       birthDate: birthDate,
       breed: breed,
-      neutered: false,
+      neutered: neutered,
     );
     pets.add(pet);
     _save();
@@ -371,6 +382,11 @@ class VetRepository {
     if (updated.id != previous.id) {
       throw ArgumentError('A edição deve preservar o ID do pet.');
     }
+    if (updated.weightKg != pets[index].weightKg &&
+        updated.weightKg != null &&
+        !isValidPetWeight(updated.weightKg)) {
+      throw const FormatException('Informe um peso válido em kg (até 250).');
+    }
     _checkPhoto(updated.photoBase64, exceptId: updated.id);
     pets[index] = updated;
     _save();
@@ -380,6 +396,7 @@ class VetRepository {
     final selectedId = selectedPet?.id;
     pets.removeWhere((item) => item.id == pet.id);
     _novosAgendamentos.remove(pet.id);
+    _vaccines.remove(pet.id);
     selectedPetId = selectedId == pet.id ? pets.firstOrNull?.id : selectedId;
     _save();
   }
@@ -452,7 +469,65 @@ class VetRepository {
     ),
   ];
 
-  static List<Vacina> vacinas(String petId) => [
+  static final Map<String, List<Vacina>> _vaccines = {};
+  static int _vaccineCounter = 0;
+
+  static List<Vacina> realVaccines(String petId) =>
+      petById(petId) == null ? [] : List.unmodifiable(_vaccines[petId] ?? []);
+
+  static void saveVaccine(String petId, Vacina vaccine) {
+    if (petById(petId) == null) throw ArgumentError('Pet não encontrado.');
+    if (vaccine.id != null &&
+        (vaccine.id!.trim().isEmpty ||
+            _vaccines.entries.any(
+              (entry) =>
+                  entry.key != petId &&
+                  entry.value.any((v) => v.id == vaccine.id),
+            ))) {
+      throw const FormatException(
+        'Vacina pertence a outro pet ou possui ID inválido.',
+      );
+    }
+    final today = DateTime.now();
+    final endToday = DateTime(today.year, today.month, today.day + 1);
+    if (vaccine.nome.trim().isEmpty ||
+        vaccine.aplicada.year < 1900 ||
+        !vaccine.aplicada.isBefore(endToday) ||
+        (vaccine.proxima != null &&
+            vaccine.proxima!.isBefore(vaccine.aplicada))) {
+      throw const FormatException('Confira as datas e o nome da vacina.');
+    }
+    final records = _vaccines.putIfAbsent(petId, () => []);
+    final id =
+        vaccine.id ??
+        'vaccine-${DateTime.now().microsecondsSinceEpoch}-${_vaccineCounter++}';
+    final index = records.indexWhere((v) => v.id == id);
+    final record = Vacina(
+      id: id,
+      nome: vaccine.nome.trim(),
+      aplicada: vaccine.aplicada,
+      proxima: vaccine.proxima,
+    );
+    if (index < 0) {
+      records.add(record);
+    } else {
+      records[index] = record;
+    }
+    _save();
+  }
+
+  static void removeVaccine(String petId, String vaccineId) {
+    _vaccines[petId]?.removeWhere((v) => v.id == vaccineId);
+    _save();
+  }
+
+  static List<Vacina> vacinas(String petId) {
+    if (petById(petId) == null) return [];
+    final real = realVaccines(petId);
+    return real.isNotEmpty ? real : _demoVaccines();
+  }
+
+  static List<Vacina> _demoVaccines() => [
     Vacina(
       nome: 'V10',
       aplicada: _hoje.subtract(const Duration(days: 200)),

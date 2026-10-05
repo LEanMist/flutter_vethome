@@ -12,11 +12,13 @@ class VetHeader extends StatelessWidget {
     required this.title,
     this.showBack = true,
     this.bottom,
+    this.titleSize = 30,
   });
 
   final String title;
   final bool showBack;
   final Widget? bottom;
+  final double titleSize;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +75,7 @@ class VetHeader extends StatelessWidget {
                     maxLines: 1,
                     softWrap: false,
                     style: TextStyle(
-                      fontSize: 30 * s,
+                      fontSize: titleSize * s,
                       fontWeight: FontWeight.w700,
                       fontFamily: PetsTheme.fontComfortaa,
                       color: Colors.white,

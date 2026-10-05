@@ -133,7 +133,7 @@ void main() {
           (list.childrenDelegate as SliverChildListDelegate).children;
       final cards = children
           .whereType<Padding>()
-          .map((p) => p.child)
+          .map((p) => (p.child as Column).children.first)
           .whereType<AppointmentCard>()
           .toList();
       expect(cards.map((c) => c.event.tipo).toList(), [

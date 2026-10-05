@@ -19,6 +19,7 @@ class VetPageScaffold extends StatelessWidget {
     this.showBack = true,
     this.headerBottom,
     this.footer,
+    this.titleSize = 30,
   });
 
   final String title;
@@ -31,6 +32,7 @@ class VetPageScaffold extends StatelessWidget {
   final bool showBack;
   final Widget? headerBottom;
   final Widget? footer;
+  final double titleSize;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +45,12 @@ class VetPageScaffold extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 600),
           child: Column(
             children: [
-              VetHeader(title: title, showBack: showBack, bottom: headerBottom),
+              VetHeader(
+                title: title,
+                titleSize: titleSize,
+                showBack: showBack,
+                bottom: headerBottom,
+              ),
               Expanded(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.all(16 * s),

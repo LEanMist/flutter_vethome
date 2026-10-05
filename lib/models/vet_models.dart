@@ -12,12 +12,16 @@ class PetProfile {
 
   final String especie;
   final int idadeAnos;
-  final bool castrado;
-  final double pesoKg;
+  final bool? castrado;
+  final double? pesoKg;
 
   String get resumo =>
       '$especie • $idadeAnos ${idadeAnos == 1 ? 'ano' : 'anos'} • '
-      '${castrado ? 'Castrado' : 'Não castrado'}';
+      '${castrado == null
+          ? 'Castração não informada'
+          : castrado!
+          ? 'Castrado'
+          : 'Não castrado'}';
 }
 
 class Consulta {
@@ -33,23 +37,49 @@ class Consulta {
   final String descricao;
 }
 
-enum VacinaStatus { emDia, vencendo, atrasada }
+enum VacinaStatus { emDia, vencendo, atrasada, semPrevisao }
 
 class Vacina {
   const Vacina({
+    this.id,
     required this.nome,
     required this.aplicada,
-    required this.proxima,
+    this.proxima,
   });
+  final String? id;
   final String nome;
   final DateTime aplicada;
-  final DateTime proxima;
+  final DateTime? proxima;
 
   VacinaStatus get status {
-    final now = DateTime.now();
-    if (proxima.isBefore(now)) return VacinaStatus.atrasada;
-    if (proxima.difference(now).inDays <= 30) return VacinaStatus.vencendo;
+    final next = proxima;
+    if (next == null) return VacinaStatus.semPrevisao;
+    final now = DateUtils.dateOnly(DateTime.now());
+    final day = DateUtils.dateOnly(next);
+    if (day.isBefore(now)) return VacinaStatus.atrasada;
+    if (day.difference(now).inDays <= 30) return VacinaStatus.vencendo;
     return VacinaStatus.emDia;
+  }
+
+  Map<String, dynamic> toJson({required String petId}) => {
+    'id': id,
+    'petId': petId,
+    'nome': nome,
+    'aplicada': aplicada.toIso8601String(),
+    if (proxima != null) 'proxima': proxima!.toIso8601String(),
+  };
+
+  factory Vacina.fromJson(Map<String, dynamic> json) {
+    final id = jsonString(json, 'id');
+    final name = jsonString(json, 'nome');
+    final applied = jsonDate(json, 'aplicada');
+    final next = json['proxima'] == null ? null : jsonDate(json, 'proxima');
+    if (id.isEmpty ||
+        name.trim().isEmpty ||
+        (next != null && next.isBefore(applied))) {
+      throw const FormatException('Vacina inválida');
+    }
+    return Vacina(id: id, nome: name, aplicada: applied, proxima: next);
   }
 }
 
@@ -145,6 +175,12 @@ String resumoVacinas(List<Vacina> v) {
   return n == 1
       ? '1 vacina precisa de atenção'
       : '$n vacinas precisam de atenção';
+}
+
+String contagemVacinas(List<Vacina> vaccines) {
+  final good = vaccines.where((v) => v.status == VacinaStatus.emDia).length;
+  final attention = vaccines.length - good;
+  return '$good em dia · $attention ${attention == 1 ? 'precisa' : 'precisam'} de atenção';
 }
 
 Agendamento? proximoAgendamento(List<Agendamento> l) {

@@ -21,7 +21,7 @@ class SaudePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final perfil = VetRepository.perfil(pet.id);
+    final currentPet = VetRepository.petById(pet.id) ?? pet;
     final historico = VetRepository.consultas(pet.id);
     final vacinas = VetRepository.vacinas(pet.id);
 
@@ -33,15 +33,17 @@ class SaudePage extends StatelessWidget {
 
     return VetPageScaffold(
       title: 'Saúde',
-      pet: pet,
+      pet: currentPet,
       selectedIndex: 0,
       children: [
-        PetSummary(pet: pet, size: PetSummarySize.medium),
+        PetSummary(pet: currentPet, size: PetSummarySize.medium),
         const VetSectionTitle('Resumo de saúde'),
         const DemoBadge(),
         Text(
-          pet.weightKg == null
-              ? 'Vacinação, peso, vermifugação e histórico.'
+          VetRepository.realVaccines(pet.id).isNotEmpty
+              ? 'Vermifugação e histórico.'
+              : currentPet.weightKg == null
+              ? 'Vacinação, vermifugação e histórico.'
               : 'Vacinação, vermifugação e histórico.',
           style: const TextStyle(fontSize: 12),
         ),
@@ -51,7 +53,8 @@ class SaudePage extends StatelessWidget {
               child: _MiniStatus(
                 icon: emDia ? Icons.check_circle : Icons.warning_amber,
                 title: 'Vacinação',
-                value: emDia ? 'Em dia' : 'Atenção',
+                value:
+                    '${vacinas.where((v) => v.status == VacinaStatus.emDia).length}/${vacinas.length} em dia',
                 color: emDia ? VetTones.success : VetTones.warning,
               ),
             ),
@@ -60,7 +63,9 @@ class SaudePage extends StatelessWidget {
               child: _MiniStatus(
                 icon: Icons.monitor_weight,
                 title: 'Peso',
-                value: fmtPeso(perfil.pesoKg),
+                value: currentPet.weightKg == null
+                    ? 'Não informado'
+                    : fmtPeso(currentPet.weightKg!),
                 color: VetTones.warning,
               ),
             ),
@@ -101,10 +106,10 @@ class _MiniStatus extends StatelessWidget {
     return VetCard(
       flat: true,
       color: VetColors.rose.withValues(alpha: .2),
-      padding: EdgeInsets.symmetric(vertical: 12 * s, horizontal: 6 * s),
+      padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 6 * s),
       child: Column(
         children: [
-          Icon(icon, color: VetColors.brown, size: 22 * s),
+          Icon(icon, color: VetColors.brown, size: 18 * s),
           SizedBox(height: 6 * s),
           Text(
             title,
@@ -152,7 +157,7 @@ class _ConsultaCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              const StatusChip('Concluído', VetTones.success),
+              const StatusChip('Concluído', VetTones.success, dense: true),
             ],
           ),
           SizedBox(height: 8 * s),

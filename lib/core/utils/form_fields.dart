@@ -57,18 +57,18 @@ class PhoneMask extends TextInputFormatter {
 }
 
 DateTime? parseBirthDate(String text) {
+  final date = parseCalendarDate(text);
+  return date == null || date.isAfter(DateTime.now()) ? null : date;
+}
+
+DateTime? parseCalendarDate(String text) {
   final match = RegExp(r'^(\d{2})/(\d{2})/(\d{4})$').firstMatch(text);
   if (match == null) return null;
   final day = int.parse(match[1]!),
       month = int.parse(match[2]!),
       year = int.parse(match[3]!);
   final date = DateTime(year, month, day);
-  return year >= 1900 &&
-          date.day == day &&
-          date.month == month &&
-          !date.isAfter(DateTime.now())
-      ? date
-      : null;
+  return year >= 1900 && date.day == day && date.month == month ? date : null;
 }
 
 String normalizedText(String text) {
@@ -107,3 +107,15 @@ List<String> breedsFor(String species) => species.toLowerCase().contains('gato')
         'Rottweiler',
         'Border Collie',
       ];
+
+/// Input in kilograms: one decimal separator, never thousands/grouping.
+double? parsePetWeight(String text) {
+  final value = text.trim();
+  if (!RegExp(r'^\d+(?:[,.]\d{1,3})?$').hasMatch(value)) return null;
+  final kg = double.tryParse(value.replaceAll(',', '.'));
+  return isValidPetWeight(kg) ? kg : null;
+}
+
+// Entry validation for the supported dog/cat form; no display clamping.
+bool isValidPetWeight(double? kg) =>
+    kg != null && kg.isFinite && kg > 0 && kg <= 250;

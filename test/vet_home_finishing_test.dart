@@ -213,10 +213,7 @@ void main() {
     expect(find.byType(SimpleDialog), findsNothing);
     await tester.tap(find.widgetWithText(ListTile, 'Outro'));
     await tester.pumpAndSettle();
-    expect(
-      find.text('Como prefere se identificar? (opcional)'),
-      findsOneWidget,
-    );
+    expect(find.text('Como deseja informar? (opcional)'), findsOneWidget);
   });
   testWidgets(
     'picker real compartilhado prepara uma miniatura local no cadastro',

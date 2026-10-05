@@ -50,6 +50,7 @@ class EditarPetPage extends StatelessWidget {
           birthDate: v.birth,
           breed: v.breed,
           photoBase64: v.photo,
+          neutered: v.neutered,
           imagePath:
               v.species == current.species ||
                   PetImages.hasImage(current.imagePath)

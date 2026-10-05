@@ -237,22 +237,22 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
             final start = _selectionPill(
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                title: const Text('Horário inicial'),
+                title: const Text('Início'),
                 subtitle: Text(_time?.format(context) ?? 'Selecione'),
-                trailing: const Icon(Icons.schedule),
+                trailing: const Icon(Icons.schedule, size: 18),
                 onTap: () => _chooseTime(),
               ),
             );
             final end = _selectionPill(
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                title: const Text('Horário final'),
+                title: const Text('Fim'),
                 subtitle: Text(_end?.format(context) ?? 'Selecione'),
-                trailing: const Icon(Icons.schedule_outlined),
+                trailing: const Icon(Icons.schedule_outlined, size: 18),
                 onTap: () => _chooseTime(end: true),
               ),
             );
-            return c.maxWidth >= 340
+            return c.maxWidth >= 270
                 ? Row(
                     children: [
                       Expanded(child: start),
