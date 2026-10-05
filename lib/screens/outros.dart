@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../core/utils/formatters.dart';
 import '../data/vet_repository.dart';
+import '../models/vet_models.dart';
+import '../widgets/appointment_card.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -39,49 +41,52 @@ class PerfilScreen extends StatelessWidget {
 
 class SobreScreen extends StatelessWidget {
   const SobreScreen({super.key});
-
   @override
-  Widget build(BuildContext context) {
-    return VHPage(
-      tab: '/chat',
-      children: [
-        const VHHeader('Sobre a veterinária'),
-        const VHBadge('vet-badge', 'Gabriella'),
-        Container(
-          margin: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-          padding: const EdgeInsets.all(20),
-          decoration: insetBox(color: VH.muted),
-          child: const Column(
-            children: [
-              Text(
-                'Sobre Mim',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+  Widget build(BuildContext context) => VHPage(
+    tab: '/sobre',
+    children: [
+      const VHHeader('Sobre a veterinária'),
+      Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Image.asset(
+              'assets/imagens/figma/vethomepng-2.png',
+              width: 140,
+              height: 140,
+            ),
+            const Text(
+              'Gabriella',
+              style: TextStyle(
+                fontFamily: 'Comfortaa',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
-              SizedBox(height: 12),
-              Text(
-                'Sou veterinária há mais de 8 anos, apaixonada por cães e gatos. Atendo em domicílio para que seu pet fique tranquilo no lar.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13),
-              ),
-              SizedBox(height: 16),
-              Text('CONTATO:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(
-                '11 93244-4392',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Gabriela@gmail.com',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Sobre mim',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Sou veterinária há mais de 8 anos, apaixonada por cães e gatos. Atendo em domicílio para que seu pet fique tranquilo no lar.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            const ListTile(
+              leading: Icon(Icons.phone_outlined),
+              title: Text('11 93244-4392'),
+            ),
+            const ListTile(
+              leading: Icon(Icons.email_outlined),
+              title: Text('Gabriela@gmail.com'),
+            ),
+          ],
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 }
 
 class ChatScreen extends StatefulWidget {
@@ -240,15 +245,24 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class AgendaScreen extends StatefulWidget {
-  const AgendaScreen({super.key});
+  const AgendaScreen({super.key, this.initialDate});
+
+  final DateTime? initialDate;
 
   @override
   State<AgendaScreen> createState() => _AgendaScreenState();
 }
 
 class _AgendaScreenState extends State<AgendaScreen> {
-  DateTime _mes = DateTime(2026, 1);
-  DateTime _selecionado = DateTime(2026, 1, 13);
+  late DateTime _mes;
+  late DateTime _selecionado;
+
+  @override
+  void initState() {
+    super.initState();
+    _selecionado = widget.initialDate ?? DateTime.now();
+    _mes = DateTime(_selecionado.year, _selecionado.month);
+  }
 
   static const meses = [
     'Janeiro',
@@ -273,273 +287,267 @@ class _AgendaScreenState extends State<AgendaScreen> {
       for (final pet in VetRepository.pets)
         for (final agendamento in VetRepository.agendamentos(pet.id))
           if (_sameDay(agendamento.data, _selecionado))
-            (pet: pet, agendamento: agendamento),
+            (
+              name: pet.name,
+              agendamento: agendamento,
+              demo: !VetRepository.realAppointments(
+                pet.id,
+              ).contains(agendamento),
+            ),
+      if (_isDemoDate(_selecionado))
+        for (final example in const [
+          (hour: 10, type: 'Hemograma'),
+          (hour: 13, type: 'Urina'),
+          (hour: 16, type: 'Creatinina'),
+        ])
+          (
+            name: 'VetHome',
+            demo: true,
+            agendamento: Agendamento(
+              data: DateTime(2026, 1, 13, example.hour),
+              endDate: DateTime(2026, 1, 13, example.hour + 1),
+              tipo: example.type,
+              veterinario: 'Demonstração',
+              local: 'VetHome',
+              status: StatusAgendamento.pendente,
+            ),
+          ),
     ]..sort((a, b) => a.agendamento.data.compareTo(b.agendamento.data));
 
     return VHPage(
       tab: '/agenda',
       children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: VH.secondary,
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
-            boxShadow: VH.raise,
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      tooltip: 'Mês anterior',
-                      onPressed: () => _changeMonth(-1),
-                      icon: const Icon(
-                        Icons.chevron_left,
-                        color: VH.onSecondary,
-                      ),
-                    ),
-                    Text(
-                      '${meses[_mes.month - 1]} ${_mes.year}',
-                      style: const TextStyle(
-                        color: VH.onSecondary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Próximo mês',
-                      onPressed: () => _changeMonth(1),
-                      icon: const Icon(
-                        Icons.chevron_right,
-                        color: VH.onSecondary,
-                      ),
-                    ),
-                  ],
+        Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Container(
+                key: const ValueKey('agenda-calendar'),
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: VH.secondary,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(24),
+                  ),
                 ),
-                const SizedBox(height: 8),
-                GridView.count(
-                  crossAxisCount: 7,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    for (final weekday in [
-                      'Dom',
-                      'Seg',
-                      'Ter',
-                      'Qua',
-                      'Qui',
-                      'Sex',
-                      'Sáb',
-                    ])
-                      Center(
-                        child: Text(
-                          weekday,
-                          style: const TextStyle(
-                            color: VH.onSecondary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            tooltip: 'Mês anterior',
+                            onPressed: () => _changeMonth(-1),
+                            icon: const Icon(
+                              Icons.chevron_left,
+                              color: VH.onSecondary,
+                            ),
                           ),
-                        ),
+                          Text(
+                            '${meses[_mes.month - 1]} ${_mes.year}',
+                            style: const TextStyle(
+                              color: VH.onSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Próximo mês',
+                            onPressed: () => _changeMonth(1),
+                            icon: const Icon(
+                              Icons.chevron_right,
+                              color: VH.onSecondary,
+                            ),
+                          ),
+                        ],
                       ),
-                    for (var i = 0; i < firstOffset; i++) const SizedBox(),
-                    for (var date = 1; date <= daysInMonth; date++)
-                      GestureDetector(
-                        onTap: () => setState(
-                          () => _selecionado = DateTime(
-                            _mes.year,
-                            _mes.month,
-                            date,
-                          ),
-                        ),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color:
-                                    date == _selecionado.day &&
-                                        _mes.year == _selecionado.year &&
-                                        _mes.month == _selecionado.month
-                                    ? VH.background
-                                    : Colors.transparent,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '$date',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color:
-                                        date == _selecionado.day &&
-                                            _mes.year == _selecionado.year &&
-                                            _mes.month == _selecionado.month
-                                        ? VH.foreground
-                                        : VH.onSecondary,
-                                  ),
+                      GridView.count(
+                        crossAxisCount: 7,
+                        mainAxisExtent: 44,
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          for (final weekday in [
+                            'Dom',
+                            'Seg',
+                            'Ter',
+                            'Qua',
+                            'Qui',
+                            'Sex',
+                            'Sáb',
+                          ])
+                            Center(
+                              child: Text(
+                                weekday,
+                                style: const TextStyle(
+                                  color: VH.foreground,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                            if (_isDemoDate(
-                                  DateTime(_mes.year, _mes.month, date),
-                                ) ||
-                                _hasAppointment(
-                                  DateTime(_mes.year, _mes.month, date),
-                                ))
-                              const Positioned(
-                                bottom: 1,
-                                child: CircleAvatar(
-                                  radius: 2,
-                                  backgroundColor: VH.onSecondary,
+                          for (var i = 0; i < firstOffset; i++)
+                            const SizedBox(),
+                          for (var date = 1; date <= daysInMonth; date++)
+                            GestureDetector(
+                              onTap: () => setState(
+                                () => _selecionado = DateTime(
+                                  _mes.year,
+                                  _mes.month,
+                                  date,
                                 ),
                               ),
-                          ],
-                        ),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                          date == _selecionado.day &&
+                                              _mes.year == _selecionado.year &&
+                                              _mes.month == _selecionado.month
+                                          ? VH.background
+                                          : Colors.transparent,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '$date',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: VH.foreground,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (_isDemoDate(
+                                        DateTime(_mes.year, _mes.month, date),
+                                      ) ||
+                                      _hasAppointment(
+                                        DateTime(_mes.year, _mes.month, date),
+                                      ))
+                                    const Positioned(
+                                      bottom: 1,
+                                      child: CircleAvatar(
+                                        radius: 2,
+                                        backgroundColor: VH.onSecondary,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
+            Positioned(
+              bottom: 0,
+              left: 32,
+              right: 32,
+              child: Center(
+                child: Container(
+                  width: 258,
+                  height: 41,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Color.lerp(VH.background, Colors.white, .75),
+                    border: Border.all(
+                      color: VH.secondary.withValues(alpha: .35),
+                    ),
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: Text(
+                    '${_selecionado.day} - ${_weekdayNames[_selecionado.weekday % 7]}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        Container(
-          margin: const EdgeInsets.only(top: 16),
-          alignment: Alignment.center,
-          child: Container(
-            width: 250,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color: VH.accent.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: VH.secondary, width: 3),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+          child: ElevatedButton(
+            onPressed: () => Navigator.pushNamed(context, '/escolhaPet'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VH.primary,
+              foregroundColor: Colors.white,
             ),
-            child: Text(
-              '${_selecionado.day} - '
-              '${_weekdayNames[_selecionado.weekday % 7]}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+            child: const Text('Nova Consulta'),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-          child: Column(
-            children: [
-              if (_isDemoDate(_selecionado))
-                for (final consulta in const [
-                  (hora: '10:00', tipo: 'Hemograma'),
-                  (hora: '13:00', tipo: 'Urina'),
-                  (hora: '16:00', tipo: 'Creatinina'),
-                ])
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+          child: DefaultTextStyle.merge(
+            style: const TextStyle(color: Colors.white),
+            child: Column(
+              children: [
+                if (consultasDoDia.isEmpty)
+                  if (!_isDemoDate(_selecionado))
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 22),
+                      child: Text(
+                        'Não há consultas neste dia.',
+                        style: TextStyle(color: VH.foreground),
+                      ),
+                    ),
+                for (final item in consultasDoDia)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.only(bottom: 10),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
-                        vertical: 12,
+                        vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: VH.card,
+                        color: VH.secondary,
                         borderRadius: BorderRadius.circular(18),
-                        boxShadow: VH.raise,
                       ),
                       child: Row(
                         children: [
                           Text(
-                            consulta.hora,
+                            fmtHora(item.agendamento.data),
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  consulta.tipo,
+                                  item.agendamento.tipo,
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const Text(
-                                  'Fernando · VetHome',
-                                  style: TextStyle(fontSize: 11),
+                                Text(
+                                  '${item.demo ? 'Demonstração · ' : ''}${item.name} · ${item.agendamento.local}',
+                                  style: const TextStyle(fontSize: 11),
                                 ),
                               ],
                             ),
                           ),
-                          Text(
-                            '${(int.parse(consulta.hora.substring(0, 2)) + 1).toString().padLeft(2, '0')}:00',
-                            style: const TextStyle(fontSize: 11),
-                          ),
+                          if (item.agendamento.endDate != null)
+                            Text(
+                              fmtHora(item.agendamento.endDate!),
+                              style: const TextStyle(fontSize: 11),
+                            ),
                         ],
                       ),
                     ),
                   ),
-              if (consultasDoDia.isEmpty)
-                if (!_isDemoDate(_selecionado))
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 22),
-                    child: Text('Não há consultas neste dia.'),
-                  ),
-              for (final item in consultasDoDia)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: VH.card,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: VH.raise,
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          fmtHora(item.agendamento.data),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.agendamento.tipo,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                '${item.pet.name} · ${item.agendamento.local}',
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Center(
-          child: PillButton(
-            label: 'Nova Consulta',
-            onTap: () => Navigator.pushNamed(context, '/escolhaPet'),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 20),
@@ -549,11 +557,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
   static const _weekdayNames = [
     'Domingo',
-    'Segunda',
-    'Terça',
-    'Quarta',
-    'Quinta',
-    'Sexta',
+    'Segunda-feira',
+    'Terça-feira',
+    'Quarta-feira',
+    'Quinta-feira',
+    'Sexta-feira',
     'Sábado',
   ];
 
@@ -591,33 +599,37 @@ class ConfigScreen extends StatelessWidget {
       tab: '/config',
       children: [
         const VHHeader('Configurações', showBack: false),
-        VHMenu(
-          const [
-            'Tema do Aplicativo',
-            'Meus Endereços',
-            'Suporte',
-            'Histórico',
-            'Sair',
-          ],
-          onTap: (index) {
-            switch (index) {
-              case 0:
-                _chooseTheme(context);
-                break;
-              case 1:
-                _editAddress(context);
-                break;
-              case 2:
-                _showSupport(context);
-                break;
-              case 3:
-                _showHistory(context);
-                break;
-              case 4:
-                _signOut(context);
-                break;
-            }
-          },
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              for (final item in <({String label, VoidCallback action})>[
+                (
+                  label: 'Tema do Aplicativo',
+                  action: () => _chooseTheme(context),
+                ),
+                (
+                  label: 'Meus Endereços',
+                  action: () => Navigator.pushNamed(context, '/enderecos'),
+                ),
+                (
+                  label: 'Sobre a veterinária',
+                  action: () => Navigator.pushNamed(context, '/sobre'),
+                ),
+                (label: 'Suporte', action: () => _showSupport(context)),
+                (label: 'Histórico', action: () => _showHistory(context)),
+                (label: 'Sair', action: () => _signOut(context)),
+              ]) ...[
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(item.label),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: item.action,
+                ),
+                const Divider(height: 1, thickness: .6),
+              ],
+            ],
+          ),
         ),
       ],
     );
@@ -704,17 +716,6 @@ class ConfigScreen extends StatelessWidget {
     if (color != null) VH.themeSeed.value = color;
   }
 
-  Future<void> _editAddress(BuildContext context) async {
-    final address = await showDialog<String>(
-      context: context,
-      builder: (_) =>
-          _AddressDialog(initialAddress: VetRepository.clientAddress),
-    );
-    if (address != null) {
-      VetRepository.updateClient(address: address);
-    }
-  }
-
   void _showSupport(BuildContext context) {
     showDialog<void>(
       context: context,
@@ -737,41 +738,95 @@ class ConfigScreen extends StatelessWidget {
   }
 
   void _showHistory(BuildContext context) {
-    final appointments = [
+    final events = [
       for (final pet in VetRepository.pets)
-        for (final appointment in VetRepository.agendamentos(pet.id))
-          (pet: pet, appointment: appointment),
-    ]..sort((a, b) => b.appointment.data.compareTo(a.appointment.data));
-    showDialog<void>(
+        for (final a in VetRepository.realAppointments(pet.id))
+          (pet: pet, event: a),
+    ]..sort((a, b) => a.event.data.compareTo(b.event.data));
+    final future =
+        events.where((e) => e.event.data.isAfter(DateTime.now())).toList()
+          ..sort((a, b) => a.event.data.compareTo(b.event.data));
+    showModalBottomSheet<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VH.background,
-        title: const Text('Histórico'),
-        content: SizedBox(
-          width: 320,
-          child: appointments.isEmpty
-              ? const Text('Nenhuma consulta registrada.')
-              : ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (final item in appointments)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(item.appointment.tipo),
-                        subtitle: Text(
-                          '${item.pet.name} · ${fmtData(item.appointment.data)}',
-                        ),
-                        trailing: Text(fmtHora(item.appointment.data)),
-                      ),
-                  ],
+      isScrollControlled: true,
+      backgroundColor: VH.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: SizedBox(
+          height: MediaQuery.sizeOf(ctx).height * .85,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Histórico',
+                  style: TextStyle(
+                    fontFamily: 'Comfortaa',
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      if (future.isEmpty) ...[
+                        const Text(
+                          'Próximo agendamento',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Text('Nenhum agendamento futuro'),
+                        ),
+                      ] else
+                        AppointmentCard(
+                          pet: future.first.pet,
+                          event: future.first.event,
+                          next: true,
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            Navigator.pushNamed(
+                              context,
+                              '/agenda',
+                              arguments: future.first.event.data,
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Histórico de agendamentos',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (events.isEmpty)
+                        const Text('Nenhuma consulta registrada.'),
+                      for (final item in events)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: AppointmentCard(
+                            pet: item.pet,
+                            event: item.event,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Fechar'),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -799,48 +854,4 @@ class ConfigScreen extends StatelessWidget {
       Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     }
   }
-}
-
-class _AddressDialog extends StatefulWidget {
-  const _AddressDialog({required this.initialAddress});
-
-  final String initialAddress;
-
-  @override
-  State<_AddressDialog> createState() => _AddressDialogState();
-}
-
-class _AddressDialogState extends State<_AddressDialog> {
-  late final _controller = TextEditingController(text: widget.initialAddress);
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    backgroundColor: VH.background,
-    title: const Text('Meus Endereços'),
-    content: TextField(
-      controller: _controller,
-      autofocus: true,
-      maxLines: 2,
-      decoration: const InputDecoration(
-        labelText: 'Endereço',
-        hintText: 'Rua, número, cidade e CEP',
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancelar'),
-      ),
-      ElevatedButton(
-        onPressed: () => Navigator.pop(context, _controller.text.trim()),
-        child: const Text('Salvar'),
-      ),
-    ],
-  );
 }

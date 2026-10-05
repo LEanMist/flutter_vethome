@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../data/vet_repository.dart';
+import '../data/cep_service.dart';
+import '../core/utils/form_fields.dart';
+import '../widgets/address_form.dart';
+import '../widgets/pet_form.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -172,6 +177,7 @@ class VHForm extends StatefulWidget {
     this.initialData = const {},
     this.onSubmit,
     this.dataPrefix = '',
+    this.onSkip,
   });
 
   final String title;
@@ -180,6 +186,7 @@ class VHForm extends StatefulWidget {
   final Map<String, String> initialData;
   final ValueChanged<Map<String, String>>? onSubmit;
   final String dataPrefix;
+  final VoidCallback? onSkip;
 
   @override
   State<VHForm> createState() => _VHFormState();
@@ -187,6 +194,9 @@ class VHForm extends StatefulWidget {
 
 class _VHFormState extends State<VHForm> {
   final _formKey = GlobalKey<FormState>();
+  late final _genderCustom = TextEditingController(
+    text: widget.initialData['client.Gênero personalizado'] ?? '',
+  );
   late List<TextEditingController> _controllers;
 
   @override
@@ -198,8 +208,11 @@ class _VHFormState extends State<VHForm> {
   @override
   void didUpdateWidget(covariant VHForm oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialData != widget.initialData ||
-        oldWidget.fields != widget.fields) {
+    if (!mapEquals(oldWidget.initialData, widget.initialData) ||
+        !listEquals(
+          oldWidget.fields.map((f) => f.label).toList(),
+          widget.fields.map((f) => f.label).toList(),
+        )) {
       for (final controller in _controllers) {
         controller.dispose();
       }
@@ -216,6 +229,7 @@ class _VHFormState extends State<VHForm> {
 
   @override
   void dispose() {
+    _genderCustom.dispose();
     for (final controller in _controllers) {
       controller.dispose();
     }
@@ -230,6 +244,15 @@ class _VHFormState extends State<VHForm> {
     if (field.label == 'E-mail' &&
         !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
       return 'Informe um e-mail válido';
+    }
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (field.label == 'CPF' && digits.length != 11) {
+      return 'Informe um CPF com 11 dígitos';
+    }
+    if (field.label == 'Telefone/Celular' &&
+        digits.length != 10 &&
+        digits.length != 11) {
+      return 'Informe um telefone com 10 ou 11 dígitos';
     }
     if (field.label == 'Senha' && value.length < 6) {
       return 'Use ao menos 6 caracteres';
@@ -256,21 +279,7 @@ class _VHFormState extends State<VHForm> {
     return null;
   }
 
-  bool _isValidDate(String value) {
-    final parts = value.split(RegExp(r'[/.-]'));
-    if (parts.length != 3) return false;
-    final first = int.tryParse(parts[0]);
-    final month = int.tryParse(parts[1]);
-    final last = int.tryParse(parts[2]);
-    if (first == null || month == null || last == null) return false;
-    final date = first > 31
-        ? DateTime(first, month, last)
-        : DateTime(last, month, first);
-    return date.year >= 1900 &&
-        date.month == month &&
-        date.day == (first > 31 ? last : first) &&
-        !date.isAfter(DateTime.now());
-  }
+  bool _isValidDate(String value) => parseBirthDate(value) != null;
 
   void _continue() {
     if (!_formKey.currentState!.validate()) return;
@@ -280,8 +289,37 @@ class _VHFormState extends State<VHForm> {
         '${widget.dataPrefix}${widget.fields[i].label}': _controllers[i].text
             .trim(),
     };
+    if (widget.dataPrefix == 'client.') {
+      data['client.Gênero personalizado'] = _genderCustom.text.trim();
+    }
     widget.onSubmit?.call(data);
     Navigator.pushNamed(context, widget.next, arguments: data);
+  }
+
+  String _value(String label) =>
+      _controllers[widget.fields.indexWhere((f) => f.label == label)].text;
+  Widget _buildField(int i) {
+    final field = widget.fields[i];
+    return VHField(
+      field.label,
+      field.icon,
+      password: field.password,
+      figmaForm: true,
+      controller: _controllers[i],
+      keyboardType: field.keyboardType,
+      choices: field.choices,
+      suggestions: field.label == 'Raça'
+          ? breedsFor(_value('Tipo de Animal'))
+          : const [],
+      onChanged: (value) {
+        if (field.label == 'Tipo de Animal') {
+          _controllers[widget.fields.indexWhere((f) => f.label == 'Raça')]
+              .clear();
+        }
+        setState(() {});
+      },
+      validator: (value) => _validate(field, value),
+    );
   }
 
   @override
@@ -289,69 +327,132 @@ class _VHFormState extends State<VHForm> {
     return Scaffold(
       backgroundColor: VH.background,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          children: [
-            Text(
-              widget.title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Comfortaa',
-                color: VH.foreground,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 390),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                (widget.dataPrefix == 'pet.' ? 49 : 39) *
+                    (MediaQuery.sizeOf(context).width / 390).clamp(.8, 1.0),
+                widget.dataPrefix == 'pet.' ? 60 : 38,
+                (widget.dataPrefix == 'pet.' ? 49 : 39) *
+                    (MediaQuery.sizeOf(context).width / 390).clamp(.8, 1.0),
+                24,
               ),
-            ),
-            const SizedBox(height: 18),
-            if (widget.title == 'Cadastro Pet') ...[
-              Image.asset(
-                'assets/imagens/figma/cachorroegatopng-2.png',
-                width: 58,
-                height: 66,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 10),
-            ],
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-              decoration: BoxDecoration(
-                color: VH.background.withValues(alpha: 0.46),
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: VH.secondary, width: 1.5),
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    for (var i = 0; i < widget.fields.length; i++) ...[
-                      VHField(
-                        widget.fields[i].label,
-                        widget.fields[i].icon,
-                        password: widget.fields[i].password,
-                        controller: _controllers[i],
-                        keyboardType: widget.fields[i].keyboardType,
-                        validator: (value) =>
-                            _validate(widget.fields[i], value),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    widget.title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Comfortaa',
+                      color: VH.foreground,
+                    ),
+                  ),
+                  SizedBox(height: widget.dataPrefix == 'pet.' ? 46 : 25),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .2),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: VH.secondary, width: 3),
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          for (var i = 0; i < widget.fields.length; i++) ...[
+                            if (!(widget.dataPrefix == 'pet.' &&
+                                widget.fields[i].label == 'Peso'))
+                              if (widget.dataPrefix == 'pet.' &&
+                                  widget.fields[i].label == 'Gênero/Sexo')
+                                LayoutBuilder(
+                                  builder: (ctx, c) => c.maxWidth >= 260
+                                      ? Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(child: _buildField(i)),
+                                            const SizedBox(width: 12),
+                                            Expanded(child: _buildField(i + 1)),
+                                          ],
+                                        )
+                                      : Column(
+                                          children: [
+                                            _buildField(i),
+                                            const SizedBox(height: 12),
+                                            _buildField(i + 1),
+                                          ],
+                                        ),
+                                )
+                              else
+                                _buildField(i),
+                            if (!(widget.dataPrefix == 'pet.' &&
+                                    widget.fields[i].label == 'Peso') &&
+                                i != widget.fields.length - 1)
+                              const SizedBox(height: 14),
+                          ],
+                          if (widget.dataPrefix == 'client.' &&
+                              _value('Gênero/Sexo') == 'Outro')
+                            VHField(
+                              'Como prefere se identificar? (opcional)',
+                              Icons.person_outline,
+                              controller: _genderCustom,
+                              figmaForm: true,
+                            ),
+                        ],
                       ),
-                      const SizedBox(height: 7),
-                    ],
-                  ],
-                ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Center(
+                    child: PillButton(
+                      color: VH.secondary,
+                      padding: EdgeInsets.zero,
+                      onTap: _continue,
+                      child: SizedBox(
+                        width: 181,
+                        height: widget.dataPrefix == 'pet.' ? 65 : 71,
+                        child: const Center(
+                          child: Text(
+                            'Cadastrar',
+                            style: TextStyle(
+                              fontFamily: VH.headingFontFamily,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (widget.onSkip != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: TextButton(
+                        onPressed: widget.onSkip,
+                        child: const Text(
+                          'Pular por enquanto',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: VH.secondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(height: 14),
-            Center(
-              child: PillButton(
-                label: 'Cadastrar',
-                color: VH.secondary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 11,
-                ),
-                onTap: _continue,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -369,7 +470,11 @@ class CadastroScreen extends StatelessWidget {
     fields: [
       VHField('Nome Completo', Icons.person, value: 'Matheus Santana Lima'),
       VHField('Data de Nascimento', Icons.cake, value: '05/02/2007'),
-      VHField('Gênero/Sexo', Icons.person_outline, value: 'Masculino'),
+      VHField(
+        'Gênero/Sexo',
+        Icons.wc,
+        choices: ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'],
+      ),
       VHField('CPF', Icons.badge, value: '534.356.874-94'),
       VHField('Telefone/Celular', Icons.phone, value: '11 94345-3266'),
       VHField('E-mail', Icons.mail, value: 'Kelvin231@gmail.com'),
@@ -380,140 +485,189 @@ class CadastroScreen extends StatelessWidget {
 }
 
 class EnderecoScreen extends StatelessWidget {
-  const EnderecoScreen({super.key, this.initialData = const {}});
-
+  const EnderecoScreen({
+    super.key,
+    this.initialData = const {},
+    this.cepService = const CepService(),
+  });
   final Map<String, String> initialData;
-
+  final CepService cepService;
   @override
-  Widget build(BuildContext context) => VHForm(
-    title: 'Endereço',
-    dataPrefix: 'client.',
-    next: '/cadastroPet',
-    initialData: initialData,
-    fields: const [
-      VHField(
-        'CEP',
-        Icons.home,
-        value: '34556-234',
-        keyboardType: TextInputType.number,
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: VH.background,
+    body: SafeArea(
+      child: AddressForm(
+        cepService: cepService,
+        title: 'Endereço',
+        onSaved: (address) {
+          final data = {
+            ...initialData,
+            'client.CEP': address.cep,
+            'client.Endereço': address.street,
+            'client.Cidade': address.city,
+            'client.Número': address.number,
+            'client.Complemento': address.complement,
+          };
+          VetRepository.registerClient(data);
+          Navigator.pushNamed(context, '/cadastroPet', arguments: data);
+        },
+        onSkip: () {
+          VetRepository.registerClient(initialData);
+          Navigator.pushNamed(context, '/cadastroPet', arguments: initialData);
+        },
       ),
-      VHField('Endereço', Icons.home, value: 'R. Carcino'),
-      VHField(
-        'Número',
-        Icons.tag,
-        value: '73',
-        keyboardType: TextInputType.number,
-      ),
-      VHField('Complemento', Icons.home),
-      VHField('Cidade', Icons.location_city),
-    ],
+    ),
   );
 }
 
 class CadastroPetScreen extends StatelessWidget {
   const CadastroPetScreen({super.key, this.initialData = const {}});
-
   final Map<String, String> initialData;
-
-  @override
-  Widget build(BuildContext context) => VHForm(
-    title: 'Cadastro Pet',
-    dataPrefix: 'pet.',
-    next: '/sucesso',
-    initialData: initialData,
-    fields: [
-      VHField('Tipo de Animal', Icons.pets, value: 'Cachorro'),
-      VHField('Nome do Pet', Icons.person, value: 'Fernando'),
-      VHField('Gênero/Sexo', Icons.person_outline, value: 'M'),
-      VHField(
-        'Peso',
-        Icons.scale,
-        value: '24',
-        keyboardType: TextInputType.number,
-      ),
-      VHField('Data de Nascimento', Icons.cake, value: '23/03/2012'),
-      VHField('Raça', Icons.pets, value: 'Lulu-da-Pomerânia'),
-    ],
-    onSubmit: (data) {
-      final weight = double.parse(data['pet.Peso']!.replaceAll(',', '.'));
-      final birth = _parseDate(data['pet.Data de Nascimento']!);
-      VetRepository.addPet(
-        name: data['pet.Nome do Pet']!,
-        species: data['pet.Tipo de Animal']!,
-        sex: data['pet.Gênero/Sexo']!,
-        weightKg: weight,
-        birthDate: birth,
-        breed: data['pet.Raça']!,
-      );
-      if (data.containsKey('client.E-mail')) {
-        VetRepository.registerClient(data);
-      }
-    },
-  );
-
-  static DateTime _parseDate(String value) {
-    final parts = value.split(RegExp(r'[/.-]')).map(int.parse).toList();
-    return parts[0] > 31
-        ? DateTime(parts[0], parts[1], parts[2])
-        : DateTime(parts[2], parts[1], parts[0]);
+  void _client() {
+    if (initialData.containsKey('client.E-mail')) {
+      VetRepository.registerClient(initialData);
+    }
   }
-}
-
-class SucessoScreen extends StatelessWidget {
-  const SucessoScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'É um prazer tê-lo(a) conosco, senhor(a) '
-                  '${VetRepository.clientName}.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'MontserratAlternates',
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: VH.background,
+    body: SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 390),
+          child: PetForm(
+            title: 'Cadastro Pet',
+            onSaved: (v) async {
+              VetRepository.addPet(
+                name: v.name,
+                species: v.species,
+                sex: v.sex,
+                weightKg: v.weight,
+                birthDate: v.birth,
+                breed: v.breed,
+                photoBase64: v.photo,
+              );
+              _client();
+              final saved = await VetRepository.flush();
+              if (!context.mounted) return;
+              if (!saved) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Dados atualizados nesta sessão. Não foi possível salvar localmente.',
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Image.asset(
-                    'assets/imagens/figma/vethomepng-1.png',
-                    width: 226,
-                    height: 226,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                const Text(
-                  'Usuário e Pets Cadastrados!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Comfortaa',
-                  ),
-                ),
-                const SizedBox(height: 28),
-                PillButton(
-                  label: 'Continuar',
-                  onTap: () => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/pets',
-                    (_) => false,
-                  ),
-                ),
-              ],
-            ),
+                );
+              }
+              Navigator.pushNamed(context, '/sucesso');
+            },
+            onSkip: () {
+              _client();
+              Navigator.pushNamed(context, '/sucesso');
+            },
           ),
         ),
       ),
-    );
+    ),
+  );
+}
+
+class SucessoScreen extends StatefulWidget {
+  const SucessoScreen({super.key});
+  @override
+  State<SucessoScreen> createState() => _SucessoScreenState();
+}
+
+class _SucessoScreenState extends State<SucessoScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+  bool _arrived = false;
+  @override
+  void initState() {
+    super.initState();
+    _controller.forward().then((_) async {
+      if (!mounted) return;
+      setState(() => _arrived = true);
+      await Future<void>.delayed(const Duration(milliseconds: 1400));
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/pets', (_) => false);
+      }
+    });
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: VH.background,
+    body: SafeArea(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Bem-vindo!',
+                style: TextStyle(
+                  fontFamily: 'Comfortaa',
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 48),
+              SlideTransition(
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(0, .5),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: _controller,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ),
+                child: Image.asset(
+                  'assets/imagens/figma/vethomepng-2.png',
+                  width: (MediaQuery.sizeOf(context).width - 40).clamp(
+                    240.0,
+                    350.0,
+                  ),
+                  height: (MediaQuery.sizeOf(context).width - 40).clamp(
+                    240.0,
+                    350.0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 27),
+              AnimatedOpacity(
+                opacity: _arrived ? 1 : 0,
+                duration: const Duration(milliseconds: 250),
+                child: Text(
+                  VetRepository.pets.isEmpty
+                      ? 'Você pode cadastrar seu pet quando quiser.'
+                      : 'Você e seu pet já podem usar o VetHome.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: VH.headingFontFamily,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: VH.foreground,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }

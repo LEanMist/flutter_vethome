@@ -83,6 +83,23 @@ class VetTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: VH.background,
       useMaterial3: true,
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: VH.secondary.withValues(alpha: .12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: VH.secondary),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: VH.foreground, width: 2),
+        ),
+      ),
     );
     final bodyTextTheme = GoogleFonts.montserratAlternatesTextTheme(
       baseTheme.textTheme,

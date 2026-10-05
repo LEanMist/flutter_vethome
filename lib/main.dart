@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/vet_repository.dart';
+import 'pages/addresses_page.dart';
+import 'models/saved_address.dart';
 import 'models/pet_model.dart';
 import 'pages/agendamentos_page.dart';
 import 'pages/detalhes_pet_page.dart';
@@ -87,7 +89,11 @@ class VetHomeApp extends StatelessWidget {
           '/perfil': (_) => const PerfilPage(),
           '/chat': (_) => const ChatScreen(),
           '/sobre': (_) => const SobreScreen(),
-          '/agenda': (_) => const AgendaScreen(),
+          '/agenda': (context) => AgendaScreen(
+            initialDate: ModalRoute.of(context)?.settings.arguments is DateTime
+                ? ModalRoute.of(context)!.settings.arguments as DateTime
+                : null,
+          ),
           '/detalhes-pet': (context) =>
               _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
           '/saude': (context) =>
@@ -99,7 +105,9 @@ class VetHomeApp extends StatelessWidget {
           '/nova-consulta': (context) {
             final args = ModalRoute.of(context)?.settings.arguments;
             final values = args is Map ? args : const <String, dynamic>{};
-            final pet = values['pet'] is PetModel
+            final pet = values['petId'] is String
+                ? VetRepository.petById(values['petId'] as String)
+                : values['pet'] is PetModel
                 ? VetRepository.petById((values['pet'] as PetModel).id)
                 : VetRepository.selectedPet;
             if (pet == null) return const PetsPage();
@@ -112,6 +120,11 @@ class VetHomeApp extends StatelessWidget {
             );
           },
           '/config': (_) => const ConfigScreen(),
+          '/enderecos': (_) => const AddressesPage(),
+          '/editar-endereco': (context) => AddressEditorPage(
+            address:
+                ModalRoute.of(context)?.settings.arguments as SavedAddress?,
+          ),
         },
       ),
     );

@@ -47,10 +47,10 @@ class VetBottomNav extends StatelessWidget {
       right: false,
       child: Container(
         margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, 12 * s),
-        padding: EdgeInsets.symmetric(vertical: 8 * s, horizontal: 8 * s),
+        padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 8 * s),
         decoration: BoxDecoration(
           color: VH.secondary.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(VH.radiusLarge * s),
+          borderRadius: BorderRadius.circular(25 * s),
           boxShadow: const [
             BoxShadow(
               color: VetColors.shadowDark,

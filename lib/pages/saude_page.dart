@@ -6,7 +6,8 @@ import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../theme/vet_colors.dart';
 import '../theme/vet_tones.dart';
-import '../widgets/pet_avatar.dart';
+import '../widgets/pet_summary.dart';
+import '../widgets/demo_badge.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/status_chip.dart';
 import '../widgets/vet_card.dart';
@@ -34,24 +35,16 @@ class SaudePage extends StatelessWidget {
       title: 'Saúde',
       pet: pet,
       selectedIndex: 0,
-      headerBottom: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          PetAvatar(image: pet.imagePath, size: 72, radius: 18),
-          SizedBox(height: 8 * s),
-          Text(
-            pet.name,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22 * s,
-              fontWeight: FontWeight.w700,
-              fontFamily: PetsTheme.fontComfortaa,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
       children: [
+        PetSummary(pet: pet, size: PetSummarySize.medium),
+        const VetSectionTitle('Resumo de saúde'),
+        const DemoBadge(),
+        Text(
+          pet.weightKg == null
+              ? 'Vacinação, peso, vermifugação e histórico.'
+              : 'Vacinação, vermifugação e histórico.',
+          style: const TextStyle(fontSize: 12),
+        ),
         Row(
           children: [
             Expanded(
@@ -75,14 +68,14 @@ class SaudePage extends StatelessWidget {
             Expanded(
               child: _MiniStatus(
                 icon: Icons.medical_services,
-                title: 'Vermif.',
+                title: 'Vermifugação',
                 value: vermif ?? '—',
                 color: VetTones.info,
               ),
             ),
           ],
         ),
-        const VetSectionTitle('Histórico'),
+        const VetSectionTitle('Histórico de atendimentos'),
         for (final c in historico) _ConsultaCard(c),
       ],
     );
@@ -106,13 +99,16 @@ class _MiniStatus extends StatelessWidget {
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
     return VetCard(
+      flat: true,
+      color: VetColors.rose.withValues(alpha: .2),
       padding: EdgeInsets.symmetric(vertical: 12 * s, horizontal: 6 * s),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 24 * s),
+          Icon(icon, color: VetColors.brown, size: 22 * s),
           SizedBox(height: 6 * s),
           Text(
             title,
+            textAlign: TextAlign.center,
             style: TextStyle(fontSize: 11 * s, color: VetColors.brown),
           ),
           FittedBox(
@@ -140,6 +136,8 @@ class _ConsultaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
     return VetCard(
+      flat: true,
+      color: VetColors.rose.withValues(alpha: .16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

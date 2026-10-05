@@ -12,12 +12,14 @@ class VetCard extends StatelessWidget {
     this.onTap,
     this.padding,
     this.color,
+    this.flat = false,
   });
 
   final Widget child;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? padding;
   final Color? color;
+  final bool flat;
 
   @override
   Widget build(BuildContext context) {
@@ -28,18 +30,20 @@ class VetCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? VetTones.card,
         borderRadius: r,
-        boxShadow: const [
-          BoxShadow(
-            color: VetColors.shadowDark,
-            offset: Offset(3, 3),
-            blurRadius: 6,
-          ),
-          BoxShadow(
-            color: VetColors.shadowLight,
-            offset: Offset(-3, -3),
-            blurRadius: 6,
-          ),
-        ],
+        boxShadow: flat
+            ? const []
+            : const [
+                BoxShadow(
+                  color: VetColors.shadowDark,
+                  offset: Offset(3, 3),
+                  blurRadius: 6,
+                ),
+                BoxShadow(
+                  color: VetColors.shadowLight,
+                  offset: Offset(-3, -3),
+                  blurRadius: 6,
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,

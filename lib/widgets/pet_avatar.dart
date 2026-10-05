@@ -1,60 +1,100 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
+import '../core/utils/pet_images.dart';
 import '../theme/vet_colors.dart';
 import 'pets/pets_theme.dart';
 
-/// Foto do pet com fallback e `cacheWidth` (evita decodificar imagem
-/// gigante na thread principal -> menos "Skipped frames").
+/// Imagem válida tem prioridade; placeholders/falhas usam a espécie real.
 class PetAvatar extends StatelessWidget {
   const PetAvatar({
     super.key,
     required this.image,
     this.size = 60,
     this.radius = 999,
+    this.photoBase64,
+    this.species,
+    this.listSilhouette = false,
   });
 
   final String image;
   final double size;
   final double radius;
-
-  static const String fallback = 'assets/imagens/VetHome_logo_1.jpg';
+  final String? species;
+  final String? photoBase64;
+  final bool listSilhouette;
 
   @override
   Widget build(BuildContext context) {
-    final double s = PetsTheme.scaleOf(context);
-    final double px = size * s;
-    final double dpr = MediaQuery.devicePixelRatioOf(context);
-    // Corrige apenas a apresentação dos caminhos legados invertidos,
-    // sem modificar imagePath ou a espécie armazenados no modelo.
-    final visualImage = switch (image) {
-      'assets/imagens/figma/cachorroegatopng-3.png' =>
-        'assets/imagens/figma/cachorroegatopng-2.png',
-      'assets/imagens/figma/cachorroegatopng-2.png' =>
-        'assets/imagens/figma/cachorroegatopng-3.png',
-      _ => image,
-    };
-    final isSpeciesIllustration =
-        visualImage == 'assets/imagens/figma/cachorroegatopng-2.png' ||
-        visualImage == 'assets/imagens/figma/cachorroegatopng-3.png';
+    final s = PetsTheme.scaleOf(context);
+    final px = size * s;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final fallback = PetImages.forSpecies(species);
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius * s),
-      child: ColoredBox(
-        color: isSpeciesIllustration ? VetColors.rose : Colors.transparent,
-        child: Image.asset(
-          visualImage.isNotEmpty ? visualImage : fallback,
-          width: px,
-          height: px,
-          fit: BoxFit.cover,
-          cacheWidth: (px * dpr).round(),
-          errorBuilder: (_, _, _) => Container(
+    Widget silhouette() {
+      final width = listSilhouette ? 32 * s : px;
+      final height = listSilhouette ? 36 * s : px;
+      final body = fallback == null
+          ? Center(
+              child: Text(
+                '?',
+                style: TextStyle(fontSize: width * .55, color: Colors.white),
+              ),
+            )
+          : Image.asset(
+              fallback,
+              width: width,
+              height: height,
+              fit: BoxFit.contain,
+              cacheWidth: (width * dpr).round(),
+              excludeFromSemantics: true,
+            );
+      if (listSilhouette) {
+        return SizedBox(width: width, height: height, child: body);
+      }
+      // Mantém o contêiner do contexto e dá espaço à silhueta inteira.
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius * s),
+        child: ColoredBox(
+          color: VetColors.rose,
+          child: SizedBox(
             width: px,
             height: px,
-            color: VetColors.rose.withValues(alpha: 0.3),
-            child: Icon(Icons.pets, color: VetColors.brown, size: px * 0.5),
+            child: Padding(padding: EdgeInsets.all(px * .12), child: body),
           ),
         ),
+      );
+    }
+
+    if (photoBase64 != null) {
+      try {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(radius * s),
+          child: Image.memory(
+            base64Decode(photoBase64!),
+            width: px,
+            height: px,
+            fit: BoxFit.cover,
+            cacheWidth: (px * dpr).round(),
+            errorBuilder: (_, _, _) => silhouette(),
+          ),
+        );
+      } catch (_) {
+        return silhouette();
+      }
+    }
+    if (!PetImages.hasImage(image)) return silhouette();
+    return Image.asset(
+      image,
+      width: px,
+      height: px,
+      fit: BoxFit.cover,
+      cacheWidth: (px * dpr).round(),
+      frameBuilder: (_, child, _, _) => ClipRRect(
+        borderRadius: BorderRadius.circular(radius * s),
+        child: child,
       ),
+      errorBuilder: (_, _, _) => silhouette(),
     );
   }
 }

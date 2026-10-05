@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/json_fields.dart';
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
+import '../models/saved_address.dart';
 
 class ClientData {
   const ClientData({
@@ -15,9 +16,13 @@ class ClientData {
     required this.phone,
     required this.email,
     required this.gender,
+    this.genderCustom = '',
+    this.addresses = const [],
   });
 
   final String name, address, phone, email, gender;
+  final String genderCustom;
+  final List<SavedAddress> addresses;
   final DateTime birthDate;
 
   Map<String, dynamic> toJson() => {
@@ -27,6 +32,8 @@ class ClientData {
     'phone': phone,
     'email': email,
     'gender': gender,
+    'genderCustom': genderCustom,
+    'addresses': addresses.map((a) => a.toJson()).toList(),
   };
 
   factory ClientData.fromJson(Map<String, dynamic> json) => ClientData(
@@ -36,7 +43,32 @@ class ClientData {
     phone: jsonString(json, 'phone'),
     email: jsonString(json, 'email'),
     gender: jsonString(json, 'gender'),
+    genderCustom: jsonOptionalString(json, 'genderCustom') ?? '',
+    addresses: _addresses(json),
   );
+
+  static List<SavedAddress> _addresses(Map<String, dynamic> json) {
+    if (!json.containsKey('addresses')) {
+      final old = jsonString(json, 'address');
+      return old.isEmpty
+          ? []
+          : [SavedAddress(id: 'address-legacy', street: old)];
+    }
+    final values = json['addresses'];
+    if (values is! List) throw const FormatException('Endereços inválidos');
+    final result = <SavedAddress>[];
+    for (final value in values) {
+      if (value is! Map<String, dynamic>) {
+        throw const FormatException('Endereço inválido');
+      }
+      final address = SavedAddress.fromJson(value);
+      if (address.id.isEmpty || result.any((a) => a.id == address.id)) {
+        throw const FormatException('ID de endereço inválido');
+      }
+      result.add(address);
+    }
+    return result;
+  }
 }
 
 class LocalState {

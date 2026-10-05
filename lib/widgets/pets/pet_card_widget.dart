@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../models/pet_model.dart';
 import '../../theme/vet_colors.dart';
 import './pets_theme.dart';
+import '../pet_avatar.dart';
+import '../vet_choice_pill.dart';
 
 class PetCardWidget extends StatelessWidget {
   final PetModel pet;
@@ -15,57 +17,40 @@ class PetCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final bool isCat = pet.species?.toLowerCase().contains('gato') ?? false;
-    final String petIllustration = isCat
-        ? 'assets/imagens/figma/cachorroegatopng-3.png'
-        : 'assets/imagens/figma/cachorroegatopng-2.png';
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 8 * s, horizontal: 14 * s),
-        decoration: BoxDecoration(
-          color: VetColors.rose,
-          borderRadius: BorderRadius.circular(18 * s),
-          boxShadow: const [
-            BoxShadow(
-              color: VetColors.shadowDark,
-              offset: Offset(2, 2),
-              blurRadius: 4,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 34 * s,
-              height: 34 * s,
-              child: Center(
-                child: Image.asset(
-                  petIllustration,
-                  width: 22 * s,
-                  height: 25 * s,
-                  fit: BoxFit.contain,
+    return Material(
+      color: VetColors.rose.withValues(alpha: .5),
+      borderRadius: BorderRadius.circular(25 * s),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(25 * s),
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 8 * s, horizontal: 18 * s),
+          child: Row(
+            children: [
+              PetAvatar(
+                photoBase64: pet.photoBase64,
+                image: pet.imagePath,
+                species: pet.species,
+                size: 34,
+                listSilhouette: true,
+              ),
+              SizedBox(width: 14 * s),
+              Expanded(
+                child: Text(
+                  pet.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 20 * s,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: PetsTheme.fontComfortaa,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(width: 10 * s),
-            Expanded(
-              child: Text(
-                pet.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 14 * s,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: PetsTheme.fontMontserratAlternates,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, size: 21 * s, color: Colors.white),
-          ],
+              const VetChevron(),
+            ],
+          ),
         ),
       ),
     );

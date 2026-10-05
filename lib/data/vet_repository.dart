@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
-import '../widgets/pets/pets_theme.dart';
+import '../models/saved_address.dart';
+import '../core/utils/pet_images.dart';
+import '../core/utils/pet_photo.dart';
 import 'local_storage.dart';
 
 /// Interface de dados das telas, com snapshot local após cada mutação suportada.
@@ -27,6 +29,10 @@ class VetRepository {
     clientPhone = state?.client.phone ?? '';
     clientEmail = state?.client.email ?? '';
     clientGender = state?.client.gender ?? '';
+    clientGenderCustom = state?.client.genderCustom ?? '';
+    addresses
+      ..clear()
+      ..addAll(state?.client.addresses ?? []);
     clientPhotoPath = null;
     clientPhotoBytes = null;
     selectedPetId = null;
@@ -56,6 +62,8 @@ class VetRepository {
         phone: clientPhone,
         email: clientEmail,
         gender: clientGender,
+        genderCustom: clientGenderCustom,
+        addresses: List.of(addresses),
       ),
       pets: List.of(pets),
       appointments: {
@@ -83,6 +91,8 @@ class VetRepository {
   static String clientAddress = '';
   static String clientPhone = '';
   static String clientGender = '';
+  static String clientGenderCustom = '';
+  static final List<SavedAddress> addresses = [];
   static String? clientPhotoPath;
   // No Web, o caminho do picker é temporário; conserva a foto nesta sessão.
   static Uint8List? clientPhotoBytes;
@@ -109,7 +119,7 @@ class VetRepository {
     PetModel(
       id: 'pet-demo-1',
       name: 'Fernando',
-      imagePath: 'assets/imagens/figma/cachorroegatopng-3.png',
+      imagePath: PetImages.dog,
       description: _petSummary('Cachorro', 14, true),
       species: 'Cachorro',
       sex: 'M',
@@ -121,7 +131,7 @@ class VetRepository {
     PetModel(
       id: 'pet-demo-2',
       name: 'Kelly',
-      imagePath: 'assets/imagens/figma/cachorroegatopng-2.png',
+      imagePath: PetImages.cat,
       description: _petSummary('Gato', 2, false),
       species: 'Gato',
       sex: 'Fêmea',
@@ -133,7 +143,7 @@ class VetRepository {
     PetModel(
       id: 'pet-demo-3',
       name: 'Escarola',
-      imagePath: 'assets/imagens/figma/cachorroegatopng-3.png',
+      imagePath: PetImages.dog,
       description: _petSummary('Cachorro', 6, true),
       species: 'Cachorro',
       sex: 'Fêmea',
@@ -145,7 +155,7 @@ class VetRepository {
     PetModel(
       id: 'pet-demo-4',
       name: 'Eduardido',
-      imagePath: 'assets/imagens/figma/cachorroegatopng-2.png',
+      imagePath: PetImages.cat,
       description: _petSummary('Gato', 1, false),
       species: 'Gato',
       sex: 'Macho',
@@ -210,15 +220,33 @@ class VetRepository {
         ? values['client.Nome Completo']!.trim()
         : clientName;
     clientEmail = values['client.E-mail']?.trim() ?? clientEmail;
-    clientPhone = values['client.Telefone/Celular']?.trim() ?? clientPhone;
+    clientPhone =
+        values['client.Telefone/Celular']?.replaceAll(RegExp(r'\D'), '') ??
+        clientPhone;
     clientGender = values['client.Gênero/Sexo']?.trim() ?? clientGender;
-    clientAddress = [
-      values['client.Endereço'],
-      values['client.Número'],
-      values['client.Complemento'],
-      values['client.Cidade'],
-      values['client.CEP'],
-    ].where((part) => part != null && part.trim().isNotEmpty).join(', ');
+    if (values.containsKey('client.Gênero personalizado')) {
+      clientGenderCustom = clientGender == 'Outro'
+          ? values['client.Gênero personalizado']!.trim()
+          : '';
+    }
+    if (values['client.Endereço']?.trim().isNotEmpty == true) {
+      final address = SavedAddress(
+        id:
+            addresses.firstOrNull?.id ??
+            'address-${DateTime.now().microsecondsSinceEpoch}',
+        street: values['client.Endereço']!.trim(),
+        number: values['client.Número']?.trim() ?? '',
+        complement: values['client.Complemento']?.trim() ?? '',
+        city: values['client.Cidade']?.trim() ?? '',
+        cep: values['client.CEP']?.trim() ?? '',
+      );
+      if (addresses.isEmpty) {
+        addresses.add(address);
+      } else {
+        addresses[0] = address;
+      }
+      clientAddress = address.summary;
+    }
     final birth = values['client.Data de Nascimento'];
     if (birth != null) clientBirthDate = _parseDate(birth) ?? clientBirthDate;
     _save();
@@ -233,13 +261,72 @@ class VetRepository {
   }) {
     if (name != null) clientName = name;
     if (birthDate != null) clientBirthDate = birthDate;
-    if (address != null) clientAddress = address;
+    if (address != null) {
+      clientAddress = address;
+      if (address.isNotEmpty) {
+        final item = SavedAddress(
+          id: addresses.firstOrNull?.id ?? 'address-legacy',
+          street: address,
+        );
+        if (addresses.isEmpty) {
+          addresses.add(item);
+        } else {
+          addresses[0] = item;
+        }
+      } else {
+        addresses.clear();
+      }
+    }
     if (phone != null) clientPhone = phone;
     if (email != null) clientEmail = email;
     _save();
   }
 
+  static void saveAddress(SavedAddress address) {
+    final index = addresses.indexWhere((a) => a.id == address.id);
+    if (index < 0) {
+      addresses.add(address);
+    } else {
+      addresses[index] = address;
+    }
+    clientAddress = addresses.firstOrNull?.summary ?? '';
+    _save();
+  }
+
+  static void removeAddress(String id) {
+    addresses.removeWhere((a) => a.id == id);
+    clientAddress = addresses.firstOrNull?.summary ?? '';
+    _save();
+  }
+
+  static List<Agendamento> realAppointments(String petId) =>
+      petById(petId) == null
+      ? []
+      : List.unmodifiable(_novosAgendamentos[petId] ?? []);
+
+  static void _checkPhoto(String? photo, {String? exceptId}) {
+    if (photo == null) return;
+    final size = pets
+        .where((p) => p.id != exceptId)
+        .fold<int>(0, (total, p) => total + (p.photoBase64?.length ?? 0));
+    if (!PetPhoto.isValid(photo) ||
+        size + photo.length > PetPhoto.maxTotalEncodedLength) {
+      throw const FormatException(
+        'Limite local de fotos atingido. Escolha uma imagem menor.',
+      );
+    }
+  }
+
+  static Future<bool> updatePetPhoto(String id, String photo) async {
+    final pet = petById(id);
+    if (pet == null) return false;
+    _checkPhoto(photo, exceptId: id);
+    updatePet(pet, pet.copyWith(photoBase64: photo));
+    return flush();
+  }
+
   static PetModel addPet({
+    String? photoBase64,
     required String name,
     required String species,
     required String sex,
@@ -254,11 +341,11 @@ class VetRepository {
         'Já existe um pet com esse nome.',
       );
     }
+    _checkPhoto(photoBase64);
     final pet = PetModel(
+      photoBase64: photoBase64,
       name: name.trim(),
-      imagePath: species.toLowerCase().contains('gato')
-          ? PetsTheme.imgCachorroegatoPng36x32
-          : PetsTheme.imgCachorroegatoPng,
+      imagePath: PetImages.forSpecies(species) ?? '',
       description: '$species • ${_age(birthDate)} anos • $sex',
       species: species,
       sex: sex,
@@ -284,6 +371,7 @@ class VetRepository {
     if (updated.id != previous.id) {
       throw ArgumentError('A edição deve preservar o ID do pet.');
     }
+    _checkPhoto(updated.photoBase64, exceptId: updated.id);
     pets[index] = updated;
     _save();
   }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'core/utils/form_fields.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
 import 'data/vet_repository.dart';
@@ -22,7 +24,7 @@ BoxDecoration insetBox({required Color color, double radius = VH.radiusCard}) {
   );
 }
 
-class VHField extends StatelessWidget {
+class VHField extends StatefulWidget {
   const VHField(
     this.label,
     this.icon, {
@@ -32,8 +34,15 @@ class VHField extends StatelessWidget {
     this.controller,
     this.validator,
     this.keyboardType,
+    this.choices,
+    this.suggestions = const [],
+    this.onChanged,
+    this.inputFormatters,
+    this.figmaForm = false,
+    this.compact = false,
   });
-
+  final bool figmaForm;
+  final bool compact;
   final String label;
   final IconData icon;
   final String? value;
@@ -41,91 +50,313 @@ class VHField extends StatelessWidget {
   final TextEditingController? controller;
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
-
+  final List<String>? choices;
+  final List<String> suggestions;
+  final ValueChanged<String>? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 10, bottom: 3),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontFamily: VH.bodyFontFamily,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: VH.foreground,
-            ),
-          ),
-        ),
-        Container(
-          height: VH.fieldHeight,
-          decoration: inset_shadow.BoxDecoration(
-            color: VH.background.withValues(alpha: 0.72),
-            borderRadius: VH.pillBorderRadius,
-            boxShadow: const [
-              inset_shadow.BoxShadow(
-                color: VH.shadowSoft,
-                offset: Offset(2, 3),
-                blurRadius: 5,
-                inset: true,
-              ),
-            ],
-          ),
-          child: TextFormField(
-            controller: controller,
-            initialValue: controller == null ? value : null,
-            obscureText: password,
-            keyboardType: keyboardType,
-            validator: validator,
-            decoration: InputDecoration(
-              hintText: controller == null ? null : value,
-              hintStyle: const TextStyle(
-                fontFamily: VH.bodyFontFamily,
-                fontSize: 15,
-                color: VH.mutedText,
-              ),
-              prefixIcon: Padding(
-                padding: const EdgeInsets.all(2),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: VH.background,
-                    border: Border.all(color: VH.secondary, width: 3),
+  State<VHField> createState() => _VHFieldState();
+}
+
+class _VHFieldState extends State<VHField> {
+  late final _owned = TextEditingController(text: widget.value ?? '');
+  final _focus = FocusNode();
+  final _link = LayerLink();
+  OverlayEntry? _options;
+  static _VHFieldState? _opened;
+  bool get isOpen => _options != null;
+  void _closeChoices({bool rebuild = true}) {
+    _options?.remove();
+    _options?.dispose();
+    _options = null;
+    if (_opened == this) _opened = null;
+    if (mounted && rebuild) setState(() {});
+  }
+
+  void _toggleChoices() {
+    if (isOpen) {
+      _closeChoices();
+      return;
+    }
+    _opened?._closeChoices();
+    _opened = this;
+    _focus.unfocus();
+    final box = context.findRenderObject() as RenderBox;
+    final width = box.size.width;
+    _options = OverlayEntry(
+      builder: (ctx) => Positioned(
+        width: width,
+        child: CompositedTransformFollower(
+          link: _link,
+          showWhenUnlinked: false,
+          targetAnchor: Alignment.bottomLeft,
+          followerAnchor: Alignment.topLeft,
+          offset: const Offset(0, 4),
+          child: TapRegion(
+            groupId: this,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 160),
+              builder: (_, value, child) =>
+                  Opacity(opacity: value, child: child),
+              child: Material(
+                color: VH.background,
+                elevation: 3,
+                borderRadius: BorderRadius.circular(16),
+                clipBehavior: Clip.antiAlias,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 192),
+                  child: ListView(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    children: [
+                      for (final value in widget.choices!)
+                        ListTile(
+                          minTileHeight: 48,
+                          dense: true,
+                          title: Text(value),
+                          selected: controller.text == value,
+                          onTap: () {
+                            controller.text = value;
+                            _closeChoices();
+                            widget.onChanged?.call(value);
+                          },
+                        ),
+                    ],
                   ),
-                  child: Icon(icon, color: VH.secondary, size: 23),
                 ),
               ),
-              filled: true,
-              fillColor: Colors.transparent,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 15,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: VH.pillBorderRadius,
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: VH.pillBorderRadius,
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: VH.pillBorderRadius,
-                borderSide: const BorderSide(color: VH.primary, width: 1),
-              ),
             ),
-            style: const TextStyle(
-              fontFamily: VH.bodyFontFamily,
-              fontSize: 15,
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_options!);
+    setState(() {});
+  }
+
+  TextEditingController get controller => widget.controller ?? _owned;
+  @override
+  void dispose() {
+    _closeChoices(rebuild: false);
+    _owned.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  List<TextInputFormatter>? get formatters =>
+      widget.inputFormatters ??
+      switch (widget.label) {
+        'Data de nascimento' ||
+        'Data de Nascimento' ||
+        'Nascimento (DD/MM/AAAA)' => [const DigitsMask('##/##/####')],
+        'CPF' => [const DigitsMask('###.###.###-##')],
+        'CEP' => [const DigitsMask('#####-###')],
+        'Telefone/Celular' => [const PhoneMask()],
+        'Peso' ||
+        'Peso (kg)' => [FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]'))],
+        _ => null,
+      };
+  Widget _prefix() {
+    if (widget.compact) {
+      return Icon(widget.icon, color: VH.foreground, size: 18);
+    }
+    final asset = widget.figmaForm
+        ? switch (widget.label) {
+            'Gênero/Sexo' => 'frame-7.png',
+            'Peso' => 'frame-7-2.png',
+            'Data de Nascimento' => 'frame-7-3.png',
+            'Raça' => 'frame-7-4.png',
+            _ => null,
+          }
+        : null;
+    if (asset != null) {
+      return Image.asset(
+        'assets/imagens/figma/$asset',
+        width: 58,
+        height: 56,
+        fit: BoxFit.contain,
+        excludeFromSemantics: true,
+      );
+    }
+    return Container(
+      width: widget.figmaForm ? 58 : 44,
+      height: widget.figmaForm ? 56 : 44,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: VH.background,
+        border: Border.all(
+          color: VH.secondary,
+          width: widget.figmaForm ? 4 : 2,
+        ),
+      ),
+      child: Icon(widget.icon, color: VH.foreground, size: 22),
+    );
+  }
+
+  Widget input(TextEditingController c, FocusNode focus) => TextFormField(
+    controller: c,
+    focusNode: focus,
+    obscureText: widget.password,
+    readOnly: widget.choices != null,
+    onTap: widget.choices == null ? null : _toggleChoices,
+    onChanged: widget.onChanged,
+    inputFormatters: formatters,
+    keyboardType:
+        widget.keyboardType ??
+        (widget.label == 'Telefone/Celular'
+            ? TextInputType.phone
+            : widget.label == 'E-mail'
+            ? TextInputType.emailAddress
+            : formatters != null
+            ? TextInputType.number
+            : TextInputType.text),
+    validator: widget.validator,
+    style: TextStyle(
+      fontSize: widget.compact
+          ? 13
+          : widget.figmaForm
+          ? 15
+          : 14,
+      fontFamily: widget.figmaForm ? VH.headingFontFamily : null,
+      fontWeight: widget.figmaForm ? FontWeight.w500 : null,
+      color: VH.foreground,
+    ),
+    decoration: InputDecoration(
+      labelText: widget.compact
+          ? switch (widget.label) {
+              'Gênero/Sexo' => 'Sexo',
+              'Tipo de Animal' => 'Espécie',
+              'Data de Nascimento' || 'Nascimento (DD/MM/AAAA)' => 'Nascimento',
+              _ => widget.label,
+            }
+          : null,
+      labelStyle: const TextStyle(fontSize: 12, color: VH.foreground),
+      isDense: widget.compact,
+      hintText: widget.value,
+      filled: true,
+      fillColor: Colors.transparent,
+      prefixIconConstraints: BoxConstraints.tightFor(
+        width: widget.compact ? 32 : 58,
+        height: widget.compact
+            ? 48
+            : widget.figmaForm
+            ? 56
+            : 52,
+      ),
+      prefixIcon: Padding(
+        padding: widget.compact || widget.figmaForm
+            ? EdgeInsets.zero
+            : const EdgeInsets.only(left: 3, right: 10),
+        child: _prefix(),
+      ),
+      suffixIcon: widget.choices == null
+          ? null
+          : AnimatedRotation(
+              turns: isOpen ? .5 : 0,
+              duration: const Duration(milliseconds: 160),
+              child: const Icon(Icons.expand_more, size: 18),
+            ),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: widget.compact
+            ? 8
+            : widget.figmaForm
+            ? 8
+            : 14,
+        vertical: widget.compact ? 14 : 16,
+      ),
+      suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 48),
+      border: OutlineInputBorder(
+        borderRadius: VH.pillBorderRadius,
+        borderSide: const BorderSide(color: VH.secondary),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: VH.pillBorderRadius,
+        borderSide: BorderSide(color: VH.secondary.withValues(alpha: .5)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: VH.pillBorderRadius,
+        borderSide: const BorderSide(color: VH.foreground, width: 2),
+      ),
+    ),
+  );
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (!widget.compact)
+        Padding(
+          padding: EdgeInsets.only(left: widget.figmaForm ? 14 : 58, bottom: 5),
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              fontFamily: widget.figmaForm ? VH.bodyFontFamily : null,
+              fontWeight: widget.figmaForm ? FontWeight.w500 : FontWeight.w600,
+              fontSize: widget.figmaForm ? 14 : 13,
               color: VH.foreground,
             ),
           ),
         ),
-      ],
-    );
-  }
+      TapRegion(
+        groupId: this,
+        onTapOutside: (_) => _closeChoices(),
+        child: CompositedTransformTarget(
+          link: _link,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  VH.secondary.withValues(alpha: widget.figmaForm ? .25 : .45),
+                  VH.background,
+                ],
+              ),
+              borderRadius: VH.pillBorderRadius,
+            ),
+            child: widget.suggestions.isEmpty
+                ? input(controller, _focus)
+                : RawAutocomplete<String>(
+                    textEditingController: controller,
+                    focusNode: _focus,
+                    optionsBuilder: (value) => value.text.isEmpty
+                        ? const Iterable<String>.empty()
+                        : widget.suggestions.where(
+                            (s) => normalizedText(
+                              s,
+                            ).contains(normalizedText(value.text)),
+                          ),
+                    onSelected: (value) => widget.onChanged?.call(value),
+                    fieldViewBuilder: (context, c, f, submit) => input(c, f),
+                    optionsViewBuilder: (context, choose, options) => Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 3,
+                        color: VH.background,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: 280,
+                            maxHeight: 180,
+                          ),
+                          child: ListView(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            children: [
+                              for (final option in options)
+                                ListTile(
+                                  title: Text(option),
+                                  onTap: () => choose(option),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class PillButton extends StatelessWidget {
@@ -200,16 +431,19 @@ class VHHeader extends StatelessWidget {
             top: 18,
             left: 50,
             right: 50,
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: VH.onSecondary,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                fontFamily: VH.headingFontFamily,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: VH.onSecondary,
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: VH.headingFontFamily,
+                ),
               ),
             ),
           ),
@@ -218,6 +452,7 @@ class VHHeader extends StatelessWidget {
               top: 8,
               left: 10,
               child: IconButton(
+                tooltip: 'Voltar',
                 onPressed: () => Navigator.of(context).maybePop(),
                 icon: const Icon(Icons.arrow_back, color: VH.onSecondary),
               ),
@@ -296,33 +531,38 @@ class VHPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: VH.background,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: children,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: children,
+                    ),
+                  ),
                 ),
-              ),
+                ?footer,
+                VetBottomNav(
+                  selectedIndex: _tabRoutes.indexOf(tab).clamp(0, 4),
+                  onSelected: (index) {
+                    final route = _tabRoutes[index];
+                    if (route != tab) {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        route,
+                        (route) => route.isFirst,
+                      );
+                    }
+                  },
+                ),
+              ],
             ),
-            ?footer,
-            VetBottomNav(
-              selectedIndex: _tabRoutes.indexOf(tab).clamp(0, 4),
-              onSelected: (index) {
-                final route = _tabRoutes[index];
-                if (route != tab) {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    route,
-                    (route) => route.isFirst,
-                  );
-                }
-              },
-            ),
-          ],
+          ),
         ),
       ),
     );

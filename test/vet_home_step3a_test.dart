@@ -5,6 +5,7 @@ import 'package:flutter_vethome/models/pet_model.dart';
 import 'package:flutter_vethome/pages/saude_page.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pet_avatar.dart';
+import 'package:flutter_vethome/widgets/pet_summary.dart';
 import 'package:flutter_vethome/widgets/pets/pet_card_widget.dart';
 import 'package:flutter_vethome/widgets/vet_header.dart';
 
@@ -55,7 +56,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Saúde mantém avatar e nome completo dentro do header', (
+  testWidgets('Saúde mantém avatar e nome completo no bloco do pet', (
     tester,
   ) async {
     mobile(tester);
@@ -67,13 +68,13 @@ void main() {
       );
       await tester.pumpWidget(MaterialApp(home: SaudePage(pet: pet)));
       await tester.pumpAndSettle();
-      final header = tester.getRect(find.byType(VetHeader));
+      final header = tester.getRect(find.byType(PetSummary));
       final avatar = tester.getRect(find.byType(PetAvatar));
       final label = tester.getRect(find.text(name));
       expect(header.contains(avatar.topLeft), isTrue);
       expect(avatar.bottom, lessThanOrEqualTo(header.bottom));
       expect(label.bottom, lessThanOrEqualTo(header.bottom));
-      expect(label.center.dx, closeTo(header.center.dx, 0.1));
+      expect(label.left, greaterThan(avatar.right));
       expect(tester.takeException(), isNull);
     }
   });
@@ -95,7 +96,7 @@ void main() {
       );
       final image = tester.widget<Image>(find.byType(Image));
       expect(
-        (image.image as AssetImage).assetName,
+        ((image.image as ResizeImage).imageProvider as AssetImage).assetName,
         'assets/imagens/figma/cachorroegatopng-${entry.$2}.png',
       );
       expect(pet.species, entry.$1);
@@ -106,7 +107,7 @@ void main() {
   testWidgets(
     'Avatar corrige os caminhos legados e dá contraste sem alterar dados',
     (tester) async {
-      for (final entry in [('3', '2'), ('2', '3')]) {
+      for (final entry in [('3', '2', 'Cachorro'), ('2', '3', 'Gato')]) {
         final storedPath =
             'assets/imagens/figma/cachorroegatopng-${entry.$1}.png';
         final pet = PetModel(
@@ -116,7 +117,9 @@ void main() {
         );
         await tester.pumpWidget(
           MaterialApp(
-            home: Scaffold(body: PetAvatar(image: pet.imagePath)),
+            home: Scaffold(
+              body: PetAvatar(image: pet.imagePath, species: entry.$3),
+            ),
           ),
         );
         final image = tester.widget<Image>(find.byType(Image));

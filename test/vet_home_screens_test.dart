@@ -56,10 +56,12 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('agenda mostra janeiro de 2026 e consultas de exemplo', (
+  testWidgets('agenda abre uma data específica e mantém exemplos separados', (
     tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: AgendaScreen()));
+    await tester.pumpWidget(
+      MaterialApp(home: AgendaScreen(initialDate: DateTime(2026, 1, 13))),
+    );
 
     expect(find.text('Janeiro 2026'), findsOneWidget);
     expect(find.text('Hemograma'), findsOneWidget);
@@ -84,20 +86,18 @@ void main() {
       MaterialApp(home: DetalhesPetPage(pet: VetRepository.pets.first)),
     );
 
-    await tester.ensureVisible(find.text('Editar'));
+    await tester.ensureVisible(find.byTooltip('Editar'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Editar'));
+    await tester.tap(find.byTooltip('Editar'));
     await tester.pumpAndSettle();
 
     expect(find.text('Editar pet'), findsOneWidget);
     expect(find.text('Nome do pet'), findsOneWidget);
-    expect(find.text('Nascimento (DD/MM/AAAA)'), findsOneWidget);
+    expect(find.text('Nascimento'), findsOneWidget);
     expect(find.text('Excluir'), findsOneWidget);
   });
 
-  testWidgets('convênio pode ser selecionado antes de continuar', (
-    tester,
-  ) async {
+  testWidgets('convênio avança imediatamente ao tocar no card', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: const ConvenioScreen(),
@@ -112,11 +112,9 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Doglife'));
-    await tester.ensureVisible(find.text('Continuar'));
-    await tester.tap(find.text('Continuar'));
+    await tester.tap(find.text('DogLife'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Doglife'), findsOneWidget);
+    expect(find.text('DogLife'), findsOneWidget);
   });
 }

@@ -87,6 +87,7 @@ class Agendamento {
     required this.local,
     required this.status,
     this.descricao,
+    this.endDate,
   });
   final DateTime data; // data + hora
   final String tipo;
@@ -94,6 +95,7 @@ class Agendamento {
   final String local;
   final StatusAgendamento status;
   final String? descricao;
+  final DateTime? endDate;
 
   // O proprietário continua sendo a chave por ID no repositório.
   Map<String, dynamic> toJson({required String petId}) => {
@@ -104,6 +106,7 @@ class Agendamento {
     'local': local,
     'status': status.name,
     'descricao': descricao,
+    if (endDate != null) 'endDate': endDate!.toIso8601String(),
   };
 
   factory Agendamento.fromJson(Map<String, dynamic> json) {
@@ -119,6 +122,7 @@ class Agendamento {
       local: jsonString(json, 'local'),
       status: status,
       descricao: jsonOptionalString(json, 'descricao'),
+      endDate: json['endDate'] == null ? null : jsonDate(json, 'endDate'),
     );
   }
 }

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../data/vet_repository.dart';
 import '../pages/pets_page.dart';
 import '../theme.dart';
+import '../widgets/pet_summary.dart';
+import '../widgets/vet_choice_pill.dart';
+import '../widgets/pets/pet_card_widget.dart';
 import '../widgets.dart';
 
 String servicoAtual = 'Consulta Geral';
@@ -157,25 +160,32 @@ class EditPetScreen extends StatelessWidget {
 
 class EscolhaPetScreen extends StatelessWidget {
   const EscolhaPetScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     if (VetRepository.pets.isEmpty) return const PetsPage();
     return VHPage(
-      tab: '/agenda',
+      tab: '/escolhaPet',
       children: [
         const VHHeader('Escolha seu Pet'),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+        Container(
+          margin: const EdgeInsets.all(22),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFECBEC0),
+            borderRadius: BorderRadius.circular(25),
+          ),
           child: Column(
             children: [
-              for (var i = 0; i < pets.length; i++)
-                PetRow(
-                  pets[i],
-                  onTap: () {
-                    VetRepository.selectedPetIndex = i;
-                    Navigator.pushNamed(context, '/servicos');
-                  },
+              for (final pet in VetRepository.pets)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 18),
+                  child: PetCardWidget(
+                    pet: pet,
+                    onTap: () {
+                      VetRepository.selectedPetId = pet.id;
+                      Navigator.pushNamed(context, '/servicos');
+                    },
+                  ),
                 ),
             ],
           ),
@@ -187,252 +197,163 @@ class EscolhaPetScreen extends StatelessWidget {
 
 class ServicosScreen extends StatefulWidget {
   const ServicosScreen({super.key});
-
   @override
   State<ServicosScreen> createState() => _ServicosScreenState();
 }
 
 class _ServicosScreenState extends State<ServicosScreen> {
-  bool aberto = true;
-
+  String? open = 'Exames';
+  static const categories = <String, List<String>>{
+    'Exames': ['Hemograma', 'Creatinina', 'Urina'],
+    'Vacinas': ['V8', 'V10', 'Antirrábica'],
+    'Microchipagem': ['Microchipagem'],
+    'Atestados': ['Atestado'],
+  };
   @override
   Widget build(BuildContext context) {
     final pet = VetRepository.selectedPet;
     if (pet == null) return const PetsPage();
-    final cao = !(pet.species?.toLowerCase().contains('gato') ?? false);
-    void convenio([String? service]) {
-      if (service != null) servicoAtual = service;
-      Navigator.pushNamed(context, '/convenio');
-    }
-
     return VHPage(
-      tab: '/pets',
+      tab: '/servicos',
       children: [
-        VHHeader('Serviços', bottom: _PetTypeTag(isDog: cao)),
-        const SizedBox(height: 122),
-        SidePill(
-          Icons.medical_services,
-          'Exames',
-          onTap: () => setState(() => aberto = !aberto),
-          extra: Icon(
-            aberto ? Icons.expand_less : Icons.expand_more,
-            size: 18,
-            color: Colors.white,
-          ),
+        const VHHeader('Serviços'),
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: PetSummary(pet: pet),
         ),
-        if (aberto)
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: Divider(),
+        ),
+        for (final entry in categories.entries)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Container(
-              width: 210,
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              decoration: BoxDecoration(
-                color: VH.background.withValues(alpha: 0.8),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(18),
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x33683F40),
-                    offset: Offset(2, 2),
-                    blurRadius: 4,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  for (final exame in ['Hemograma', 'Creatinina', 'Urina'])
-                    SizedBox(
-                      height: 25,
-                      child: InkWell(
-                        onTap: () => convenio(exame),
-                        child: Center(
-                          child: Text(
-                            exame,
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: Column(
+              children: [
+                Material(
+                  color: VH.secondary.withValues(alpha: .2),
+                  borderRadius: BorderRadius.circular(22),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      Ink(
+                        decoration: BoxDecoration(gradient: VH.softGradient),
+                        child: ListTile(
+                          minTileHeight: 59,
+                          leading: SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: VetPictogram(entry.key),
+                          ),
+                          title: Text(
+                            entry.key,
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: VH.foreground,
-                              fontFamily: 'MontserratAlternates',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        const SizedBox(height: 38),
-        SidePill(Icons.vaccines, 'Vacinas', onTap: () => convenio('Vacinação')),
-        const SizedBox(height: 39),
-        SidePill(
-          Icons.memory,
-          'Microchipagem',
-          onTap: () => convenio('Microchipagem'),
-        ),
-        const SizedBox(height: 39),
-        SidePill(
-          Icons.description,
-          'Atestados',
-          onTap: () => convenio('Atestado'),
-        ),
-        const SizedBox(height: 24),
-      ],
-    );
-  }
-}
-
-class ConvenioScreen extends StatefulWidget {
-  const ConvenioScreen({super.key});
-
-  @override
-  State<ConvenioScreen> createState() => _ConvenioScreenState();
-}
-
-class _ConvenioScreenState extends State<ConvenioScreen> {
-  String _selectedPlan = convenioAtual;
-
-  @override
-  Widget build(BuildContext context) {
-    final pet = VetRepository.selectedPet;
-    if (pet == null) return const PetsPage();
-    final cao = !(pet.species?.toLowerCase().contains('gato') ?? false);
-    const plans = [
-      (name: 'PetLove', icon: Icons.favorite_outline),
-      (name: 'Doglife', icon: Icons.health_and_safety_outlined),
-      (name: 'Particular', icon: Icons.person_outline),
-    ];
-    void agendar() {
-      convenioAtual = _selectedPlan;
-      Navigator.pushNamed(
-        context,
-        '/nova-consulta',
-        arguments: {'pet': pet, 'service': servicoAtual, 'plan': _selectedPlan},
-      );
-    }
-
-    return VHPage(
-      tab: '/pets',
-      children: [
-        VHHeader('Convênio', bottom: _PetTypeTag(isDog: cao)),
-        const SizedBox(height: 185),
-        for (var i = 0; i < plans.length; i++)
-          Padding(
-            padding: EdgeInsets.only(bottom: i == plans.length - 1 ? 14 : 60),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: InkWell(
-                onTap: () => setState(() => _selectedPlan = plans[i].name),
-                borderRadius: const BorderRadius.horizontal(
-                  right: Radius.circular(30),
-                ),
-                child: Ink(
-                  width: 254,
-                  height: 59,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [VH.secondary, VH.background],
-                    ),
-                    borderRadius: BorderRadius.horizontal(
-                      right: Radius.circular(i == 0 ? 50 : 25),
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x33683F40),
-                        offset: Offset(2, 2),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 15),
-                      Icon(plans[i].icon, color: Colors.white, size: 29),
-                      const SizedBox(width: 17),
-                      Expanded(
-                        child: Text(
-                          plans[i].name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            fontFamily: 'MontserratAlternates',
+                          trailing: AnimatedRotation(
+                            turns: open == entry.key ? .5 : 0,
+                            duration: const Duration(milliseconds: 220),
+                            child: const Icon(
+                              Icons.expand_more,
+                              color: VH.foreground,
+                            ),
+                          ),
+                          onTap: () => setState(
+                            () => open = open == entry.key ? null : entry.key,
                           ),
                         ),
                       ),
-                      Icon(
-                        _selectedPlan == plans[i].name
-                            ? Icons.radio_button_checked
-                            : Icons.chevron_right,
-                        color: Colors.white,
-                        size: 20,
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 240),
+                        alignment: Alignment.topCenter,
+                        child: open != entry.key
+                            ? const SizedBox(width: double.infinity)
+                            : Column(
+                                children: [
+                                  for (final option in entry.value) ...[
+                                    const Divider(height: 1, thickness: .5),
+                                    ListTile(
+                                      minTileHeight: 48,
+                                      dense: true,
+                                      title: Text(option),
+                                      trailing: const VetChevron(),
+                                      selected: servicoAtual == option,
+                                      hoverColor: VH.secondary.withValues(
+                                        alpha: .15,
+                                      ),
+                                      onTap: () {
+                                        setState(() => servicoAtual = option);
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/convenio',
+                                          arguments: {
+                                            'petId': pet.id,
+                                            'service': option,
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ],
+                              ),
                       ),
-                      const SizedBox(width: 16),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
           ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(28, 18, 28, 8),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: agendar,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VH.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                shape: const StadiumBorder(),
-              ),
-              child: const Text('Continuar'),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
       ],
     );
   }
 }
 
-class _PetTypeTag extends StatelessWidget {
-  const _PetTypeTag({required this.isDog});
-
-  final bool isDog;
-
+class ConvenioScreen extends StatelessWidget {
+  const ConvenioScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    if (isDog) {
-      return Image.asset(
-        'assets/imagens/figma/frame-20.png',
-        width: 173,
-        height: 52,
-        fit: BoxFit.contain,
-      );
-    }
-
-    return Container(
-      width: 173,
-      height: 52,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: VH.background.withValues(alpha: 0.55),
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(30),
-          bottom: Radius.circular(10),
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final values = args is Map ? args : const {};
+    final pet = values['petId'] is String
+        ? VetRepository.petById(values['petId'] as String)
+        : VetRepository.selectedPet;
+    if (pet == null) return const PetsPage();
+    final service = values['service'] as String? ?? servicoAtual;
+    return VHPage(
+      tab: '/convenio',
+      children: [
+        const VHHeader('Convênio'),
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: PetSummary(pet: pet),
         ),
-      ),
-      child: const Text(
-        'GATO',
-        style: TextStyle(
-          color: VH.foreground,
-          fontFamily: 'Comfortaa',
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: Divider(),
         ),
-      ),
+        for (final plan in ['PetLove', 'DogLife', 'Particular'])
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            child: VetChoicePill(
+              label: plan,
+              icon: VetPictogram(plan),
+              onTap: () {
+                convenioAtual = plan;
+                Navigator.pushNamed(
+                  context,
+                  '/nova-consulta',
+                  arguments: {
+                    'petId': pet.id,
+                    'service': service,
+                    'plan': plan,
+                  },
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 }

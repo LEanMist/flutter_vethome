@@ -6,7 +6,8 @@ import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../theme/vet_colors.dart';
 import '../theme/vet_tones.dart';
-import '../widgets/pet_avatar.dart';
+import '../widgets/pet_summary.dart';
+import '../widgets/demo_badge.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/status_chip.dart';
 import '../widgets/vet_card.dart';
@@ -29,44 +30,20 @@ class VacinacaoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double s = PetsTheme.scaleOf(context);
     final vacinas = VetRepository.vacinas(pet.id);
 
     return VetPageScaffold(
-      title: 'Vacinação',
+      title: 'Carteira de vacinação',
       pet: pet,
       selectedIndex: 0,
       children: [
-        VetCard(
-          child: Row(
-            children: [
-              PetAvatar(image: pet.imagePath, size: 60),
-              SizedBox(width: 14 * s),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      pet.name,
-                      style: TextStyle(
-                        fontSize: 18 * s,
-                        fontWeight: FontWeight.w700,
-                        color: VetColors.brown,
-                      ),
-                    ),
-                    Text(
-                      resumoVacinas(vacinas),
-                      style: TextStyle(
-                        fontSize: 12 * s,
-                        color: VetColors.brown.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        PetSummary(pet: pet, size: PetSummarySize.medium),
+        Text(
+          '${vacinas.where((v) => v.status == VacinaStatus.emDia).length} em dia · ${vacinas.where((v) => v.status != VacinaStatus.emDia).length} ${vacinas.where((v) => v.status != VacinaStatus.emDia).length == 1 ? 'precisa' : 'precisam'} de atenção',
         ),
+        const DemoBadge(),
+        const VetSectionTitle('Vacinas'),
+        if (vacinas.isEmpty) const Text('Nenhuma vacina exibida'),
         for (final v in vacinas) _VacinaCard(v, _visual(v.status)),
       ],
     );
@@ -84,6 +61,8 @@ class _VacinaCard extends StatelessWidget {
     final (cor, icone, label) = visual;
 
     return VetCard(
+      flat: true,
+      color: VetColors.rose.withValues(alpha: .24),
       child: Row(
         children: [
           Container(
@@ -115,11 +94,11 @@ class _VacinaCard extends StatelessWidget {
                     color: VetColors.brown.withValues(alpha: 0.75),
                   ),
                 ),
+                const SizedBox(height: 6),
+                StatusChip(label, cor),
               ],
             ),
           ),
-          SizedBox(width: 8 * s),
-          StatusChip(label, cor),
         ],
       ),
     );

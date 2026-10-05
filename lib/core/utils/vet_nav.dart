@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../models/pet_model.dart';
-import '../../pages/perfil_page.dart';
-import '../../pages/pets_page.dart';
-import '../../screens/outros.dart' show AgendaScreen, ChatScreen, ConfigScreen;
 
 /// Barra inferior (igual ao Figma):
 /// 0 Pets · 1 Perfil · 2 WhatsApp · 3 Agenda · 4 Configurações
@@ -17,27 +14,29 @@ void vetNavigate(
   PetModel? pet,
   int selected = 0,
   bool isTabRoot = false,
+  DateTime? initialDate,
 }) {
   if (isTabRoot && index == selected) return;
 
-  final Widget? page = switch (index) {
-    0 => const PetsPage(),
-    1 => const PerfilPage(),
-    2 => const ChatScreen(),
-    3 => const AgendaScreen(),
-    4 => const ConfigScreen(),
+  final String? routeName = switch (index) {
+    0 => '/pets',
+    1 => '/perfil',
+    2 => '/chat',
+    3 => '/agenda',
+    4 => '/config',
     _ => null,
   };
 
-  if (page == null) {
+  if (routeName == null) {
     vetSoon(context);
     return;
   }
 
-  Navigator.pushAndRemoveUntil(
+  Navigator.pushNamedAndRemoveUntil(
     context,
-    MaterialPageRoute(builder: (_) => page),
+    routeName,
     (route) => route.isFirst,
+    arguments: index == 3 ? initialDate : null,
   );
 }
 

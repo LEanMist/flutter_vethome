@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
+import 'package:flutter_vethome/data/cep_service.dart';
 import 'package:flutter_vethome/models/pet_model.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
@@ -11,6 +12,12 @@ import 'package:flutter_vethome/screens/auth.dart';
 import 'package:flutter_vethome/screens/outros.dart';
 import 'package:flutter_vethome/screens/pets.dart';
 import 'package:flutter_vethome/widgets.dart';
+
+class _TestCep extends CepService {
+  @override
+  Future<CepResult?> lookup(String cep) async =>
+      const CepResult('Rua Teste', 'Cidade Teste');
+}
 
 void main() {
   late List<PetModel> savedPets;
@@ -82,7 +89,19 @@ void main() {
       matching: find.byType(TextFormField),
     );
     await tester.ensureVisible(field);
-    await tester.enterText(field, value);
+    final definition = tester.widget<VHField>(
+      find.byWidgetPredicate((w) => w is VHField && w.label == label),
+    );
+    if (definition.choices != null) {
+      await tester.tap(field);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(value).last);
+      await tester.pumpAndSettle();
+    } else {
+      await tester.enterText(field, value);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+    }
   }
 
   Future<void> submit(WidgetTester tester) async {
@@ -101,6 +120,7 @@ void main() {
         home: const CadastroScreen(),
         routes: {
           '/endereco': (context) => EnderecoScreen(
+            cepService: _TestCep(),
             initialData:
                 ModalRoute.of(context)!.settings.arguments
                     as Map<String, String>,
@@ -239,11 +259,16 @@ void main() {
     VetRepository.addAgendamento(pet.id, appointment);
     VetRepository.selectedPetId = pet.id;
     await tester.pumpWidget(MaterialApp(home: DetalhesPetPage(pet: pet)));
-    await tester.ensureVisible(find.text('Editar'));
+    await tester.ensureVisible(find.byTooltip('Editar'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Editar'));
+    await tester.tap(find.byTooltip('Editar'));
     await tester.pumpAndSettle();
-    final nameField = find.widgetWithText(TextFormField, 'Nome do pet');
+    final nameField = find.descendant(
+      of: find.byWidgetPredicate(
+        (w) => w is VHField && w.label == 'Nome do pet',
+      ),
+      matching: find.byType(TextFormField),
+    );
     await tester.enterText(nameField, 'Pet modal renomeado 4A');
     await tester.ensureVisible(find.text('Salvar'));
     await tester.pumpAndSettle();

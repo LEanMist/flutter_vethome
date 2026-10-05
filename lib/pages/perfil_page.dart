@@ -8,6 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../core/utils/formatters.dart';
+import '../core/utils/form_fields.dart';
+import '../core/utils/photo_picker.dart';
+import '../widgets.dart';
 import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
@@ -22,13 +25,10 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
-  // TODO: carregar/salvar dados reais (API, SharedPreferences, etc.)
   String _nome = VetRepository.clientName;
   DateTime _nascimento = VetRepository.clientBirthDate;
   File? _foto;
   Uint8List? _fotoBytes;
-
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -58,37 +58,8 @@ class _PerfilPageState extends State<PerfilPage> {
   String get _nascimentoTexto => fmtData(_nascimento).replaceAll('/', ' / ');
 
   Future<void> _mudarFoto() async {
-    final ImageSource? source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      backgroundColor: VetColors.pink,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.photo_camera, color: VetColors.brown),
-              title: const Text('Tirar foto'),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: Icon(Icons.photo_library, color: VetColors.brown),
-              title: const Text('Escolher da galeria'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (source == null) return;
-
     try {
-      final XFile? picked = await _picker.pickImage(
-        source: source,
-        maxWidth: 800,
-      );
+      final picked = await pickLocalPhoto(context);
       if (picked != null && mounted) {
         final bytes = kIsWeb ? await picked.readAsBytes() : null;
         if (!mounted) return;
@@ -121,11 +92,9 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   Future<void> _mudarNascimento() async {
-    final DateTime? data = await showDatePicker(
+    final DateTime? data = await showDialog<DateTime>(
       context: context,
-      initialDate: _nascimento,
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      builder: (_) => _BirthDialog(initial: _nascimento),
     );
     if (data != null && mounted) {
       setState(() {
@@ -136,38 +105,8 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   Future<void> _mudarEndereco() async {
-    final controller = TextEditingController(text: VetRepository.clientAddress);
-    try {
-      final String? value = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: VetColors.pink,
-          title: const Text('Alterar endereço'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            maxLines: 2,
-            decoration: const InputDecoration(hintText: 'Endereço completo'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('Salvar'),
-            ),
-          ],
-        ),
-      );
-      if (value != null && value.isNotEmpty && mounted) {
-        VetRepository.updateClient(address: value);
-        vetSoon(context, 'Endereço atualizado');
-      }
-    } finally {
-      controller.dispose();
-    }
+    await Navigator.pushNamed(context, '/enderecos');
+    if (mounted) setState(() {});
   }
 
   @override
@@ -177,48 +116,53 @@ class _PerfilPageState extends State<PerfilPage> {
 
     return Scaffold(
       backgroundColor: VetColors.pink,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: top + 72 * s + 280 * s,
-                    child: Stack(
-                      alignment: Alignment.topCenter,
-                      children: [
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          child: _buildHeader(s, top),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: top + 72 * s + 280 * s,
+                        child: Stack(
+                          alignment: Alignment.topCenter,
+                          children: [
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              child: _buildHeader(s, top),
+                            ),
+                            Positioned(
+                              top: top + 72 * s,
+                              child: _buildAvatarTab(s),
+                            ),
+                          ],
                         ),
-                        Positioned(
-                          top: top + 72 * s,
-                          child: _buildAvatarTab(s),
-                        ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(height: 18 * s),
+                      _buildBirthday(s),
+                      SizedBox(height: 28 * s),
+                      _buildOptions(s),
+                    ],
                   ),
-                  SizedBox(height: 18 * s),
-                  _buildBirthday(s),
-                  SizedBox(height: 28 * s),
-                  _buildOptions(s),
-                ],
+                ),
               ),
-            ),
+              SafeArea(
+                top: false,
+                child: VetBottomNav(
+                  selectedIndex: 1,
+                  onSelected: (i) =>
+                      vetNavigate(context, i, selected: 1, isTabRoot: true),
+                ),
+              ),
+            ],
           ),
-          SafeArea(
-            top: false,
-            child: VetBottomNav(
-              selectedIndex: 1,
-              onSelected: (i) =>
-                  vetNavigate(context, i, selected: 1, isTabRoot: true),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -424,12 +368,10 @@ class _NomeDialogState extends State<_NomeDialog> {
     return AlertDialog(
       backgroundColor: VetColors.pink,
       title: const Text('Mudar nome de perfil'),
-      content: TextField(
+      content: VHField(
+        'Novo nome',
+        Icons.person_outline,
         controller: _controller,
-        autofocus: true,
-        maxLength: 20,
-        decoration: const InputDecoration(hintText: 'Novo nome'),
-        onSubmitted: (v) => Navigator.pop(context, v.trim()),
       ),
       actions: [
         TextButton(
@@ -443,6 +385,54 @@ class _NomeDialogState extends State<_NomeDialog> {
       ],
     );
   }
+}
+
+class _BirthDialog extends StatefulWidget {
+  const _BirthDialog({required this.initial});
+  final DateTime initial;
+  @override
+  State<_BirthDialog> createState() => _BirthDialogState();
+}
+
+class _BirthDialogState extends State<_BirthDialog> {
+  final _form = GlobalKey<FormState>();
+  late final _controller = TextEditingController(text: fmtData(widget.initial));
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    backgroundColor: VetColors.pink,
+    title: const Text('Mudar data de nascimento'),
+    content: Form(
+      key: _form,
+      child: VHField(
+        'Data de nascimento',
+        Icons.cake_outlined,
+        controller: _controller,
+        keyboardType: TextInputType.number,
+        validator: (v) =>
+            parseBirthDate(v ?? '') == null ? 'Informe uma data válida' : null,
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancelar'),
+      ),
+      TextButton(
+        onPressed: () {
+          if (_form.currentState!.validate()) {
+            Navigator.pop(context, parseBirthDate(_controller.text));
+          }
+        },
+        child: const Text('Salvar'),
+      ),
+    ],
+  );
 }
 
 /// Círculo tracejado ao redor do avatar.

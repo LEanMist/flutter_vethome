@@ -18,6 +18,7 @@ class VetPageScaffold extends StatelessWidget {
     this.isTabRoot = false,
     this.showBack = true,
     this.headerBottom,
+    this.footer,
   });
 
   final String title;
@@ -29,6 +30,7 @@ class VetPageScaffold extends StatelessWidget {
   final bool isTabRoot;
   final bool showBack;
   final Widget? headerBottom;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -36,37 +38,50 @@ class VetPageScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: VetColors.pink,
-      body: Column(
-        children: [
-          VetHeader(title: title, showBack: showBack, bottom: headerBottom),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16 * s),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (int i = 0; i < children.length; i++) ...[
-                    if (i > 0) SizedBox(height: 12 * s),
-                    children[i],
-                  ],
-                ],
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            children: [
+              VetHeader(title: title, showBack: showBack, bottom: headerBottom),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(16 * s),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (int i = 0; i < children.length; i++) ...[
+                        if (i > 0) SizedBox(height: 12 * s),
+                        children[i],
+                      ],
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-          SafeArea(
-            top: false,
-            child: VetBottomNav(
-              selectedIndex: selectedIndex,
-              onSelected: (i) => vetNavigate(
-                context,
-                i,
-                pet: pet,
-                selected: selectedIndex,
-                isTabRoot: isTabRoot,
+              if (footer != null)
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16 * s,
+                    vertical: 8,
+                  ),
+                  child: footer!,
+                ),
+              SafeArea(
+                top: false,
+                child: VetBottomNav(
+                  selectedIndex: selectedIndex,
+                  onSelected: (i) => vetNavigate(
+                    context,
+                    i,
+                    pet: pet,
+                    selected: selectedIndex,
+                    isTabRoot: isTabRoot,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

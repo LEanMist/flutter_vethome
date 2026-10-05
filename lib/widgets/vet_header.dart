@@ -49,13 +49,16 @@ class VetHeader extends StatelessWidget {
                     ? Material(
                         color: Colors.white.withValues(alpha: 0.2),
                         shape: const CircleBorder(),
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () => Navigator.maybePop(context),
-                          child: Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                            size: 22 * s,
+                        child: Tooltip(
+                          message: 'Voltar',
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => Navigator.maybePop(context),
+                            child: Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: 22 * s,
+                            ),
                           ),
                         ),
                       )
@@ -70,7 +73,7 @@ class VetHeader extends StatelessWidget {
                     maxLines: 1,
                     softWrap: false,
                     style: TextStyle(
-                      fontSize: 26 * s,
+                      fontSize: 30 * s,
                       fontWeight: FontWeight.w700,
                       fontFamily: PetsTheme.fontComfortaa,
                       color: Colors.white,

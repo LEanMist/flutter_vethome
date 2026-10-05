@@ -141,6 +141,15 @@ class TestePage extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
+                final routeName = switch (tela.titulo) {
+                  'Pets' => '/pets',
+                  'Agenda' => '/agenda',
+                  _ => null,
+                };
+                if (routeName != null) {
+                  Navigator.pushNamed(context, routeName);
+                  return;
+                }
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: tela.pagina),

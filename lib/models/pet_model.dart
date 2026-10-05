@@ -2,6 +2,7 @@
 // Modelo simples usado pela PetsPage e pelo PetCardWidget.
 
 import 'json_fields.dart';
+import '../core/utils/pet_photo.dart';
 
 class PetModel {
   static int _nextId = 0;
@@ -10,6 +11,7 @@ class PetModel {
   final String name;
   final String imagePath;
   final String description;
+  final String? photoBase64;
   final String? species;
   final String? sex;
   final double? weightKg;
@@ -24,6 +26,7 @@ class PetModel {
     required this.name,
     required this.imagePath,
     required this.description,
+    this.photoBase64,
     this.species,
     this.sex,
     this.weightKg,
@@ -38,6 +41,7 @@ class PetModel {
     'name': name,
     'imagePath': imagePath,
     'description': description,
+    if (photoBase64 != null) 'photoBase64': photoBase64,
     'species': species,
     'sex': sex,
     'weightKg': weightKg,
@@ -55,6 +59,7 @@ class PetModel {
       name: jsonString(json, 'name'),
       imagePath: jsonString(json, 'imagePath'),
       description: jsonString(json, 'description'),
+      photoBase64: _photo(json),
       species: jsonOptionalString(json, 'species'),
       sex: jsonOptionalString(json, 'sex'),
       weightKg: jsonOptionalDouble(json, 'weightKg'),
@@ -65,7 +70,13 @@ class PetModel {
     );
   }
 
+  static String? _photo(Map<String, dynamic> json) {
+    final value = json['photoBase64'];
+    return value is String && PetPhoto.isValid(value) ? value : null;
+  }
+
   PetModel copyWith({
+    String? photoBase64,
     String? name,
     String? imagePath,
     String? description,
@@ -78,6 +89,7 @@ class PetModel {
   }) => PetModel(
     id: id,
     name: name ?? this.name,
+    photoBase64: photoBase64 ?? this.photoBase64,
     imagePath: imagePath ?? this.imagePath,
     description: description ?? this.description,
     species: species ?? this.species,

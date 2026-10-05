@@ -11,20 +11,22 @@ import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:flutter_vethome/widgets/vet_header.dart';
 
 void main() {
-  test(
-    'Decoração do Login cabe na largura e não cresce além do estilo original',
-    () {
-      for (final width in [320.0, 390.0, 500.0, 1000.0]) {
-        for (final preferred in [0.65, 1.1]) {
-          final scale = loginPawScaleForWidth(preferred, width);
-          expect(scale, lessThanOrEqualTo(preferred));
-          expect(scale, greaterThan(0));
-          expect(540 * scale, lessThanOrEqualTo(width - 36 + 0.001));
-        }
-      }
-      expect(loginPawScaleForWidth(0.65, 20), 0);
-    },
-  );
+  testWidgets('Login real mantém ações acessíveis em larguras estreitas', (
+    tester,
+  ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    for (final size in [const Size(320, 640), const Size(390, 844)]) {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+      await tester.ensureVisible(find.text('CADASTRE-SE'));
+      await tester.pumpAndSettle();
+      expect(find.text('Entrar'), findsOneWidget);
+      expect(find.text('CADASTRE-SE'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+  });
   const photoAsset = 'assets/imagens/figma/frame-53-3.png';
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
   final savedPath = VetRepository.clientPhotoPath;

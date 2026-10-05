@@ -29,7 +29,7 @@ class PetsTheme {
   /// Limitado para o layout não ficar minúsculo/gigante em telas extremas.
   static double scaleOf(BuildContext context) {
     final double width = MediaQuery.sizeOf(context).width;
-    return (width / designWidth).clamp(0.8, 1.4).toDouble();
+    return (width / designWidth).clamp(0.8, 1.0).toDouble();
   }
 
   // ── Caminhos de assets ──────────────────────────────────────────────────
