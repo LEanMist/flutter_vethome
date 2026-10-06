@@ -12,6 +12,10 @@ class CampoCadastro extends StatelessWidget {
     required this.tamanhoIcone,
     required this.tamanhoIconeInterno,
     required this.fonteLabel,
+    this.controller,
+    this.errorText,
+    this.onChanged,
+    this.onTap,
   });
   final String titulo;
   final IconData icone;
@@ -20,6 +24,10 @@ class CampoCadastro extends StatelessWidget {
   final double tamanhoIcone;
   final double tamanhoIconeInterno;
   final double fonteLabel;
+  final TextEditingController? controller;
+  final String? errorText;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -62,11 +70,16 @@ class CampoCadastro extends StatelessWidget {
                   ],
                 ),
                 child: TextField(
+                  controller: controller,
                   expands: true,
                   maxLines: null,
                   minLines: null,
                   textAlignVertical: TextAlignVertical.center,
-
+                  keyboardType: titulo == 'Peso'
+                      ? TextInputType.number
+                      : TextInputType.text,
+                  readOnly: onTap != null,
+                  onTap: onTap,
                   style: GoogleFonts.montserratAlternates(
                     color: const Color(0xFF68442E),
                     fontWeight: FontWeight.w500,
@@ -97,7 +110,9 @@ class CampoCadastro extends StatelessWidget {
                         width: 1.5,
                       ),
                     ),
+                    errorText: errorText,
                   ),
+                  onChanged: onChanged,
                 ),
               ),
               ),

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/pages/carregamento.dart';
-import 'package:flutter_vethome/widgets/campo_cadastro.dart';
+import 'package:flutter_vethome/repositories/pet_repository.dart';
 import 'package:flutter_vethome/widgets/botao_cadastrar.dart';
+import 'package:flutter_vethome/widgets/campo_cadastro.dart';
+import 'package:flutter_vethome/widgets/pet_type_selector.dart';
 
 class CadastroPetPage extends StatefulWidget {
   const CadastroPetPage({
@@ -17,18 +20,94 @@ class CadastroPetPage extends StatefulWidget {
 }
 
 class _CadastroPetPage extends State<CadastroPetPage> {
-  void menu(){
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Carregamento(
-          titulo: 'Pet Cadastrado!',
-          mensagem: null,
-          destinoBuilder: widget.destinoBuilder,
-        ),
+  final repository = InMemoryPetRepository.instance;
+  final nomeController = TextEditingController();
+  final racaController = TextEditingController();
+  final pesoController = TextEditingController();
+  final dataController = TextEditingController();
+
+  PetType? _tipo;
+  PetGenero? _genero;
+  DateTime? _dataNascimento;
+  final Map<String, String> _errors = <String, String>{};
+
+  @override
+  void dispose() {
+    nomeController.dispose();
+    racaController.dispose();
+    pesoController.dispose();
+    dataController.dispose();
+    super.dispose();
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF68442E),
+        content: Text(message),
       ),
     );
   }
+
+  void _cadastrar() {
+    final pet = Pet(
+      tipo: _tipo ?? PetType.outro,
+      nome: nomeController.text,
+      genero: _genero ?? PetGenero.macho,
+      peso: double.tryParse(pesoController.text) ?? 0,
+      dataNascimento: _dataNascimento ?? DateTime.now(),
+      raca: racaController.text,
+    );
+
+    final errors = pet.errors;
+    if (errors.isNotEmpty) {
+      setState(() {
+        _errors
+          ..clear()
+          ..addAll({
+            for (final error in errors) error: error,
+          });
+      });
+      _showError(errors.first);
+      return;
+    }
+
+    try {
+      repository.save(pet);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Carregamento(
+            titulo: 'Pet cadastrado!',
+            mensagem: '${pet.nome} foi cadastrado com sucesso.',
+            destinoBuilder: widget.destinoBuilder,
+          ),
+        ),
+      );
+    } on ArgumentError catch (error) {
+      _showError(error.message.toString());
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _dataNascimento = picked;
+        dataController.text =
+            '${picked.day}/${picked.month}/${picked.year}';
+        _errors.remove('Data de nascimento não pode ser futura.');
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,25 +174,23 @@ class _CadastroPetPage extends State<CadastroPetPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              CampoCadastro(
-                                titulo: 'Tipo de Animal',
-                                icone: Icons.pets,
-                                altura: alturaCampos,
-                                largura: larguraCampos,
-                                tamanhoIcone: tamanhoIcone,
-                                tamanhoIconeInterno: tamanhoIconeInterno,
-                                fonteLabel: fonteLabel,
+                              PetTypeSelector(
+                                value: _tipo,
+                                onChanged: (tipo) => setState(() => _tipo = tipo),
                               ),
 
                               SizedBox(height: espacamentoCampos,),
                               CampoCadastro(
-                                titulo: 'Nome do Cachorro(a)',
+                                titulo: 'Nome do animal',
                                 icone: Icons.pets,
                                 altura: alturaCampos,
                                 largura: larguraCampos,
                                 tamanhoIcone: tamanhoIcone,
                                 tamanhoIconeInterno: tamanhoIconeInterno,
                                 fonteLabel: fonteLabel,
+                                controller: nomeController,
+                                errorText: _errors['Nome do animal é obrigatório.'],
+                                onChanged: (_) => _errors.remove('Nome do animal é obrigatório.'),
                               ),
 
                               SizedBox(height: espacamentoCampos,),
@@ -121,21 +198,29 @@ class _CadastroPetPage extends State<CadastroPetPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Expanded(
-                                    child: CampoCadastro(
-                                      titulo: 'Gênero/Sexo',
-                                      icone: Icons.transgender,
-                                      altura: alturaCampos,
-                                      largura: double.infinity,
-                                      tamanhoIcone: tamanhoIcone,
-                                      tamanhoIconeInterno:
-                                          tamanhoIconeInterno,
-                                      fonteLabel: fonteLabel,
+                                    child: DropdownButtonFormField<PetGenero>(
+                                      initialValue: _genero,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Gênero/Sexo',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      items: const [
+                                        DropdownMenuItem(
+                                          value: PetGenero.macho,
+                                          child: Text('Macho'),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: PetGenero.femea,
+                                          child: Text('Fêmea'),
+                                        ),
+                                      ],
+                                      onChanged: (genero) => setState(() => _genero = genero),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: CampoCadastro(
-                                      titulo: 'peso',
+                                      titulo: 'Peso',
                                       icone: Icons.monitor_weight,
                                       altura: alturaCampos,
                                       largura: double.infinity,
@@ -143,6 +228,9 @@ class _CadastroPetPage extends State<CadastroPetPage> {
                                       tamanhoIconeInterno:
                                           tamanhoIconeInterno,
                                       fonteLabel: fonteLabel,
+                                      controller: pesoController,
+                                      errorText: _errors['Peso deve ser maior que zero.'],
+                                      onChanged: (_) => _errors.remove('Peso deve ser maior que zero.'),
                                     ),
                                   ),
                                 ],
@@ -150,13 +238,19 @@ class _CadastroPetPage extends State<CadastroPetPage> {
 
                               SizedBox(height: espacamentoCampos,),
                               CampoCadastro(
-                                titulo: 'Data de Nascimento',
+                                titulo: 'Data de nascimento',
                                 icone: Icons.cake,
                                 altura: alturaCampos,
                                 largura: larguraCampos,
                                 tamanhoIcone: tamanhoIcone,
                                 tamanhoIconeInterno: tamanhoIconeInterno,
                                 fonteLabel: fonteLabel,
+                                controller: dataController,
+                                errorText: _errors['Data de nascimento não pode ser futura.'],
+                                onChanged: (_) => _errors.remove('Data de nascimento não pode ser futura.'),
+                                onTap: () {
+                                  _selectDate(context);
+                                },
                               ),
 
                               SizedBox(height: espacamentoCampos,),
@@ -168,6 +262,9 @@ class _CadastroPetPage extends State<CadastroPetPage> {
                                 tamanhoIcone: tamanhoIcone,
                                 tamanhoIconeInterno: tamanhoIconeInterno,
                                 fonteLabel: fonteLabel,
+                                controller: racaController,
+                                errorText: _errors['Raça é obrigatória.'],
+                                onChanged: (_) => _errors.remove('Raça é obrigatória.'),
                               ),
                             ],
                           ),
@@ -175,11 +272,11 @@ class _CadastroPetPage extends State<CadastroPetPage> {
                         const SizedBox(height: 30,),
 
                         BotaoCadastro(
-                        largura: larguraBotao,
-                        altura: alturaBotao,
-                        fonte: fonteBotao,
-                        onPressed: menu,
-                      ),
+                          largura: larguraBotao,
+                          altura: alturaBotao,
+                          fonte: fonteBotao,
+                          onPressed: _cadastrar,
+                        ),
                         const SizedBox(height: 30,),
                     ],
                   ),

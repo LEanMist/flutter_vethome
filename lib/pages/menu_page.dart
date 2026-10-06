@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_vethome/models/pet.dart';
+import 'package:flutter_vethome/repositories/pet_repository.dart';
+import 'package:flutter_vethome/widgets/pet_card.dart';
 import 'agendamento_page.dart';
 import 'contato_page.dart';
 import 'configuracoes_page.dart';
@@ -15,8 +18,17 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPage extends State<MenuPage> {
+  final repository = InMemoryPetRepository.instance;
+  late final List<Pet> _pets;
+  int indiceAtual = 0;
 
-  void cadastropet(){
+  @override
+  void initState() {
+    super.initState();
+    _pets = repository.findAll();
+  }
+
+  void cadastropet() {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -24,9 +36,12 @@ class _MenuPage extends State<MenuPage> {
           destinoBuilder: (context) => const MenuPage(),
         ),
       ),
-    );
+    ).then((_) => {
+      if (mounted) {
+        setState(() => _pets = repository.findAll())
+      }
+    });
   }
-  int indiceAtual = 0;
 
   final List<Widget> telas = const [
     PerfilPage(),
@@ -75,6 +90,32 @@ class _MenuPage extends State<MenuPage> {
               decoration: BoxDecoration(
                 color: const Color.fromRGBO(192, 128, 129, 0.25),
                 borderRadius: BorderRadius.circular(35),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: _pets.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Nenhum pet cadastrado ainda.',
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: EdgeInsets.zero,
+                        itemCount: _pets.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          return PetCard(
+                            pet: _pets[index],
+                            onDetails: () => ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Detalhes do pet em breve.'),
+                                  ),
+                                ),
+                          );
+                        },
+                      ),
               ),
             ),
             const SizedBox(height: 30),
