@@ -19,11 +19,9 @@ class VH {
   static const Color accent = Color(0xFFD99A9B);
   static const Color foreground = VetColors.brown;
   static const Color onSecondary = Colors.white;
-  static const Color mutedText = Color(0xFF8F7777);
   static const Color shadowSubtle = Color(0x22683F40);
   static const Color shadowSoft = Color(0x33683F40);
 
-  static const double fieldHeight = 56;
   static const double headerHeight = 125;
   static const double radiusSmall = 10;
   static const double radiusCard = 20;

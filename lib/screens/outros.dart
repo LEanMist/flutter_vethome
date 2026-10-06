@@ -7,38 +7,6 @@ import '../widgets/appointment_card.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-class PerfilScreen extends StatelessWidget {
-  const PerfilScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return VHPage(
-      tab: '/perfil',
-      children: const [
-        VHHeader('Perfil'),
-        VHBadge('user-badge', 'Minha conta'),
-        SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.cake, size: 16),
-            SizedBox(width: 4),
-            Text(
-              'Data de nascimento não informada',
-              style: TextStyle(fontSize: 13),
-            ),
-          ],
-        ),
-        VHMenu([
-          'Mudar Foto de Perfil',
-          'Mudar Nome de Perfil',
-          'Mudar Data de Nascimento',
-        ]),
-      ],
-    );
-  }
-}
-
 class SobreScreen extends StatelessWidget {
   const SobreScreen({super.key});
   @override

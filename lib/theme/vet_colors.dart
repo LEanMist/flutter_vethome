@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 class VetColors {
   VetColors._();
 
-  static const Color gray = Color(0xFFD9D9D9); // D9D9D9
   static const Color pink = Color(0xFFFAD3D5); // FAD3D5 (fundo, botões)
   static const Color rose = Color(0xFFC08081); // C08081 (header, cards)
   static const Color brown = Color(0xFF68442E); // 68442E (ícones, textos)

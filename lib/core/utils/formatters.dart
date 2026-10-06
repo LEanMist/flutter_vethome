@@ -7,13 +7,3 @@ String fmtHorario(DateTime start, DateTime? end) =>
     end == null ? fmtHora(start) : '${fmtHora(start)} — ${fmtHora(end)}';
 
 String fmtPeso(double kg) => '${kg.toStringAsFixed(1).replaceAll('.', ',')} kg';
-
-/// 1234.5 -> "R$ 1.234,50"
-String fmtMoeda(double v) {
-  final parts = v.toStringAsFixed(2).split('.');
-  final inteiro = parts[0].replaceAllMapped(
-    RegExp(r'\B(?=(\d{3})+(?!\d))'),
-    (_) => '.',
-  );
-  return 'R\$ $inteiro,${parts[1]}';
-}

@@ -132,7 +132,7 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
           flat: true,
           onTap: next == null
               ? null
-              : () => vetNavigate(context, 3, pet: pet, initialDate: next.data),
+              : () => vetNavigate(context, 3, initialDate: next.data),
           color: VetColors.rose.withValues(alpha: .2),
           child: Row(
             children: [

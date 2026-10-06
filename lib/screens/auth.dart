@@ -48,127 +48,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
-
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  bool lembrar = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VH.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Column(
-            children: [
-              Image.asset(_logo, width: 164, height: 164, fit: BoxFit.contain),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: VH.card,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: VH.raise,
-                ),
-                child: Column(
-                  children: [
-                    const VHField('Usuário', Icons.person),
-                    const SizedBox(height: 12),
-                    const VHField('Senha', Icons.lock, password: true),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: lembrar,
-                          onChanged: (value) =>
-                              setState(() => lembrar = value ?? false),
-                        ),
-                        const Text(
-                          'Lembrar de mim',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () => ScaffoldMessenger.of(context)
-                            ..hideCurrentSnackBar()
-                            ..showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Entre em contato com o suporte para recuperar o acesso.',
-                                ),
-                              ),
-                            ),
-                          child: const Text('Esqueceu a senha?'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              PillButton(
-                label: 'Entrar',
-                onTap: () => Navigator.pushReplacementNamed(context, '/pets'),
-              ),
-              const SizedBox(height: 20),
-              const Text('Ou continue com', style: TextStyle(fontSize: 12)),
-              const SizedBox(height: 12),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _SocialIcon(
-                    icon: Icons.g_mobiledata,
-                    color: Color(0xFF4285F4),
-                  ),
-                  _SocialIcon(icon: Icons.facebook, color: Color(0xFF1877F2)),
-                  _SocialIcon(
-                    icon: Icons.camera_alt_outlined,
-                    color: Color(0xFFC13584),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Ainda não possui uma conta?',
-                style: TextStyle(fontSize: 12),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/cadastro'),
-                child: const Text(
-                  'Cadastre-se',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SocialIcon extends StatelessWidget {
-  const _SocialIcon({required this.icon, required this.color});
-
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: CircleAvatar(
-        backgroundColor: color,
-        child: Icon(icon, color: Colors.white, size: 25),
-      ),
-    );
-  }
-}
-
 class VHForm extends StatefulWidget {
   const VHForm({
     super.key,
@@ -176,18 +55,14 @@ class VHForm extends StatefulWidget {
     required this.fields,
     required this.next,
     this.initialData = const {},
-    this.onSubmit,
     this.dataPrefix = '',
-    this.onSkip,
   });
 
   final String title;
   final List<VHField> fields;
   final String next;
   final Map<String, String> initialData;
-  final ValueChanged<Map<String, String>>? onSubmit;
   final String dataPrefix;
-  final VoidCallback? onSkip;
 
   @override
   State<VHForm> createState() => _VHFormState();
@@ -267,13 +142,6 @@ class _VHFormState extends State<VHForm> {
                 .text) {
       return 'As senhas não coincidem';
     }
-    if (field.label == 'Nome do Pet' && VetRepository.petNameExists(value)) {
-      return 'Já existe um pet com esse nome';
-    }
-    if (field.label == 'Peso') {
-      final weight = double.tryParse(value.replaceAll(',', '.'));
-      if (weight == null || weight <= 0) return 'Informe um peso válido';
-    }
     if (field.label.contains('Nascimento') && !_isValidDate(value)) {
       return 'Use uma data válida (DD/MM/AAAA)';
     }
@@ -293,12 +161,9 @@ class _VHFormState extends State<VHForm> {
     if (widget.dataPrefix == 'client.') {
       data['client.Gênero personalizado'] = _genderCustom.text.trim();
     }
-    widget.onSubmit?.call(data);
     Navigator.pushNamed(context, widget.next, arguments: data);
   }
 
-  String _value(String label) =>
-      _controllers[widget.fields.indexWhere((f) => f.label == label)].text;
   Widget _buildField(int i) {
     final field = widget.fields[i];
     if (widget.dataPrefix == 'client.' && field.label == 'Gênero/Sexo') {
@@ -317,14 +182,7 @@ class _VHFormState extends State<VHForm> {
       controller: _controllers[i],
       keyboardType: field.keyboardType,
       choices: field.choices,
-      suggestions: field.label == 'Raça'
-          ? breedsFor(_value('Tipo de Animal'))
-          : const [],
       onChanged: (value) {
-        if (field.label == 'Tipo de Animal') {
-          _controllers[widget.fields.indexWhere((f) => f.label == 'Raça')]
-              .clear();
-        }
         setState(() {});
       },
       validator: (value) => _validate(field, value),
@@ -342,11 +200,9 @@ class _VHFormState extends State<VHForm> {
             constraints: const BoxConstraints(maxWidth: 390),
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
-                (widget.dataPrefix == 'pet.' ? 49 : 39) *
-                    (MediaQuery.sizeOf(context).width / 390).clamp(.8, 1.0),
-                widget.dataPrefix == 'pet.' ? 60 : 38,
-                (widget.dataPrefix == 'pet.' ? 49 : 39) *
-                    (MediaQuery.sizeOf(context).width / 390).clamp(.8, 1.0),
+                39 * (MediaQuery.sizeOf(context).width / 390).clamp(.8, 1.0),
+                38,
+                39 * (MediaQuery.sizeOf(context).width / 390).clamp(.8, 1.0),
                 24,
               ),
               child: Column(
@@ -362,7 +218,7 @@ class _VHFormState extends State<VHForm> {
                       color: VH.foreground,
                     ),
                   ),
-                  SizedBox(height: widget.dataPrefix == 'pet.' ? 46 : 25),
+                  const SizedBox(height: 25),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -378,34 +234,8 @@ class _VHFormState extends State<VHForm> {
                       child: Column(
                         children: [
                           for (var i = 0; i < widget.fields.length; i++) ...[
-                            if (!(widget.dataPrefix == 'pet.' &&
-                                widget.fields[i].label == 'Peso'))
-                              if (widget.dataPrefix == 'pet.' &&
-                                  widget.fields[i].label == 'Gênero/Sexo')
-                                LayoutBuilder(
-                                  builder: (ctx, c) => c.maxWidth >= 260
-                                      ? Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(child: _buildField(i)),
-                                            const SizedBox(width: 12),
-                                            Expanded(child: _buildField(i + 1)),
-                                          ],
-                                        )
-                                      : Column(
-                                          children: [
-                                            _buildField(i),
-                                            const SizedBox(height: 12),
-                                            _buildField(i + 1),
-                                          ],
-                                        ),
-                                )
-                              else
-                                _buildField(i),
-                            if (!(widget.dataPrefix == 'pet.' &&
-                                    widget.fields[i].label == 'Peso') &&
-                                i != widget.fields.length - 1)
+                            _buildField(i),
+                            if (i != widget.fields.length - 1)
                               const SizedBox(height: 14),
                           ],
                         ],
@@ -420,7 +250,7 @@ class _VHFormState extends State<VHForm> {
                       onTap: _continue,
                       child: SizedBox(
                         width: 181,
-                        height: widget.dataPrefix == 'pet.' ? 65 : 71,
+                        height: 71,
                         child: const Center(
                           child: Text(
                             'Cadastrar',
@@ -435,21 +265,6 @@ class _VHFormState extends State<VHForm> {
                       ),
                     ),
                   ),
-                  if (widget.onSkip != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 20),
-                      child: TextButton(
-                        onPressed: widget.onSkip,
-                        child: const Text(
-                          'Pular por enquanto',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: VH.secondary,
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),

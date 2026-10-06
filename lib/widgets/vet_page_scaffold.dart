@@ -80,7 +80,6 @@ class VetPageScaffold extends StatelessWidget {
                   onSelected: (i) => vetNavigate(
                     context,
                     i,
-                    pet: pet,
                     selected: selectedIndex,
                     isTabRoot: isTabRoot,
                   ),

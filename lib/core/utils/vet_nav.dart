@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../models/pet_model.dart';
-
 /// Barra inferior (igual ao Figma):
 /// 0 Pets · 1 Perfil · 2 WhatsApp · 3 Agenda · 4 Configurações
 ///
@@ -11,7 +9,6 @@ import '../../models/pet_model.dart';
 void vetNavigate(
   BuildContext context,
   int index, {
-  PetModel? pet,
   int selected = 0,
   bool isTabRoot = false,
   DateTime? initialDate,

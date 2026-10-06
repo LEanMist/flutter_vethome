@@ -42,8 +42,6 @@ class SaudePage extends StatelessWidget {
         Text(
           VetRepository.realVaccines(pet.id).isNotEmpty
               ? 'Vermifugação e histórico.'
-              : currentPet.weightKg == null
-              ? 'Vacinação, vermifugação e histórico.'
               : 'Vacinação, vermifugação e histórico.',
           style: const TextStyle(fontSize: 12),
         ),
