@@ -15,8 +15,6 @@ dependencies:
 
   google_fonts: ^6.2.1
   flutter_inset_shadow: ^2.0.3
-  cached_network_image: ^3.4.1
-  flutter_svg: ^2.3.0
 
   cupertino_icons: ^1.0.8
   image_picker: ^1.2.3
