@@ -83,7 +83,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
             child: Column(
               children: [
                 Material(
-                  color: VH.secondary.withValues(alpha: .2),
+                  color: VH.secondary.withValues(alpha: .25),
                   borderRadius: BorderRadius.circular(22),
                   clipBehavior: Clip.antiAlias,
                   child: Column(

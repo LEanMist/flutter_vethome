@@ -12,15 +12,15 @@ class VH {
   static const String bodyFontFamily = 'MontserratAlternates';
 
   static const Color background = VetColors.pink;
-  static const Color card = Color(0xFFFFEEEE);
-  static const Color muted = Color(0xFFF4C4C6);
+  static const Color card = VetColors.roseOverlay50;
+  static const Color muted = VetColors.roseOverlay25;
   static const Color secondary = VetColors.rose;
   static const Color primary = VetColors.brown;
   static const Color accent = Color(0xFFD99A9B);
   static const Color foreground = VetColors.brown;
   static const Color onSecondary = Colors.white;
-  static const Color shadowSubtle = Color(0x22683F40);
-  static const Color shadowSoft = Color(0x33683F40);
+  static const Color shadowSubtle = VetColors.shadowDark;
+  static const Color shadowSoft = VetColors.shadowDark;
 
   static const double headerHeight = 125;
   static const double radiusSmall = 10;
@@ -74,6 +74,7 @@ class VetTheme {
       onPrimary: Colors.white,
       secondary: VH.secondary,
       onSecondary: VH.onSecondary,
+      surface: VH.background,
       onSurface: VH.foreground,
       outline: VH.secondary,
     );

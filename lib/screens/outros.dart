@@ -5,6 +5,7 @@ import '../data/vet_repository.dart';
 import '../models/vet_models.dart';
 import '../widgets/appointment_card.dart';
 import '../theme.dart';
+import '../theme/vet_colors.dart';
 import '../widgets.dart';
 
 class SobreScreen extends StatelessWidget {
@@ -84,32 +85,51 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return VHPage(
       tab: '/chat',
-      footer: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: insetBox(color: VH.card, radius: 999),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: TextField(
-                    controller: ctrl,
-                    onSubmitted: (_) => enviar(),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Mensagem',
+      footer: ColoredBox(
+        color: VetColors.chatComposerBackground,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: insetBox(
+                      color: Colors.transparent,
+                      radius: 999,
+                      gradient: LinearGradient(
+                        colors: [
+                          VH.background.withValues(alpha: .5),
+                          VH.secondary.withValues(alpha: .375),
+                        ],
+                        stops: const [.25, 1],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        transform: GradientRotation(-0.1781671607501732),
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TextField(
+                      controller: ctrl,
+                      onSubmitted: (_) => enviar(),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Mensagem',
+                        hintStyle: TextStyle(
+                          color: VH.foreground.withValues(alpha: .5),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              IconButton(
-                tooltip: 'Enviar mensagem',
-                onPressed: enviar,
-                icon: const Icon(Icons.send, color: VH.foreground),
-              ),
-            ],
+                IconButton(
+                  tooltip: 'Enviar mensagem',
+                  onPressed: enviar,
+                  icon: const Icon(Icons.send, color: VH.foreground),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -160,6 +180,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
+                                  color: VetColors.brownSecondary,
                                 ),
                               ),
                             ),
@@ -172,18 +193,14 @@ class _ChatScreenState extends State<ChatScreen> {
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: message.fromClient
-                                    ? VH.secondary
+                                    ? VH.foreground.withValues(alpha: .5)
                                     : VH.card,
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: VH.raise,
                               ),
                               child: Text(
                                 message.text,
-                                style: TextStyle(
-                                  color: message.fromClient
-                                      ? VH.onSecondary
-                                      : VH.foreground,
-                                ),
+                                style: const TextStyle(color: VH.onSecondary),
                               ),
                             ),
                           ],
@@ -327,7 +344,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           Text(
                             '${meses[_mes.month - 1]} ${_mes.year}',
                             style: const TextStyle(
-                              color: VH.onSecondary,
+                              color: VH.foreground,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -395,7 +412,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                           color: VH.foreground.withValues(
                                             alpha: date.month == _mes.month
                                                 ? 1
-                                                : .55,
+                                                : .3,
                                           ),
                                         ),
                                       ),
@@ -430,14 +447,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   height: 41,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Color.lerp(
-                      VH.background,
-                      Colors.white,
-                      .2,
-                    )!.withValues(alpha: .88),
-                    border: Border.all(
-                      color: VH.secondary.withValues(alpha: .35),
-                    ),
+                    color: VetColors.pinkOverlay50,
+                    border: Border.all(color: VH.secondary),
                     borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text(
@@ -603,7 +614,11 @@ class ConfigScreen extends StatelessWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: item.action,
                 ),
-                const Divider(height: 1, thickness: .6),
+                Divider(
+                  height: 1,
+                  thickness: .6,
+                  color: VH.foreground.withValues(alpha: .25),
+                ),
               ],
             ],
           ),

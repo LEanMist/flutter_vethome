@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
 import '../theme.dart';
+import '../theme/vet_colors.dart';
 import 'teste_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -148,7 +149,10 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   child: const Text(
                                     'Esqueceu sua senha?',
-                                    style: TextStyle(fontSize: 9),
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: Color.fromRGBO(0, 0, 0, .5),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -194,6 +198,7 @@ class _LoginPageState extends State<LoginPage> {
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
+                                    color: VetColors.brownSecondary,
                                   ),
                                 ),
                               ),
@@ -248,7 +253,7 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: VH.foreground,
+                            color: VetColors.brownSecondary,
                           ),
                         ),
                         TextButton(
@@ -314,7 +319,11 @@ class _LoginPageState extends State<LoginPage> {
           colors: [VH.secondary.withValues(alpha: .25), VH.background],
         ),
         boxShadow: const [
-          BoxShadow(color: Colors.black12, offset: Offset(1, 1), blurRadius: 2),
+          BoxShadow(
+            color: VetColors.shadowDark,
+            offset: Offset(1, 1),
+            blurRadius: 2,
+          ),
         ],
       ),
       child: TextField(

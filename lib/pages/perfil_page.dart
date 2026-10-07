@@ -202,7 +202,7 @@ class _PerfilPageState extends State<PerfilPage> {
       alignment: Alignment.topCenter,
       padding: EdgeInsets.only(top: top + 16 * s),
       decoration: BoxDecoration(
-        color: VetColors.roseDark.withValues(alpha: 0.85),
+        color: VetColors.rose,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(30 * s)),
       ),
       child: Column(
@@ -221,7 +221,7 @@ class _PerfilPageState extends State<PerfilPage> {
             width: 220 * s,
             height: 59 * s,
             decoration: BoxDecoration(
-              color: VetColors.pink.withValues(alpha: 0.16),
+              color: Colors.transparent,
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(30 * s),
                 bottom: Radius.circular(10 * s),
@@ -238,7 +238,7 @@ class _PerfilPageState extends State<PerfilPage> {
       width: 220 * s,
       height: 280 * s,
       decoration: BoxDecoration(
-        color: VetColors.pink.withValues(alpha: 0.9),
+        color: VetColors.pinkOverlay50,
         border: Border.all(color: VetColors.rose, width: 3 * s),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(30 * s),
@@ -268,7 +268,7 @@ class _PerfilPageState extends State<PerfilPage> {
               height: 178 * s,
               child: CustomPaint(
                 painter: _DashedCirclePainter(
-                  color: VetColors.roseDark,
+                  color: VetColors.profileOutline,
                   strokeWidth: 2 * s,
                 ),
                 child: Center(
@@ -340,7 +340,8 @@ class _PerfilPageState extends State<PerfilPage> {
       child: Column(
         children: [
           for (int i = 0; i < items.length; i++) ...[
-            if (i > 0) Divider(height: 1, thickness: 1, color: VetColors.rose),
+            if (i > 0)
+              Divider(height: 1, thickness: 1, color: VetColors.profileOutline),
             InkWell(
               onTap: items[i].value,
               child: Padding(

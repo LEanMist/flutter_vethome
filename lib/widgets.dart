@@ -7,9 +7,14 @@ import 'pages/teste_page.dart';
 import 'theme.dart';
 import 'widgets/vet_bottom_nav.dart';
 
-BoxDecoration insetBox({required Color color, double radius = VH.radiusCard}) {
+BoxDecoration insetBox({
+  required Color color,
+  double radius = VH.radiusCard,
+  Gradient? gradient,
+}) {
   return inset_shadow.BoxDecoration(
     color: color,
+    gradient: gradient,
     borderRadius: BorderRadius.circular(radius),
     boxShadow: const [
       inset_shadow.BoxShadow(
@@ -366,10 +371,7 @@ class _VHFieldState extends State<VHField> {
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  VH.secondary.withValues(alpha: widget.figmaForm ? .25 : .45),
-                  VH.background,
-                ],
+                colors: [VH.secondary.withValues(alpha: .25), VH.background],
               ),
               borderRadius: fieldRadius,
             ),

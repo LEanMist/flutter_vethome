@@ -10,8 +10,15 @@ class VetColors {
   static const Color rose = Color(0xFFC08081); // C08081 (header, cards)
   static const Color brown = Color(0xFF68442E); // 68442E (ícones, textos)
 
-  // Derivadas da paleta (para o efeito neumórfico)
-  static const Color roseDark = Color(0xFFA96C6D);
-  static const Color shadowDark = Color(0x55683F40);
+  // Cores e transparências dos nós do Figma Education.
+  static const Color roseOverlay25 = Color.fromRGBO(192, 128, 129, .25);
+  static const Color roseOverlay50 = Color.fromRGBO(192, 128, 129, .5);
+  static const Color pinkOverlay50 = Color.fromRGBO(250, 211, 213, .5);
+  static const Color brownSecondary = Color.fromRGBO(104, 68, 46, .75);
+  static const Color profileOutline = Color(0xFFB18B81);
+  static const Color chatComposerBackground = Color(0xFFEBBEC0);
+  static const Color shadowDark = Color.fromRGBO(0, 0, 0, .25);
+
+  // Realce existente, sem equivalente confirmado no Figma.
   static const Color shadowLight = Color(0x99FFFFFF);
 }
