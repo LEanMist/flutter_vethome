@@ -21,7 +21,7 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
-  // TODO: carregar/salvar dados reais (API, SharedPreferences, etc.)
+  // TO DO: carregar/salvar dados reais (API, SharedPreferences, etc.)
   String _nome = VetRepository.clientName;
   DateTime _nascimento = VetRepository.clientBirthDate;
   File? _foto;

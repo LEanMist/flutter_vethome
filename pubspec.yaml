@@ -11,7 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_localizations:
-    sdk: flutter
+    sdk: flutter 
+    
+  http: ^1.2.2
 
   google_fonts: ^6.2.1
   flutter_inset_shadow: ^2.0.3

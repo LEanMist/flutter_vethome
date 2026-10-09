@@ -1,11 +1,55 @@
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../widgets/pets/pets_theme.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http
+;
 
 /// Dados de exemplo. Quando houver API, só este arquivo muda.
 class VetRepository {
   VetRepository._();
 
+ // Emulador Android:
+ static const String baseUrl = 'http://10.0.2.2:8080';
+
+  // Celular físico:
+  // static const String baseUrl = 'http://10.106.75.47:8080';
+ // static const String baseUrl = 'http://localhost:8080';
+ 
+  static Future<void> cadastrar({
+    required String clientNome,
+    required DateTime clientBirthDate,
+    required String clientCPF,
+    required String clientPhone,
+    required String clientEmail,
+    required String clientPassword,
+    required String clientConfirmPassword,
+  }) async {
+   final response = await http.post(
+      Uri.parse('$baseUrl/cliente'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'nome': clientNome,
+        'dataNascimento': clientBirthDate.toIso8601String(),
+        'cpf': clientCPF,
+        'telefone': clientPhone,
+        'email': clientEmail,
+        'senha': clientPassword,
+      }),
+    );
+
+ if (response.statusCode == 200 ||
+        response.statusCode == 201) {
+      return;
+    }
+  throw Exception(
+      'Erro ao cadastrar: ${response.statusCode} ${response.body}',
+    );
+  
+  }
+  
   static String clientName = 'Liminha';
   static DateTime clientBirthDate = DateTime(2007, 2, 5);
   static String clientEmail = '';

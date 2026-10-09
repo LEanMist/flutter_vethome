@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import '../service/cliente_service.dart';
 
 const _logo = 'assets/imagens/figma/vethomepng-2.png';
 
@@ -239,6 +240,7 @@ class _VHFormState extends State<VHForm> {
                 .text) {
       return 'As senhas não coincidem';
     }
+
     if (field.label == 'Nome do Pet' && VetRepository.petNameExists(value)) {
       return 'Já existe um pet com esse nome';
     }
@@ -353,25 +355,67 @@ class _VHFormState extends State<VHForm> {
   }
 }
 
-class CadastroScreen extends StatelessWidget {
+class CadastroScreen extends StatefulWidget {
   const CadastroScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => const VHForm(
-    title: 'Cadastro',
-    next: '/endereco',
-    fields: [
-      VHField('Nome Completo', Icons.person, value: 'Matheus Santana Lima'),
-      VHField('Data de Nascimento', Icons.cake, value: '05/02/2007'),
-      VHField('Gênero/Sexo', Icons.person_outline, value: 'Masculino'),
-      VHField('CPF', Icons.badge, value: '534.356.874-94'),
-      VHField('Telefone/Celular', Icons.phone, value: '11 94345-3266'),
-      VHField('E-mail', Icons.mail, value: 'Kelvin231@gmail.com'),
-      VHField('Senha', Icons.lock, password: true),
-      VHField('Confirmar Senha', Icons.lock, password: true),
-    ],
-  );
+  State<CadastroScreen> createState() => _CadastroScreen();
 }
+
+
+class _CadastroScreen extends State<CadastroScreen> {
+  bool _carregando = false;
+
+@override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: VH.background,
+      body: Stack(
+        children: [
+          VHForm(
+            title: 'Cadastro',
+            next: '/endereco',
+            fields: const [
+              VHField('Nome Completo', Icons.person, value: 'Matheus Santana Lima'),
+              VHField('Data de Nascimento', Icons.cake, value: '05/02/2007'),
+              VHField('Gênero/Sexo', Icons.person_outline, value: 'Masculino'),
+              VHField('CPF', Icons.badge, value: '534.356.874-94'),
+              VHField('Telefone/Celular', Icons.phone, value: '11 94345-3266'),
+              VHField('E-mail', Icons.mail, value: 'Kelvin231@gmail.com'),
+              VHField('Senha', Icons.lock, password: true),
+              VHField('Confirmar Senha', Icons.lock, password: true),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _cadastrar() async {
+    setState(() => _carregando = true);
+
+    try {
+      await ClienteService.cadastrarCliente({
+        'Nome Completo': 'Matheus Santana Lima',
+        'Data de Nascimento': '05/02/2007',
+        'CPF': '534.356.874-94',
+        'Telefone/Celular': '11 94345-3266',
+        'E-mail': 'Kelvin231@gmail.com',
+        'Senha': '123456',
+      
+      });
+
+      Navigator.pushNamed(context, '/sucesso');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Falha: $e')),
+      );
+    } finally {
+      setState(() => _carregando = false);
+    }
+  }
+}
+
 
 class EnderecoScreen extends StatelessWidget {
   const EnderecoScreen({super.key, this.initialData = const {}});
@@ -426,21 +470,32 @@ class CadastroPetScreen extends StatelessWidget {
       VHField('Data de Nascimento', Icons.cake, value: '23/03/2012'),
       VHField('Raça', Icons.pets, value: 'Lulu-da-Pomerânia'),
     ],
-    onSubmit: (data) {
-      final weight = double.parse(data['Peso']!.replaceAll(',', '.'));
-      final birth = _parseDate(data['Data de Nascimento']!);
-      VetRepository.addPet(
-        name: data['Nome do Pet']!,
-        species: data['Tipo de Animal']!,
-        sex: data['Gênero/Sexo']!,
-        weightKg: weight,
-        birthDate: birth,
-        breed: data['Raça']!,
-      );
-      if (data.containsKey('E-mail')) {
-        VetRepository.registerClient(data);
-      }
-    },
+    onSubmit: (data) async {
+  try {
+    await ClienteService.cadastrarCliente(data);
+    final weight = double.parse(data['Peso']!.replaceAll(',', '.'));
+    final birth = _parseDate(data['Data de Nascimento']!);
+
+    VetRepository.addPet(
+      name: data['Nome do Pet']!,
+      species: data['Tipo de Animal']!,
+      sex: data['Gênero/Sexo']!,
+      weightKg: weight,
+      birthDate: birth,
+      breed: data['Raça']!,
+    );
+
+    if (data.containsKey('E-mail')) {
+      VetRepository.registerClient(data);
+    }
+
+    // opcional: navegar para sucesso
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Erro no cadastro: $e')),
+    );
+  }
+},
   );
 
   static DateTime _parseDate(String value) {
