@@ -6,11 +6,11 @@ import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../theme/vet_colors.dart';
 import '../theme/vet_tones.dart';
-import '../widgets/pet_avatar.dart';
+import '../widgets/pets/pet_avatar.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/status_chip.dart';
-import '../widgets/vet_card.dart';
-import '../widgets/vet_page_scaffold.dart';
+import '../widgets/vet/vet_card.dart';
+import '../widgets/vet/vet_page_scaffold.dart';
 
 class SaudePage extends StatelessWidget {
   const SaudePage({required this.pet, super.key});

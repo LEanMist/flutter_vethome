@@ -10,7 +10,7 @@ import '../pages/perfil_page.dart';
 import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
 import '../pages/vacinacao_page.dart';
-import '../screens/auth.dart'
+import 'sucessoScreen.dart'
     show CadastroPetScreen, CadastroScreen, EnderecoScreen, SucessoScreen;
 import '../screens/outros.dart'
     show AgendaScreen, ChatScreen, ConfigScreen, SobreScreen;

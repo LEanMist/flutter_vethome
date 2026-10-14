@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../theme/vet_colors.dart';
-import '../theme/vet_tones.dart';
-import 'pets/pets_theme.dart';
+import '../../theme/vet_colors.dart';
+import '../../theme/vet_tones.dart';
+import '../pets/pets_theme.dart';
 
 /// Card neumórfico (sombra escura + clara), no estilo das telas do Figma.
 class VetCard extends StatelessWidget {

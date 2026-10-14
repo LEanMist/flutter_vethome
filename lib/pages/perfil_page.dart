@@ -11,7 +11,7 @@ import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pets/pets_theme.dart';
-import '../widgets/vet_bottom_nav.dart';
+import '../widgets/vet/vet_bottom_nav.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});

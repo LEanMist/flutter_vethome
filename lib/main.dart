@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'pages/Cadastro_page.dart';
+import 'pages/cadastroPet_page.dart';
+import 'pages/splashScreen.dart';
+import 'pages/endereco_page.dart';
 import 'data/vet_repository.dart';
 import 'models/pet_model.dart';
 import 'pages/agendamentos_page.dart';
@@ -13,7 +17,7 @@ import 'pages/pets_page.dart';
 import 'pages/saude_page.dart';
 import 'pages/vacinacao_page.dart';
 import 'pages/nova_consulta_page.dart';
-import 'screens/auth.dart';
+import 'pages/sucessoScreen.dart';
 import 'screens/outros.dart';
 import 'screens/pets.dart'
     show ConvenioScreen, EscolhaPetScreen, ServicosScreen;
@@ -77,11 +81,9 @@ class VetHomeApp extends StatelessWidget {
           '/': (_) => const SplashScreen(),
           '/login': (_) => const LoginPage(),
           '/cadastro': (_) => const CadastroScreen(),
-          '/endereco': (context) =>
-              EnderecoScreen(initialData: _formDataFromRoute(context)),
-          '/cadastroPet': (context) =>
-              CadastroPetScreen(initialData: _formDataFromRoute(context)),
-          '/sucesso': (_) => const SucessoScreen(),
+          '/endereco': (context) => EnderecoScreen(initialData: _formDataFromRoute(context)),
+          '/cadastroPet': (context) => CadastroPetScreen(initialData: _formDataFromRoute(context)),
+          '/sucesso': (_) => const SucessoScreen(), 
           '/pets': (_) => const PetsPage(),
           '/pet': (context) => DetalhesPetPage(pet: _petFromRoute(context)),
           '/editPet': (context) => EditarPetPage(pet: _petFromRoute(context)),

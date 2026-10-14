@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/app_export.dart';
+import '../../core/app_export.dart';
 
 /// CustomWeatherButton is a stylized button component with custom border radius,
 /// background color, shadow, and Montserrat Alternates typography.

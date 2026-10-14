@@ -4,10 +4,10 @@ import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../theme/vet_colors.dart';
-import '../widgets/pet_avatar.dart';
+import '../widgets/pets/pet_avatar.dart';
 import '../widgets/pets/pets_theme.dart';
-import '../widgets/vet_card.dart';
-import '../widgets/vet_page_scaffold.dart';
+import '../widgets/vet/vet_card.dart';
+import '../widgets/vet/vet_page_scaffold.dart';
 
 class NovaConsultaPage extends StatefulWidget {
   const NovaConsultaPage({

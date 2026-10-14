@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../pages/teste_page.dart';
-import '../theme/vet_colors.dart';
-import 'pets/pets_theme.dart';
+import '../../pages/teste_page.dart';
+import '../../theme/vet_colors.dart';
+import '../pets/pets_theme.dart';
 
 /// Cabeçalho padrão: botão voltar + título centralizado + curva inferior.
 /// Respeita o notch/status bar. `bottom` permite pendurar conteúdo extra.

@@ -7,10 +7,10 @@ import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../pages/editar_pet_page.dart';
 import '../theme/vet_colors.dart';
-import '../widgets/pet_avatar.dart';
+import '../widgets/pets/pet_avatar.dart';
 import '../widgets/pets/pets_theme.dart';
-import '../widgets/vet_card.dart';
-import '../widgets/vet_page_scaffold.dart';
+import '../widgets/vet/vet_card.dart';
+import '../widgets/vet/vet_page_scaffold.dart';
 import 'saude_page.dart';
 import 'vacinacao_page.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../theme/vet_colors.dart';
-import 'pets/pets_theme.dart';
+import '../../theme/vet_colors.dart';
+import 'pets_theme.dart';
 
 /// Foto do pet com fallback e `cacheWidth` (evita decodificar imagem
 /// gigante na thread principal -> menos "Skipped frames").

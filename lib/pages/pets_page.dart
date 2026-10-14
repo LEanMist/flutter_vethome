@@ -7,7 +7,7 @@ import '../models/pet_model.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pets/pet_card_widget.dart';
 import '../widgets/pets/pets_theme.dart';
-import '../widgets/vet_bottom_nav.dart';
+import '../widgets/vet/vet_bottom_nav.dart';
 import 'detalhes_pet_page.dart';
 import 'teste_page.dart';
 

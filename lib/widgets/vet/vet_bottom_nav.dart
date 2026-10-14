@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../theme/vet_colors.dart';
-import 'pets/pets_theme.dart';
+import '../../theme/vet_colors.dart';
+import '../pets/pets_theme.dart';
 
 class VetBottomNav extends StatelessWidget {
   const VetBottomNav({

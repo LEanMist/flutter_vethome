@@ -17,3 +17,108 @@
    
   // );
 
+
+                      login que estava no auth
+  class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool lembrar = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: VH.background,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Column(
+            children: [
+              Image.asset(_logo, width: 164, height: 164, fit: BoxFit.contain),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: VH.card,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: VH.raise,
+                ),
+                child: Column(
+                  children: [
+                    const VHField('Usuário', Icons.person),
+                    const SizedBox(height: 12),
+                    const VHField('Senha', Icons.lock, password: true),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: lembrar,
+                          onChanged: (value) =>
+                              setState(() => lembrar = value ?? false),
+                        ),
+                        const Text(
+                          'Lembrar de mim',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Entre em contato com o suporte para recuperar o acesso.',
+                                ),
+                              ),
+                            ),
+                          child: const Text('Esqueceu a senha?'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              PillButton(
+                label: 'Entrar',
+                onTap: () => Navigator.pushReplacementNamed(context, '/pets'),
+              ),
+              const SizedBox(height: 20),
+              const Text('Ou continue com', style: TextStyle(fontSize: 12)),
+              const SizedBox(height: 12),
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _SocialIcon(
+                    icon: Icons.g_mobiledata,
+                    color: Color(0xFF4285F4),
+                  ),
+                  _SocialIcon(icon: Icons.facebook, color: Color(0xFF1877F2)),
+                  _SocialIcon(
+                    icon: Icons.camera_alt_outlined,
+                    color: Color(0xFFC13584),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Ainda não possui uma conta?',
+                style: TextStyle(fontSize: 12),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/cadastro'),
+                child: const Text(
+                  'Cadastre-se',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

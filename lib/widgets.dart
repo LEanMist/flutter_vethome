@@ -5,7 +5,7 @@ import 'data/vet_repository.dart';
 import 'models/pet_model.dart';
 import 'pages/teste_page.dart';
 import 'theme.dart';
-import 'widgets/vet_bottom_nav.dart';
+import 'widgets/vet/vet_bottom_nav.dart';
 
 BoxDecoration insetBox({required Color color, double radius = 20}) {
   return inset_shadow.BoxDecoration(
