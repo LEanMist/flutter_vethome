@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vethome/models/pet.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class PetCard extends StatelessWidget {
   const PetCard({
@@ -15,56 +16,54 @@ class PetCard extends StatelessWidget {
       ? 'assets/imagens/cachorro.png'
       : 'assets/imagens/gato.png';
 
-  String get animalLabel => pet.tipo == PetType.cachorro ? 'Cachorro' : 'Gato';
-
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white.withValues(alpha: 0.92),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 100,
-              height: 100,
-              child: Image.asset(
-                imageAsset,
-                fit: BoxFit.cover,
-                errorBuilder: (context, object, stackTrace) =>
-                    const Icon(Icons.pets),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+    return Material(
+      color: const Color(0xFFD9A4A5),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(30),    
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onDetails,
+        child: SizedBox(
+          height: 65,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Image.asset(
+                    imageAsset,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, object, stackTrace) =>
+                        const Icon(Icons.pets, color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
                     pet.nome,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 20,
+                    style: GoogleFonts.comfortaa(
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 25,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text('$animalLabel · ${pet.raca}'),
-                  Text('Peso: ${pet.peso.toStringAsFixed(1)} kg'),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: TextButton(
-                      onPressed: onDetails,
-                      child: const Text('Ver detalhes'),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.keyboard_double_arrow_right_rounded,
+                  color: Color(0xFF9A6C59),
+                  size: 45,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

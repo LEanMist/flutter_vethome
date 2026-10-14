@@ -19,7 +19,7 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPage extends State<MenuPage> {
   final repository = InMemoryPetRepository.instance;
-  late final List<Pet> _pets;
+  late List<Pet> _pets;
   int indiceAtual = 0;
 
   @override
