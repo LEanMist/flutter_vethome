@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../service/cliente_service.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -16,22 +16,37 @@ class EnderecoScreen extends StatelessWidget {
           next: '/cadastroPet',
           initialData: initialData,
           fields: const [
-            VHField(
-              'CEP',
-              Icons.home,
-              value: '34556-234',
-              keyboardType: TextInputType.number,
-            ),
-            VHField('Endereço', Icons.home, value: 'R. Carcino'),
-            VHField(
-              'Número',
-              Icons.tag,
-              value: '73',
-              keyboardType: TextInputType.number,
-            ),
+            VHField('CEP',Icons.home, value: '34556-234', keyboardType: TextInputType.number,),
+            VHField('Logradouro', Icons.home, value: 'R. Carcino'),
             VHField('Complemento', Icons.home),
+            VHField('Bairro', Icons.home, value: 'Centro'),
             VHField('Cidade', Icons.location_city),
+            VHField('Número',Icons.tag,value: '73',keyboardType: TextInputType.number),
+            VHField('CPF Cliente',Icons.tag,value: '754894724804',keyboardType: TextInputType.number),
           ],
+          onSubmit: (data) async{
+              final payload = {
+              'cep': data['CEP'],
+              'logradouro': data['Logradouro'],
+              'complemento': data['Complemento'] ?? '',
+              'bairro': data['Bairro'],
+              'cidade': data['Cidade'],
+              'numero': data['Número'],
+              'cpfCliente': data['CPF Cliente'],
+              };
+
+             await ClienteService.cadastrarEndereco(payload);
+          }
         ),
       );
 }
+
+//try {
+ //   await ClienteService.cadastrarEndereco(data);
+ // } catch (e){
+ //    if (context.mounted) {
+ //   ScaffoldMessenger.of(context).showSnackBar(
+ //     SnackBar(content: Text('Falha: $e')),
+ //   );
+ // }
+ // }
