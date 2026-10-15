@@ -1,3 +1,6 @@
+export 'widgets/auth/vh_form.dart';
+export 'widgets/dialog/address_dialog.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
@@ -311,7 +314,7 @@ class VHPage extends StatelessWidget {
                 ),
               ),
             ),
-            ?footer,
+            if (footer != null) footer!,
             VetBottomNav(
               selectedIndex: _tabRoutes.indexOf(tab).clamp(0, 4),
               onSelected: (index) {

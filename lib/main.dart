@@ -2,23 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'pages/Cadastro_page.dart';
-import 'pages/cadastroPet_page.dart';
-import 'pages/splashScreen.dart';
-import 'pages/endereco_page.dart';
+import 'pages/sobre_page.dart';
+import 'pages/chat_page.dart';
+import 'pages/agenda_page.dart';
+import 'pages/config_page.dart';
 import 'data/vet_repository.dart';
 import 'models/pet_model.dart';
 import 'pages/agendamentos_page.dart';
+import 'pages/cadastro_page.dart';
+import 'pages/cadastroPet_page.dart';
 import 'pages/detalhes_pet_page.dart';
 import 'pages/editar_pet_page.dart';
+import 'pages/endereco_page.dart';
 import 'pages/login_page.dart';
+import 'pages/nova_consulta_page.dart';
 import 'pages/perfil_page.dart';
 import 'pages/pets_page.dart';
 import 'pages/saude_page.dart';
-import 'pages/vacinacao_page.dart';
-import 'pages/nova_consulta_page.dart';
+import 'pages/splashScreen.dart';
 import 'pages/sucessoScreen.dart';
-import 'screens/outros.dart';
+import 'pages/vacinacao_page.dart';
 import 'screens/pets.dart'
     show ConvenioScreen, EscolhaPetScreen, ServicosScreen;
 import 'theme.dart';
@@ -114,6 +117,7 @@ class VetHomeApp extends StatelessWidget {
               plan: plan is String ? plan : 'Particular',
             );
           },
+ 
           '/config': (_) => const ConfigScreen(),
         },
       ),

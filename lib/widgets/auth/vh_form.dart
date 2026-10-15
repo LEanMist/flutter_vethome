@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../data/vet_repository.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
 
 class VHForm extends StatefulWidget {
   const VHForm({
@@ -20,7 +23,6 @@ class VHForm extends StatefulWidget {
   @override
   State<VHForm> createState() => _VHFormState();
 }
-
 
 class _VHFormState extends State<VHForm> {
   final _formKey = GlobalKey<FormState>();
@@ -45,9 +47,9 @@ class _VHFormState extends State<VHForm> {
   }
 
   List<TextEditingController> _makeControllers() => [
-    for (final field in widget.fields)
-      TextEditingController(text: widget.initialData[field.label] ?? ''),
-  ];
+        for (final field in widget.fields)
+          TextEditingController(text: widget.initialData[field.label] ?? ''),
+      ];
 
   @override
   void dispose() {
@@ -78,7 +80,6 @@ class _VHFormState extends State<VHForm> {
                 .text) {
       return 'As senhas não coincidem';
     }
-
     if (field.label == 'Nome do Pet' && VetRepository.petNameExists(value)) {
       return 'Já existe um pet com esse nome';
     }
@@ -99,9 +100,8 @@ class _VHFormState extends State<VHForm> {
     final month = int.tryParse(parts[1]);
     final last = int.tryParse(parts[2]);
     if (first == null || month == null || last == null) return false;
-    final date = first > 31
-        ? DateTime(first, month, last)
-        : DateTime(last, month, first);
+
+    final date = first > 31 ? DateTime(first, month, last) : DateTime(last, month, first);
     return date.year >= 1900 &&
         date.month == month &&
         date.day == (first > 31 ? last : first) &&
@@ -165,8 +165,7 @@ class _VHFormState extends State<VHForm> {
                         password: widget.fields[i].password,
                         controller: _controllers[i],
                         keyboardType: widget.fields[i].keyboardType,
-                        validator: (value) =>
-                            _validate(widget.fields[i], value),
+                        validator: (value) => _validate(widget.fields[i], value),
                       ),
                       const SizedBox(height: 7),
                     ],
@@ -192,3 +191,4 @@ class _VHFormState extends State<VHForm> {
     );
   }
 }
+

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../data/vet_repository.dart';
+import '../theme.dart';
 import '../widgets.dart';
 
 class SucessoScreen extends StatelessWidget {
@@ -8,6 +10,7 @@ class SucessoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: VH.background,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -60,3 +63,4 @@ class SucessoScreen extends StatelessWidget {
     );
   }
 }
+

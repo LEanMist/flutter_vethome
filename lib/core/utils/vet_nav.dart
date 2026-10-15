@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../models/pet_model.dart';
+import '../../pages/agenda_page.dart';
+import '../../pages/chat_page.dart';
+import '../../pages/config_page.dart';
 import '../../pages/perfil_page.dart';
 import '../../pages/pets_page.dart';
-import '../../screens/outros.dart' show AgendaScreen, ChatScreen, ConfigScreen;
 
 /// Barra inferior (igual ao Figma):
 /// 0 Pets · 1 Perfil · 2 WhatsApp · 3 Agenda · 4 Configurações

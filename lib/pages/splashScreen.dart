@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-const _logo = 'assets/imagens/figma/vethomepng-2.png';
-import 'widgets/VHForm.dart' as VH;
 
+import '../theme.dart';
+
+const _logo = 'assets/imagens/figma/vethomepng-2.png';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -38,3 +39,4 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
+

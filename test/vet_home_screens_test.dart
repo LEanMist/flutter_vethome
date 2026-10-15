@@ -3,9 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/perfil_page.dart';
+import 'package:flutter_vethome/pages/agenda_page.dart';
+import 'package:flutter_vethome/pages/config_page.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
-import 'package:flutter_vethome/screens/outros.dart';
-import 'package:flutter_vethome/screens/pets.dart' show ConvenioScreen;
+import 'package:flutter_vethome/screens/pets.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
 

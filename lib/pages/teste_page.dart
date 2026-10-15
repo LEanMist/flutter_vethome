@@ -10,10 +10,14 @@ import '../pages/perfil_page.dart';
 import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
 import '../pages/vacinacao_page.dart';
-import 'sucessoScreen.dart'
-    show CadastroPetScreen, CadastroScreen, EnderecoScreen, SucessoScreen;
-import '../screens/outros.dart'
-    show AgendaScreen, ChatScreen, ConfigScreen, SobreScreen;
+import 'cadastro_page.dart';
+import 'cadastroPet_page.dart';
+import 'endereco_page.dart';
+import 'sucessoScreen.dart';
+import 'agenda_page.dart';
+import 'chat_page.dart';
+import 'config_page.dart';
+import 'sobre_page.dart';
 import '../screens/pets.dart'
     show ConvenioScreen, EscolhaPetScreen, ServicosScreen;
 
