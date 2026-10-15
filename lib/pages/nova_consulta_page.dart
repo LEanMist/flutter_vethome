@@ -6,7 +6,7 @@ import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pet_summary.dart';
-import '../widgets/vet_page_scaffold.dart';
+import '../widgets/vet/vet_page_scaffold.dart';
 
 bool isFutureAppointmentTime(DateTime time, DateTime now, {DateTime? after}) =>
     time.isAfter(now) && (after == null || time.isAfter(after));

@@ -10,8 +10,8 @@ import '../widgets/pet_summary.dart';
 import '../widgets/demo_badge.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/status_chip.dart';
-import '../widgets/vet_card.dart';
-import '../widgets/vet_page_scaffold.dart';
+import '../widgets/vet/vet_card.dart';
+import '../widgets/vet/vet_page_scaffold.dart';
 
 class SaudePage extends StatelessWidget {
   const SaudePage({required this.pet, super.key});

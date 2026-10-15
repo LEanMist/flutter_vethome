@@ -5,7 +5,7 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
 import 'pages/teste_page.dart';
 import 'theme.dart';
-import 'widgets/vet_bottom_nav.dart';
+import 'widgets/vet/vet_bottom_nav.dart';
 
 BoxDecoration insetBox({
   required Color color,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../core/utils/vet_nav.dart';
-import '../models/pet_model.dart';
-import '../theme/vet_colors.dart';
-import 'pets/pets_theme.dart';
+import '../../core/utils/vet_nav.dart';
+import '../../models/pet_model.dart';
+import '../../theme/vet_colors.dart';
+import '../pets/pets_theme.dart';
 import 'vet_bottom_nav.dart';
 import 'vet_header.dart';
 

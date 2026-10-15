@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/perfil_page.dart';
 import 'package:flutter_vethome/pages/login_page.dart';
-import 'package:flutter_vethome/widgets/vet_header.dart';
+import 'package:flutter_vethome/widgets/vet/vet_header.dart';
 
 void main() {
   testWidgets('Login real mantém ações acessíveis em larguras estreitas', (

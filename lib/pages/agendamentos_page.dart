@@ -4,8 +4,8 @@ import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../widgets/pet_summary.dart';
 import '../widgets/appointment_card.dart';
-import '../widgets/vet_page_scaffold.dart';
-import '../widgets/vet_card.dart';
+import '../widgets/vet/vet_page_scaffold.dart';
+import '../widgets/vet/vet_card.dart';
 
 class AgendamentosPage extends StatelessWidget {
   const AgendamentosPage({super.key, required this.pet});

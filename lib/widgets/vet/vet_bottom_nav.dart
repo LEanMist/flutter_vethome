@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
-import '../theme.dart';
-import '../theme/vet_colors.dart';
-import 'pets/pets_theme.dart';
+import '../../theme.dart';
+import '../../theme/vet_colors.dart';
+import '../pets/pets_theme.dart';
 
 class VetBottomNav extends StatelessWidget {
   const VetBottomNav({

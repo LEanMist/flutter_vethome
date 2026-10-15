@@ -6,7 +6,7 @@ import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pets/pet_card_widget.dart';
 import '../widgets/pets/pets_theme.dart';
-import '../widgets/vet_bottom_nav.dart';
+import '../widgets/vet/vet_bottom_nav.dart';
 import 'teste_page.dart';
 
 class PetsPage extends StatefulWidget {

@@ -10,8 +10,8 @@ import '../widgets.dart';
 import '../widgets/demo_badge.dart';
 import '../widgets/pet_summary.dart';
 import '../widgets/status_chip.dart';
-import '../widgets/vet_card.dart';
-import '../widgets/vet_page_scaffold.dart';
+import '../widgets/vet/vet_card.dart';
+import '../widgets/vet/vet_page_scaffold.dart';
 
 class VacinacaoPage extends StatefulWidget {
   const VacinacaoPage({required this.pet, super.key});

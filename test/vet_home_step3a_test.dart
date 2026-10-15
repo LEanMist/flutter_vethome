@@ -7,7 +7,7 @@ import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pet_avatar.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
 import 'package:flutter_vethome/widgets/pets/pet_card_widget.dart';
-import 'package:flutter_vethome/widgets/vet_header.dart';
+import 'package:flutter_vethome/widgets/vet/vet_header.dart';
 
 void main() {
   void mobile(WidgetTester tester) {

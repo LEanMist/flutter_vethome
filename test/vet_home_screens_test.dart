@@ -9,7 +9,7 @@ import 'package:flutter_vethome/screens/outros.dart';
 import 'package:flutter_vethome/screens/pets.dart' show ConvenioScreen;
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
-import 'package:flutter_vethome/widgets/vet_bottom_nav.dart';
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
 void main() {
   test('paleta base segue as cores exatas da referência', () {
