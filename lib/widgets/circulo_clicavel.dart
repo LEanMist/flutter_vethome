@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 
 class CirculoClicavel extends StatelessWidget {
   final String? imagem;
@@ -30,17 +31,25 @@ class CirculoClicavel extends StatelessWidget {
       width: 52,
       height: 52,
       child: Container(
-        decoration: BoxDecoration(
+        decoration: inset.BoxDecoration(
           color: selecionado
               ? const Color(0xFFC08081)
               : const Color(0xFFFAD3D5),
           shape: BoxShape.circle,
-          boxShadow: const [
-            BoxShadow(
-              color: Color.fromARGB(100, 105, 66, 67),
-              blurRadius: 1,
-              offset: Offset(2, 3),
-            ),
+          boxShadow: [
+            if (!selecionado)
+              const inset.BoxShadow(
+                color: Color.fromARGB(100, 105, 66, 67),
+                blurRadius: 1,
+                offset: Offset(2, 3),
+              ),
+            if (selecionado)
+              const inset.BoxShadow(
+                color: Color.fromARGB(55, 70, 40, 41),
+                blurRadius: 1,
+                offset: Offset(2, 3),
+                inset: true,
+              ),
           ],
         ),
         child: OutlinedButton(

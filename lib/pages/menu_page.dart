@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/repositories/pet_repository.dart';
@@ -57,7 +58,7 @@ class _MenuPage extends State<MenuPage> {
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
         final double alturaCabecalho = compacto ? 140 : 160;
         final double alturaCampoAnimais = compacto ? 480 : 700;
-        final double larguraCampoAnimais = compacto ? 350 : 180;
+        final double larguraCampoAnimais = compacto ? 370 : 180;
         final double alturaBotao = compacto ? 50 : 60;
         final double larguraBotao = compacto ? 120 : 250;
 
@@ -162,9 +163,17 @@ class _MenuPage extends State<MenuPage> {
         height: 75,
         margin: const EdgeInsets.fromLTRB(10, 0, 10, 17),
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-        decoration: BoxDecoration(
+        decoration: inset.BoxDecoration(
           color: const Color(0xFFD9A4A5),
           borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            inset.BoxShadow(
+              color: Color.fromARGB(55, 70, 40, 41),
+              blurRadius: 1,
+              offset: Offset(2, 3),
+              inset: true,
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
