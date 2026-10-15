@@ -104,7 +104,7 @@ class _MenuPage extends State<MenuPage> {
                     : ListView.separated(
                         padding: EdgeInsets.zero,
                         itemCount: _pets.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           return PetCard(
                             pet: _pets[index],

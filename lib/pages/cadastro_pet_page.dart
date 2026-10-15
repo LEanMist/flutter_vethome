@@ -162,7 +162,7 @@ class _CadastroPetPage extends State<CadastroPetPage> {
         MaterialPageRoute(
           builder: (context) => Carregamento(
             titulo: 'Pet cadastrado!',
-            mensagem: '${pet.nome} foi cadastrado com sucesso.',
+            mensagem: '${pet.nome}\n foi cadastrado com sucesso.',
             destinoBuilder: widget.destinoBuilder,
           ),
         ),
