@@ -26,6 +26,33 @@ void main() {
     expect(title.style?.fontFamily, 'Comfortaa');
   });
 
+ testWidgets('formulario valida CPF antes de continuar', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: VHForm(
+          title: 'Cadastro',
+          next: '/next',
+          fields: const [VHField('CPF', Icons.badge)],
+          initialData: const {'CPF': '534.356.874-94'},
+        ),
+        routes: {'/next': (_) => const Scaffold(body: Text('Avançou'))},
+      ),
+    );
+
+    await tester.tap(find.text('Cadastrar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Informe um CPF válido'), findsOneWidget);
+    expect(find.text('Avançou'), findsNothing);
+
+    await tester.enterText(find.byType(TextFormField), '529.982.247-25');
+    await tester.tap(find.text('Cadastrar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Avançou'), findsOneWidget);
+  });
+
+
+
   testWidgets('tela Pets carrega os assets exportados do Figma', (
     tester,
   ) async {

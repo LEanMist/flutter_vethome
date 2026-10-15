@@ -68,6 +68,9 @@ class _VHFormState extends State<VHForm> {
         !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
       return 'Informe um e-mail válido';
     }
+     if (field.label == 'CPF' && !_isValidCpf(value)) {
+      return 'Informe um CPF válido';
+    }
     if (field.label == 'Senha' && value.length < 6) {
       return 'Use ao menos 6 caracteres';
     }
@@ -91,6 +94,25 @@ class _VHFormState extends State<VHForm> {
       return 'Use uma data válida (DD/MM/AAAA)';
     }
     return null;
+  }
+
+  bool _isValidCpf(String value) {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != 11 || RegExp(r'^(\d)\1{10}$').hasMatch(digits)) {
+      return false;
+    }
+
+    final numbers = digits.split('').map(int.parse).toList();
+    for (var position = 9; position < 11; position++) {
+      var sum = 0;
+      for (var index = 0; index < position; index++) {
+        sum += numbers[index] * (position + 1 - index);
+      }
+      final remainder = sum % 11;
+      final digit = remainder < 2 ? 0 : 11 - remainder;
+      if (numbers[position] != digit) return false;
+    }
+    return true;
   }
 
   bool _isValidDate(String value) {
