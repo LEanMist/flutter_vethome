@@ -280,12 +280,9 @@ class _VHFieldState extends State<VHField> {
             ? TextInputType.number
             : TextInputType.text),
     validator: widget.validator,
-    style: TextStyle(
-      fontSize: _fontSize(width),
-      fontFamily: widget.figmaForm ? VH.headingFontFamily : null,
-      fontWeight: widget.figmaForm ? FontWeight.w500 : null,
-      color: VH.foreground,
-    ),
+    style: widget.figmaForm
+        ? VH.figmaFieldValueStyle.copyWith(fontSize: _fontSize(width))
+        : TextStyle(fontSize: _fontSize(width), color: VH.foreground),
     decoration: InputDecoration(
       labelText: widget.compact
           ? switch (widget.label) {
@@ -332,13 +329,17 @@ class _VHFieldState extends State<VHField> {
       suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 48),
       border: OutlineInputBorder(
         borderRadius: fieldRadius,
-        borderSide: const BorderSide(color: VH.secondary),
+        borderSide: widget.figmaForm
+            ? BorderSide.none
+            : const BorderSide(color: VH.secondary),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: fieldRadius,
-        borderSide: BorderSide(
-          color: VH.secondary.withValues(alpha: isOpen ? .65 : .5),
-        ),
+        borderSide: widget.figmaForm
+            ? BorderSide.none
+            : BorderSide(
+                color: VH.secondary.withValues(alpha: isOpen ? .65 : .5),
+              ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: fieldRadius,
@@ -355,12 +356,13 @@ class _VHFieldState extends State<VHField> {
           padding: EdgeInsets.only(left: widget.figmaForm ? 14 : 58, bottom: 5),
           child: Text(
             widget.label,
-            style: TextStyle(
-              fontFamily: widget.figmaForm ? VH.bodyFontFamily : null,
-              fontWeight: widget.figmaForm ? FontWeight.w500 : FontWeight.w600,
-              fontSize: widget.figmaForm ? 14 : 13,
-              color: VH.foreground,
-            ),
+            style: widget.figmaForm
+                ? VH.figmaFieldLabelStyle
+                : const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: VH.foreground,
+                  ),
           ),
         ),
       TapRegion(
@@ -369,12 +371,33 @@ class _VHFieldState extends State<VHField> {
         child: CompositedTransformTarget(
           link: _link,
           child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [VH.secondary.withValues(alpha: .25), VH.background],
-              ),
-              borderRadius: fieldRadius,
-            ),
+            decoration: widget.figmaForm
+                ? inset_shadow.BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        VH.secondary.withValues(alpha: .25),
+                        VH.background,
+                      ],
+                    ),
+                    borderRadius: fieldRadius,
+                    boxShadow: const [
+                      inset_shadow.BoxShadow(
+                        color: VH.shadowSubtle,
+                        offset: Offset(2, 2),
+                        blurRadius: 2,
+                        inset: true,
+                      ),
+                    ],
+                  )
+                : BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        VH.secondary.withValues(alpha: .25),
+                        VH.background,
+                      ],
+                    ),
+                    borderRadius: fieldRadius,
+                  ),
             child: widget.fitSingleLine
                 ? LayoutBuilder(
                     builder: (context, constraints) =>
@@ -446,21 +469,33 @@ class PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      borderRadius: VH.pillBorderRadius,
-      elevation: 2,
-      child: InkWell(
-        onTap: onTap,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color,
         borderRadius: VH.pillBorderRadius,
-        child: Padding(
-          padding: padding,
-          child:
-              child ??
-              Text(
-                label!,
-                style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
-              ),
+        boxShadow: const [
+          BoxShadow(
+            color: VH.shadowSubtle,
+            offset: Offset(2, 2),
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: VH.pillBorderRadius,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: VH.pillBorderRadius,
+          child: Padding(
+            padding: padding,
+            child:
+                child ??
+                Text(
+                  label!,
+                  style: VH.figmaButtonTextStyle.copyWith(color: textColor),
+                ),
+          ),
         ),
       ),
     );

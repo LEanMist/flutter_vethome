@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
 import '../theme.dart';
 import '../theme/vet_colors.dart';
@@ -48,14 +49,15 @@ class VetBottomNav extends StatelessWidget {
       child: Container(
         margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, 12 * s),
         padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 8 * s),
-        decoration: BoxDecoration(
+        decoration: inset_shadow.BoxDecoration(
           color: VH.secondary.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(25 * s),
           boxShadow: const [
-            BoxShadow(
+            inset_shadow.BoxShadow(
               color: VetColors.shadowDark,
               offset: Offset(2, 2),
-              blurRadius: 4,
+              blurRadius: 2,
+              inset: true,
             ),
           ],
         ),
