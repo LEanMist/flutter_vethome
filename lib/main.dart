@@ -3,7 +3,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/vet_repository.dart';
 import 'pages/addresses_page.dart';
+import 'pages/agenda_page.dart';
 import 'pages/chat_page.dart';
+import 'pages/config_page.dart';
 import 'models/saved_address.dart';
 import 'models/pet_model.dart';
 import 'pages/agendamentos_page.dart';
@@ -17,7 +19,6 @@ import 'pages/sobre_page.dart';
 import 'pages/vacinacao_page.dart';
 import 'pages/nova_consulta_page.dart';
 import 'screens/auth.dart';
-import 'screens/outros.dart' show AgendaScreen, ConfigScreen;
 import 'screens/pets.dart'
     show ConvenioScreen, EscolhaPetScreen, ServicosScreen;
 import 'theme.dart';
