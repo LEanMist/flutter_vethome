@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../service/cliente_service.dart';
-import '../theme.dart';
-import '../widgets.dart';
+import '../../service/endereco_service.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
 
 class EnderecoScreen extends StatelessWidget {
   const EnderecoScreen({super.key, this.initialData = const {}});
@@ -25,7 +25,7 @@ class EnderecoScreen extends StatelessWidget {
             VHField('CPF Cliente',Icons.tag,value: '754894724804',keyboardType: TextInputType.number),
           ],
           onSubmit: (data) async{
-              final payload = {
+              final endereco = {
               'cep': data['CEP'],
               'logradouro': data['Logradouro'],
               'complemento': data['Complemento'] ?? '',
@@ -35,18 +35,9 @@ class EnderecoScreen extends StatelessWidget {
               'cpfCliente': data['CPF Cliente'],
               };
 
-             await ClienteService.cadastrarEndereco(payload);
+             await EnderecoService.cadastrarEndereco(endereco);
           }
         ),
       );
 }
 
-//try {
- //   await ClienteService.cadastrarEndereco(data);
- // } catch (e){
- //    if (context.mounted) {
- //   ScaffoldMessenger.of(context).showSnackBar(
- //     SnackBar(content: Text('Falha: $e')),
- //   );
- // }
- // }

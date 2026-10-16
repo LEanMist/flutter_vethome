@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../service/cliente_service.dart';
-import '../theme.dart';
-import '../widgets.dart';
+import '../../service/cliente_service.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
 
 class CadastroScreen extends StatelessWidget {
   const CadastroScreen({super.key});
