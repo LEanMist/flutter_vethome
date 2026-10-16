@@ -50,6 +50,25 @@ class VH {
     colors: [secondary, background],
   );
 
+  static TextStyle get figmaFieldValueStyle => GoogleFonts.comfortaa(
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+    color: foreground,
+  );
+
+  static TextStyle get figmaFieldLabelStyle => GoogleFonts.montserratAlternates(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: foreground,
+  );
+
+  static const TextStyle figmaButtonTextStyle = TextStyle(
+    fontFamily: headingFontFamily,
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    color: onSecondary,
+  );
+
   static const List<BoxShadow> raise = [
     BoxShadow(color: shadowSoft, offset: Offset(3, 4), blurRadius: 8),
     BoxShadow(

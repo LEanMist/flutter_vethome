@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/vet_repository.dart';
 import '../models/saved_address.dart';
 import '../widgets/address_form.dart';
-import '../widgets/vet_page_scaffold.dart';
+import '../widgets/vet/vet_page_scaffold.dart';
 import '../theme/vet_colors.dart';
 
 class AddressesPage extends StatefulWidget {

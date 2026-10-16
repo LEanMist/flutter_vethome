@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
 import '../pages/agendamentos_page.dart';
+import '../pages/chat_page.dart';
 import '../pages/detalhes_pet_page.dart';
 import '../pages/editar_pet_page.dart';
 import '../pages/login_page.dart';
@@ -10,11 +11,11 @@ import '../pages/nova_consulta_page.dart';
 import '../pages/perfil_page.dart';
 import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
+import '../pages/sobre_page.dart';
 import '../pages/vacinacao_page.dart';
 import '../screens/auth.dart'
     show CadastroPetScreen, CadastroScreen, EnderecoScreen, SucessoScreen;
-import '../screens/outros.dart'
-    show AgendaScreen, ChatScreen, ConfigScreen, SobreScreen;
+import '../screens/outros.dart' show AgendaScreen, ConfigScreen;
 import '../screens/pets.dart'
     show ConvenioScreen, EscolhaPetScreen, ServicosScreen;
 

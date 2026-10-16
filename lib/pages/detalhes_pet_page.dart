@@ -8,8 +8,8 @@ import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../pages/editar_pet_page.dart';
 import '../theme/vet_colors.dart';
-import '../widgets/vet_card.dart';
-import '../widgets/vet_page_scaffold.dart';
+import '../widgets/vet/vet_card.dart';
+import '../widgets/vet/vet_page_scaffold.dart';
 import '../widgets/pet_summary.dart';
 
 class DetalhesPetPage extends StatefulWidget {
