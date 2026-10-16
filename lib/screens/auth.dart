@@ -10,43 +10,8 @@ import '../widgets/client_gender_fields.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-const _logo = 'assets/imagens/figma/vethomepng-2.png';
-
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    Future<void>.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) Navigator.pushReplacementNamed(context, '/login');
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VH.background,
-      body: Center(
-        child: Container(
-          width: 136,
-          height: 136,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: VH.secondary.withValues(alpha: 0.45)),
-          ),
-          child: Image.asset(_logo, width: 108, height: 108),
-        ),
-      ),
-    );
-  }
-}
+export '../pages/splashScreen.dart' show SplashScreen;
+export '../pages/sucessoScreen.dart' show SucessoScreen;
 
 class VHForm extends StatefulWidget {
   const VHForm({
@@ -392,105 +357,6 @@ class CadastroPetScreen extends StatelessWidget {
                 Navigator.pushNamed(context, '/sucesso');
               }
             },
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-class SucessoScreen extends StatefulWidget {
-  const SucessoScreen({super.key});
-  @override
-  State<SucessoScreen> createState() => _SucessoScreenState();
-}
-
-class _SucessoScreenState extends State<SucessoScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 900),
-  );
-  bool _arrived = false;
-  @override
-  void initState() {
-    super.initState();
-    _controller.forward().then((_) async {
-      if (!mounted) return;
-      setState(() => _arrived = true);
-      await Future<void>.delayed(const Duration(milliseconds: 1400));
-      if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/pets', (_) => false);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: VH.background,
-    body: SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Bem-vindo!',
-                style: TextStyle(
-                  fontFamily: 'Comfortaa',
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 48),
-              SlideTransition(
-                position:
-                    Tween<Offset>(
-                      begin: const Offset(0, .5),
-                      end: Offset.zero,
-                    ).animate(
-                      CurvedAnimation(
-                        parent: _controller,
-                        curve: Curves.easeOutCubic,
-                      ),
-                    ),
-                child: Image.asset(
-                  'assets/imagens/figma/vethomepng-2.png',
-                  width: (MediaQuery.sizeOf(context).width - 40).clamp(
-                    240.0,
-                    350.0,
-                  ),
-                  height: (MediaQuery.sizeOf(context).width - 40).clamp(
-                    240.0,
-                    350.0,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 27),
-              AnimatedOpacity(
-                opacity: _arrived ? 1 : 0,
-                duration: const Duration(milliseconds: 250),
-                child: Text(
-                  VetRepository.pets.isEmpty
-                      ? 'Você pode cadastrar seu pet quando quiser.'
-                      : 'Você e seu pet já podem usar o VetHome.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: VH.headingFontFamily,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: VH.foreground,
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ),
