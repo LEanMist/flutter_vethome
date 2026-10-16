@@ -7,13 +7,13 @@ class PetService{
 
   static Future<void> cadastrarPet(Map<String, String?> dados) async {
     final body = {
-      'nome': dados['Nome do Pet'],
-      'dataNasc':Utils.formatDate(dados['Data de Nascimento']),
-      'especie': dados['Tipo de Animal'],
-    //'sexo': dados['Gênero/Sexo']  
-      'raca': dados['Raça'],
-      'peso': dados['Peso'],
-      'convenio': dados['Convênio'],
+      'nome': dados['nome'],
+      'dataNasc':Utils.formatDate(dados['dataNasc']),
+      'especie': dados['especie'],
+    //'sexo': dados['sexo']  
+      'raca': dados['raca'] ?? '',
+      'peso': dados['peso'],
+      'convenio': dados['convenio'],
       'cpfCliente': Utils.limparCpf(dados['cpfCliente']),
     };
 
