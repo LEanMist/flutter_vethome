@@ -509,30 +509,36 @@ class VHHeader extends StatelessWidget {
     this.sub,
     this.showBack = true,
     this.bottom,
+    this.settingsStyle = false,
   });
 
   final String title;
   final String? sub;
   final bool showBack;
   final Widget? bottom;
+  final bool settingsStyle;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.zero,
-      height: bottom != null ? VH.headerHeight : (sub != null ? 80 : 64),
-      decoration: const BoxDecoration(
+      height: settingsStyle || bottom != null
+          ? VH.headerHeight
+          : (sub != null ? 80 : 64),
+      decoration: BoxDecoration(
         color: VH.secondary,
-        borderRadius: VH.headerBorderRadius,
-        boxShadow: VH.raise,
+        borderRadius: settingsStyle
+            ? const BorderRadius.vertical(bottom: Radius.circular(30))
+            : VH.headerBorderRadius,
+        boxShadow: settingsStyle ? null : VH.raise,
       ),
       child: Stack(
         children: [
           Positioned(
-            top: 18,
-            left: 50,
-            right: 50,
+            top: settingsStyle ? 46 : 18,
+            left: settingsStyle ? 24 : 50,
+            right: settingsStyle ? 24 : 50,
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
@@ -559,20 +565,24 @@ class VHHeader extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back, color: VH.onSecondary),
               ),
             ),
-          Positioned(
-            top: 8,
-            right: 10,
-            child: IconButton(
-              tooltip: 'Telas de teste',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const TestePage()),
-                );
-              },
-              icon: const Icon(Icons.dashboard_outlined, color: VH.onSecondary),
+          if (!settingsStyle)
+            Positioned(
+              top: 8,
+              right: 10,
+              child: IconButton(
+                tooltip: 'Telas de teste',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TestePage()),
+                  );
+                },
+                icon: const Icon(
+                  Icons.dashboard_outlined,
+                  color: VH.onSecondary,
+                ),
+              ),
             ),
-          ),
           if (sub != null)
             Positioned(
               top: 54,

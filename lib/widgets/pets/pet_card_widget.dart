@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../models/pet_model.dart';
 import '../../theme/vet_colors.dart';
 import './pets_theme.dart';
-import '../pet_avatar.dart';
+import 'pet_avatar.dart';
 import '../vet_choice_pill.dart';
 
 class PetCardWidget extends StatelessWidget {

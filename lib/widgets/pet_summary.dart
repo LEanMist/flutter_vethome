@@ -3,7 +3,7 @@ import '../core/utils/formatters.dart';
 import '../models/pet_model.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
-import 'pet_avatar.dart';
+import 'pets/pet_avatar.dart';
 import 'pet_photo_button.dart';
 
 enum PetSummarySize { compact, medium, detailed }

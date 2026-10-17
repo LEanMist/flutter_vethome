@@ -10,42 +10,53 @@ class ConfigScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = <({String label, VoidCallback action})>[
+      (label: 'Tema do Aplicativo', action: () => _chooseTheme(context)),
+      (
+        label: 'Meus Endereços',
+        action: () => Navigator.pushNamed(context, '/enderecos'),
+      ),
+      (
+        label: 'Sobre a veterinária',
+        action: () => Navigator.pushNamed(context, '/sobre'),
+      ),
+      (label: 'Suporte', action: () => _showSupport(context)),
+      (label: 'Histórico', action: () => _showHistory(context)),
+      (label: 'Sair', action: () => _signOut(context)),
+    ];
     return VHPage(
       tab: '/config',
       children: [
-        const VHHeader('Configurações', showBack: false),
+        const VHHeader('Configurações', showBack: false, settingsStyle: true),
         Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(12, 26, 12, 24),
           child: Column(
             children: [
-              for (final item in <({String label, VoidCallback action})>[
-                (
-                  label: 'Tema do Aplicativo',
-                  action: () => _chooseTheme(context),
-                ),
-                (
-                  label: 'Meus Endereços',
-                  action: () => Navigator.pushNamed(context, '/enderecos'),
-                ),
-                (
-                  label: 'Sobre a veterinária',
-                  action: () => Navigator.pushNamed(context, '/sobre'),
-                ),
-                (label: 'Suporte', action: () => _showSupport(context)),
-                (label: 'Histórico', action: () => _showHistory(context)),
-                (label: 'Sair', action: () => _signOut(context)),
-              ]) ...[
+              for (var index = 0; index < items.length; index++) ...[
                 ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(item.label),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: item.action,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  minTileHeight: index == 0 ? 57 : 58,
+                  title: Text(
+                    items[index].label,
+                    style: const TextStyle(
+                      fontFamily: VH.headingFontFamily,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: VH.foreground,
+                    ),
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: VH.foreground,
+                  ),
+                  onTap: items[index].action,
                 ),
-                Divider(
-                  height: 1,
-                  thickness: .6,
-                  color: VH.foreground.withValues(alpha: .25),
-                ),
+                if (index < items.length - 1)
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: VH.foreground.withValues(alpha: .25),
+                  ),
               ],
             ],
           ),

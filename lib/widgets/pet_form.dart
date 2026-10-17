@@ -6,7 +6,7 @@ import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
 import '../theme/vet_colors.dart';
 import '../widgets.dart';
-import 'pet_avatar.dart';
+import 'pets/pet_avatar.dart';
 import 'pet_photo_button.dart';
 
 class PetFormValue {

@@ -5,7 +5,7 @@ import '../models/vet_models.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
 import '../theme/vet_tones.dart';
-import 'pet_avatar.dart';
+import 'pets/pet_avatar.dart';
 import 'status_chip.dart';
 import 'demo_badge.dart';
 

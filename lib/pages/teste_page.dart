@@ -16,8 +16,9 @@ import '../pages/saude_page.dart';
 import '../pages/sobre_page.dart';
 import '../pages/sucessoScreen.dart';
 import '../pages/vacinacao_page.dart';
-import '../screens/auth.dart'
-    show CadastroPetScreen, CadastroScreen, EnderecoScreen;
+import 'cadastro_page.dart';
+import 'endereco_page.dart';
+import 'cadastroPet_page.dart';
 import '../screens/pets.dart'
     show ConvenioScreen, EscolhaPetScreen, ServicosScreen;
 
