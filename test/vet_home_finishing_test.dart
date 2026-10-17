@@ -15,6 +15,7 @@ import 'package:flutter_vethome/pages/saude_page.dart';
 import 'package:flutter_vethome/pages/vacinacao_page.dart';
 import 'package:flutter_vethome/pages/agendamentos_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/pages/perfil_page.dart';
 import 'package:flutter_vethome/screens/auth.dart';
 import 'package:flutter_vethome/screens/pets.dart';
 import 'package:flutter_vethome/widgets.dart';
@@ -203,10 +204,13 @@ void main() {
       },
     );
   }
-  testWidgets('Gênero inline mantém Outro e descrição personalizada', (
+  testWidgets('Perfil mantém Outro e descrição personalizada legados', (
     tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: CadastroScreen()));
+    await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
+    await tester.ensureVisible(find.text('Mudar gênero'));
+    await tester.tap(find.text('Mudar gênero'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(field('Gênero/Sexo'));
     await tester.tap(field('Gênero/Sexo'));
     await tester.pumpAndSettle();

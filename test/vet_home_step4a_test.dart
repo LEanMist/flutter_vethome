@@ -111,7 +111,72 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Cadastro completo separa nascimento e gênero de usuário e pet', (
+  testWidgets('cadastro do cliente não pede gênero e preserva dado antigo', (
+    tester,
+  ) async {
+    largeViewport(tester);
+    final previousGender = VetRepository.clientGender;
+    final previousCustomGender = VetRepository.clientGenderCustom;
+    VetRepository.clientGender = 'Outro';
+    VetRepository.clientGenderCustom = 'Identidade preservada';
+    addTearDown(() {
+      VetRepository.clientGender = previousGender;
+      VetRepository.clientGenderCustom = previousCustomGender;
+    });
+    late Map<String, String> submitted;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const CadastroScreen(),
+        routes: {
+          '/endereco': (context) {
+            submitted =
+                ModalRoute.of(context)!.settings.arguments
+                    as Map<String, String>;
+            VetRepository.registerClient(submitted);
+            return const Scaffold(body: Text('Cadastro sem gênero aceito'));
+          },
+        },
+      ),
+    );
+
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Gênero/Sexo',
+      ),
+      findsNothing,
+    );
+    for (final entry in {
+      'Nome Completo': 'Cliente sem gênero',
+      'Data de Nascimento': '05/02/1995',
+      'CPF': '12345678900',
+      'Telefone/Celular': '11999999999',
+      'E-mail': 'sem-genero@example.com',
+      'Senha': '123456',
+      'Confirmar Senha': '123456',
+    }.entries) {
+      await fill(tester, entry.key, entry.value);
+    }
+    await submit(tester);
+
+    expect(find.text('Cadastro sem gênero aceito'), findsOneWidget);
+    expect(submitted, isNot(contains('client.Gênero/Sexo')));
+    expect(submitted, isNot(contains('client.Gênero personalizado')));
+    expect(VetRepository.clientGender, 'Outro');
+    expect(VetRepository.clientGenderCustom, 'Identidade preservada');
+  });
+
+  testWidgets('cadastro do pet mantém o campo de sexo', (tester) async {
+    largeViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: CadastroPetScreen()));
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Gênero/Sexo',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Cadastro completo separa cliente e dados do pet', (
     tester,
   ) async {
     largeViewport(tester);
@@ -137,7 +202,6 @@ void main() {
     for (final entry in {
       'Nome Completo': 'Cliente Teste',
       'Data de Nascimento': '05/02/1995',
-      'Gênero/Sexo': 'Feminino',
       'CPF': '12345678900',
       'Telefone/Celular': '11999999999',
       'E-mail': 'cliente@example.com',
@@ -180,7 +244,7 @@ void main() {
     await submit(tester);
     expect(find.text('Cadastro concluído'), findsOneWidget);
     expect(VetRepository.clientBirthDate, DateTime(1995, 2, 5));
-    expect(VetRepository.clientGender, 'Feminino');
+    expect(VetRepository.clientGender, savedClient['gender']);
     expect(VetRepository.clientName, 'Cliente Teste');
     expect(VetRepository.clientEmail, 'cliente@example.com');
     expect(VetRepository.clientPhone, '11999999999');

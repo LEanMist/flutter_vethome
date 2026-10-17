@@ -188,8 +188,13 @@ void main() {
     expect(VetRepository.addresses.single.street, 'Rua A editada');
     expect(VetRepository.addresses.single.id, 'a');
   });
-  testWidgets('gênero é seleção e Outro revela campo opcional', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: CadastroScreen()));
+  testWidgets('perfil mantém seleção de gênero legado e campo opcional', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
+    await tester.ensureVisible(find.text('Mudar gênero'));
+    await tester.tap(find.text('Mudar gênero'));
+    await tester.pumpAndSettle();
     expect(
       tester
           .widget<TextField>(

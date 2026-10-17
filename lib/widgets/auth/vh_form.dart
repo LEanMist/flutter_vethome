@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/utils/form_fields.dart';
-import '../client_gender_fields.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -28,9 +27,6 @@ class VHForm extends StatefulWidget {
 
 class _VHFormState extends State<VHForm> {
   final _formKey = GlobalKey<FormState>();
-  late final _genderCustom = TextEditingController(
-    text: widget.initialData['client.Gênero personalizado'] ?? '',
-  );
   late List<TextEditingController> _controllers;
 
   @override
@@ -63,7 +59,6 @@ class _VHFormState extends State<VHForm> {
 
   @override
   void dispose() {
-    _genderCustom.dispose();
     for (final controller in _controllers) {
       controller.dispose();
     }
@@ -116,22 +111,11 @@ class _VHFormState extends State<VHForm> {
         '${widget.dataPrefix}${widget.fields[i].label}': _controllers[i].text
             .trim(),
     };
-    if (widget.dataPrefix == 'client.') {
-      data['client.Gênero personalizado'] = _genderCustom.text.trim();
-    }
     Navigator.pushNamed(context, widget.next, arguments: data);
   }
 
   Widget _buildField(int i) {
     final field = widget.fields[i];
-    if (widget.dataPrefix == 'client.' && field.label == 'Gênero/Sexo') {
-      return ClientGenderFields(
-        gender: _controllers[i],
-        custom: _genderCustom,
-        figmaForm: true,
-        validator: (v) => _validate(field, v),
-      );
-    }
     return VHField(
       field.label,
       field.icon,

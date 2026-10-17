@@ -59,12 +59,6 @@ void main() {
     }.entries) {
       await fill(tester, entry.key, entry.value);
     }
-    await tester.ensureVisible(field('Gênero/Sexo'));
-    await tester.pumpAndSettle();
-    await tester.tap(field('Gênero/Sexo'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Prefiro não informar').last);
-    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Cadastrar'));
     await tester.tap(find.text('Cadastrar'));
     await tester.pumpAndSettle();
@@ -256,6 +250,7 @@ void main() {
     final pet = VetRepository.pets.first;
     for (final screen in [
       const LoginPage(),
+      const CadastroScreen(),
       const CadastroPetScreen(),
       const PetsPage(),
       const EscolhaPetScreen(),
