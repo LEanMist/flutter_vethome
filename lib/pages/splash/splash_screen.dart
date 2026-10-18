@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
+import '../../theme.dart';
 
 const _logo = 'assets/imagens/figma/vethomepng-2.png';
 

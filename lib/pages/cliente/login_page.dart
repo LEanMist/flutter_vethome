@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
-import '../data/vet_repository.dart';
-import 'teste_page.dart';
+import '../../data/vet_repository.dart';
+import '../teste_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

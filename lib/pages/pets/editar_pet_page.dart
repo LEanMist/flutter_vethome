@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../data/vet_repository.dart';
-import '../models/pet_model.dart';
-import '../theme/vet_colors.dart';
-import '../widgets/pets/pets_theme.dart';
-import '../widgets/vet/vet_page_scaffold.dart';
-import '../widgets/vet/vet_card.dart';
+import '../../data/vet_repository.dart';
+import '../../models/pet_model.dart';
+import '../../theme/vet_colors.dart';
+import '../../widgets/pets/pets_theme.dart';
+import '../../widgets/vet/vet_page_scaffold.dart';
+import '../../widgets/vet/vet_card.dart';
 
 class EditarPetPage extends StatefulWidget {
   const EditarPetPage({required this.pet, this.modal = false, super.key});

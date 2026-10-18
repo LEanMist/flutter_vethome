@@ -1,15 +1,15 @@
 // lib/pages/pets_page.dart
 import 'package:flutter/material.dart';
 
-import '../core/utils/vet_nav.dart';
-import '../data/vet_repository.dart';
-import '../models/pet_model.dart';
-import '../theme/vet_colors.dart';
-import '../widgets/pets/pet_card_widget.dart';
-import '../widgets/pets/pets_theme.dart';
-import '../widgets/vet/vet_bottom_nav.dart';
+import '../../core/utils/vet_nav.dart';
+import '../../data/vet_repository.dart';
+import '../../models/pet_model.dart';
+import '../../theme/vet_colors.dart';
+import '../../widgets/pets/pet_card_widget.dart';
+import '../../widgets/pets/pets_theme.dart';
+import '../../widgets/vet/vet_bottom_nav.dart';
 import 'detalhes_pet_page.dart';
-import 'teste_page.dart';
+import '../teste_page.dart';
 
 class PetsPage extends StatefulWidget {
   const PetsPage({super.key});

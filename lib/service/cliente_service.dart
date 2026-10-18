@@ -4,7 +4,15 @@ import 'utils/utils.dart';
 
 
 class ClienteService {
+  //emulador android
   static const String baseUrl = 'http://10.0.2.2:8080';
+
+  //celular fisico
+  // static const String baseUrl = 'http://10.106.75.47:8080';
+
+  //web
+  // static const String baseUrl = 'http://localhost:8080';
+
 
   static Future<void> cadastrarCliente(Map<String, String?> dados) async {
     final body = {

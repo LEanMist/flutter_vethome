@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../data/vet_repository.dart';
-import '../theme.dart';
-import '../widgets.dart';
+// import '../data/vet_repository.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
 
 class SucessoScreen extends StatelessWidget {
   const SucessoScreen({super.key});
@@ -18,16 +18,16 @@ class SucessoScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'É um prazer tê-lo(a) conosco, senhor(a) '
-                  '${VetRepository.clientName}.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'MontserratAlternates',
-                  ),
-                ),
+                // Text(
+                //   'É um prazer tê-lo(a) conosco, senhor(a) '
+                //   '${VetRepository.clientName}.',
+                //   textAlign: TextAlign.center,
+                //   style: const TextStyle(
+                //     fontSize: 18,
+                //     fontWeight: FontWeight.w600,
+                //     fontFamily: 'MontserratAlternates',
+                //   ),
+                // ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Image.asset(

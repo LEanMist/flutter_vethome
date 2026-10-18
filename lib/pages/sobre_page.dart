@@ -29,13 +29,13 @@ class SobreScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13),
               ),
-              SizedBox(height: 16),
-              Text('CONTATO:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(
-                '11 93244-4392',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13),
-              ),
+              // SizedBox(height: 16),
+              // Text('CONTATO:', style: TextStyle(fontWeight: FontWeight.bold)),
+              // Text(
+              //   '11 93244-4392',
+              //   textAlign: TextAlign.center,
+              //   style: TextStyle(fontSize: 13),
+              // ),
               SizedBox(height: 8),
               Text(
                 'Gabriela@gmail.com',

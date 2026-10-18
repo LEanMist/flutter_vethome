@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
-import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
+import 'package:flutter_vethome/pages/pets/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/teste_page.dart';
 
 void main() {

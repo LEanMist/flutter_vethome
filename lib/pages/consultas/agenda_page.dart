@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../core/utils/formatters.dart';
-import '../data/vet_repository.dart';
-import '../theme.dart';
-import '../widgets.dart';
+import '../../core/utils/formatters.dart';
+import '../../data/vet_repository.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
 
 class AgendaScreen extends StatefulWidget {
   const AgendaScreen({super.key});

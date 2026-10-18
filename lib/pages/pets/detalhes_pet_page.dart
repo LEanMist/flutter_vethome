@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../core/utils/formatters.dart';
-import '../core/utils/vet_nav.dart';
-import '../data/vet_repository.dart';
-import '../models/pet_model.dart';
-import '../models/vet_models.dart';
-import '../pages/editar_pet_page.dart';
-import '../theme/vet_colors.dart';
-import '../widgets/pets/pet_avatar.dart';
-import '../widgets/pets/pets_theme.dart';
-import '../widgets/vet/vet_card.dart';
-import '../widgets/vet/vet_page_scaffold.dart';
+import '../../core/utils/formatters.dart';
+import '../../core/utils/vet_nav.dart';
+import '../../data/vet_repository.dart';
+import '../../models/pet_model.dart';
+import '../../models/vet_models.dart';
+import 'editar_pet_page.dart';
+import '../../theme/vet_colors.dart';
+import '../../widgets/pets/pet_avatar.dart';
+import '../../widgets/pets/pets_theme.dart';
+import '../../widgets/vet/vet_card.dart';
+import '../../widgets/vet/vet_page_scaffold.dart';
 import 'saude_page.dart';
 import 'vacinacao_page.dart';
 

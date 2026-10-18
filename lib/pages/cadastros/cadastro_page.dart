@@ -12,7 +12,7 @@ class CadastroScreen extends StatelessWidget {
       backgroundColor: VH.background,
       body: VHForm(
         title: 'Cadastro',
-        next: '/endereco',
+        next: '/sucesso',
         fields: const [
           VHField('Nome Completo', Icons.person, value: 'Matheus Santana Lima'),
           VHField('Data de Nascimento', Icons.cake, value: '05/02/2007'),

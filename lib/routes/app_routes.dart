@@ -1,13 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 
 import '../models/pet_model.dart';
-import '../pages/agendamentos_page.dart';
-import '../pages/detalhes_pet_page.dart';
-import '../pages/login_page.dart';
-import '../pages/perfil_page.dart';
-import '../pages/pets_page.dart';
-import '../pages/saude_page.dart';
-import '../pages/vacinacao_page.dart';
+import '../pages/consultas/agendamentos_page.dart';
+import '../pages/pets/detalhes_pet_page.dart';
+import '../pages/cliente/login_page.dart';
+import '../pages/cliente/perfil_page.dart';
+import '../pages/pets/pets_page.dart';
+import '../pages/pets/saude_page.dart';
+import '../pages/pets/vacinacao_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
