@@ -20,6 +20,7 @@ class AgendamentosPage extends StatelessWidget {
       title: 'Agendamentos',
       pet: pet,
       selectedIndex: 3,
+      contentMaxWidth: 1120,
       children: [
         PetSummary(pet: pet, size: PetSummarySize.medium),
         if (next == null)
@@ -37,8 +38,34 @@ class AgendamentosPage extends StatelessWidget {
           ),
         const VetSectionTitle('Histórico de agendamentos'),
         if (events.isEmpty) const Text('Nenhum agendamento'),
-        for (final event in events)
-          AppointmentCard(pet: pet, event: event, demo: !real.contains(event)),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final desktop = constraints.maxWidth >= 900;
+            final width = desktop
+                ? (constraints.maxWidth - 16) / 2
+                : constraints.maxWidth;
+            return Wrap(
+              key: ValueKey(
+                desktop
+                    ? 'appointments-desktop-grid'
+                    : 'appointments-mobile-list',
+              ),
+              spacing: 16,
+              runSpacing: 12,
+              children: [
+                for (final event in events)
+                  SizedBox(
+                    width: width,
+                    child: AppointmentCard(
+                      pet: pet,
+                      event: event,
+                      demo: !real.contains(event),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ],
     );
   }

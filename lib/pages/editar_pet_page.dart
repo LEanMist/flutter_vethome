@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import '../core/utils/pet_images.dart';
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
@@ -76,12 +77,25 @@ class EditarPetPage extends StatelessWidget {
     );
     if (modal) {
       return Dialog(
-        backgroundColor: VetColors.pink,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         insetPadding: const EdgeInsets.all(12),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 390,
-            maxHeight: MediaQuery.sizeOf(context).height - 24,
+        child: Container(
+          key: const ValueKey('edit-pet-modal-surface'),
+          width: 310,
+          height: 480,
+          clipBehavior: Clip.antiAlias,
+          decoration: inset_shadow.BoxDecoration(
+            color: const Color(0xFFFBDCDD),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: const [
+              inset_shadow.BoxShadow(
+                inset: true,
+                color: VetColors.shadowDark,
+                offset: Offset(2, 2),
+                blurRadius: 5,
+              ),
+            ],
           ),
           child: form,
         ),

@@ -6,6 +6,7 @@ import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pet_summary.dart';
+import '../widgets/vet_calendar.dart';
 import '../widgets/vet/vet_page_scaffold.dart';
 
 bool isFutureAppointmentTime(DateTime time, DateTime now, {DateTime? after}) =>
@@ -44,11 +45,18 @@ class NovaConsultaPage extends StatefulWidget {
 
 class _NovaConsultaPageState extends State<NovaConsultaPage> {
   DateTime _date = DateTime.now().add(const Duration(days: 1));
+  late DateTime _calendarMonth;
   TimeOfDay? _time = const TimeOfDay(hour: 12, minute: 0);
   TimeOfDay? _end = const TimeOfDay(hour: 13, minute: 0);
   final _description = TextEditingController();
   DateTime _at(TimeOfDay t) =>
       DateTime(_date.year, _date.month, _date.day, t.hour, t.minute);
+  @override
+  void initState() {
+    super.initState();
+    _calendarMonth = DateTime(_date.year, _date.month);
+  }
+
   @override
   void dispose() {
     _description.dispose();
@@ -58,15 +66,76 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   Future<void> _chooseDate() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final date = await showDatePicker(
+    var selected = _date.isBefore(today) ? today : _date;
+    var month = DateTime(selected.year, selected.month);
+    final lastDate = DateTime(now.year + 2);
+    final date = await showDialog<DateTime>(
       context: context,
-      initialDate: _date.isBefore(today) ? today : _date,
-      firstDate: today,
-      lastDate: DateTime(now.year + 2),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            key: const ValueKey('mobile-calendar-dialog'),
+            constraints: const BoxConstraints(maxWidth: 390),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+            decoration: BoxDecoration(
+              color: VetColors.pink,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: const [
+                BoxShadow(
+                  color: VetColors.shadowDark,
+                  offset: Offset(2, 2),
+                  blurRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                VetCalendar(
+                  month: month,
+                  selected: selected,
+                  firstDate: today,
+                  lastDate: lastDate,
+                  onPreviousMonth: () => setDialogState(() {
+                    final previous = DateTime(month.year, month.month - 1);
+                    final firstMonth = DateTime(today.year, today.month);
+                    if (!previous.isBefore(firstMonth)) month = previous;
+                  }),
+                  onNextMonth: () => setDialogState(() {
+                    final next = DateTime(month.year, month.month + 1);
+                    final lastMonth = DateTime(lastDate.year, lastDate.month);
+                    if (!next.isAfter(lastMonth)) month = next;
+                  }),
+                  onSelected: (value) => setDialogState(() {
+                    selected = value;
+                    month = DateTime(value.year, value.month);
+                  }),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Cancelar'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext, selected),
+                      child: const Text('Confirmar'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
     if (date != null && mounted) {
       setState(() {
         _date = date;
+        _calendarMonth = DateTime(date.year, date.month);
         if (_time != null &&
             !isFutureAppointmentTime(_at(_time!), DateTime.now())) {
           _time = null;
@@ -166,10 +235,12 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   @override
   Widget build(BuildContext context) {
     final pet = VetRepository.petById(widget.pet.id) ?? widget.pet;
+    final form = _form(context, pet);
     return VetPageScaffold(
       title: 'Novo agendamento',
       pet: pet,
       selectedIndex: 3,
+      contentMaxWidth: 1120,
       footer: SizedBox(
         width: double.infinity,
         child: ElevatedButton(
@@ -184,57 +255,113 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
         ),
       ),
       children: [
-        PetSummary(pet: pet),
-        const Divider(),
-        const Text(
-          'Detalhes do agendamento',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: VetColors.rose.withValues(alpha: .15),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Column(
+        VetResponsiveLayout(
+          mobile: form,
+          desktop: Row(
+            key: const ValueKey('new-appointment-desktop-layout'),
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Serviço: ${const ['V8', 'V10', 'Antirrábica'].contains(widget.service)
-                    ? 'Vacina'
-                    : const ['Hemograma', 'Creatinina', 'Urina'].contains(widget.service)
-                    ? 'Exames'
-                    : widget.service}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              if (const ['V8', 'V10', 'Antirrábica'].contains(widget.service))
-                Text('Vacina: ${widget.service}')
-              else if (const [
-                'Hemograma',
-                'Creatinina',
-                'Urina',
-              ].contains(widget.service))
-                Text('Exame: ${widget.service}'),
-              const SizedBox(height: 6),
-              Text('Convênio: ${widget.plan}'),
+              Expanded(child: _inlineCalendar()),
+              const SizedBox(width: 28),
+              Expanded(child: form),
             ],
           ),
         ),
-        _selectionPill(
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-            leading: const Icon(Icons.calendar_month),
-            title: const Text('Data'),
-            subtitle: Text(
-              '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year}',
-            ),
-            trailing: const Icon(Icons.edit_calendar),
-            onTap: _chooseDate,
-          ),
+      ],
+    );
+  }
+
+  Widget _inlineCalendar() {
+    final today = DateTime.now();
+    return VetCalendar(
+      month: _calendarMonth,
+      selected: _date,
+      firstDate: today,
+      onPreviousMonth: () => setState(() {
+        final previous = DateTime(
+          _calendarMonth.year,
+          _calendarMonth.month - 1,
+        );
+        final currentMonth = DateTime(today.year, today.month);
+        if (!previous.isBefore(currentMonth)) _calendarMonth = previous;
+      }),
+      onNextMonth: () => setState(
+        () => _calendarMonth = DateTime(
+          _calendarMonth.year,
+          _calendarMonth.month + 1,
         ),
-        LayoutBuilder(
-          builder: (context, c) {
-            final start = _selectionPill(
+      ),
+      onSelected: (date) => setState(() {
+        _date = date;
+        _calendarMonth = DateTime(date.year, date.month);
+        if (_time != null &&
+            !isFutureAppointmentTime(_at(_time!), DateTime.now())) {
+          _time = null;
+          _end = null;
+        }
+      }),
+    );
+  }
+
+  Widget _form(BuildContext context, PetModel pet) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      PetSummary(pet: pet),
+      const SizedBox(height: 12),
+      const Divider(),
+      const Text(
+        'Detalhes do agendamento',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: VetColors.rose.withValues(alpha: .15),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Serviço: ${const ['V8', 'V10', 'Antirrábica'].contains(widget.service)
+                  ? 'Vacina'
+                  : const ['Hemograma', 'Creatinina', 'Urina'].contains(widget.service)
+                  ? 'Exames'
+                  : widget.service}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            if (const ['V8', 'V10', 'Antirrábica'].contains(widget.service))
+              Text('Vacina: ${widget.service}')
+            else if (const [
+              'Hemograma',
+              'Creatinina',
+              'Urina',
+            ].contains(widget.service))
+              Text('Exame: ${widget.service}'),
+            const SizedBox(height: 6),
+            Text('Convênio: ${widget.plan}'),
+          ],
+        ),
+      ),
+      const SizedBox(height: 12),
+      _selectionPill(
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          leading: const Icon(Icons.calendar_month),
+          title: const Text('Data'),
+          subtitle: Text(
+            '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year}',
+          ),
+          trailing: const Icon(Icons.edit_calendar),
+          onTap: MediaQuery.sizeOf(context).width >= 900 ? null : _chooseDate,
+        ),
+      ),
+      const SizedBox(height: 12),
+      Row(
+        children: [
+          Expanded(
+            child: _selectionPill(
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 title: const Text('Início'),
@@ -242,8 +369,11 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
                 trailing: const Icon(Icons.schedule, size: 18),
                 onTap: () => _chooseTime(),
               ),
-            );
-            final end = _selectionPill(
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _selectionPill(
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 title: const Text('Fim'),
@@ -251,43 +381,35 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
                 trailing: const Icon(Icons.schedule_outlined, size: 18),
                 onTap: () => _chooseTime(end: true),
               ),
-            );
-            return c.maxWidth >= 270
-                ? Row(
-                    children: [
-                      Expanded(child: start),
-                      const SizedBox(width: 12),
-                      Expanded(child: end),
-                    ],
-                  )
-                : Column(children: [start, const SizedBox(height: 8), end]);
-          },
-        ),
-        TextField(
-          controller: _description,
-          minLines: 3,
-          maxLines: 5,
-          style: const TextStyle(color: Colors.white),
-          maxLength: 500,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: VetColors.rose,
-            hintStyle: const TextStyle(color: Colors.white),
-            hintText: 'Adicionar uma descrição (opcional)',
-            counterText: '',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-              borderSide: BorderSide.none,
             ),
           ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      TextField(
+        controller: _description,
+        minLines: 3,
+        maxLines: 5,
+        style: const TextStyle(color: Colors.white),
+        maxLength: 500,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: VetColors.rose,
+          hintStyle: const TextStyle(color: Colors.white),
+          hintText: 'Adicionar uma descrição (opcional)',
+          counterText: '',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 }
 
 class _TimeChoices extends StatefulWidget {
@@ -330,49 +452,102 @@ class _TimeChoicesState extends State<_TimeChoices> {
     final options = widget.minimum == null
         ? [12, 13, 14, 15, 16]
         : [13, 14, 15, 16, 17];
-    return AlertDialog(
-      backgroundColor: VetColors.pink,
-      title: const Text('Escolha o horário'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!options.any(_available))
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: Text('Nenhum horário disponível. Escolha outra data.'),
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        key: const ValueKey('time-choice-panel'),
+        constraints: const BoxConstraints(maxWidth: 390),
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+        decoration: BoxDecoration(
+          color: VetColors.pink,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: const [
+            BoxShadow(
+              color: VetColors.shadowDark,
+              offset: Offset(2, 2),
+              blurRadius: 2,
             ),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final hour in options)
-                ChoiceChip(
-                  label: Text('${hour.toString().padLeft(2, '0')}:00'),
-                  selected: widget.selected?.hour == hour && _available(hour),
-                  selectedColor: VetColors.rose,
-                  onSelected: _available(hour)
-                      ? (_) {
-                          if (_available(hour)) {
-                            Navigator.pop(
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Escolha o horário',
+              style: TextStyle(
+                color: VetColors.brown,
+                fontFamily: 'Comfortaa',
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (!options.any(_available))
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text('Nenhum horário disponível. Escolha outra data.'),
+              ),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final hour in options)
+                  SizedBox(
+                    key: ValueKey('time-choice-$hour'),
+                    width: 96,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: _available(hour)
+                          ? () => Navigator.pop(
                               context,
                               TimeOfDay(hour: hour, minute: 0),
-                            );
-                          } else {
-                            setState(() {});
-                          }
-                        }
-                      : null,
-                ),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+                            )
+                          : null,
+                      style: ButtonStyle(
+                        elevation: const WidgetStatePropertyAll(0),
+                        backgroundColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.disabled)
+                              ? VetColors.rose.withValues(alpha: .18)
+                              : widget.selected?.hour == hour
+                              ? VetColors.brown
+                              : VetColors.rose,
+                        ),
+                        foregroundColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.disabled)
+                              ? VetColors.brown.withValues(alpha: .35)
+                              : Colors.white,
+                        ),
+                        shape: WidgetStatePropertyAll(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                        ),
+                        overlayColor: WidgetStateProperty.resolveWith(
+                          (states) =>
+                              states.contains(WidgetState.focused) ||
+                                  states.contains(WidgetState.hovered)
+                              ? Colors.white.withValues(alpha: .16)
+                              : null,
+                        ),
+                      ),
+                      child: Text('${hour.toString().padLeft(2, '0')}:00'),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

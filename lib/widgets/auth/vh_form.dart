@@ -133,18 +133,31 @@ class _VHFormState extends State<VHForm> {
 
   @override
   Widget build(BuildContext context) {
+    final desktop = MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint;
     return Scaffold(
       backgroundColor: VH.background,
       body: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 390),
+            constraints: BoxConstraints(maxWidth: desktop ? 900 : 390),
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
-                39 * (MediaQuery.sizeOf(context).width / 390).clamp(.8, 1.0),
+                desktop
+                    ? 32
+                    : 39 *
+                          (MediaQuery.sizeOf(context).width / 390).clamp(
+                            .8,
+                            1.0,
+                          ),
                 38,
-                39 * (MediaQuery.sizeOf(context).width / 390).clamp(.8, 1.0),
+                desktop
+                    ? 32
+                    : 39 *
+                          (MediaQuery.sizeOf(context).width / 390).clamp(
+                            .8,
+                            1.0,
+                          ),
                 24,
               ),
               child: Column(
@@ -173,14 +186,28 @@ class _VHFormState extends State<VHForm> {
                     ),
                     child: Form(
                       key: _formKey,
-                      child: Column(
-                        children: [
-                          for (var i = 0; i < widget.fields.length; i++) ...[
-                            _buildField(i),
-                            if (i != widget.fields.length - 1)
-                              const SizedBox(height: 14),
-                          ],
-                        ],
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final fieldWidth = desktop
+                              ? (constraints.maxWidth - 14) / 2
+                              : constraints.maxWidth;
+                          return Wrap(
+                            key: ValueKey(
+                              desktop
+                                  ? 'vh-form-desktop-grid'
+                                  : 'vh-form-mobile-grid',
+                            ),
+                            spacing: 14,
+                            runSpacing: 14,
+                            children: [
+                              for (var i = 0; i < widget.fields.length; i++)
+                                SizedBox(
+                                  width: fieldWidth,
+                                  child: _buildField(i),
+                                ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),

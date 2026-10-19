@@ -82,15 +82,8 @@ void main() {
   testWidgets('Perfil sem foto preserva o avatar padrão', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
     await tester.pumpAndSettle();
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Image &&
-            widget.image is AssetImage &&
-            (widget.image as AssetImage).assetName == photoAsset,
-      ),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('profile-empty-photo')), findsOneWidget);
+    expect(find.byIcon(Icons.add_a_photo_outlined), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

@@ -24,18 +24,25 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final logoSize = width >= VH.desktopBreakpoint ? 196.0 : 152.0;
     return Scaffold(
       backgroundColor: VH.background,
       body: Center(
         child: Container(
-          width: 136,
-          height: 136,
+          width: logoSize,
+          height: logoSize,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(color: VH.secondary.withValues(alpha: 0.45)),
           ),
-          child: Image.asset(_logo, width: 108, height: 108),
+          child: Image.asset(
+            _logo,
+            width: logoSize * .82,
+            height: logoSize * .82,
+            semanticLabel: 'VetHome',
+          ),
         ),
       ),
     );

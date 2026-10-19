@@ -11,7 +11,6 @@ import '../core/utils/formatters.dart';
 import '../core/utils/form_fields.dart';
 import '../core/utils/photo_picker.dart';
 import '../widgets.dart';
-import '../widgets/client_gender_fields.dart';
 import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
@@ -30,33 +29,6 @@ class _PerfilPageState extends State<PerfilPage> {
   DateTime _nascimento = VetRepository.clientBirthDate;
   File? _foto;
   Uint8List? _fotoBytes;
-  bool _editingGender = false;
-  final _gender = TextEditingController(text: VetRepository.clientGender);
-  final _genderCustom = TextEditingController(
-    text: VetRepository.clientGenderCustom,
-  );
-  @override
-  void dispose() {
-    _gender.dispose();
-    _genderCustom.dispose();
-    super.dispose();
-  }
-
-  Future<void> _saveGender() async {
-    VetRepository.registerClient({
-      'client.Gênero/Sexo': _gender.text,
-      'client.Gênero personalizado': _genderCustom.text,
-    });
-    final saved = await VetRepository.flush();
-    if (!mounted) return;
-    setState(() => _editingGender = false);
-    if (!saved) {
-      vetSoon(
-        context,
-        'Dados atualizados nesta sessão. Não foi possível salvar localmente.',
-      );
-    }
-  }
 
   @override
   void initState() {
@@ -141,44 +113,19 @@ class _PerfilPageState extends State<PerfilPage> {
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
     final double top = MediaQuery.paddingOf(context).top;
+    final desktop = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
       backgroundColor: VetColors.pink,
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        height: top + 72 * s + 280 * s,
-                        child: Stack(
-                          alignment: Alignment.topCenter,
-                          children: [
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              child: _buildHeader(s, top),
-                            ),
-                            Positioned(
-                              top: top + 72 * s,
-                              child: _buildAvatarTab(s),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 18 * s),
-                      _buildBirthday(s),
-                      SizedBox(height: 28 * s),
-                      _buildOptions(s),
-                    ],
-                  ),
-                ),
+                child: desktop
+                    ? _buildDesktopProfile(s, top)
+                    : SingleChildScrollView(child: _buildMobileProfile(s, top)),
               ),
               SafeArea(
                 top: false,
@@ -194,6 +141,54 @@ class _PerfilPageState extends State<PerfilPage> {
       ),
     );
   }
+
+  Widget _buildMobileProfile(double s, double top) => Column(
+    children: [
+      SizedBox(
+        width: double.infinity,
+        height: top + 72 * s + 280 * s,
+        child: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            Positioned(top: 0, left: 0, right: 0, child: _buildHeader(s, top)),
+            Positioned(top: top + 72 * s, child: _buildAvatarTab(s)),
+          ],
+        ),
+      ),
+      SizedBox(height: 18 * s),
+      _buildBirthday(s),
+      SizedBox(height: 28 * s),
+      _buildOptions(s),
+    ],
+  );
+
+  Widget _buildDesktopProfile(double s, double top) => Column(
+    key: const ValueKey('profile-desktop-layout'),
+    children: [
+      _buildHeader(s, top),
+      Expanded(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildAvatarTab(s),
+                    const SizedBox(height: 18),
+                    _buildBirthday(s),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 48),
+              Expanded(child: _buildOptions(s)),
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
 
   Widget _buildHeader(double s, double top) {
     return Container(
@@ -252,6 +247,8 @@ class _PerfilPageState extends State<PerfilPage> {
             onTap: _mudarNome,
             child: Text(
               _nome,
+              textAlign: TextAlign.center,
+              maxLines: 2,
               style: TextStyle(
                 fontSize: 20 * s,
                 fontFamily: PetsTheme.fontComfortaa,
@@ -298,9 +295,37 @@ class _PerfilPageState extends State<PerfilPage> {
     if (!kIsWeb && _foto != null) {
       return Image.file(_foto!, fit: BoxFit.cover, cacheWidth: 400);
     }
-    return Image.asset(
-      'assets/imagens/figma/frame-53-3.png',
-      fit: BoxFit.contain,
+    return Container(
+      key: const ValueKey('profile-empty-photo'),
+      color: VetColors.pink.withValues(alpha: .45),
+      alignment: Alignment.center,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            Icons.person_outline,
+            size: 76,
+            color: VetColors.profileOutline.withValues(alpha: .7),
+          ),
+          Positioned(
+            right: 20,
+            bottom: 20,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: const BoxDecoration(
+                color: VetColors.brown,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.add_a_photo_outlined,
+                size: 19,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -329,10 +354,6 @@ class _PerfilPageState extends State<PerfilPage> {
       MapEntry('Mudar Nome de Perfil', _mudarNome),
       MapEntry('Mudar Data de Nascimento', _mudarNascimento),
       MapEntry('Alterar endereço', _mudarEndereco),
-      MapEntry(
-        'Mudar gênero',
-        () => setState(() => _editingGender = !_editingGender),
-      ),
     ];
 
     return Padding(
@@ -366,17 +387,6 @@ class _PerfilPageState extends State<PerfilPage> {
                     ),
                   ],
                 ),
-              ),
-            ),
-          ],
-          if (_editingGender) ...[
-            const SizedBox(height: 10),
-            ClientGenderFields(gender: _gender, custom: _genderCustom),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: _saveGender,
-                child: const Text('Salvar gênero'),
               ),
             ),
           ],

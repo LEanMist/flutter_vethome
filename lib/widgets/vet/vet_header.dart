@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../pages/teste_page.dart';
@@ -85,25 +86,29 @@ class VetHeader extends StatelessWidget {
               ),
               SizedBox(
                 width: 48 * s,
-                child: IconButton(
-                  tooltip: 'Telas de teste',
-                  constraints: BoxConstraints.tightFor(
-                    width: 48 * s,
-                    height: 48 * s,
-                  ),
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TestePage()),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.dashboard_outlined,
-                    color: Colors.white,
-                    size: 22 * s,
-                  ),
-                ),
+                child: kDebugMode
+                    ? IconButton(
+                        tooltip: 'Telas de teste',
+                        constraints: BoxConstraints.tightFor(
+                          width: 48 * s,
+                          height: 48 * s,
+                        ),
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TestePage(),
+                            ),
+                          );
+                        },
+                        icon: Icon(
+                          Icons.dashboard_outlined,
+                          color: Colors.white,
+                          size: 22 * s,
+                        ),
+                      )
+                    : null,
               ),
             ],
           ),

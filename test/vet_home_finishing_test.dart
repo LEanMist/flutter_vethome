@@ -207,17 +207,19 @@ void main() {
   testWidgets('Perfil mantém Outro e descrição personalizada legados', (
     tester,
   ) async {
+    await tester.runAsync(() async {
+      VetRepository.registerClient({
+        'client.Gênero/Sexo': 'Outro',
+        'client.Gênero personalizado': 'Identificação preservada',
+      });
+      await VetRepository.flush();
+      await VetRepository.initialize();
+    });
     await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
-    await tester.ensureVisible(find.text('Mudar gênero'));
-    await tester.tap(find.text('Mudar gênero'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(field('Gênero/Sexo'));
-    await tester.tap(field('Gênero/Sexo'));
-    await tester.pumpAndSettle();
-    expect(find.byType(SimpleDialog), findsNothing);
-    await tester.tap(find.widgetWithText(ListTile, 'Outro'));
-    await tester.pumpAndSettle();
-    expect(find.text('Como deseja informar? (opcional)'), findsOneWidget);
+    expect(find.text('Mudar gênero'), findsNothing);
+    expect(find.text('Salvar gênero'), findsNothing);
+    expect(VetRepository.clientGender, 'Outro');
+    expect(VetRepository.clientGenderCustom, 'Identificação preservada');
   });
   testWidgets(
     'picker real compartilhado prepara uma miniatura local no cadastro',

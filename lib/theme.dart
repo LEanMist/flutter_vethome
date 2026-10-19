@@ -29,6 +29,21 @@ class VH {
   static const double radiusXLarge = 30;
   static const double radiusPill = 999;
 
+  // Limites compartilhados para as composições responsivas. As telas antigas
+  // continuam compactas por padrão; telas aprovadas para desktop podem optar
+  // pela largura ampla sem duplicar breakpoints.
+  static const double compactBreakpoint = 600;
+  static const double desktopBreakpoint = 900;
+  static const double mobileContentMaxWidth = 600;
+  static const double desktopContentMaxWidth = 1120;
+  static const double desktopShellMaxWidth = 1200;
+
+  static double pagePaddingFor(double width) {
+    if (width >= desktopBreakpoint) return 32;
+    if (width >= compactBreakpoint) return 24;
+    return 16;
+  }
+
   static const BorderRadius cardBorderRadius = BorderRadius.all(
     Radius.circular(radiusCard),
   );
@@ -70,13 +85,26 @@ class VH {
   );
 
   static const List<BoxShadow> raise = [
-    BoxShadow(color: shadowSoft, offset: Offset(3, 4), blurRadius: 8),
-    BoxShadow(
-      color: VetColors.shadowLight,
-      offset: Offset(-2, -2),
-      blurRadius: 6,
-    ),
+    BoxShadow(color: shadowSoft, offset: Offset(2, 2), blurRadius: 2),
   ];
+
+  static const List<BoxShadow> controlShadow = [
+    BoxShadow(color: shadowSubtle, offset: Offset(2, 2), blurRadius: 2),
+  ];
+
+  static const List<BoxShadow> cardShadow = [
+    BoxShadow(color: shadowSubtle, offset: Offset(2, 2), blurRadius: 2),
+  ];
+
+  static Color? interactionOverlay(Set<WidgetState> states) {
+    if (states.contains(WidgetState.disabled)) return Colors.transparent;
+    if (states.contains(WidgetState.pressed)) return muted;
+    if (states.contains(WidgetState.focused)) return muted;
+    if (states.contains(WidgetState.hovered)) {
+      return secondary.withValues(alpha: .14);
+    }
+    return null;
+  }
 }
 
 class VetTheme {
@@ -101,6 +129,10 @@ class VetTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: VH.background,
       useMaterial3: true,
+      focusColor: VH.muted,
+      hoverColor: VH.secondary.withValues(alpha: .14),
+      splashColor: VH.muted,
+      highlightColor: Colors.transparent,
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: VH.secondary.withValues(alpha: .12),

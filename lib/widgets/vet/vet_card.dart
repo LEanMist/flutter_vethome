@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../theme.dart';
 import '../../theme/vet_colors.dart';
 import '../../theme/vet_tones.dart';
 import '../pets/pets_theme.dart';
@@ -30,20 +31,7 @@ class VetCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? VetTones.card,
         borderRadius: r,
-        boxShadow: flat
-            ? const []
-            : const [
-                BoxShadow(
-                  color: VetColors.shadowDark,
-                  offset: Offset(3, 3),
-                  blurRadius: 6,
-                ),
-                BoxShadow(
-                  color: VetColors.shadowLight,
-                  offset: Offset(-3, -3),
-                  blurRadius: 6,
-                ),
-              ],
+        boxShadow: flat ? const [] : VH.cardShadow,
       ),
       child: Material(
         color: Colors.transparent,
@@ -51,6 +39,11 @@ class VetCard extends StatelessWidget {
         child: InkWell(
           borderRadius: r,
           onTap: onTap,
+          canRequestFocus: onTap != null,
+          mouseCursor: onTap == null
+              ? MouseCursor.defer
+              : SystemMouseCursors.click,
+          overlayColor: WidgetStateProperty.resolveWith(VH.interactionOverlay),
           child: Padding(
             padding: padding ?? EdgeInsets.all(14 * s),
             child: child,

@@ -62,10 +62,15 @@ class VetChoicePill extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: VH.softGradient,
                   borderRadius: BorderRadius.circular(100),
+                  boxShadow: VH.controlShadow,
                 ),
                 child: InkWell(
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(100),
+                  mouseCursor: SystemMouseCursors.click,
+                  overlayColor: WidgetStateProperty.resolveWith(
+                    VH.interactionOverlay,
+                  ),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(minHeight: 59),
                     child: Padding(

@@ -46,64 +46,114 @@ class VetBottomNav extends StatelessWidget {
       top: false,
       left: false,
       right: false,
-      child: Container(
-        margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, 12 * s),
-        padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 8 * s),
-        decoration: inset_shadow.BoxDecoration(
-          color: VH.secondary.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(25 * s),
-          boxShadow: const [
-            inset_shadow.BoxShadow(
-              color: VetColors.shadowDark,
-              offset: Offset(2, 2),
-              blurRadius: 2,
-              inset: true,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            for (int i = 0; i < _icons.length; i++)
-              InkWell(
-                onTap: () => onSelected(i),
-                customBorder: const CircleBorder(),
-                child: Semantics(
-                  button: true,
-                  selected: i == selectedIndex,
-                  label: _labels[i],
-                  child: i == 0
-                      ? Container(
-                          width: 50 * s,
-                          height: 50 * s,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: i == selectedIndex
-                                ? VH.secondary
-                                : VH.background,
-                            shape: BoxShape.circle,
-                            boxShadow: const [
-                              BoxShadow(
-                                color: VetColors.shadowDark,
-                                offset: Offset(2, 2),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                          child: Image.asset(
-                            i == selectedIndex ? _selectedIcons[i] : _icons[i],
-                            width: 36 * s,
-                            height: 36 * s,
-                          ),
-                        )
-                      : Image.asset(
-                          i == selectedIndex ? _selectedIcons[i] : _icons[i],
-                          width: 50 * s,
-                          height: 50 * s,
-                        ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: VH.mobileContentMaxWidth),
+          child: Container(
+            margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, 12 * s),
+            padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 8 * s),
+            decoration: inset_shadow.BoxDecoration(
+              color: VH.secondary.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(25 * s),
+              boxShadow: const [
+                inset_shadow.BoxShadow(
+                  color: VetColors.shadowDark,
+                  offset: Offset(2, 2),
+                  blurRadius: 2,
+                  inset: true,
                 ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (int i = 0; i < _icons.length; i++)
+                  _VetNavDestination(
+                    label: _labels[i],
+                    icon: _icons[i],
+                    selectedIcon: _selectedIcons[i],
+                    selected: i == selectedIndex,
+                    highlighted: i == 0,
+                    scale: s,
+                    onTap: () => onSelected(i),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VetNavDestination extends StatelessWidget {
+  const _VetNavDestination({
+    required this.label,
+    required this.icon,
+    required this.selectedIcon,
+    required this.selected,
+    required this.highlighted,
+    required this.scale,
+    required this.onTap,
+  });
+
+  final String label;
+  final String icon;
+  final String selectedIcon;
+  final bool selected;
+  final bool highlighted;
+  final double scale;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dimension = (50 * scale).clamp(48.0, 50.0);
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Tooltip(
+        message: label,
+        child: SizedBox.square(
+          dimension: dimension,
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: onTap,
+              customBorder: const CircleBorder(),
+              overlayColor: WidgetStateProperty.resolveWith(
+                VH.interactionOverlay,
               ),
-          ],
+              child: Center(
+                child: highlighted
+                    ? Container(
+                        width: 50 * scale,
+                        height: 50 * scale,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: selected ? VH.secondary : VH.background,
+                          shape: BoxShape.circle,
+                          boxShadow: VH.cardShadow,
+                        ),
+                        child: ExcludeSemantics(
+                          child: Image.asset(
+                            selected ? selectedIcon : icon,
+                            width: 36 * scale,
+                            height: 36 * scale,
+                          ),
+                        ),
+                      )
+                    : ExcludeSemantics(
+                        child: Image.asset(
+                          selected ? selectedIcon : icon,
+                          width: 50 * scale,
+                          height: 50 * scale,
+                        ),
+                      ),
+              ),
+            ),
+          ),
         ),
       ),
     );

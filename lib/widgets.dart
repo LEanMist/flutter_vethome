@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/utils/form_fields.dart';
@@ -19,8 +20,8 @@ BoxDecoration insetBox({
     boxShadow: const [
       inset_shadow.BoxShadow(
         color: VH.shadowSubtle,
-        offset: Offset(2, 3),
-        blurRadius: 7,
+        offset: Offset(2, 2),
+        blurRadius: 2,
         inset: true,
       ),
     ],
@@ -43,10 +44,12 @@ class VHField extends StatefulWidget {
     this.inputFormatters,
     this.figmaForm = false,
     this.compact = false,
+    this.labelAbove = false,
     this.fitSingleLine = false,
   });
   final bool figmaForm;
   final bool compact;
+  final bool labelAbove;
   final bool fitSingleLine;
   final String label;
   final IconData icon;
@@ -284,7 +287,7 @@ class _VHFieldState extends State<VHField> {
         ? VH.figmaFieldValueStyle.copyWith(fontSize: _fontSize(width))
         : TextStyle(fontSize: _fontSize(width), color: VH.foreground),
     decoration: InputDecoration(
-      labelText: widget.compact
+      labelText: widget.compact && !widget.labelAbove
           ? switch (widget.label) {
               'Gênero/Sexo' => 'Sexo',
               'Tipo de Animal' => 'Espécie',
@@ -351,9 +354,16 @@ class _VHFieldState extends State<VHField> {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      if (!widget.compact)
+      if (!widget.compact || widget.labelAbove)
         Padding(
-          padding: EdgeInsets.only(left: widget.figmaForm ? 14 : 58, bottom: 5),
+          padding: EdgeInsets.only(
+            left: widget.compact
+                ? 12
+                : widget.figmaForm
+                ? 14
+                : 58,
+            bottom: 5,
+          ),
           child: Text(
             widget.label,
             style: widget.figmaForm
@@ -565,7 +575,7 @@ class VHHeader extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back, color: VH.onSecondary),
               ),
             ),
-          if (!settingsStyle)
+          if (!settingsStyle && kDebugMode)
             Positioned(
               top: 8,
               right: 10,
@@ -645,7 +655,7 @@ class VHPage extends StatelessWidget {
       backgroundColor: VH.background,
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(maxWidth: VH.desktopShellMaxWidth),
           child: SafeArea(
             bottom: false,
             child: Column(

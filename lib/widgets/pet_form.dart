@@ -116,6 +116,7 @@ class _PetFormState extends State<PetForm> {
     label,
     icon,
     compact: true,
+    labelAbove: MediaQuery.sizeOf(context).width >= 900,
     controller: c,
     value: label == 'Castração' ? 'Não informado' : null,
     choices: choices,
@@ -156,9 +157,10 @@ class _PetFormState extends State<PetForm> {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final small = MediaQuery.sizeOf(context).height < 720;
+      final desktop = constraints.maxWidth >= 700 && !widget.modal;
       final editing = widget.pet != null;
       final content = Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -202,86 +204,37 @@ class _PetFormState extends State<PetForm> {
               ),
             ),
             const SizedBox(height: 8),
-            Form(
-              key: key,
-              child: Column(
-                children: [
-                  field(
-                    editing ? 'Nome do pet' : 'Nome do Pet',
-                    Icons.pets,
-                    name,
-                    validator: (v) {
-                      final error = requiredValue(v);
-                      if (error != null) return error;
-                      return VetRepository.petNameExists(
-                            v!,
-                            except: widget.pet?.name,
-                          )
-                          ? 'Já existe um pet com esse nome'
-                          : null;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  field(
-                    editing ? 'Espécie' : 'Tipo de Animal',
-                    Icons.pets_outlined,
-                    species,
-                    choices: const ['Cachorro', 'Gato'],
-                    onChanged: (_) => setState(() => breed.clear()),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    key: const ValueKey('pet-sex-weight'),
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: field(
-                          editing ? 'Sexo' : 'Gênero/Sexo',
-                          Icons.wc,
-                          sex,
-                          choices: const ['Macho', 'Fêmea'],
-                        ),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .16),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: VetColors.rose.withValues(alpha: .7),
+                  width: 2,
+                ),
+              ),
+              child: Form(
+                key: key,
+                child: desktop
+                    ? LayoutBuilder(
+                        builder: (context, fieldConstraints) {
+                          final width = (fieldConstraints.maxWidth - 12) / 2;
+                          return Wrap(
+                            key: const ValueKey('pet-form-desktop-grid'),
+                            spacing: 12,
+                            runSpacing: 10,
+                            children: [
+                              for (final item in _formFields(editing))
+                                SizedBox(width: width, child: item),
+                            ],
+                          );
+                        },
+                      )
+                    : Column(
+                        key: const ValueKey('pet-form-mobile-grid'),
+                        children: _mobileFields(editing),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: field(
-                          editing ? 'Peso (kg)' : 'Peso',
-                          Icons.scale_outlined,
-                          weight,
-                          validator: (v) {
-                            return parsePetWeight(v ?? '') == null
-                                ? 'Peso inválido (kg)'
-                                : null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  field(
-                    'Castração',
-                    Icons.health_and_safety_outlined,
-                    neutered,
-                    choices: const ['Castrado', 'Não castrado'],
-                    validator: (_) => null,
-                  ),
-                  const SizedBox(height: 8),
-                  field(
-                    editing ? 'Nascimento (DD/MM/AAAA)' : 'Data de Nascimento',
-                    Icons.cake_outlined,
-                    birth,
-                    validator: (v) => parseBirthDate(v ?? '') == null
-                        ? 'Data inválida'
-                        : null,
-                  ),
-                  const SizedBox(height: 8),
-                  field(
-                    'Raça',
-                    Icons.pets,
-                    breed,
-                    suggestions: breedsFor(species.text),
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -300,7 +253,9 @@ class _PetFormState extends State<PetForm> {
                   child: ElevatedButton(
                     onPressed: busy ? null : save,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: VetColors.brown,
+                      backgroundColor: editing
+                          ? VetColors.brown
+                          : VetColors.rose,
                       foregroundColor: Colors.white,
                       minimumSize: const Size.fromHeight(48),
                     ),
@@ -329,13 +284,87 @@ class _PetFormState extends State<PetForm> {
           ],
         ),
       );
-      // Normal 320x640/390x844 uses the compact column. Only keyboard/validation
-      // messages or unusually short windows need a scrollable fallback.
-      return constraints.maxHeight < 560 ||
+      return widget.modal ||
+              constraints.maxHeight < 560 ||
               validationFailed ||
               MediaQuery.viewInsetsOf(context).bottom > 0
           ? SingleChildScrollView(child: content)
           : Align(alignment: Alignment.topCenter, child: content);
     },
   );
+
+  List<Widget> _formFields(bool editing) => [
+    field(
+      editing ? 'Nome do pet' : 'Nome do Pet',
+      Icons.pets,
+      name,
+      validator: (v) {
+        final error = requiredValue(v);
+        if (error != null) return error;
+        return VetRepository.petNameExists(v!, except: widget.pet?.name)
+            ? 'Já existe um pet com esse nome'
+            : null;
+      },
+    ),
+    field(
+      editing ? 'Espécie' : 'Tipo de Animal',
+      Icons.pets_outlined,
+      species,
+      choices: const ['Cachorro', 'Gato'],
+      onChanged: (_) => setState(() => breed.clear()),
+    ),
+    field(
+      editing ? 'Sexo' : 'Gênero/Sexo',
+      Icons.wc,
+      sex,
+      choices: const ['Macho', 'Fêmea'],
+    ),
+    field(
+      editing ? 'Peso (kg)' : 'Peso',
+      Icons.scale_outlined,
+      weight,
+      validator: (v) =>
+          parsePetWeight(v ?? '') == null ? 'Peso inválido (kg)' : null,
+    ),
+    field(
+      'Castração',
+      Icons.health_and_safety_outlined,
+      neutered,
+      choices: const ['Castrado', 'Não castrado'],
+      validator: (_) => null,
+    ),
+    field(
+      editing ? 'Nascimento (DD/MM/AAAA)' : 'Data de Nascimento',
+      Icons.cake_outlined,
+      birth,
+      validator: (v) =>
+          parseBirthDate(v ?? '') == null ? 'Data inválida' : null,
+    ),
+    field('Raça', Icons.pets, breed, suggestions: breedsFor(species.text)),
+  ];
+
+  List<Widget> _mobileFields(bool editing) {
+    final fields = _formFields(editing);
+    final children = <Widget>[];
+    for (var i = 0; i < fields.length; i++) {
+      if (i == 2) {
+        children.add(
+          Row(
+            key: const ValueKey('pet-sex-weight'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: fields[2]),
+              const SizedBox(width: 10),
+              Expanded(child: fields[3]),
+            ],
+          ),
+        );
+        i = 3;
+      } else {
+        children.add(fields[i]);
+      }
+      if (i < fields.length - 1) children.add(const SizedBox(height: 8));
+    }
+    return children;
+  }
 }

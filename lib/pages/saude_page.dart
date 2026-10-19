@@ -20,7 +20,6 @@ class SaudePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double s = PetsTheme.scaleOf(context);
     final currentPet = VetRepository.petById(pet.id) ?? pet;
     final historico = VetRepository.consultas(pet.id);
     final vacinas = VetRepository.vacinas(pet.id);
@@ -35,54 +34,105 @@ class SaudePage extends StatelessWidget {
       title: 'Saúde',
       pet: currentPet,
       selectedIndex: 0,
+      contentMaxWidth: 1120,
       children: [
-        PetSummary(pet: currentPet, size: PetSummarySize.medium),
-        const VetSectionTitle('Resumo de saúde'),
-        const DemoBadge(),
-        Text(
-          VetRepository.realVaccines(pet.id).isNotEmpty
-              ? 'Vermifugação e histórico.'
-              : 'Vacinação, vermifugação e histórico.',
-          style: const TextStyle(fontSize: 12),
+        VetResponsiveLayout(
+          mobile: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: _sections(currentPet, historico, vacinas, emDia, vermif),
+          ),
+          desktop: Row(
+            key: const ValueKey('health-desktop-layout'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _summary(currentPet, vacinas, emDia, vermif),
+                ),
+              ),
+              const SizedBox(width: 28),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const VetSectionTitle('Histórico de atendimentos'),
+                    for (final c in historico) _ConsultaCard(c),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        Row(
-          children: [
-            Expanded(
-              child: _MiniStatus(
-                icon: emDia ? Icons.check_circle : Icons.warning_amber,
-                title: 'Vacinação',
-                value:
-                    '${vacinas.where((v) => v.status == VacinaStatus.emDia).length}/${vacinas.length} em dia',
-                color: emDia ? VetTones.success : VetTones.warning,
-              ),
-            ),
-            SizedBox(width: 12 * s),
-            Expanded(
-              child: _MiniStatus(
-                icon: Icons.monitor_weight,
-                title: 'Peso',
-                value: currentPet.weightKg == null
-                    ? 'Não informado'
-                    : fmtPeso(currentPet.weightKg!),
-                color: VetTones.warning,
-              ),
-            ),
-            SizedBox(width: 12 * s),
-            Expanded(
-              child: _MiniStatus(
-                icon: Icons.medical_services,
-                title: 'Vermifugação',
-                value: vermif ?? '—',
-                color: VetTones.info,
-              ),
-            ),
-          ],
-        ),
-        const VetSectionTitle('Histórico de atendimentos'),
-        for (final c in historico) _ConsultaCard(c),
       ],
     );
   }
+
+  List<Widget> _sections(
+    PetModel pet,
+    List<Consulta> history,
+    List<Vacina> vaccines,
+    bool upToDate,
+    String? deworming,
+  ) => [
+    ..._summary(pet, vaccines, upToDate, deworming),
+    const VetSectionTitle('Histórico de atendimentos'),
+    for (final consultation in history) _ConsultaCard(consultation),
+  ];
+
+  List<Widget> _summary(
+    PetModel pet,
+    List<Vacina> vaccines,
+    bool upToDate,
+    String? deworming,
+  ) => [
+    PetSummary(pet: pet, size: PetSummarySize.medium),
+    const SizedBox(height: 12),
+    const VetSectionTitle('Resumo de saúde'),
+    const DemoBadge(),
+    const SizedBox(height: 8),
+    Text(
+      VetRepository.realVaccines(pet.id).isNotEmpty
+          ? 'Vermifugação e histórico.'
+          : 'Vacinação, vermifugação e histórico.',
+      style: const TextStyle(fontSize: 12),
+    ),
+    const SizedBox(height: 12),
+    Row(
+      children: [
+        Expanded(
+          child: _MiniStatus(
+            icon: upToDate ? Icons.check_circle : Icons.warning_amber,
+            title: 'Vacinação',
+            value:
+                '${vaccines.where((v) => v.status == VacinaStatus.emDia).length}/${vaccines.length} em dia',
+            color: upToDate ? VetTones.success : VetTones.warning,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _MiniStatus(
+            icon: Icons.monitor_weight,
+            title: 'Peso',
+            value: pet.weightKg == null
+                ? 'Não informado'
+                : fmtPeso(pet.weightKg!),
+            color: VetTones.warning,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _MiniStatus(
+            icon: Icons.medical_services,
+            title: 'Vermifugação',
+            value: deworming ?? '—',
+            color: VetTones.info,
+          ),
+        ),
+      ],
+    ),
+    const SizedBox(height: 12),
+  ];
 }
 
 class _MiniStatus extends StatelessWidget {

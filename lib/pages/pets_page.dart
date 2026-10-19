@@ -1,4 +1,5 @@
 // lib/pages/pets_page.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/utils/vet_nav.dart';
@@ -33,7 +34,7 @@ class _PetsPageState extends State<PetsPage> {
       backgroundColor: VetColors.pink,
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
               _buildHeader(s, top),
@@ -87,20 +88,21 @@ class _PetsPageState extends State<PetsPage> {
                 ),
               ),
               const Spacer(),
-              IconButton(
-                tooltip: 'Telas de teste',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TestePage()),
-                  );
-                },
-                icon: Icon(
-                  Icons.dashboard_outlined,
-                  color: Colors.white,
-                  size: 23 * s,
+              if (kDebugMode)
+                IconButton(
+                  tooltip: 'Telas de teste',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TestePage()),
+                    );
+                  },
+                  icon: Icon(
+                    Icons.dashboard_outlined,
+                    color: Colors.white,
+                    size: 23 * s,
+                  ),
                 ),
-              ),
             ],
           ),
         ],
@@ -110,6 +112,7 @@ class _PetsPageState extends State<PetsPage> {
 
   Widget _buildPetListSection(BuildContext context, double s) => LayoutBuilder(
     builder: (context, constraints) {
+      final desktop = MediaQuery.sizeOf(context).width >= 900;
       final top = 57 * s;
       final gap = 33 * s;
       // A lista rola internamente; o botão permanece fora dela em telas pequenas.
@@ -119,34 +122,47 @@ class _PetsPageState extends State<PetsPage> {
       return Column(
         children: [
           SizedBox(height: top),
-          Container(
+          SizedBox(
             height: height,
-            margin: EdgeInsets.symmetric(horizontal: 22 * s),
-            padding: EdgeInsets.all(12 * s),
-            decoration: BoxDecoration(
-              color: VetColors.rose.withValues(alpha: .25),
-              borderRadius: BorderRadius.circular(25 * s),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: desktop ? 34 : 22 * s),
+              child: Container(
+                key: const ValueKey('pets-list-panel'),
+                padding: EdgeInsets.symmetric(
+                  horizontal: desktop ? 20 : 12 * s,
+                  vertical: 21 * s,
+                ),
+                decoration: BoxDecoration(
+                  color: VetColors.roseOverlay25,
+                  borderRadius: BorderRadius.circular(25 * s),
+                ),
+                child: VetRepository.pets.isEmpty
+                    ? const Center(child: Text('Nenhum pet cadastrado'))
+                    : desktop
+                    ? GridView.builder(
+                        key: const ValueKey('pets-desktop-grid'),
+                        controller: _listScroll,
+                        padding: EdgeInsets.zero,
+                        itemCount: VetRepository.pets.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 22,
+                              mainAxisSpacing: 18,
+                              childAspectRatio: 5.2,
+                            ),
+                        itemBuilder: (context, i) => _petCard(context, i),
+                      )
+                    : ListView.separated(
+                        key: const ValueKey('pets-mobile-list'),
+                        controller: _listScroll,
+                        padding: EdgeInsets.zero,
+                        itemCount: VetRepository.pets.length,
+                        separatorBuilder: (_, _) => SizedBox(height: 18 * s),
+                        itemBuilder: (context, i) => _petCard(context, i),
+                      ),
+              ),
             ),
-            child: VetRepository.pets.isEmpty
-                ? const Center(child: Text('Nenhum pet cadastrado'))
-                : ListView.separated(
-                    controller: _listScroll,
-                    padding: EdgeInsets.zero,
-                    itemCount: VetRepository.pets.length,
-                    separatorBuilder: (_, _) => SizedBox(height: 18 * s),
-                    itemBuilder: (context, i) => PetCardWidget(
-                      pet: VetRepository.pets[i],
-                      onTap: () async {
-                        VetRepository.selectedPetId = VetRepository.pets[i].id;
-                        await Navigator.pushNamed(
-                          context,
-                          '/pet',
-                          arguments: VetRepository.pets[i],
-                        );
-                        if (mounted) setState(() {});
-                      },
-                    ),
-                  ),
           ),
           SizedBox(height: gap),
           SizedBox(
@@ -187,6 +203,19 @@ class _PetsPageState extends State<PetsPage> {
           ),
         ],
       );
+    },
+  );
+
+  Widget _petCard(BuildContext context, int index) => PetCardWidget(
+    pet: VetRepository.pets[index],
+    onTap: () async {
+      VetRepository.selectedPetId = VetRepository.pets[index].id;
+      await Navigator.pushNamed(
+        context,
+        '/pet',
+        arguments: VetRepository.pets[index],
+      );
+      if (mounted) setState(() {});
     },
   );
 }

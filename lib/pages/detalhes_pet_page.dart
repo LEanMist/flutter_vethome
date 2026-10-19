@@ -71,16 +71,15 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
   Widget build(BuildContext context) {
     pet = VetRepository.petById(pet.id) ?? pet;
     final next = proximoAgendamento(VetRepository.realAppointments(pet.id));
-    return VetPageScaffold(
-      title: 'Detalhes',
+    final summary = PetSummary(
       pet: pet,
+      size: PetSummarySize.detailed,
+      onEdit: _edit,
+      onPhoto: _photo,
+    );
+    final actions = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PetSummary(
-          pet: pet,
-          size: PetSummarySize.detailed,
-          onEdit: _edit,
-          onPhoto: _photo,
-        ),
         ElevatedButton(
           onPressed: () {
             VetRepository.selectedPetId = pet.id;
@@ -93,72 +92,88 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
           ),
           child: const Text('Nova Consulta'),
         ),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-                onPressed: () => Navigator.pushNamed(
-                  context,
-                  '/saude',
-                  arguments: {'petId': pet.id},
-                ),
-                icon: const Icon(Icons.favorite_outline),
-                label: const Text('Saúde'),
-              ),
+              child: _recordButton('Saúde', Icons.favorite_outline, '/saude'),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-                onPressed: () => Navigator.pushNamed(
-                  context,
-                  '/vacinacao',
-                  arguments: {'petId': pet.id},
-                ),
-                icon: const Icon(Icons.vaccines_outlined),
-                label: const Text('Vacinação'),
+              child: _recordButton(
+                'Vacinação',
+                Icons.vaccines_outlined,
+                '/vacinacao',
               ),
             ),
           ],
         ),
-        VetCard(
-          flat: true,
-          onTap: next == null
-              ? null
-              : () => vetNavigate(context, 3, initialDate: next.data),
-          color: VetColors.rose.withValues(alpha: .2),
-          child: Row(
+        const SizedBox(height: 12),
+        _appointment(next),
+      ],
+    );
+    return VetPageScaffold(
+      title: 'Detalhes',
+      pet: pet,
+      contentMaxWidth: 1120,
+      children: [
+        VetResponsiveLayout(
+          mobile: Column(
+            children: [summary, const SizedBox(height: 12), actions],
+          ),
+          desktop: Row(
+            key: const ValueKey('pet-details-desktop-layout'),
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.calendar_month, color: VetColors.brown),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Próximo agendamento',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      next == null ? 'Nenhum agendamento futuro' : next.tipo,
-                    ),
-                    if (next != null)
-                      Text('${fmtDiaMes(next.data)} · ${fmtHora(next.data)}'),
-                  ],
-                ),
-              ),
-              if (next != null) const Icon(Icons.chevron_right),
+              Expanded(child: summary),
+              const SizedBox(width: 28),
+              Expanded(child: actions),
             ],
           ),
         ),
       ],
     );
   }
+
+  Widget _recordButton(String label, IconData icon, String route) =>
+      OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          textStyle: const TextStyle(fontSize: 12),
+          minimumSize: const Size.fromHeight(48),
+        ),
+        onPressed: () =>
+            Navigator.pushNamed(context, route, arguments: {'petId': pet.id}),
+        icon: Icon(icon),
+        label: Text(label),
+      );
+
+  Widget _appointment(Agendamento? next) => VetCard(
+    flat: true,
+    onTap: next == null
+        ? null
+        : () => vetNavigate(context, 3, initialDate: next.data),
+    color: VetColors.rose.withValues(alpha: .2),
+    child: Row(
+      children: [
+        const Icon(Icons.calendar_month, color: VetColors.brown),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Próximo agendamento',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(next == null ? 'Nenhum agendamento futuro' : next.tipo),
+              if (next != null)
+                Text('${fmtDiaMes(next.data)} · ${fmtHora(next.data)}'),
+            ],
+          ),
+        ),
+        if (next != null) const Icon(Icons.chevron_right),
+      ],
+    ),
+  );
 }

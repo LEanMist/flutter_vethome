@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/widgets/vet_calendar.dart';
 
 void main() {
   final current = DateTime.now();
@@ -34,7 +35,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final firstDate = tester
-        .widget<DatePickerDialog>(find.byType(DatePickerDialog))
+        .widget<VetCalendar>(find.byType(VetCalendar))
         .firstDate;
     final actualNow = DateTime.now();
     expect(firstDate, DateTime(actualNow.year, actualNow.month, actualNow.day));

@@ -46,6 +46,8 @@ class PetAvatar extends StatelessWidget {
               width: width,
               height: height,
               fit: BoxFit.contain,
+              color: listSilhouette ? Colors.white : null,
+              colorBlendMode: listSilhouette ? BlendMode.srcIn : null,
               cacheWidth: (width * dpr).round(),
               excludeFromSemantics: true,
             );

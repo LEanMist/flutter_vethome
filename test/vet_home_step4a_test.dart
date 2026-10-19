@@ -334,8 +334,16 @@ void main() {
       matching: find.byType(TextFormField),
     );
     await tester.enterText(nameField, 'Pet modal renomeado 4A');
-    await tester.ensureVisible(find.text('Salvar'));
-    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Salvar'),
+      100,
+      scrollable: find
+          .descendant(
+            of: find.byType(Dialog),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.tap(find.text('Salvar'));
     await tester.pumpAndSettle();
     expect(VetRepository.petById(pet.id)?.name, 'Pet modal renomeado 4A');

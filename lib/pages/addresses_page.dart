@@ -44,6 +44,7 @@ class _AddressesPageState extends State<AddressesPage> {
   Widget build(BuildContext context) => VetPageScaffold(
     title: 'Meus Endereços',
     selectedIndex: 4,
+    contentMaxWidth: 1120,
     children: [
       if (VetRepository.addresses.isEmpty)
         const Padding(
@@ -53,48 +54,68 @@ class _AddressesPageState extends State<AddressesPage> {
             textAlign: TextAlign.center,
           ),
         ),
-      for (final a in VetRepository.addresses)
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: VetColors.rose.withValues(alpha: .2),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final desktop = constraints.maxWidth >= 900;
+          final width = desktop
+              ? (constraints.maxWidth - 18) / 2
+              : constraints.maxWidth;
+          return Wrap(
+            key: ValueKey(
+              desktop ? 'addresses-desktop-grid' : 'addresses-mobile-list',
+            ),
+            spacing: 18,
+            runSpacing: 16,
             children: [
-              Text(
-                a.street,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              if (a.number.isNotEmpty) Text('Número: ${a.number}'),
-              if (a.complement.isNotEmpty) Text('Complemento: ${a.complement}'),
-              if (a.city.isNotEmpty) Text(a.city),
-              if (a.cep.isNotEmpty) Text('CEP: ${a.cep}'),
-              Wrap(
-                spacing: 12,
-                children: [
-                  TextButton.icon(
-                    onPressed: () => _edit(a),
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Editar'),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => _delete(a),
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Excluir'),
-                  ),
-                ],
-              ),
+              for (final a in VetRepository.addresses)
+                SizedBox(width: width, child: _addressCard(a)),
             ],
-          ),
-        ),
+          );
+        },
+      ),
       ElevatedButton.icon(
         onPressed: () => _edit(),
         icon: const Icon(Icons.add),
         label: const Text('Novo endereço'),
       ),
     ],
+  );
+
+  Widget _addressCard(SavedAddress a) => Material(
+    color: VetColors.rose.withValues(alpha: .2),
+    borderRadius: BorderRadius.circular(18),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => _edit(a),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(a.street, style: const TextStyle(fontWeight: FontWeight.bold)),
+            if (a.number.isNotEmpty) Text('Número: ${a.number}'),
+            if (a.complement.isNotEmpty) Text('Complemento: ${a.complement}'),
+            if (a.city.isNotEmpty) Text(a.city),
+            if (a.cep.isNotEmpty) Text('CEP: ${a.cep}'),
+            Wrap(
+              spacing: 12,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _edit(a),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Editar'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _delete(a),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Excluir'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
   );
 }
 

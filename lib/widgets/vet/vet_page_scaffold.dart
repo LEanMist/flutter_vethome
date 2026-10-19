@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/utils/vet_nav.dart';
 import '../../models/pet_model.dart';
+import '../../theme.dart';
 import '../../theme/vet_colors.dart';
 import '../pets/pets_theme.dart';
 import 'vet_bottom_nav.dart';
@@ -20,6 +21,7 @@ class VetPageScaffold extends StatelessWidget {
     this.headerBottom,
     this.footer,
     this.titleSize = 30,
+    this.contentMaxWidth = VH.mobileContentMaxWidth,
   });
 
   final String title;
@@ -33,6 +35,7 @@ class VetPageScaffold extends StatelessWidget {
   final Widget? headerBottom;
   final Widget? footer;
   final double titleSize;
+  final double contentMaxWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +45,8 @@ class VetPageScaffold extends StatelessWidget {
       backgroundColor: VetColors.pink,
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          key: const ValueKey('vet-page-shell'),
+          constraints: const BoxConstraints(maxWidth: VH.desktopShellMaxWidth),
           child: Column(
             children: [
               VetHeader(
@@ -53,15 +57,28 @@ class VetPageScaffold extends StatelessWidget {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16 * s),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (int i = 0; i < children.length; i++) ...[
-                        if (i > 0) SizedBox(height: 12 * s),
-                        children[i],
-                      ],
-                    ],
+                  padding: EdgeInsets.all(
+                    VH.pagePaddingFor(MediaQuery.sizeOf(context).width) * s,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      key: const ValueKey('vet-page-content'),
+                      constraints: BoxConstraints(
+                        maxWidth: contentMaxWidth.clamp(
+                          0,
+                          VH.desktopContentMaxWidth,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (int i = 0; i < children.length; i++) ...[
+                            if (i > 0) SizedBox(height: 12 * s),
+                            children[i],
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -91,4 +108,29 @@ class VetPageScaffold extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Alterna entre composições aprovadas para celular e desktop sem acoplar
+/// regras de layout às páginas ou misturar os sistemas históricos VH e Vet.
+class VetResponsiveLayout extends StatelessWidget {
+  const VetResponsiveLayout({
+    super.key,
+    required this.mobile,
+    required this.desktop,
+    this.breakpoint = VH.desktopBreakpoint,
+  });
+
+  final Widget mobile;
+  final Widget desktop;
+  final double breakpoint;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final width = constraints.hasBoundedWidth
+          ? constraints.maxWidth
+          : MediaQuery.sizeOf(context).width;
+      return width >= breakpoint ? desktop : mobile;
+    },
+  );
 }

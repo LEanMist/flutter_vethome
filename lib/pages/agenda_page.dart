@@ -6,24 +6,16 @@ import '../models/vet_models.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets.dart';
+import '../widgets/vet_calendar.dart';
 
-/// Complete weeks starting on Sunday, including adjacent months.
-List<DateTime> calendarMonthDays(DateTime month) {
-  final first = DateTime(month.year, month.month);
-  final offset = first.weekday % 7;
-  // Six complete weeks keep the calendar height stable during navigation.
-  const cells = 42;
-  return List.generate(
-    cells,
-    (i) => DateTime(month.year, month.month, 1 - offset + i),
-  );
-}
+List<DateTime> calendarMonthDays(DateTime month) =>
+    VetCalendar.monthDays(month);
+
+typedef _AgendaItem = ({String name, Agendamento agendamento, bool demo});
 
 class AgendaScreen extends StatefulWidget {
   const AgendaScreen({super.key, this.initialDate});
-
   final DateTime? initialDate;
-
   @override
   State<AgendaScreen> createState() => _AgendaScreenState();
 }
@@ -39,34 +31,18 @@ class _AgendaScreenState extends State<AgendaScreen> {
     _mes = DateTime(_selecionado.year, _selecionado.month);
   }
 
-  static const meses = [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro',
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final calendarDays = calendarMonthDays(_mes);
-    final consultasDoDia = [
+    final consultasDoDia = <_AgendaItem>[
       for (final pet in VetRepository.pets)
-        for (final agendamento in VetRepository.agendamentos(pet.id))
-          if (_sameDay(agendamento.data, _selecionado))
+        for (final appointment in VetRepository.agendamentos(pet.id))
+          if (_sameDay(appointment.data, _selecionado))
             (
               name: pet.name,
-              agendamento: agendamento,
+              agendamento: appointment,
               demo: !VetRepository.realAppointments(
                 pet.id,
-              ).contains(agendamento),
+              ).contains(appointment),
             ),
       if (_isDemoDate(_selecionado))
         for (final example in const [
@@ -91,232 +67,169 @@ class _AgendaScreenState extends State<AgendaScreen> {
     return VHPage(
       tab: '/agenda',
       children: [
-        Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Container(
-                key: const ValueKey('agenda-calendar'),
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: VH.secondary,
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(24),
-                  ),
-                ),
-                child: SafeArea(
-                  bottom: false,
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          IconButton(
-                            tooltip: 'Mês anterior',
-                            onPressed: () => _changeMonth(-1),
-                            icon: const Icon(
-                              Icons.chevron_left,
-                              color: VH.onSecondary,
-                            ),
-                          ),
-                          Text(
-                            '${meses[_mes.month - 1]} ${_mes.year}',
-                            style: const TextStyle(
-                              color: VH.foreground,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Próximo mês',
-                            onPressed: () => _changeMonth(1),
-                            icon: const Icon(
-                              Icons.chevron_right,
-                              color: VH.onSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      GridView.count(
-                        crossAxisCount: 7,
-                        mainAxisExtent: 37,
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          for (final weekday in [
-                            'Dom',
-                            'Seg',
-                            'Ter',
-                            'Qua',
-                            'Qui',
-                            'Sex',
-                            'Sáb',
-                          ])
-                            Center(
-                              child: Text(
-                                weekday,
-                                style: const TextStyle(
-                                  color: VH.foreground,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          for (final date in calendarDays)
-                            GestureDetector(
-                              key: ValueKey(
-                                'calendar-${date.year}-${date.month}-${date.day}',
-                              ),
-                              onTap: () => setState(() {
-                                _selecionado = date;
-                                _mes = DateTime(date.year, date.month);
-                              }),
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: _sameDay(date, _selecionado)
-                                          ? VH.background
-                                          : Colors.transparent,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '${date.day}',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: VH.foreground.withValues(
-                                            alpha: date.month == _mes.month
-                                                ? 1
-                                                : .3,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_isDemoDate(date) ||
-                                      _hasAppointment(date))
-                                    const Positioned(
-                                      bottom: 1,
-                                      child: CircleAvatar(
-                                        radius: 2,
-                                        backgroundColor: VH.onSecondary,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 32,
-              right: 32,
-              child: Center(
-                child: Container(
-                  width: 258,
-                  height: 41,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: VetColors.pinkOverlay50,
-                    border: Border.all(color: VH.secondary),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    '${_selecionado.day} - ${_weekdayNames[_selecionado.weekday % 7]}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-          child: ElevatedButton(
-            onPressed: () => Navigator.pushNamed(context, '/escolhaPet'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VH.primary,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Nova Consulta'),
+          padding: const EdgeInsets.all(20),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth >= VH.desktopBreakpoint) {
+                return Row(
+                  key: const ValueKey('agenda-desktop-layout'),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _calendarPanel()),
+                    const SizedBox(width: 32),
+                    Expanded(child: _appointments(consultasDoDia)),
+                  ],
+                );
+              }
+              return Column(
+                key: const ValueKey('agenda-mobile-layout'),
+                children: [
+                  _calendarPanel(),
+                  const SizedBox(height: 16),
+                  _appointments(consultasDoDia),
+                ],
+              );
+            },
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-          child: DefaultTextStyle.merge(
-            style: const TextStyle(color: Colors.white),
-            child: Column(
-              children: [
-                if (consultasDoDia.isEmpty)
-                  if (!_isDemoDate(_selecionado))
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 22),
+      ],
+    );
+  }
+
+  Widget _calendarPanel() => Column(
+    children: [
+      SizedBox(
+        key: const ValueKey('agenda-calendar'),
+        child: VetCalendar(
+          month: _mes,
+          selected: _selecionado,
+          onPreviousMonth: () => _changeMonth(-1),
+          onNextMonth: () => _changeMonth(1),
+          onSelected: (date) => setState(() {
+            _selecionado = date;
+            _mes = DateTime(date.year, date.month);
+          }),
+          hasIndicator: (date) => _isDemoDate(date) || _hasAppointment(date),
+        ),
+      ),
+      Transform.translate(
+        offset: const Offset(0, -10),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 258),
+          height: 41,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: VetColors.pinkOverlay50,
+            border: Border.all(color: VH.secondary),
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Text(
+            '${_selecionado.day} - ${_weekdayNames[_selecionado.weekday % 7]}',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    ],
+  );
+
+  Widget _appointments(List<_AgendaItem> appointments) {
+    final button = SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () => Navigator.pushNamed(context, '/escolhaPet'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: VH.primary,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(48),
+        ),
+        child: const Text('Nova Consulta'),
+      ),
+    );
+    return Column(
+      key: const ValueKey('agenda-timeline'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (appointments.isEmpty) ...[
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 18),
+            child: Text(
+              'Não há consultas neste dia.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: VH.foreground),
+            ),
+          ),
+          button,
+        ] else ...[
+          for (final item in appointments)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 54,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 14),
                       child: Text(
-                        'Não há consultas neste dia.',
-                        style: TextStyle(color: VH.foreground),
+                        fmtHora(item.agendamento.data),
+                        style: const TextStyle(
+                          color: VH.foreground,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                for (final item in consultasDoDia)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                  ),
+                  Expanded(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
-                        vertical: 8,
+                        vertical: 12,
                       ),
                       decoration: BoxDecoration(
                         color: VH.secondary,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border(
-                          bottom: BorderSide(
-                            color: VH.foreground.withValues(alpha: .25),
-                          ),
-                        ),
+                        boxShadow: VH.controlShadow,
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.agendamento.tipo,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  fmtHorario(
-                                    item.agendamento.data,
-                                    item.agendamento.endDate,
-                                  ),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                Text(
-                                  '${item.demo ? 'Demonstração · ' : ''}${item.name} · ${item.agendamento.local}',
-                                  style: const TextStyle(fontSize: 11),
-                                ),
-                              ],
+                          Text(
+                            item.agendamento.tipo,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            fmtHorario(
+                              item.agendamento.data,
+                              item.agendamento.endDate,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            '${item.demo ? 'Demonstração · ' : ''}${item.name} · ${item.agendamento.local}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.white,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ),
-        const SizedBox(height: 20),
+          const SizedBox(height: 4),
+          button,
+        ],
       ],
     );
   }
@@ -333,10 +246,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
-
   bool _isDemoDate(DateTime date) =>
       date.year == 2026 && date.month == 1 && date.day == 13;
-
   bool _hasAppointment(DateTime date) => VetRepository.pets.any(
     (pet) => VetRepository.agendamentos(
       pet.id,

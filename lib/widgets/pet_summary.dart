@@ -32,7 +32,7 @@ class _PetSummaryState extends State<PetSummary> {
     final avatarSize = switch (widget.size) {
       PetSummarySize.compact => 48.0,
       PetSummarySize.medium => 64.0,
-      PetSummarySize.detailed => 76.0,
+      PetSummarySize.detailed => 116.0,
     };
     final secondary = TextStyle(
       color: VetColors.brown.withValues(alpha: .75),
@@ -61,13 +61,13 @@ class _PetSummaryState extends State<PetSummary> {
       ),
     );
     return Material(
-      color: VetColors.rose.withValues(alpha: .3),
-      borderRadius: BorderRadius.circular(22),
+      color: VetColors.rose.withValues(alpha: .25),
+      borderRadius: BorderRadius.circular(25),
       child: InkWell(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(25),
         onTap: detailed ? () => setState(() => expanded = !expanded) : null,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(detailed ? 20 : 14),
           child: Column(
             children: [
               Row(

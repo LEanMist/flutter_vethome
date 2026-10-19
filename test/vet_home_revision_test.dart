@@ -11,6 +11,7 @@ import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/widgets/vet_calendar.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/pages/perfil_page.dart';
 import 'package:flutter_vethome/screens/auth.dart';
@@ -188,28 +189,19 @@ void main() {
     expect(VetRepository.addresses.single.street, 'Rua A editada');
     expect(VetRepository.addresses.single.id, 'a');
   });
-  testWidgets('perfil mantém seleção de gênero legado e campo opcional', (
+  testWidgets('perfil oculta edição de gênero e preserva o dado legado', (
     tester,
   ) async {
+    final genderBefore = VetRepository.clientGender;
+    final genderCustomBefore = VetRepository.clientGenderCustom;
     await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
-    await tester.ensureVisible(find.text('Mudar gênero'));
-    await tester.tap(find.text('Mudar gênero'));
-    await tester.pumpAndSettle();
-    expect(
-      tester
-          .widget<TextField>(
-            find.descendant(
-              of: field('Gênero/Sexo'),
-              matching: find.byType(TextField),
-            ),
-          )
-          .readOnly,
-      isTrue,
-    );
-    await choose(tester, 'Gênero/Sexo', 'Outro');
-    expect(find.text('Como deseja informar? (opcional)'), findsOneWidget);
-    await choose(tester, 'Gênero/Sexo', 'Prefiro não informar');
-    expect(find.text('Como deseja informar? (opcional)'), findsNothing);
+    expect(find.text('Mudar gênero'), findsNothing);
+    expect(find.text('Mudar Foto de Perfil'), findsOneWidget);
+    expect(find.text('Mudar Nome de Perfil'), findsOneWidget);
+    expect(find.text('Mudar Data de Nascimento'), findsOneWidget);
+    expect(find.text('Alterar endereço'), findsOneWidget);
+    expect(VetRepository.clientGender, genderBefore);
+    expect(VetRepository.clientGenderCustom, genderCustomBefore);
   });
   testWidgets('pular endereço não cria registro vazio', (tester) async {
     await tester.pumpWidget(
@@ -447,21 +439,22 @@ void main() {
     await tester.tap(find.text('Data'));
     await tester.pumpAndSettle();
     final now = DateTime.now(), today = DateTime(now.year, now.month, now.day);
-    tester
-        .widget<CalendarDatePicker>(find.byType(CalendarDatePicker))
-        .onDateChanged(today);
+    tester.widget<VetCalendar>(find.byType(VetCalendar)).onSelected(today);
     await tester.pump();
-    await tester.tap(find.text('OK'));
+    await tester.tap(find.text('Confirmar'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Início'));
     await tester.tap(find.text('Início'));
     await tester.pumpAndSettle();
     for (final hour in [12, 13, 14, 15, 16]) {
-      final chip = tester.widget<ChoiceChip>(
-        find.widgetWithText(ChoiceChip, '$hour:00'),
+      final button = tester.widget<ElevatedButton>(
+        find.ancestor(
+          of: find.text('$hour:00'),
+          matching: find.byType(ElevatedButton),
+        ),
       );
       expect(
-        chip.onSelected != null,
+        button.onPressed != null,
         isFutureAppointmentTime(
           DateTime(today.year, today.month, today.day, hour),
           DateTime.now(),
@@ -556,13 +549,10 @@ void main() {
           routes: {'/pets': (_) => const PetsPage()},
         ),
       );
-      expect(find.text('Bem-vindo!'), findsOneWidget);
+      expect(find.textContaining(VetRepository.clientName), findsOneWidget);
       expect(find.text('Continuar'), findsNothing);
       await tester.pump(const Duration(milliseconds: 950));
-      expect(
-        find.text('Você pode cadastrar seu pet quando quiser.'),
-        findsOneWidget,
-      );
+      expect(find.text('Usuário\nCadastrado!'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
       expect(find.byType(PetsPage), findsOneWidget);

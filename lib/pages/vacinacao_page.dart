@@ -70,6 +70,7 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
       title: 'Carteira de vacinação',
       titleSize: 23,
       pet: pet,
+      contentMaxWidth: 1120,
       children: [
         PetSummary(pet: pet, size: PetSummarySize.medium),
         VetCard(
@@ -103,12 +104,32 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
             label: const Text('Adicionar vacina'),
           ),
         ),
-        for (final vaccine in vaccines)
-          _VacinaCard(
-            vaccine,
-            onEdit: demo ? null : () => _edit(vaccine),
-            onDelete: demo ? null : () => _delete(vaccine),
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final desktop = constraints.maxWidth >= 900;
+            final width = desktop
+                ? (constraints.maxWidth - 16) / 2
+                : constraints.maxWidth;
+            return Wrap(
+              key: ValueKey(
+                desktop ? 'vaccines-desktop-grid' : 'vaccines-mobile-list',
+              ),
+              spacing: 16,
+              runSpacing: 12,
+              children: [
+                for (final vaccine in vaccines)
+                  SizedBox(
+                    width: width,
+                    child: _VacinaCard(
+                      vaccine,
+                      onEdit: demo ? null : () => _edit(vaccine),
+                      onDelete: demo ? null : () => _delete(vaccine),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
         const SizedBox(height: 8),
       ],
     );

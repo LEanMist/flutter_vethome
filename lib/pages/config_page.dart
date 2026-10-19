@@ -66,12 +66,12 @@ class ConfigScreen extends StatelessWidget {
   }
 
   Future<void> _chooseTheme(BuildContext context) async {
-    const colors = [
-      Color(0xFF68442E),
-      Color(0xFFC08081),
-      Color(0xFF718B70),
-      Color(0xFF6B8FA3),
-      Color(0xFF9477A8),
+    const colors = <({String name, Color color})>[
+      (name: 'Marrom', color: Color(0xFF68442E)),
+      (name: 'Rosa', color: Color(0xFFC08081)),
+      (name: 'Verde', color: Color(0xFF718B70)),
+      (name: 'Azul', color: Color(0xFF6B8FA3)),
+      (name: 'Roxo', color: Color(0xFF9477A8)),
     ];
     var selected = VH.themeSeed.value;
     final color = await showDialog<Color>(
@@ -110,20 +110,29 @@ class ConfigScreen extends StatelessWidget {
               Wrap(
                 spacing: 12,
                 children: [
-                  for (final color in colors)
-                    InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () => setDialogState(() => selected = color),
-                      child: CircleAvatar(
-                        radius: selected == color ? 19 : 16,
-                        backgroundColor: color,
-                        child: selected == color
-                            ? const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 18,
-                              )
-                            : null,
+                  for (final palette in colors)
+                    Semantics(
+                      button: true,
+                      selected: selected == palette.color,
+                      label: 'Tema ${palette.name}',
+                      child: Tooltip(
+                        message: palette.name,
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () =>
+                              setDialogState(() => selected = palette.color),
+                          child: CircleAvatar(
+                            radius: selected == palette.color ? 19 : 16,
+                            backgroundColor: palette.color,
+                            child: selected == palette.color
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 18,
+                                  )
+                                : null,
+                          ),
+                        ),
                       ),
                     ),
                 ],
@@ -152,8 +161,8 @@ class ConfigScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: VH.background,
         title: const Text('Suporte VetHome'),
-        content: const Text(
-          'Estamos aqui para ajudar.\n'
+        content: const SelectableText(
+          'Estamos aqui para ajudar.\n\n'
           'Telefone: 11 93244-4392\n'
           'E-mail: Gabriela@gmail.com',
         ),

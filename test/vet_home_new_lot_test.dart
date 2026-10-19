@@ -357,54 +357,29 @@ void main() {
       expect(VetRepository.pets.last.name, 'Novo do app');
     },
   );
-  realWidgetTest('Outro aparece, salva, reabre na edição e some na troca', (
-    t,
-  ) async {
+  realWidgetTest('Perfil oculta gênero sem apagar valores legados', (t) async {
     await VetRepository.initialize(storage: widgetStorage);
-    await t.pumpWidget(const MaterialApp(home: PerfilPage()));
-    await t.ensureVisible(find.text('Mudar gênero'));
-    await t.tap(find.text('Mudar gênero'));
-    await t.pumpAndSettle();
-    await t.ensureVisible(field('Gênero/Sexo'));
-    await t.tap(field('Gênero/Sexo'));
-    await t.pumpAndSettle();
-    await t.tap(find.widgetWithText(ListTile, 'Outro'));
-    await t.pumpAndSettle();
-    await fill(t, 'Como deseja informar? (opcional)', 'Identificação Teste');
-    await t.ensureVisible(find.text('Salvar gênero'));
-    await t.tap(find.text('Salvar gênero'));
-    await t.pump();
+    VetRepository.registerClient({
+      'client.Gênero/Sexo': 'Outro',
+      'client.Gênero personalizado': 'Identificação Teste',
+    });
     await VetRepository.flush();
-    await t.pumpAndSettle();
-    await t.pumpAndSettle();
     await VetRepository.initialize(storage: widgetStorage);
     await t.pumpWidget(
       const MaterialApp(key: ValueKey('reopen'), home: PerfilPage()),
     );
     await t.pumpAndSettle();
-    await t.ensureVisible(find.text('Mudar gênero'));
-    await t.tap(find.text('Mudar gênero'));
-    await t.pumpAndSettle();
-    expect(
-      t
-          .widget<TextFormField>(field('Como deseja informar? (opcional)'))
-          .controller!
-          .text,
-      'Identificação Teste',
-    );
-    await t.ensureVisible(field('Gênero/Sexo'));
-    await t.tap(field('Gênero/Sexo'));
-    await t.pumpAndSettle();
-    await t.tap(find.widgetWithText(ListTile, 'Feminino'));
-    await t.pumpAndSettle();
-    expect(field('Como deseja informar? (opcional)'), findsNothing);
-    await t.ensureVisible(find.text('Salvar gênero'));
-    await t.tap(find.text('Salvar gênero'));
-    await t.pump();
+    expect(find.text('Mudar gênero'), findsNothing);
+    expect(find.text('Salvar gênero'), findsNothing);
+    expect(VetRepository.clientGender, 'Outro');
+    expect(VetRepository.clientGenderCustom, 'Identificação Teste');
+
+    VetRepository.updateClient(name: 'Cliente atualizado');
     await VetRepository.flush();
-    await t.pumpAndSettle();
-    await t.pumpAndSettle();
-    expect(VetRepository.clientGenderCustom, isEmpty);
+    await VetRepository.initialize(storage: widgetStorage);
+    expect(VetRepository.clientName, 'Cliente atualizado');
+    expect(VetRepository.clientGender, 'Outro');
+    expect(VetRepository.clientGenderCustom, 'Identificação Teste');
   });
   realWidgetTest(
     'vacinação CRUD pela interface confirma exclusão e não mistura mocks',

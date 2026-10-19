@@ -40,66 +40,90 @@ class _SucessoScreenState extends State<SucessoScreen>
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: VH.background,
-    body: SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Bem-vindo!',
-                style: TextStyle(
-                  fontFamily: 'Comfortaa',
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
+    body: LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = (constraints.maxWidth / 390).clamp(0.72, 1.0).toDouble();
+        final name = VetRepository.clientName.trim().isEmpty
+            ? 'usuário'
+            : VetRepository.clientName.trim();
+        return Center(
+          child: SizedBox(
+            width: 390 * scale,
+            height: (844 * scale).clamp(0, constraints.maxHeight),
+            child: Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                Positioned(
+                  top: 133 * scale,
+                  width: 332 * scale,
+                  child: Text(
+                    'É um prazer tê-lo(a) conosco,\n$name.',
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    style: TextStyle(
+                      fontFamily: VH.headingFontFamily,
+                      fontSize: 25 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: VH.foreground,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 48),
-              SlideTransition(
-                position:
-                    Tween<Offset>(
-                      begin: const Offset(0, .5),
-                      end: Offset.zero,
-                    ).animate(
-                      CurvedAnimation(
-                        parent: _controller,
-                        curve: Curves.easeOutCubic,
+                Positioned(
+                  top: 250 * scale,
+                  child: SlideTransition(
+                    position:
+                        Tween<Offset>(
+                          begin: const Offset(0, .5),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: _controller,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ),
+                    child: Container(
+                      width: 350 * scale,
+                      height: 350 * scale,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color.fromRGBO(0, 0, 0, .08),
+                            offset: Offset(2, 2),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/imagens/figma/vethomepng-2.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
-                child: Image.asset(
-                  'assets/imagens/figma/vethomepng-2.png',
-                  width: (MediaQuery.sizeOf(context).width - 40).clamp(
-                    240.0,
-                    350.0,
-                  ),
-                  height: (MediaQuery.sizeOf(context).width - 40).clamp(
-                    240.0,
-                    350.0,
                   ),
                 ),
-              ),
-              const SizedBox(height: 27),
-              AnimatedOpacity(
-                opacity: _arrived ? 1 : 0,
-                duration: const Duration(milliseconds: 250),
-                child: Text(
-                  VetRepository.pets.isEmpty
-                      ? 'Você pode cadastrar seu pet quando quiser.'
-                      : 'Você e seu pet já podem usar o VetHome.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: VH.headingFontFamily,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: VH.foreground,
+                Positioned(
+                  top: 627 * scale,
+                  width: 300 * scale,
+                  child: AnimatedOpacity(
+                    opacity: _arrived ? 1 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    child: Text(
+                      'Usuário\nCadastrado!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: VH.headingFontFamily,
+                        fontSize: 40 * scale,
+                        fontWeight: FontWeight.bold,
+                        color: VH.foreground,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     ),
   );
 }

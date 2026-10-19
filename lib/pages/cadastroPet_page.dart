@@ -21,7 +21,7 @@ class CadastroPetScreen extends StatelessWidget {
     body: SafeArea(
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 390),
+          constraints: const BoxConstraints(maxWidth: 900),
           child: PetForm(
             title: 'Cadastro Pet',
             onSaved: (v) async {
