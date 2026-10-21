@@ -3,6 +3,7 @@ enum GeneroUsuario { feminino, masculino, outro, prefiroNaoInformar }
 class Usuario {
   Usuario({
     this.id,
+    this.fotoPerfilPath,
     required this.nome,
     required this.dataNascimento,
     required this.genero,
@@ -17,6 +18,7 @@ class Usuario {
   });
 
   final String? id;
+  final String? fotoPerfilPath;
   final String nome;
   final DateTime? dataNascimento;
   final GeneroUsuario? genero;
@@ -72,9 +74,10 @@ class Usuario {
     return Map<String, String>.unmodifiable(validationErrors);
   }
 
-  Usuario copyWith({String? id}) {
+  Usuario copyWith({String? id, String? fotoPerfilPath}) {
     return Usuario(
       id: id ?? this.id,
+      fotoPerfilPath: fotoPerfilPath ?? this.fotoPerfilPath,
       nome: nome,
       dataNascimento: dataNascimento,
       genero: genero,
