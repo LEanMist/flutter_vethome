@@ -69,13 +69,13 @@ void main() {
     });
   }
 
-  testWidgets('cabeçalho padrão preserva altura, sombra e catálogo', (
+  testWidgets('cabeçalho padrão preserva geometria Figma e catálogo', (
     tester,
   ) async {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: VHHeader('Padrão'))),
     );
-    expect(tester.getSize(find.byType(VHHeader)).height, 64);
+    expect(tester.getSize(find.byType(VHHeader)).height, 125);
     final box = tester.widget<Container>(
       find
           .descendant(
@@ -85,8 +85,11 @@ void main() {
           .first,
     );
     final decoration = box.decoration! as BoxDecoration;
-    expect(decoration.borderRadius, VH.headerBorderRadius);
-    expect(decoration.boxShadow, VH.raise);
+    expect(
+      decoration.borderRadius,
+      const BorderRadius.vertical(bottom: Radius.circular(30)),
+    );
+    expect(decoration.boxShadow, isNull);
     expect(find.byTooltip('Telas de teste'), findsOneWidget);
   });
 

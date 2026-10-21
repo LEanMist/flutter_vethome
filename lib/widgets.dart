@@ -533,20 +533,15 @@ class VHHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.zero,
-      height: settingsStyle || bottom != null
-          ? VH.headerHeight
-          : (sub != null ? 80 : 64),
+      height: VH.headerHeight,
       decoration: BoxDecoration(
         color: VH.secondary,
-        borderRadius: settingsStyle
-            ? const BorderRadius.vertical(bottom: Radius.circular(30))
-            : VH.headerBorderRadius,
-        boxShadow: settingsStyle ? null : VH.raise,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: Stack(
         children: [
           Positioned(
-            top: settingsStyle ? 46 : 18,
+            top: settingsStyle || (sub == null && bottom == null) ? 46 : 18,
             left: settingsStyle ? 24 : 50,
             right: settingsStyle ? 24 : 50,
             child: FittedBox(

@@ -57,19 +57,12 @@ class _PetsPageState extends State<PetsPage> {
   Widget _buildHeader(double s, double topInset) {
     return Container(
       width: double.infinity,
-      height: 125 * s + topInset,
+      height: 125 + topInset,
       alignment: Alignment.center,
       padding: EdgeInsets.fromLTRB(12 * s, topInset + 8 * s, 12 * s, 12 * s),
       decoration: BoxDecoration(
         color: VetColors.rose,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28 * s)),
-        boxShadow: const [
-          BoxShadow(
-            color: VetColors.shadowDark,
-            offset: Offset(0, 3),
-            blurRadius: 6,
-          ),
-        ],
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

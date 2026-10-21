@@ -28,20 +28,15 @@ class VetHeader extends StatelessWidget {
 
     return Container(
       width: double.infinity,
+      constraints: BoxConstraints(minHeight: 125 + top),
       padding: EdgeInsets.fromLTRB(18 * s, top + 14 * s, 18 * s, 22 * s),
       decoration: BoxDecoration(
         color: VetColors.rose,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28 * s)),
-        boxShadow: const [
-          BoxShadow(
-            color: VetColors.shadowDark,
-            offset: Offset(0, 3),
-            blurRadius: 6,
-          ),
-        ],
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
             children: [
