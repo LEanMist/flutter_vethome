@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/vet_repository.dart';
 import '../models/saved_address.dart';
 import '../widgets/address_form.dart';
+import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet/vet_page_scaffold.dart';
 import '../theme/vet_colors.dart';
 
@@ -12,6 +13,17 @@ class AddressesPage extends StatefulWidget {
 }
 
 class _AddressesPageState extends State<AddressesPage> {
+  static const _titleStyle = TextStyle(
+    fontFamily: PetsTheme.fontComfortaa,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+  );
+  static const _detailStyle = TextStyle(
+    fontFamily: PetsTheme.fontComfortaa,
+    fontSize: 12,
+    fontWeight: FontWeight.bold,
+  );
+
   Future<void> _edit([SavedAddress? address]) async {
     await Navigator.pushNamed(context, '/editar-endereco', arguments: address);
     if (mounted) setState(() {});
@@ -82,21 +94,23 @@ class _AddressesPageState extends State<AddressesPage> {
   );
 
   Widget _addressCard(SavedAddress a) => Material(
-    color: VetColors.rose.withValues(alpha: .2),
-    borderRadius: BorderRadius.circular(18),
+    color: VetColors.roseOverlay50,
+    borderRadius: BorderRadius.circular(25),
     child: InkWell(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(25),
       onTap: () => _edit(a),
       child: Container(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(a.street, style: const TextStyle(fontWeight: FontWeight.bold)),
-            if (a.number.isNotEmpty) Text('Número: ${a.number}'),
-            if (a.complement.isNotEmpty) Text('Complemento: ${a.complement}'),
-            if (a.city.isNotEmpty) Text(a.city),
-            if (a.cep.isNotEmpty) Text('CEP: ${a.cep}'),
+            Text(a.street, style: _titleStyle),
+            if (a.number.isNotEmpty)
+              Text('Número: ${a.number}', style: _detailStyle),
+            if (a.complement.isNotEmpty)
+              Text('Complemento: ${a.complement}', style: _detailStyle),
+            if (a.city.isNotEmpty) Text(a.city, style: _detailStyle),
+            if (a.cep.isNotEmpty) Text('CEP: ${a.cep}', style: _detailStyle),
             Wrap(
               spacing: 12,
               children: [

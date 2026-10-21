@@ -234,7 +234,7 @@ class _PerfilPageState extends State<PerfilPage> {
       height: 280 * s,
       decoration: BoxDecoration(
         color: VetColors.pinkOverlay50,
-        border: Border.all(color: VetColors.rose, width: 3 * s),
+        border: Border.all(color: VetColors.rose, width: 5 * s),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(30 * s),
           bottom: Radius.circular(200 * s),
@@ -250,9 +250,9 @@ class _PerfilPageState extends State<PerfilPage> {
               textAlign: TextAlign.center,
               maxLines: 2,
               style: TextStyle(
-                fontSize: 20 * s,
+                fontSize: 22 * s,
                 fontFamily: PetsTheme.fontComfortaa,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
                 color: VetColors.brown,
               ),
             ),
@@ -338,9 +338,9 @@ class _PerfilPageState extends State<PerfilPage> {
         Text(
           _nascimentoTexto,
           style: TextStyle(
-            fontSize: 13 * s,
+            fontSize: 18 * s,
             fontFamily: PetsTheme.fontComfortaa,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
             color: VetColors.brown,
           ),
         ),
@@ -373,9 +373,9 @@ class _PerfilPageState extends State<PerfilPage> {
                       child: Text(
                         items[i].key,
                         style: TextStyle(
-                          fontSize: 14 * s,
+                          fontSize: 18 * s,
                           fontFamily: PetsTheme.fontComfortaa,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                           color: VetColors.brown,
                         ),
                       ),
