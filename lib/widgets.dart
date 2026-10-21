@@ -381,14 +381,9 @@ class _VHFieldState extends State<VHField> {
         child: CompositedTransformTarget(
           link: _link,
           child: DecoratedBox(
-            decoration: widget.figmaForm
+            decoration: widget.figmaForm || widget.compact
                 ? inset_shadow.BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        VH.secondary.withValues(alpha: .25),
-                        VH.background,
-                      ],
-                    ),
+                    color: VH.secondary.withValues(alpha: .25),
                     borderRadius: fieldRadius,
                     boxShadow: const [
                       inset_shadow.BoxShadow(
