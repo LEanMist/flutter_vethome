@@ -35,6 +35,7 @@ class VHField extends StatelessWidget {
     this.controller,
     this.validator,
     this.keyboardType,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   final String label;
@@ -44,6 +45,7 @@ class VHField extends StatelessWidget {
   final TextEditingController? controller;
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
+  final TextCapitalization textCapitalization;
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +83,7 @@ class VHField extends StatelessWidget {
             initialValue: controller == null ? value : null,
             obscureText: password,
             keyboardType: keyboardType,
+            textCapitalization: textCapitalization,
             validator: validator,
             decoration: InputDecoration(
               hintText: controller == null ? null : value,

@@ -135,7 +135,10 @@ class _VHFormState extends State<VHForm> {
     final data = <String, String>{
       ...widget.initialData,
       for (var i = 0; i < widget.fields.length; i++)
-        widget.fields[i].label: _controllers[i].text.trim(),
+        widget.fields[i].label: (widget.fields[i].label == 'Tipo de Animal' ||
+                widget.fields[i].label == 'Gênero/Sexo')
+            ? _controllers[i].text.trim().toUpperCase()
+            : _controllers[i].text.trim(),
     };
     widget.onSubmit?.call(data);
     Navigator.pushNamed(context, widget.next, arguments: data);

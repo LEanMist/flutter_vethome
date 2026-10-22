@@ -18,11 +18,10 @@ class CadastroPetScreen extends StatelessWidget {
           fields: const [
             VHField('Nome do Pet', Icons.person, value: 'Fernando'),
             VHField('Data de Nascimento', Icons.cake, value: '23/03/2012'),
-            VHField('Tipo de Animal', Icons.pets, value: 'Cachorro'),
-       //     VHField('Gênero/Sexo', Icons.person_outline, value: 'M'),
+            VHField('Tipo de Animal', Icons.pets, value: 'Cachorro', textCapitalization: TextCapitalization.characters,),
+           VHField('Gênero/Sexo', Icons.person_outline, value: 'femea', textCapitalization: TextCapitalization.characters,),
             VHField('Raça', Icons.pets, value: 'Lulu-da-Pomerânia'),
             VHField('Peso',Icons.scale,value: '24',keyboardType: TextInputType.number,),
-            VHField('Convênio', Icons.home, value: 'Particular'),
             VHField('CPF Cliente',Icons.tag,value: '754894724804',keyboardType: TextInputType.number),
 
           ],
@@ -31,10 +30,9 @@ class CadastroPetScreen extends StatelessWidget {
               'nome': data['Nome do Pet'],
               'dataNasc': data['Data de Nascimento'],
               'especie': data['Tipo de Animal'] ,
-          //  'sexo': dados['Gênero/Sexo'] 
+              'sexo': data['Gênero/Sexo'], 
               'raca': data['Raça'],
               'peso': data['Peso'],
-              'convenio': data['Convênio'],
               'cpfCliente': data['CPF Cliente'],
               };
 

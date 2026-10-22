@@ -17,10 +17,9 @@ class PetService{
       'nome': dados['nome'],
       'dataNasc':Utils.formatDate(dados['dataNasc']),
       'especie': dados['especie'],
-    //'sexo': dados['sexo']  
+      'sexo': dados['sexo'],  
       'raca': dados['raca'] ?? '',
       'peso': dados['peso'],
-      'convenio': dados['convenio'],
       'cpfCliente': Utils.limparCpf(dados['cpfCliente']),
     };
 
