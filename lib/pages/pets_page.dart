@@ -121,10 +121,9 @@ class _PetsPageState extends State<PetsPage> {
               padding: EdgeInsets.symmetric(horizontal: desktop ? 34 : 22 * s),
               child: Container(
                 key: const ValueKey('pets-list-panel'),
-                padding: EdgeInsets.symmetric(
-                  horizontal: desktop ? 20 : 12 * s,
-                  vertical: 21 * s,
-                ),
+                padding: desktop
+                    ? EdgeInsets.symmetric(horizontal: 20, vertical: 21 * s)
+                    : EdgeInsets.fromLTRB(12 * s, 21 * s, 13 * s, 21 * s),
                 decoration: BoxDecoration(
                   color: VetColors.roseOverlay25,
                   borderRadius: BorderRadius.circular(25 * s),

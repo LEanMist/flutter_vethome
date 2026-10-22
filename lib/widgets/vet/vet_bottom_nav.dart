@@ -86,7 +86,7 @@ class VetBottomNav extends StatelessWidget {
   }
 }
 
-class _VetNavDestination extends StatelessWidget {
+class _VetNavDestination extends StatefulWidget {
   const _VetNavDestination({
     required this.label,
     required this.icon,
@@ -106,51 +106,88 @@ class _VetNavDestination extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_VetNavDestination> createState() => _VetNavDestinationState();
+}
+
+class _VetNavDestinationState extends State<_VetNavDestination> {
+  bool _hovered = false;
+  bool _focused = false;
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    final dimension = (50 * scale).clamp(48.0, 50.0);
+    final dimension = (50 * widget.scale).clamp(48.0, 50.0);
+    final overlay = _pressed
+        ? VH.interactionOverlay({WidgetState.pressed})
+        : _focused
+        ? VH.interactionOverlay({WidgetState.focused})
+        : _hovered
+        ? VH.interactionOverlay({WidgetState.hovered})
+        : Colors.transparent;
     return Semantics(
       button: true,
-      selected: selected,
-      label: label,
+      selected: widget.selected,
+      label: widget.label,
       child: Tooltip(
-        message: label,
+        message: widget.label,
         child: SizedBox.square(
           dimension: dimension,
           child: Material(
             color: Colors.transparent,
             shape: const CircleBorder(),
             child: InkWell(
-              onTap: onTap,
+              onTap: widget.onTap,
+              onHover: (value) => setState(() => _hovered = value),
+              onFocusChange: (value) => setState(() => _focused = value),
+              onHighlightChanged: (value) => setState(() => _pressed = value),
               customBorder: const CircleBorder(),
-              overlayColor: WidgetStateProperty.resolveWith(
-                VH.interactionOverlay,
-              ),
-              child: Center(
-                child: highlighted
-                    ? Container(
-                        width: 50 * scale,
-                        height: 50 * scale,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: selected ? VH.secondary : VH.background,
-                          shape: BoxShape.circle,
-                          boxShadow: VH.cardShadow,
-                        ),
-                        child: ExcludeSemantics(
+              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+              child: Container(
+                foregroundDecoration: BoxDecoration(
+                  color: overlay,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: widget.highlighted
+                      ? Container(
+                          width: 50 * widget.scale,
+                          height: 50 * widget.scale,
+                          alignment: Alignment.center,
+                          decoration: widget.selected
+                              ? inset_shadow.BoxDecoration(
+                                  color: VetColors.roseOverlay50,
+                                  shape: BoxShape.circle,
+                                  boxShadow: const [
+                                    inset_shadow.BoxShadow(
+                                      color: VetColors.shadowDark,
+                                      offset: Offset(2, 2),
+                                      blurRadius: 2,
+                                      inset: true,
+                                    ),
+                                  ],
+                                )
+                              : const BoxDecoration(
+                                  color: VetColors.pink,
+                                  shape: BoxShape.circle,
+                                ),
+                          child: ExcludeSemantics(
+                            child: Image.asset(
+                              widget.selected
+                                  ? widget.selectedIcon
+                                  : widget.icon,
+                              width: 35 * widget.scale,
+                              height: 35 * widget.scale,
+                            ),
+                          ),
+                        )
+                      : ExcludeSemantics(
                           child: Image.asset(
-                            selected ? selectedIcon : icon,
-                            width: 36 * scale,
-                            height: 36 * scale,
+                            widget.selected ? widget.selectedIcon : widget.icon,
+                            width: 50 * widget.scale,
+                            height: 50 * widget.scale,
                           ),
                         ),
-                      )
-                    : ExcludeSemantics(
-                        child: Image.asset(
-                          selected ? selectedIcon : icon,
-                          width: 50 * scale,
-                          height: 50 * scale,
-                        ),
-                      ),
+                ),
               ),
             ),
           ),

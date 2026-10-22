@@ -138,9 +138,12 @@ void main() {
             matching: find.byType(Container),
           ),
         )
-        .map((widget) => widget.decoration)
-        .whereType<inset_shadow.BoxDecoration>()
-        .single;
+        .singleWhere(
+          (widget) =>
+              widget.margin != null &&
+              widget.decoration is inset_shadow.BoxDecoration,
+        )
+        .decoration! as inset_shadow.BoxDecoration;
     final shadow = decoration.boxShadow!.single as inset_shadow.BoxShadow;
     expect(shadow.inset, isTrue);
     expect(shadow.color, VetColors.shadowDark);
