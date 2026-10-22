@@ -20,7 +20,7 @@ class DashedCircle extends StatelessWidget {
     return SizedBox.square(
       dimension: size,
       child: CustomPaint(
-        painter: _DashedCirclePainter(
+        foregroundPainter: _DashedCirclePainter(
           color: color,
           strokeWidth: strokeWidth,
         ),
@@ -53,11 +53,11 @@ class _DashedCirclePainter extends CustomPainter {
       radius: radius,
     );
 
-    const int dashes = 36;
+    const int dashes = 21;
     const double sweep = 2 * math.pi / dashes;
 
     for (int i = 0; i < dashes; i++) {
-      canvas.drawArc(rect, i * sweep, sweep * 0.55, false, paint);
+      canvas.drawArc(rect, i * sweep, sweep * 0.5, false, paint);
     }
   }
 

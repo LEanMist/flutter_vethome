@@ -21,8 +21,6 @@ class LogoTematico extends StatelessWidget {
 
       child: Stack(
         children: [
-
-          // IMAGEM DA LOGO
           ClipOval(
             child: Image.asset(
               'assets/imagens/VetHome_logo_1.jpg',

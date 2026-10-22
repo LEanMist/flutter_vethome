@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 import 'package:flutter_vethome/models/pet.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_vethome/themes/vet_cores.dart';
 
 class PetCard extends StatelessWidget {
   const PetCard({
@@ -21,7 +22,7 @@ class PetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: inset.BoxDecoration(
-        color: const Color(0xFFD9A4A5),
+        color: VetCores.rosaEscuro50,
         borderRadius: BorderRadius.circular(30),
         boxShadow: const [
           inset.BoxShadow(
