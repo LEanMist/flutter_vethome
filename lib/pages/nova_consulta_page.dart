@@ -235,7 +235,6 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   @override
   Widget build(BuildContext context) {
     final pet = VetRepository.petById(widget.pet.id) ?? widget.pet;
-    final form = _form(context, pet);
     return VetPageScaffold(
       title: 'Novo agendamento',
       pet: pet,
@@ -256,14 +255,14 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       ),
       children: [
         VetResponsiveLayout(
-          mobile: form,
+          mobile: _form(context, pet, dateDialogEnabled: true),
           desktop: Row(
             key: const ValueKey('new-appointment-desktop-layout'),
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _inlineCalendar()),
               const SizedBox(width: 28),
-              Expanded(child: form),
+              Expanded(child: _form(context, pet, dateDialogEnabled: false)),
             ],
           ),
         ),
@@ -303,7 +302,11 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     );
   }
 
-  Widget _form(BuildContext context, PetModel pet) => Column(
+  Widget _form(
+    BuildContext context,
+    PetModel pet, {
+    required bool dateDialogEnabled,
+  }) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       PetSummary(pet: pet),
@@ -354,7 +357,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
             '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year}',
           ),
           trailing: const Icon(Icons.edit_calendar),
-          onTap: MediaQuery.sizeOf(context).width >= 900 ? null : _chooseDate,
+          onTap: dateDialogEnabled ? _chooseDate : null,
         ),
       ),
       const SizedBox(height: 12),
