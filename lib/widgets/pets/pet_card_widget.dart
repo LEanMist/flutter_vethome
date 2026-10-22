@@ -55,7 +55,7 @@ class PetCardWidget extends StatelessWidget {
                     size: 34,
                     listSilhouette: true,
                   ),
-                  SizedBox(width: 14 * s),
+                  SizedBox(width: 2 * s),
                   Expanded(
                     child: Text(
                       pet.name,
@@ -69,7 +69,10 @@ class PetCardWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const VetChevron(),
+                  VetChevron(
+                    color: VetColors.brown.withValues(alpha: .5),
+                    strokeWidth: 3,
+                  ),
                 ],
               ),
             ),

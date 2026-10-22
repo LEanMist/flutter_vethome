@@ -4,22 +4,30 @@ import '../theme.dart';
 
 /// Setas duplas usadas nas listas do protótipo.
 class VetChevron extends StatelessWidget {
-  const VetChevron({super.key, this.color = VH.foreground});
+  const VetChevron({
+    super.key,
+    this.color = VH.foreground,
+    this.strokeWidth = 2,
+  });
   final Color color;
+  final double strokeWidth;
   @override
-  Widget build(BuildContext context) =>
-      CustomPaint(size: const Size(18, 24), painter: _ChevronPainter(color));
+  Widget build(BuildContext context) => CustomPaint(
+    size: const Size(18, 24),
+    painter: _ChevronPainter(color, strokeWidth),
+  );
 }
 
 class _ChevronPainter extends CustomPainter {
-  const _ChevronPainter(this.color);
+  const _ChevronPainter(this.color, this.strokeWidth);
   final Color color;
+  final double strokeWidth;
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
+      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
     for (final x in [2.0, 9.0]) {
@@ -34,7 +42,8 @@ class _ChevronPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ChevronPainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(_ChevronPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
 }
 
 class VetChoicePill extends StatelessWidget {

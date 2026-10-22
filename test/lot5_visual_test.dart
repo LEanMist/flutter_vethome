@@ -11,6 +11,7 @@ import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pets/pet_card_widget.dart';
 import 'package:flutter_vethome/widgets/pets/pet_avatar.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
+import 'package:flutter_vethome/widgets/vet_choice_pill.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -56,6 +57,19 @@ void main() {
     expect(shadow.color, VetColors.shadowDark);
     expect(shadow.offset, const Offset(2, 2));
     expect(shadow.blurRadius, 2);
+
+    final avatar = find.descendant(of: card, matching: find.byType(PetAvatar));
+    final name = find.descendant(of: card, matching: find.text('Fernando'));
+    expect(
+      tester.getTopLeft(name).dx - tester.getTopRight(avatar).dx,
+      closeTo(2, .1),
+    );
+
+    final chevron = tester.widget<VetChevron>(
+      find.descendant(of: card, matching: find.byType(VetChevron)),
+    );
+    expect(chevron.color, VetColors.brown.withValues(alpha: .5));
+    expect(chevron.strokeWidth, 3);
     expect(tester.takeException(), isNull);
   });
 
@@ -164,16 +178,7 @@ void main() {
     tester,
   ) async {
     viewport(tester, const Size(390, 844));
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          bottomNavigationBar: VetBottomNav(
-            selectedIndex: 0,
-            onSelected: (_) {},
-          ),
-        ),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: PetsPage()));
     final bar = tester
         .widgetList<Container>(
           find.descendant(
@@ -191,6 +196,7 @@ void main() {
       ),
       const Size(366, 70),
     );
+    expect(tester.getTopLeft(find.byWidget(bar)).dy + margin.top, 724);
 
     final pets = find.bySemanticsLabel('Pets');
     final circle = tester
@@ -280,5 +286,29 @@ void main() {
     }
     expect(tapped, [0, 1, 2, 3, 4]);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('D10 stays inside 320px mobile and 1280px desktop viewports', (
+    tester,
+  ) async {
+    for (final size in [const Size(320, 640), const Size(1280, 800)]) {
+      viewport(tester, size);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            bottomNavigationBar: VetBottomNav(
+              selectedIndex: 0,
+              onSelected: (_) {},
+            ),
+          ),
+        ),
+      );
+      final rect = tester.getRect(find.byType(VetBottomNav));
+      expect(rect.left, greaterThanOrEqualTo(0));
+      expect(rect.right, lessThanOrEqualTo(size.width));
+      expect(rect.top, greaterThanOrEqualTo(0));
+      expect(rect.bottom, lessThanOrEqualTo(size.height));
+      expect(tester.takeException(), isNull);
+    }
   });
 }

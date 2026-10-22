@@ -42,6 +42,17 @@ class VetBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
+    final media = MediaQuery.of(context);
+    final standardBottomGap = 12 * s;
+    final fitsFigmaMobileHeight =
+        media.size.width <= PetsTheme.designWidth &&
+        media.size.height >= 844 * s;
+    final referenceBottomGap = 50 * s;
+    final bottomMargin = fitsFigmaMobileHeight
+        ? (referenceBottomGap - media.viewPadding.bottom)
+              .clamp(standardBottomGap, referenceBottomGap)
+              .toDouble()
+        : standardBottomGap;
     return SafeArea(
       top: false,
       left: false,
@@ -50,7 +61,7 @@ class VetBottomNav extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: VH.mobileContentMaxWidth),
           child: Container(
-            margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, 12 * s),
+            margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, bottomMargin),
             padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 8 * s),
             decoration: inset_shadow.BoxDecoration(
               color: VH.secondary.withValues(alpha: 0.5),
