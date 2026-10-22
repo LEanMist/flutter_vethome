@@ -226,15 +226,25 @@ void main() {
     expect(find.byType(ClipRRect), findsOneWidget);
   });
   testWidgets(
-    'Agenda desktop mantém células compactas e a ação inicial visível',
+    'Agenda desktop mantém seis semanas completas e a ação inicial visível',
     (tester) async {
       viewport(tester, const Size(1280, 800));
       await tester.pumpWidget(
         MaterialApp(home: AgendaScreen(initialDate: DateTime(2026, 10, 5))),
       );
+      final calendar = find.byKey(const ValueKey('agenda-calendar'));
+      final dayCells = find.byWidgetPredicate(
+        (widget) =>
+            widget is InkWell &&
+            widget.key is ValueKey<String> &&
+            (widget.key! as ValueKey<String>).value.startsWith('calendar-'),
+      );
+      expect(dayCells, findsNWidgets(42));
       expect(
-        tester.getSize(find.byKey(const ValueKey('agenda-calendar'))).height,
-        lessThanOrEqualTo(344),
+        tester
+            .getRect(find.byKey(const ValueKey('calendar-2026-11-7-surface')))
+            .bottom,
+        lessThan(tester.getRect(calendar).bottom),
       );
       expect(
         tester.getBottomRight(find.text('Nova Consulta')).dy,

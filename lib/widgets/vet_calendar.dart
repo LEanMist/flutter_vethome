@@ -71,8 +71,9 @@ class VetCalendar extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: VH.secondary,
-        borderRadius: BorderRadius.circular(VH.radiusCard),
-        boxShadow: VH.cardShadow,
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(VH.radiusXLarge),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -92,6 +93,7 @@ class VetCalendar extends StatelessWidget {
                     '${monthNames[month.month - 1]} ${month.year}',
                     style: const TextStyle(
                       color: VH.foreground,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       fontFamily: VH.headingFontFamily,
                     ),
@@ -107,7 +109,7 @@ class VetCalendar extends StatelessWidget {
           ),
           GridView.count(
             crossAxisCount: 7,
-            mainAxisExtent: 37,
+            mainAxisExtent: 41,
             padding: EdgeInsets.zero,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -126,8 +128,9 @@ class VetCalendar extends StatelessWidget {
                     weekday,
                     style: const TextStyle(
                       color: VH.foreground,
-                      fontSize: 11,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
+                      fontFamily: VH.headingFontFamily,
                     ),
                   ),
                 ),
@@ -149,7 +152,7 @@ class VetCalendar extends StatelessWidget {
   }
 }
 
-class _CalendarDay extends StatelessWidget {
+class _CalendarDay extends StatefulWidget {
   const _CalendarDay({
     required this.date,
     required this.selected,
@@ -165,54 +168,137 @@ class _CalendarDay extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_CalendarDay> createState() => _CalendarDayState();
+}
+
+class _CalendarDayState extends State<_CalendarDay> {
+  final WidgetStatesController _statesController = WidgetStatesController();
+
+  @override
+  void dispose() {
+    _statesController.dispose();
+    super.dispose();
+  }
+
+  Color? _overlayColor(Set<WidgetState> states) {
+    if (!widget.enabled || states.contains(WidgetState.disabled)) {
+      return Colors.transparent;
+    }
+    final overlayBase = widget.selected ? Colors.white : VH.foreground;
+    if (states.contains(WidgetState.pressed)) {
+      return overlayBase.withValues(alpha: .20);
+    }
+    if (states.contains(WidgetState.focused)) {
+      return overlayBase.withValues(alpha: .18);
+    }
+    if (states.contains(WidgetState.hovered)) {
+      return overlayBase.withValues(alpha: .12);
+    }
+    return null;
+  }
+
+  @override
   Widget build(BuildContext context) => Semantics(
     button: true,
-    selected: selected,
-    enabled: enabled,
-    label: '${date.day}/${date.month}/${date.year}',
-    child: InkWell(
-      key: ValueKey('calendar-${date.year}-${date.month}-${date.day}'),
-      borderRadius: BorderRadius.circular(12),
-      onTap: enabled ? onTap : null,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            margin: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: selected
-                  ? VH.background
-                  : today
-                  ? VH.background.withValues(alpha: .35)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              border: today && !selected
-                  ? Border.all(color: VH.foreground.withValues(alpha: .5))
-                  : null,
+    selected: widget.selected,
+    enabled: widget.enabled,
+    label: '${widget.date.day}/${widget.date.month}/${widget.date.year}',
+    child: Center(
+      child: SizedBox.square(
+        dimension: 35,
+        child: Material(
+          key: ValueKey(
+            'calendar-${widget.date.year}-${widget.date.month}-${widget.date.day}-surface',
+          ),
+          color: widget.selected
+              ? VH.primary
+              : widget.today
+              ? VH.secondary.withValues(alpha: .25)
+              : Colors.transparent,
+          shape: CircleBorder(
+            side: widget.today && !widget.selected
+                ? BorderSide(color: VH.foreground.withValues(alpha: .5))
+                : BorderSide.none,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            key: ValueKey(
+              'calendar-${widget.date.year}-${widget.date.month}-${widget.date.day}',
             ),
-            alignment: Alignment.center,
-            child: Text(
-              '${date.day}',
-              style: TextStyle(
-                fontSize: 11,
-                color: VH.foreground.withValues(
-                  alpha: enabled
-                      ? inMonth
-                            ? 1
-                            : .35
-                      : .2,
-                ),
+            statesController: _statesController,
+            customBorder: const CircleBorder(),
+            overlayColor: WidgetStateProperty.resolveWith(_overlayColor),
+            canRequestFocus: widget.enabled,
+            onTap: widget.enabled ? widget.onTap : null,
+            child: CustomPaint(
+              foregroundPainter: widget.selected
+                  ? const _InsetCircleShadowPainter()
+                  : null,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    '${widget.date.day}',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: VH.headingFontFamily,
+                      color: widget.selected
+                          ? VH.onSecondary
+                          : VH.foreground.withValues(
+                              alpha: widget.enabled
+                                  ? widget.inMonth
+                                        ? 1
+                                        : .30
+                                  : .2,
+                            ),
+                    ),
+                  ),
+                  if (widget.indicator)
+                    Positioned(
+                      bottom: 2,
+                      child: CircleAvatar(
+                        radius: 2,
+                        backgroundColor: widget.selected
+                            ? VH.onSecondary
+                            : VH.foreground,
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
-          if (indicator)
-            const Positioned(
-              bottom: 2,
-              child: CircleAvatar(radius: 2, backgroundColor: VH.onSecondary),
-            ),
-        ],
+        ),
       ),
     ),
   );
+}
+
+class _InsetCircleShadowPainter extends CustomPainter {
+  const _InsetCircleShadowPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bounds = Offset.zero & size;
+    final circle = Path()..addOval(bounds);
+    final center = bounds.center + const Offset(2, 2);
+    final radius = size.shortestSide / 2;
+
+    canvas
+      ..save()
+      ..clipPath(circle)
+      ..drawCircle(
+        center,
+        radius,
+        Paint()
+          ..color = Colors.black.withValues(alpha: .25)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+      )
+      ..restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _InsetCircleShadowPainter oldDelegate) => false;
 }
