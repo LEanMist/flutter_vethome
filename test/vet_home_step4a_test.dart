@@ -105,9 +105,13 @@ void main() {
   }
 
   Future<void> submit(WidgetTester tester) async {
-    await tester.ensureVisible(find.text('Cadastrar'));
+    final continueButton = find.text('Continuar');
+    final button = continueButton.evaluate().isNotEmpty
+        ? continueButton
+        : find.text('Cadastrar');
+    await tester.ensureVisible(button);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Cadastrar'));
+    await tester.tap(button);
     await tester.pumpAndSettle();
   }
 

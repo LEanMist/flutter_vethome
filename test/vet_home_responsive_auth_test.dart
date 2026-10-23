@@ -5,14 +5,19 @@ import 'package:flutter_vethome/pages/cadastroPet_page.dart';
 import 'package:flutter_vethome/pages/cadastro_page.dart';
 import 'package:flutter_vethome/pages/endereco_page.dart';
 import 'package:flutter_vethome/pages/login_page.dart';
+import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
+import 'package:flutter_vethome/widgets.dart';
+import 'package:flutter_vethome/widgets/pet_form.dart';
 
 Future<void> pumpAt(WidgetTester tester, Widget child, Size size) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  await tester.pumpWidget(MaterialApp(home: child));
+  await tester.pumpWidget(
+    MaterialApp(theme: VetTheme.light(VH.primary), home: child),
+  );
   await tester.pump();
 }
 
@@ -133,6 +138,10 @@ void main() {
       tester.getSize(find.byKey(const ValueKey('remember-me-marker'))),
       const Size(16, 15),
     );
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey('remember-me-marker'))),
+      const Offset(79, 458),
+    );
 
     final control = tester.widget<FocusableActionDetector>(
       find.byKey(const ValueKey('remember-me-control')),
@@ -143,6 +152,69 @@ void main() {
     await tester.pump();
 
     expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+  });
+
+  testWidgets('login distribui os ícones sociais conforme o frame original', (
+    tester,
+  ) async {
+    await pumpAt(tester, const LoginPage(), const Size(390, 844));
+
+    expect(tester.getTopLeft(find.byTooltip('Google')).dx, closeTo(73, 1));
+    expect(tester.getTopLeft(find.byTooltip('Facebook')).dx, closeTo(166, 1));
+    expect(tester.getTopLeft(find.byTooltip('Instagram')).dx, closeTo(260, 1));
+  });
+
+  testWidgets('cadastro usa a ação marrom Continuar do frame original', (
+    tester,
+  ) async {
+    await pumpAt(tester, const CadastroScreen(), const Size(390, 926));
+
+    final buttonFinder = find.ancestor(
+      of: find.text('Continuar'),
+      matching: find.byType(PillButton),
+    );
+    final button = tester.widget<PillButton>(buttonFinder);
+    expect(button.color, VetColors.brown);
+    expect(tester.getSize(buttonFinder), const Size(181, 71));
+  });
+
+  testWidgets('cadastro de endereço usa o painel medido no Figma', (
+    tester,
+  ) async {
+    await pumpAt(tester, const EnderecoScreen(), const Size(390, 844));
+
+    final panelFinder = find.byKey(
+      const ValueKey('address-registration-panel'),
+    );
+    final panel = tester.widget<Container>(panelFinder);
+    final decoration = panel.decoration! as BoxDecoration;
+    expect(tester.getSize(panelFinder), const Size(290, 565));
+    expect(tester.getTopLeft(panelFinder).dy, closeTo(88, 1));
+    expect(decoration.color, Colors.white.withValues(alpha: .2));
+    expect(decoration.borderRadius, BorderRadius.circular(30));
+    expect(decoration.border!.top.width, 3);
+    final buttonFinder = find.widgetWithText(ElevatedButton, 'Cadastrar');
+    expect(tester.getSize(buttonFinder), const Size(181, 65));
+    expect(tester.getTopLeft(buttonFinder).dy, closeTo(683, 1));
+  });
+
+  testWidgets('cadastro de pet usa o painel medido no Figma', (tester) async {
+    await pumpAt(tester, const CadastroPetScreen(), const Size(390, 844));
+
+    final panelFinder = find.byKey(const ValueKey('pet-registration-panel'));
+    final panel = tester.widget<Container>(panelFinder);
+    final decoration = panel.decoration! as BoxDecoration;
+    expect(tester.getSize(panelFinder), const Size(290, 480));
+    expect(decoration.color, Colors.white.withValues(alpha: .2));
+    expect(decoration.borderRadius, BorderRadius.circular(30));
+    expect(decoration.border!.top.width, 3);
+    final buttonFinder = find.widgetWithText(ElevatedButton, 'Cadastrar');
+    expect(tester.getSize(buttonFinder), const Size(181, 65));
+    expect(
+      tester.getTopLeft(buttonFinder).dy - tester.getTopLeft(panelFinder).dy,
+      closeTo(524, 1),
+    );
+    expect(find.byType(PetForm), findsOneWidget);
   });
 
   testWidgets('cadastro distribui campos em duas colunas no desktop', (

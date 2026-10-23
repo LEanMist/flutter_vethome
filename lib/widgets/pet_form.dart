@@ -4,6 +4,7 @@ import '../core/utils/form_fields.dart';
 import '../core/utils/pet_photo.dart';
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
+import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets.dart';
 import 'pets/pet_avatar.dart';
@@ -116,6 +117,11 @@ class _PetFormState extends State<PetForm> {
     label,
     icon,
     compact: true,
+    figmaForm:
+        widget.onSkip != null &&
+        widget.pet == null &&
+        MediaQuery.sizeOf(context).height >= 720 &&
+        MediaQuery.sizeOf(context).width < VH.desktopBreakpoint,
     labelAbove: MediaQuery.sizeOf(context).width >= 900,
     controller: c,
     value: label == 'Castração' ? 'Não informado' : null,
@@ -159,8 +165,37 @@ class _PetFormState extends State<PetForm> {
       final small = MediaQuery.sizeOf(context).height < 720;
       final desktop = constraints.maxWidth >= 700 && !widget.modal;
       final editing = widget.pet != null;
+      final registration = widget.onSkip != null && !editing && !desktop;
+      final saveButton = ElevatedButton(
+        onPressed: busy ? null : save,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: editing ? VetColors.brown : VetColors.rose,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(48),
+          shape: registration ? const StadiumBorder() : null,
+          textStyle: registration
+              ? const TextStyle(
+                  fontFamily: VH.headingFontFamily,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                )
+              : null,
+        ),
+        child: Text(
+          editing
+              ? widget.modal
+                    ? 'Salvar'
+                    : 'Salvar alterações'
+              : 'Cadastrar',
+        ),
+      );
       final content = Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          registration ? 5 : 7,
+          16,
+          registration ? 0 : 7,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -171,11 +206,15 @@ class _PetFormState extends State<PetForm> {
               style: TextStyle(
                 fontFamily: 'Comfortaa',
                 fontWeight: FontWeight.bold,
-                fontSize: small ? 22 : 26,
+                fontSize: small
+                    ? 22
+                    : registration
+                    ? 30
+                    : 26,
                 color: VetColors.brown,
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: registration ? 0 : 6),
             Center(
               child: SizedBox(
                 width: small ? 80 : 96,
@@ -203,73 +242,78 @@ class _PetFormState extends State<PetForm> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .16),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: VetColors.rose.withValues(alpha: .7),
-                  width: 2,
-                ),
-              ),
-              child: Form(
-                key: key,
-                child: desktop
-                    ? LayoutBuilder(
-                        builder: (context, fieldConstraints) {
-                          final width = (fieldConstraints.maxWidth - 12) / 2;
-                          return Wrap(
-                            key: const ValueKey('pet-form-desktop-grid'),
-                            spacing: 12,
-                            runSpacing: 10,
-                            children: [
-                              for (final item in _formFields(editing))
-                                SizedBox(width: width, child: item),
-                            ],
-                          );
-                        },
-                      )
-                    : Column(
-                        key: const ValueKey('pet-form-mobile-grid'),
-                        children: _mobileFields(editing),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                if (widget.onCancel != null) ...[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: widget.onCancel,
-                      child: const Text('Cancelar'),
+            SizedBox(height: registration ? 0 : 8),
+            Center(
+              child: SizedBox(
+                width: registration ? 290 : double.infinity,
+                height: registration && !small ? 480 : null,
+                child: Container(
+                  key: registration
+                      ? const ValueKey('pet-registration-panel')
+                      : null,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: registration ? 15.5 : 12,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(
+                      alpha: registration ? .2 : .16,
+                    ),
+                    borderRadius: BorderRadius.circular(registration ? 30 : 28),
+                    border: Border.all(
+                      color: registration
+                          ? VetColors.rose
+                          : VetColors.rose.withValues(alpha: .7),
+                      width: registration ? 3 : 2,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: busy ? null : save,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: editing
-                          ? VetColors.brown
-                          : VetColors.rose,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    child: Text(
-                      editing
-                          ? widget.modal
-                                ? 'Salvar'
-                                : 'Salvar alterações'
-                          : 'Cadastrar',
-                    ),
+                  child: Form(
+                    key: key,
+                    child: desktop
+                        ? LayoutBuilder(
+                            builder: (context, fieldConstraints) {
+                              final width =
+                                  (fieldConstraints.maxWidth - 12) / 2;
+                              return Wrap(
+                                key: const ValueKey('pet-form-desktop-grid'),
+                                spacing: 12,
+                                runSpacing: 10,
+                                children: [
+                                  for (final item in _formFields(editing))
+                                    SizedBox(width: width, child: item),
+                                ],
+                              );
+                            },
+                          )
+                        : Column(
+                            key: const ValueKey('pet-form-mobile-grid'),
+                            children: _mobileFields(editing),
+                          ),
                   ),
                 ),
-              ],
+              ),
             ),
+            SizedBox(height: registration ? 44 : 12),
+            registration
+                ? Center(
+                    child: SizedBox(width: 181, height: 65, child: saveButton),
+                  )
+                : Row(
+                    children: [
+                      if (widget.onCancel != null) ...[
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: widget.onCancel,
+                            child: const Text('Cancelar'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Expanded(child: saveButton),
+                    ],
+                  ),
+            if (widget.onSkip != null)
+              if (registration) const SizedBox(height: 8),
             if (widget.onSkip != null)
               TextButton(
                 onPressed: widget.onSkip,

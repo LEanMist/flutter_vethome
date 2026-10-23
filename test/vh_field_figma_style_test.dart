@@ -20,9 +20,13 @@ void main() {
       .whereType<inset_shadow.BoxDecoration>()
       .single;
 
-  void expectFlatFigmaSurface(inset_shadow.BoxDecoration decoration) {
-    expect(decoration.color, VH.secondary.withValues(alpha: .25));
-    expect(decoration.gradient, isNull);
+  void expectFigmaGradient(inset_shadow.BoxDecoration decoration) {
+    expect(decoration.color, isNull);
+    final gradient = decoration.gradient! as LinearGradient;
+    expect(gradient.colors, [
+      VH.secondary.withValues(alpha: .25),
+      VH.background,
+    ]);
     final shadow = decoration.boxShadow!.single as inset_shadow.BoxShadow;
     expect(shadow.inset, isTrue);
     expect(shadow.color, VetColors.shadowDark);
@@ -30,36 +34,36 @@ void main() {
     expect(shadow.blurRadius, 2);
   }
 
-  for (final viewport in viewports) {
-    testWidgets(
-      'figmaForm usa superfície plana e sombra interna em $viewport',
-      (tester) async {
-        tester.view.physicalSize = viewport;
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
+  void expectFlatCompactSurface(inset_shadow.BoxDecoration decoration) {
+    expect(decoration.color, VH.secondary.withValues(alpha: .25));
+    expect(decoration.gradient, isNull);
+  }
 
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: SizedBox(
-                  width: 292,
-                  child: VHField(
-                    'Nome Completo',
-                    Icons.person,
-                    figmaForm: true,
-                  ),
-                ),
+  for (final viewport in viewports) {
+    testWidgets('figmaForm usa gradiente e sombra interna em $viewport', (
+      tester,
+    ) async {
+      tester.view.physicalSize = viewport;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 292,
+                child: VHField('Nome Completo', Icons.person, figmaForm: true),
               ),
             ),
           ),
-        );
+        ),
+      );
 
-        expectFlatFigmaSurface(fieldDecoration(tester));
-        expect(tester.takeException(), isNull);
-      },
-    );
+      expectFigmaGradient(fieldDecoration(tester));
+      expect(tester.takeException(), isNull);
+    });
 
     testWidgets('compact usa superfície plana e sombra interna em $viewport', (
       tester,
@@ -82,7 +86,7 @@ void main() {
         ),
       );
 
-      expectFlatFigmaSurface(fieldDecoration(tester));
+      expectFlatCompactSurface(fieldDecoration(tester));
       expect(tester.takeException(), isNull);
     });
   }

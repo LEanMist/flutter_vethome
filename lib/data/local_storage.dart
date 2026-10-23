@@ -8,6 +8,27 @@ import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../models/saved_address.dart';
 
+enum LocalLoadStatus { empty, valid, invalid, unavailable }
+
+class LocalLoadResult {
+  const LocalLoadResult._(this.status, {this.state, this.error});
+
+  const LocalLoadResult.empty() : this._(LocalLoadStatus.empty);
+
+  const LocalLoadResult.valid(LocalState state)
+    : this._(LocalLoadStatus.valid, state: state);
+
+  const LocalLoadResult.invalid(Object error)
+    : this._(LocalLoadStatus.invalid, error: error);
+
+  const LocalLoadResult.unavailable(Object error)
+    : this._(LocalLoadStatus.unavailable, error: error);
+
+  final LocalLoadStatus status;
+  final LocalState? state;
+  final Object? error;
+}
+
 class ClientData {
   const ClientData({
     required this.name,
@@ -98,6 +119,24 @@ class LocalState {
     ],
   };
 
+  /// Serializa e confirma que [LocalState.fromJson] aceita o resultado.
+  /// Impede gravar um snapshot que o próprio aplicativo não conseguiria ler.
+  String toValidatedJson() {
+    try {
+      final encoded = jsonEncode(toJson());
+      final decoded = jsonDecode(encoded);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Snapshot não é um objeto');
+      }
+      LocalState.fromJson(decoded);
+      return encoded;
+    } catch (_) {
+      throw const FormatException(
+        'Os dados locais não passaram na validação de gravação.',
+      );
+    }
+  }
+
   factory LocalState.fromJson(Map<String, dynamic> json) {
     if (json['schemaVersion'] != 1 ||
         json['client'] is! Map<String, dynamic> ||
@@ -156,37 +195,59 @@ class LocalState {
 
 /// Snapshot local; não grava senha, foto do cliente ou mocks clínicos.
 class LocalStorage {
+  LocalStorage({
+    Future<SharedPreferences> Function()? preferencesLoader,
+    Future<void> Function(SharedPreferences)? reloadPreferences,
+  }) : _preferencesLoader = preferencesLoader ?? SharedPreferences.getInstance,
+       _reloadPreferences =
+           reloadPreferences ?? ((preferences) => preferences.reload());
+
   static const stateKey = 'vethome.state.v1';
 
+  final Future<SharedPreferences> Function() _preferencesLoader;
+  final Future<void> Function(SharedPreferences) _reloadPreferences;
+
   // API com mock oficial; reload evita ler um cache antigo na inicialização.
-  Future<LocalState?> load() async {
+  Future<LocalLoadResult> load() async {
+    late final Object? storedValue;
     try {
-      final preferences = await SharedPreferences.getInstance();
-      await preferences.reload();
-      final value = preferences.getString(stateKey);
-      if (value == null) return null;
-      final decoded = jsonDecode(value);
+      final preferences = await _preferencesLoader();
+      await _reloadPreferences(preferences);
+      if (!preferences.containsKey(stateKey)) {
+        return const LocalLoadResult.empty();
+      }
+      storedValue = preferences.get(stateKey);
+    } catch (error) {
+      debugPrint('VetHome: armazenamento local indisponível.');
+      return LocalLoadResult.unavailable(error);
+    }
+
+    try {
+      if (storedValue is! String) {
+        throw const FormatException('Snapshot local não é texto JSON');
+      }
+      final decoded = jsonDecode(storedValue);
       if (decoded is! Map<String, dynamic>) {
         throw const FormatException('Snapshot não é um objeto');
       }
-      return LocalState.fromJson(decoded);
-    } catch (_) {
-      // Não apaga nem sobrescreve automaticamente o conteúdo inválido.
-      debugPrint('VetHome: armazenamento indisponível ou snapshot inválido.');
-      return null;
+      return LocalLoadResult.valid(LocalState.fromJson(decoded));
+    } catch (error) {
+      // O valor original permanece intocado para recuperação explícita futura.
+      debugPrint('VetHome: snapshot local inválido.');
+      return LocalLoadResult.invalid(error);
     }
   }
 
   Future<void> save(LocalState state) async {
-    final value = jsonEncode(state.toJson());
-    final preferences = await SharedPreferences.getInstance();
+    final value = state.toValidatedJson();
+    final preferences = await _preferencesLoader();
     if (!await preferences.setString(stateKey, value)) {
       throw StateError('Não foi possível salvar o estado local do VetHome.');
     }
   }
 
   Future<void> clear() async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences = await _preferencesLoader();
     if (!await preferences.remove(stateKey)) {
       throw StateError('Não foi possível limpar o estado local do VetHome.');
     }

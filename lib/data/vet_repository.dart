@@ -15,15 +15,28 @@ class VetRepository {
   VetRepository._();
 
   static LocalStorage? _storage;
+  static LocalStorage? _lastLocal;
+  // Último estado persistível validado; base para reverter mutações inválidas.
+  static LocalState? _lastValid;
   static Future<bool> _pendingSave = Future.value(true);
   static Object? lastPersistenceError;
+  static LocalLoadStatus _persistenceStatus = LocalLoadStatus.empty;
+
+  static LocalLoadStatus get persistenceStatus => _persistenceStatus;
+
+  static bool get persistenceBlocked =>
+      _persistenceStatus == LocalLoadStatus.invalid ||
+      _persistenceStatus == LocalLoadStatus.unavailable;
 
   /// Deve terminar antes de runApp. Também permite simular reinício nos testes.
   static Future<void> initialize({LocalStorage? storage}) async {
     await flush();
     _storage = null;
     final local = storage ?? LocalStorage();
-    final state = await local.load();
+    _lastLocal = local;
+    _lastValid = null;
+    final result = await local.load();
+    final state = result.state;
     clientName = state?.client.name ?? 'Liminha';
     clientBirthDate = state?.client.birthDate ?? DateTime(2007, 2, 5);
     clientAddress = state?.client.address ?? '';
@@ -46,38 +59,95 @@ class VetRepository {
     _vaccines
       ..clear()
       ..addAll(state?.vaccinations ?? {});
-    lastPersistenceError = null;
-    _pendingSave = Future.value(true);
-    _storage = local;
+    _persistenceStatus = result.status;
+    lastPersistenceError = persistenceBlocked ? result.error : null;
+    _pendingSave = Future.value(!persistenceBlocked);
+    _storage = persistenceBlocked ? null : local;
+    _lastValid = _storage == null ? null : _buildState();
+  }
+
+  /// Nova leitura pelo fluxo de [initialize], só quando o armazenamento estava
+  /// indisponível. Não grava nada; snapshot inválido continua bloqueado.
+  static Future<void> retryInitialization() async {
+    if (_persistenceStatus != LocalLoadStatus.unavailable) return;
+    await initialize(storage: _lastLocal);
   }
 
   /// Aguarda a fila; false indica falha, sem lançar erro assíncrono nas telas.
   static Future<bool> flush() => _pendingSave;
 
+  static void _ensurePersistenceWritable() {
+    if (persistenceBlocked) {
+      throw const PersistenceBlockedException();
+    }
+  }
+
+  static LocalState _buildState() => LocalState(
+    client: ClientData(
+      name: clientName,
+      birthDate: clientBirthDate,
+      address: clientAddress,
+      phone: clientPhone,
+      email: clientEmail,
+      gender: clientGender,
+      genderCustom: clientGenderCustom,
+      addresses: List.of(addresses),
+    ),
+    pets: List.of(pets),
+    appointments: {
+      for (final entry in _novosAgendamentos.entries)
+        entry.key: List.of(entry.value),
+    },
+    vaccinations: {
+      for (final entry in _vaccines.entries) entry.key: List.of(entry.value),
+    },
+  );
+
+  static void _restore(LocalState state) {
+    clientName = state.client.name;
+    clientBirthDate = state.client.birthDate;
+    clientAddress = state.client.address;
+    clientPhone = state.client.phone;
+    clientEmail = state.client.email;
+    clientGender = state.client.gender;
+    clientGenderCustom = state.client.genderCustom;
+    addresses
+      ..clear()
+      ..addAll(state.client.addresses);
+    pets
+      ..clear()
+      ..addAll(state.pets);
+    _novosAgendamentos
+      ..clear()
+      ..addAll({
+        for (final entry in state.appointments.entries)
+          entry.key: List.of(entry.value),
+      });
+    _vaccines
+      ..clear()
+      ..addAll({
+        for (final entry in state.vaccinations.entries)
+          entry.key: List.of(entry.value),
+      });
+  }
+
   static void _save() {
+    _ensurePersistenceWritable();
     final storage = _storage;
     // Testes/telas isolados continuam podendo usar o repositório em memória.
     if (storage == null) return;
-    final state = LocalState(
-      client: ClientData(
-        name: clientName,
-        birthDate: clientBirthDate,
-        address: clientAddress,
-        phone: clientPhone,
-        email: clientEmail,
-        gender: clientGender,
-        genderCustom: clientGenderCustom,
-        addresses: List.of(addresses),
-      ),
-      pets: List.of(pets),
-      appointments: {
-        for (final entry in _novosAgendamentos.entries)
-          entry.key: List.of(entry.value),
-      },
-      vaccinations: {
-        for (final entry in _vaccines.entries) entry.key: List.of(entry.value),
-      },
-    );
+    final state = _buildState();
+    try {
+      state.toValidatedJson();
+    } catch (error) {
+      // Mutação inválida: devolve a memória ao último estado validado.
+      final rollback = _lastValid;
+      if (rollback != null) _restore(rollback);
+      lastPersistenceError = error;
+      debugPrint('VetHome: mutação revertida por snapshot inválido.');
+      rethrow;
+    }
+    _lastValid = state;
     // Captura cada estado e serializa as gravações para evitar inversão de ordem.
     _pendingSave = _pendingSave.then((_) async {
       try {
@@ -222,6 +292,7 @@ class VetRepository {
       password.trim().length >= 6;
 
   static void registerClient(Map<String, String> values) {
+    _ensurePersistenceWritable();
     if (!values.keys.any((key) => key.startsWith('client.'))) return;
     clientName = values['client.Nome Completo']?.trim().isNotEmpty == true
         ? values['client.Nome Completo']!.trim()
@@ -266,6 +337,7 @@ class VetRepository {
     String? phone,
     String? email,
   }) {
+    _ensurePersistenceWritable();
     if (name != null) clientName = name;
     if (birthDate != null) clientBirthDate = birthDate;
     if (address != null) {
@@ -290,6 +362,7 @@ class VetRepository {
   }
 
   static void saveAddress(SavedAddress address) {
+    _ensurePersistenceWritable();
     final index = addresses.indexWhere((a) => a.id == address.id);
     if (index < 0) {
       addresses.add(address);
@@ -301,6 +374,7 @@ class VetRepository {
   }
 
   static void removeAddress(String id) {
+    _ensurePersistenceWritable();
     addresses.removeWhere((a) => a.id == id);
     clientAddress = addresses.firstOrNull?.summary ?? '';
     _save();
@@ -325,6 +399,7 @@ class VetRepository {
   }
 
   static Future<bool> updatePetPhoto(String id, String photo) async {
+    _ensurePersistenceWritable();
     final pet = petById(id);
     if (pet == null) return false;
     _checkPhoto(photo, exceptId: id);
@@ -342,6 +417,7 @@ class VetRepository {
     required DateTime birthDate,
     required String breed,
   }) {
+    _ensurePersistenceWritable();
     if (petNameExists(name)) {
       throw ArgumentError.value(
         name,
@@ -377,6 +453,7 @@ class VetRepository {
   );
 
   static void updatePet(PetModel previous, PetModel updated) {
+    _ensurePersistenceWritable();
     final index = pets.indexWhere((pet) => pet.id == previous.id);
     if (index < 0) return;
     if (updated.id != previous.id) {
@@ -393,15 +470,23 @@ class VetRepository {
   }
 
   static void removePet(PetModel pet) {
+    _ensurePersistenceWritable();
+    final previousSelectedPetId = selectedPetId;
     final selectedId = selectedPet?.id;
     pets.removeWhere((item) => item.id == pet.id);
     _novosAgendamentos.remove(pet.id);
     _vaccines.remove(pet.id);
     selectedPetId = selectedId == pet.id ? pets.firstOrNull?.id : selectedId;
-    _save();
+    try {
+      _save();
+    } catch (_) {
+      selectedPetId = previousSelectedPetId;
+      rethrow;
+    }
   }
 
   static void addAgendamento(String petId, Agendamento agendamento) {
+    _ensurePersistenceWritable();
     if (petById(petId) == null) {
       throw ArgumentError('Pet não encontrado.');
     }
@@ -476,6 +561,7 @@ class VetRepository {
       petById(petId) == null ? [] : List.unmodifiable(_vaccines[petId] ?? []);
 
   static void saveVaccine(String petId, Vacina vaccine) {
+    _ensurePersistenceWritable();
     if (petById(petId) == null) throw ArgumentError('Pet não encontrado.');
     if (vaccine.id != null &&
         (vaccine.id!.trim().isEmpty ||
@@ -517,6 +603,7 @@ class VetRepository {
   }
 
   static void removeVaccine(String petId, String vaccineId) {
+    _ensurePersistenceWritable();
     _vaccines[petId]?.removeWhere((v) => v.id == vaccineId);
     _save();
   }
@@ -564,4 +651,12 @@ class VetRepository {
           ),
           ...?_novosAgendamentos[petId],
         ];
+}
+
+class PersistenceBlockedException implements Exception {
+  const PersistenceBlockedException();
+
+  @override
+  String toString() =>
+      'O armazenamento local está protegido contra alterações nesta sessão.';
 }

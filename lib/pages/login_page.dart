@@ -77,10 +77,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     for (final pad in const [
-                      ('frame-35.png', 89.0, 77.0, 82.0, 104.5),
-                      ('frame-36.png', 210.0, 77.0, 82.0, 104.5),
-                      ('frame-34-3.png', -7.0, 141.0, 96.0, 112.5),
-                      ('frame-37.png', 282.0, 141.0, 96.0, 112.5),
+                      ('frame-35.png', 97.0, 82.0, 81.66, 104.03),
+                      ('frame-36.png', 216.0, 82.0, 81.66, 104.03),
+                      ('frame-34-3.png', 4.0, 151.0, 95.97, 112.05),
+                      ('frame-37.png', 288.0, 151.0, 95.97, 112.05),
                     ])
                       Positioned(
                         left: pad.$2 * s,
@@ -124,39 +124,42 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                         ),
-                        SizedBox(
-                          width: 258,
-                          height: 48,
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 130,
-                                child: _RememberMeControl(
-                                  value: lembrarDeMim,
-                                  focusNode: _rememberFocusNode,
-                                  onChanged: (value) =>
-                                      setState(() => lembrarDeMim = value),
+                        Transform.translate(
+                          offset: Offset((258 - 242 * s) / 2, -17.5),
+                          child: SizedBox(
+                            width: 258,
+                            height: 48,
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 130,
+                                  child: _RememberMeControl(
+                                    value: lembrarDeMim,
+                                    focusNode: _rememberFocusNode,
+                                    onChanged: (value) =>
+                                        setState(() => lembrarDeMim = value),
+                                  ),
                                 ),
-                              ),
-                              Expanded(
-                                child: TextButton(
-                                  style: TextButton.styleFrom(
-                                    alignment: Alignment.centerRight,
-                                    padding: const EdgeInsets.only(right: 10),
-                                  ),
-                                  onPressed: () => mostrarMensagem(
-                                    'Procure o suporte para recuperar o acesso.',
-                                  ),
-                                  child: const Text(
-                                    'Esqueceu sua senha?',
-                                    style: TextStyle(
-                                      fontSize: 8,
-                                      color: Color.fromRGBO(0, 0, 0, .5),
+                                Expanded(
+                                  child: TextButton(
+                                    style: TextButton.styleFrom(
+                                      alignment: Alignment.centerLeft,
+                                      padding: const EdgeInsets.only(left: 26),
+                                    ),
+                                    onPressed: () => mostrarMensagem(
+                                      'Procure o suporte para recuperar o acesso.',
+                                    ),
+                                    child: const Text(
+                                      'Esqueceu sua senha?',
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        color: Color.fromRGBO(0, 0, 0, .5),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 11),
@@ -194,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 18),
+                                padding: EdgeInsets.symmetric(horizontal: 26),
                                 child: Text(
                                   'Ou continue com',
                                   style: TextStyle(
@@ -214,13 +217,14 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 22),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            for (final social in const [
+                            for (final (index, social) in const [
                               ('Google', 'icons8-google-logo-96-1.png'),
                               ('Facebook', 'icons8-facebook-novo-96-1.png'),
                               ('Instagram', 'icons8-instagram-96-1.png'),
-                            ])
+                            ].indexed) ...[
+                              if (index > 0) const SizedBox(width: 37.5),
                               Tooltip(
                                 message: social.$1,
                                 child: DecoratedBox(
@@ -258,6 +262,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 ),
                               ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 27),

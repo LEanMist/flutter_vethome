@@ -59,8 +59,8 @@ void main() {
     }.entries) {
       await fill(tester, entry.key, entry.value);
     }
-    await tester.ensureVisible(find.text('Cadastrar'));
-    await tester.tap(find.text('Cadastrar'));
+    await tester.ensureVisible(find.text('Continuar'));
+    await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
   }
 

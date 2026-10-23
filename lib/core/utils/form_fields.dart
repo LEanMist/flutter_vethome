@@ -1,5 +1,16 @@
 import 'package:flutter/services.dart';
 
+Map<String, String> withoutRegistrationPasswords(Map<String, String> values) =>
+    <String, String>{
+      for (final entry in values.entries)
+        if (!_isRegistrationPasswordKey(entry.key)) entry.key: entry.value,
+    };
+
+bool _isRegistrationPasswordKey(String key) {
+  final label = key.split('.').last.trim().toLowerCase();
+  return label == 'senha' || label == 'confirmar senha';
+}
+
 class DigitsMask extends TextInputFormatter {
   const DigitsMask(this.pattern);
   final String pattern;

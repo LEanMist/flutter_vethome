@@ -137,6 +137,9 @@ class _AddressFormState extends State<AddressForm> {
     label,
     icon,
     compact: true,
+    figmaForm:
+        widget.onSkip != null &&
+        MediaQuery.sizeOf(context).width < VH.desktopBreakpoint,
     labelAbove: true,
     fitSingleLine: true,
     controller: controller,
@@ -147,13 +150,38 @@ class _AddressFormState extends State<AddressForm> {
   @override
   Widget build(BuildContext context) {
     final desktop = MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint;
-    return Center(
+    final registration = widget.onSkip != null && !desktop;
+    final saveButton = ElevatedButton(
+      onPressed: _loading ? null : _save,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: VH.secondary,
+        foregroundColor: Colors.white,
+        shape: const StadiumBorder(),
+        textStyle: TextStyle(
+          fontFamily: VH.headingFontFamily,
+          fontSize: registration ? 18 : 15,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      child: Text(
+        widget.onSkip == null ? 'Salvar endereço' : 'Cadastrar',
+        maxLines: 1,
+        softWrap: false,
+      ),
+    );
+    return Align(
+      alignment: registration ? Alignment.topCenter : Alignment.center,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: desktop ? 900 : 440),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final content = Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                registration ? 24 : 16,
+                16,
+                registration ? 0 : 16,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -161,136 +189,145 @@ class _AddressFormState extends State<AddressForm> {
                   Text(
                     widget.title,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Comfortaa',
-                      fontSize: 24,
+                      fontSize: registration ? 30 : 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: VH.secondary.withValues(alpha: .12),
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: VH.secondary.withValues(alpha: .3),
-                      ),
-                    ),
-                    child: Form(
-                      key: _key,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final half = (constraints.maxWidth - 12) / 2;
-                          Widget slot(Widget child, {bool full = false}) =>
-                              SizedBox(
-                                width: desktop && !full
-                                    ? half
-                                    : constraints.maxWidth,
-                                child: child,
-                              );
-                          return Wrap(
-                            key: ValueKey(
-                              desktop
-                                  ? 'address-form-desktop-grid'
-                                  : 'address-form-mobile-grid',
-                            ),
-                            spacing: 12,
-                            runSpacing: 10,
-                            children: [
-                              slot(
-                                _field(
-                                  'CEP',
-                                  Icons.pin_drop_outlined,
-                                  _cep,
-                                  onChanged: _lookup,
-                                  validator: (v) =>
-                                      (v ?? '')
-                                              .replaceAll(RegExp(r'\D'), '')
-                                              .length ==
-                                          8
-                                      ? null
-                                      : 'Informe um CEP com 8 números',
+                  SizedBox(height: registration ? 21 : 16),
+                  Center(
+                    child: SizedBox(
+                      width: registration ? 290 : double.infinity,
+                      height: registration ? 565 : null,
+                      child: Container(
+                        key: registration
+                            ? const ValueKey('address-registration-panel')
+                            : null,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: registration ? 15.5 : 10,
+                          vertical: registration ? 12 : 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: registration
+                              ? Colors.white.withValues(alpha: .2)
+                              : VH.secondary.withValues(alpha: .12),
+                          borderRadius: BorderRadius.circular(
+                            registration ? 30 : 22,
+                          ),
+                          border: Border.all(
+                            color: registration
+                                ? VH.secondary
+                                : VH.secondary.withValues(alpha: .3),
+                            width: registration ? 3 : 1,
+                          ),
+                        ),
+                        child: Form(
+                          key: _key,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final half = (constraints.maxWidth - 12) / 2;
+                              Widget slot(Widget child, {bool full = false}) =>
+                                  SizedBox(
+                                    width: desktop && !full
+                                        ? half
+                                        : constraints.maxWidth,
+                                    child: child,
+                                  );
+                              return Wrap(
+                                key: ValueKey(
+                                  desktop
+                                      ? 'address-form-desktop-grid'
+                                      : 'address-form-mobile-grid',
                                 ),
-                              ),
-                              if (_status.isNotEmpty)
-                                slot(
-                                  Semantics(
-                                    liveRegion: true,
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        12,
-                                        28,
-                                        12,
-                                        0,
-                                      ),
-                                      child: Text(
-                                        _status,
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
+                                spacing: 12,
+                                runSpacing: 10,
+                                children: [
+                                  slot(
+                                    _field(
+                                      'CEP',
+                                      Icons.pin_drop_outlined,
+                                      _cep,
+                                      onChanged: _lookup,
+                                      validator: (v) =>
+                                          (v ?? '')
+                                                  .replaceAll(RegExp(r'\D'), '')
+                                                  .length ==
+                                              8
+                                          ? null
+                                          : 'Informe um CEP com 8 números',
                                     ),
                                   ),
-                                ),
-                              slot(
-                                _field(
-                                  'Endereço',
-                                  Icons.location_on_outlined,
-                                  _street,
-                                  validator: _required,
-                                ),
-                                full: true,
-                              ),
-                              slot(
-                                _field(
-                                  'Número',
-                                  Icons.tag,
-                                  _number,
-                                  validator: _required,
-                                ),
-                              ),
-                              slot(
-                                _field(
-                                  'Complemento (opcional)',
-                                  Icons.home_outlined,
-                                  _complement,
-                                ),
-                              ),
-                              slot(
-                                _field(
-                                  'Cidade',
-                                  Icons.location_city_outlined,
-                                  _city,
-                                  validator: _required,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _save,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: VH.secondary,
-                        foregroundColor: Colors.white,
-                        shape: const StadiumBorder(),
-                        textStyle: const TextStyle(
-                          fontFamily: VH.headingFontFamily,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
+                                  if (_status.isNotEmpty)
+                                    slot(
+                                      Semantics(
+                                        liveRegion: true,
+                                        child: Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                            12,
+                                            28,
+                                            12,
+                                            0,
+                                          ),
+                                          child: Text(
+                                            _status,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  slot(
+                                    _field(
+                                      'Endereço',
+                                      Icons.location_on_outlined,
+                                      _street,
+                                      validator: _required,
+                                    ),
+                                    full: true,
+                                  ),
+                                  slot(
+                                    _field(
+                                      'Número',
+                                      Icons.tag,
+                                      _number,
+                                      validator: _required,
+                                    ),
+                                  ),
+                                  slot(
+                                    _field(
+                                      'Complemento (opcional)',
+                                      Icons.home_outlined,
+                                      _complement,
+                                    ),
+                                  ),
+                                  slot(
+                                    _field(
+                                      'Cidade',
+                                      Icons.location_city_outlined,
+                                      _city,
+                                      validator: _required,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
                         ),
                       ),
-                      child: Text(
-                        widget.onSkip == null ? 'Salvar endereço' : 'Cadastrar',
-                        maxLines: 1,
-                        softWrap: false,
-                      ),
                     ),
                   ),
+                  SizedBox(height: registration ? 30 : 16),
+                  registration
+                      ? Center(
+                          child: SizedBox(
+                            width: 181,
+                            height: 65,
+                            child: saveButton,
+                          ),
+                        )
+                      : SizedBox(height: 48, child: saveButton),
                   if (widget.onSkip != null)
                     TextButton(
                       onPressed: widget.onSkip,
@@ -299,8 +336,8 @@ class _AddressFormState extends State<AddressForm> {
                 ],
               ),
             );
-          return !desktop ||
-                  constraints.maxHeight < 700 ||
+            return !desktop ||
+                    constraints.maxHeight < 700 ||
                     MediaQuery.viewInsetsOf(context).bottom > 0
                 ? SingleChildScrollView(child: content)
                 : Align(alignment: Alignment.topCenter, child: content);

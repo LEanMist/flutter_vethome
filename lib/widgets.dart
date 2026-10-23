@@ -238,10 +238,10 @@ class _VHFieldState extends State<VHField> {
       : const BorderRadius.vertical(top: Radius.circular(24));
 
   double _fontSize(double? width) {
-    final base = widget.compact
-        ? 13.0
-        : widget.figmaForm
+    final base = widget.figmaForm
         ? 15.0
+        : widget.compact
+        ? 13.0
         : 14.0;
     if (!widget.fitSingleLine || width == null || controller.text.isEmpty) {
       return base;
@@ -253,7 +253,14 @@ class _VHFieldState extends State<VHField> {
       text: TextSpan(text: controller.text, style: style),
       textDirection: TextDirection.ltr,
     )..layout();
-    final available = width - (widget.compact ? 32 : 58) - 20;
+    final available =
+        width -
+        (widget.figmaForm
+            ? 58
+            : widget.compact
+            ? 32
+            : 58) -
+        20;
     return (base * available / painter.width).clamp(12.0, base);
   }
 
@@ -301,11 +308,15 @@ class _VHFieldState extends State<VHField> {
       filled: true,
       fillColor: Colors.transparent,
       prefixIconConstraints: BoxConstraints.tightFor(
-        width: widget.compact ? 32 : 58,
-        height: widget.compact
-            ? 48
-            : widget.figmaForm
+        width: widget.figmaForm
+            ? 58
+            : widget.compact
+            ? 32
+            : 58,
+        height: widget.figmaForm
             ? 56
+            : widget.compact
+            ? 48
             : 52,
       ),
       prefixIcon: Padding(
@@ -322,12 +333,16 @@ class _VHFieldState extends State<VHField> {
               child: const Icon(Icons.expand_more, size: 18),
             ),
       contentPadding: EdgeInsets.symmetric(
-        horizontal: widget.compact
+        horizontal: widget.figmaForm
             ? 8
-            : widget.figmaForm
+            : widget.compact
             ? 8
             : 14,
-        vertical: widget.compact ? 14 : 16,
+        vertical: widget.figmaForm
+            ? 16
+            : widget.compact
+            ? 14
+            : 16,
       ),
       suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 48),
       border: OutlineInputBorder(
@@ -381,7 +396,25 @@ class _VHFieldState extends State<VHField> {
         child: CompositedTransformTarget(
           link: _link,
           child: DecoratedBox(
-            decoration: widget.figmaForm || widget.compact
+            decoration: widget.figmaForm
+                ? inset_shadow.BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        VH.secondary.withValues(alpha: .25),
+                        VH.background,
+                      ],
+                    ),
+                    borderRadius: fieldRadius,
+                    boxShadow: const [
+                      inset_shadow.BoxShadow(
+                        color: VH.shadowSubtle,
+                        offset: Offset(2, 2),
+                        blurRadius: 2,
+                        inset: true,
+                      ),
+                    ],
+                  )
+                : widget.compact
                 ? inset_shadow.BoxDecoration(
                     color: VH.secondary.withValues(alpha: .25),
                     borderRadius: fieldRadius,

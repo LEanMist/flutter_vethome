@@ -311,12 +311,12 @@ void main() {
       expect(VetRepository.clientName, 'Liminha');
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString(LocalStorage.stateKey), invalid);
-      VetRepository.updateClient(name: 'Recuperado');
-      final repaired = await savedJson();
-      expect(repaired['schemaVersion'], 1);
-      expect(prefs.getString(LocalStorage.stateKey), isNot(invalid));
-      await VetRepository.initialize();
-      expect(VetRepository.clientName, 'Recuperado');
+      expect(
+        () => VetRepository.updateClient(name: 'Recuperado'),
+        throwsA(isA<PersistenceBlockedException>()),
+      );
+      expect(await VetRepository.flush(), isFalse);
+      expect(prefs.getString(LocalStorage.stateKey), invalid);
     });
   }
 

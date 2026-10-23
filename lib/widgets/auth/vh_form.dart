@@ -105,12 +105,13 @@ class _VHFormState extends State<VHForm> {
 
   void _continue() {
     if (!_formKey.currentState!.validate()) return;
-    final data = <String, String>{
+    final data = withoutRegistrationPasswords(<String, String>{
       ...widget.initialData,
       for (var i = 0; i < widget.fields.length; i++)
-        '${widget.dataPrefix}${widget.fields[i].label}': _controllers[i].text
-            .trim(),
-    };
+        if (!widget.fields[i].password)
+          '${widget.dataPrefix}${widget.fields[i].label}': _controllers[i].text
+              .trim(),
+    });
     Navigator.pushNamed(context, widget.next, arguments: data);
   }
 
@@ -214,7 +215,7 @@ class _VHFormState extends State<VHForm> {
                   const SizedBox(height: 32),
                   Center(
                     child: PillButton(
-                      color: VH.secondary,
+                      color: VH.primary,
                       padding: EdgeInsets.zero,
                       onTap: _continue,
                       child: SizedBox(
@@ -222,7 +223,7 @@ class _VHFormState extends State<VHForm> {
                         height: 71,
                         child: const Center(
                           child: Text(
-                            'Cadastrar',
+                            'Continuar',
                             style: TextStyle(
                               fontFamily: VH.headingFontFamily,
                               fontSize: 18,

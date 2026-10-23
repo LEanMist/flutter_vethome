@@ -30,7 +30,9 @@ import 'package:flutter_vethome/widgets/pet_summary.dart';
 class _WidgetStorage extends LocalStorage {
   LocalState? state;
   @override
-  Future<LocalState?> load() async => state;
+  Future<LocalLoadResult> load() async => state == null
+      ? const LocalLoadResult.empty()
+      : LocalLoadResult.valid(state!);
   @override
   Future<void> save(LocalState value) async {
     state = LocalState.fromJson(value.toJson());
