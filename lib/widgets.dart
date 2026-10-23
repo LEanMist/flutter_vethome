@@ -35,6 +35,8 @@ class VHField extends StatelessWidget {
     this.controller,
     this.validator,
     this.keyboardType,
+    this.textCapitalization = TextCapitalization.none,
+    this.options = const [],
   });
 
   final String label;
@@ -44,9 +46,56 @@ class VHField extends StatelessWidget {
   final TextEditingController? controller;
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
+  final TextCapitalization textCapitalization;
+  final List<String> options;
 
   @override
   Widget build(BuildContext context) {
+    final hasOptions = options.isNotEmpty;
+    final dropdownValue = controller == null
+        ? (value ?? (hasOptions ? options.first : null))
+        : (controller!.text.isNotEmpty
+            ? controller!.text
+            : (value ?? (hasOptions ? options.first : null)));
+
+    final inputDecoration = InputDecoration(
+      hintText: controller == null ? null : value,
+      hintStyle: const TextStyle(
+        fontFamily: 'MontserratAlternates',
+        fontSize: 15,
+        color: VH.mutedText,
+      ),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: VH.background,
+            border: Border.all(color: VH.secondary, width: 3),
+          ),
+          child: Icon(icon, color: VH.secondary, size: 23),
+        ),
+      ),
+      filled: true,
+      fillColor: Colors.transparent,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 15,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(999),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(999),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(999),
+        borderSide: const BorderSide(color: VH.primary, width: 1),
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -76,55 +125,54 @@ class VHField extends StatelessWidget {
               ),
             ],
           ),
-          child: TextFormField(
-            controller: controller,
-            initialValue: controller == null ? value : null,
-            obscureText: password,
-            keyboardType: keyboardType,
-            validator: validator,
-            decoration: InputDecoration(
-              hintText: controller == null ? null : value,
-              hintStyle: const TextStyle(
-                fontFamily: 'MontserratAlternates',
-                fontSize: 15,
-                color: VH.mutedText,
-              ),
-              prefixIcon: Padding(
-                padding: const EdgeInsets.all(2),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: VH.background,
-                    border: Border.all(color: VH.secondary, width: 3),
+          child: hasOptions
+              ? DropdownButtonFormField<String>(
+                  value: dropdownValue,
+                  hint: const Text(
+                    'Selecione',
+                    style: TextStyle(
+                      fontFamily: 'MontserratAlternates',
+                      fontSize: 15,
+                      color: VH.mutedText,
+                    ),
                   ),
-                  child: Icon(icon, color: VH.secondary, size: 23),
+                  decoration: inputDecoration,
+                  style: const TextStyle(
+                    fontFamily: 'MontserratAlternates',
+                    fontSize: 15,
+                    color: VH.foreground,
+                  ),
+                  dropdownColor: VH.background,
+                  icon: const Icon(Icons.keyboard_arrow_down, color: VH.secondary),
+                  items: options
+                      .map(
+                        (option) => DropdownMenuItem<String>(
+                          value: option,
+                          child: Text(option),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (selected) {
+                    if (selected != null && controller != null) {
+                      controller!.text = selected;
+                    }
+                  },
+                  validator: validator,
+                )
+              : TextFormField(
+                  controller: controller,
+                  initialValue: controller == null ? value : null,
+                  obscureText: password,
+                  keyboardType: keyboardType,
+                  textCapitalization: textCapitalization,
+                  validator: validator,
+                  decoration: inputDecoration,
+                  style: const TextStyle(
+                    fontFamily: 'MontserratAlternates',
+                    fontSize: 15,
+                    color: VH.foreground,
+                  ),
                 ),
-              ),
-              filled: true,
-              fillColor: Colors.transparent,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 15,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(999),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(999),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(999),
-                borderSide: const BorderSide(color: VH.primary, width: 1),
-              ),
-            ),
-            style: const TextStyle(
-              fontFamily: 'MontserratAlternates',
-              fontSize: 15,
-              color: VH.foreground,
-            ),
-          ),
         ),
       ],
     );

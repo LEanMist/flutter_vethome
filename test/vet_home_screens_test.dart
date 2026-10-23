@@ -26,7 +26,38 @@ void main() {
     expect(title.style?.fontFamily, 'Comfortaa');
   });
 
- testWidgets('formulario valida CPF antes de continuar', (tester) async {
+testWidgets('formulario usa enums para tipo e sexo do animal', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: VHForm(
+          title: 'Cadastro Pet',
+          next: '/next',
+          fields: const [
+            VHField(
+              'Tipo de Animal',
+              Icons.pets,
+              options: ['Cachorro', 'Gato'],
+              value: 'Cachorro',
+            ),
+            VHField(
+              'Sexo',
+              Icons.person,
+              options: ['Macho', 'Fêmea'],
+              value: 'Fêmea',
+            ),
+          ],
+        ),
+        routes: {'/next': (_) => const Scaffold(body: Text('Avançou'))},
+      ),
+    );
+
+    expect(find.text('Tipo de Animal'), findsOneWidget);
+    expect(find.text('Sexo'), findsOneWidget);
+    expect(find.text('Cachorro'), findsOneWidget);
+    expect(find.text('Fêmea'), findsOneWidget);
+  });
+
+  testWidgets('formulario valida CPF antes de continuar', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: VHForm(

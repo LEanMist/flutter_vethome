@@ -48,7 +48,9 @@ class _VHFormState extends State<VHForm> {
 
   List<TextEditingController> _makeControllers() => [
         for (final field in widget.fields)
-          TextEditingController(text: widget.initialData[field.label] ?? ''),
+          TextEditingController(
+            text: widget.initialData[field.label] ?? field.value ?? '',
+          ),
       ];
 
   @override
@@ -135,7 +137,10 @@ class _VHFormState extends State<VHForm> {
     final data = <String, String>{
       ...widget.initialData,
       for (var i = 0; i < widget.fields.length; i++)
-        widget.fields[i].label: _controllers[i].text.trim(),
+        widget.fields[i].label: (widget.fields[i].label == 'Tipo de Animal' ||
+                widget.fields[i].label == 'Gênero/Sexo')
+            ? _controllers[i].text.trim().toUpperCase()
+            : _controllers[i].text.trim(),
     };
     widget.onSubmit?.call(data);
     Navigator.pushNamed(context, widget.next, arguments: data);
@@ -188,6 +193,7 @@ class _VHFormState extends State<VHForm> {
                         controller: _controllers[i],
                         keyboardType: widget.fields[i].keyboardType,
                         validator: (value) => _validate(widget.fields[i], value),
+                        options: widget.fields[i].options,
                       ),
                       const SizedBox(height: 7),
                     ],

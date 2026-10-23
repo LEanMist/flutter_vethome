@@ -38,7 +38,7 @@ class SucessoScreen extends StatelessWidget {
                   ),
                 ),
                 const Text(
-                  'Usuário e Pets Cadastrados!',
+                  'Cadastro realizado!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 22,
