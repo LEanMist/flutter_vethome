@@ -16,6 +16,7 @@ class CadastroPetScreen extends StatelessWidget {
           title: 'Cadastro Pet',
           next: '/sucesso',
           initialData: initialData,
+
           fields: [
             const VHField('Nome do Pet', Icons.person),
             const VHField('Data de Nascimento', Icons.cake),
@@ -48,6 +49,7 @@ class CadastroPetScreen extends StatelessWidget {
               Icons.tag,
               keyboardType: TextInputType.number,
             ),
+
           ],
           onSubmit: (data) async {
             String normalizeEnum(String? value) {
