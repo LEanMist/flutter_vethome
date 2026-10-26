@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/utils/formatters.dart';
+import '../../service/utils/formatters.dart';
 import '../../data/vet_repository.dart';
 import '../../models/pet_model.dart';
 import '../../models/vet_models.dart';

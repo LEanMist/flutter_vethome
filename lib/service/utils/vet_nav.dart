@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../models/pet_model.dart';
-import '../../pages/consultas/agenda_page.dart';
-import '../../pages/chat_page.dart';
-import '../../pages/config_page.dart';
-import '../../pages/cliente/perfil_page.dart';
-import '../../pages/pets/pets_page.dart';
+import '../../../models/pet_model.dart';
+import '../../../pages/consultas/agenda_page.dart';
+import '../../../pages/chat_page.dart';
+import '../../../pages/config_page.dart';
+import '../../../pages/cliente/perfil_page.dart';
+import '../../../pages/pets/pets_page.dart';
 
 /// Barra inferior (igual ao Figma):
 /// 0 Pets · 1 Perfil · 2 WhatsApp · 3 Agenda · 4 Configurações

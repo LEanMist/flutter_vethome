@@ -1,9 +1,8 @@
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../widgets/pets/pets_theme.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http
-;
+// import 'dart:convert';
+// import 'package:http/http.dart' as http;
 
 /// Dados de exemplo. Quando houver API, só este arquivo muda.
 class VetRepository {

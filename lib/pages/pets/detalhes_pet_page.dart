@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/utils/formatters.dart';
-import '../../core/utils/vet_nav.dart';
+import '../../service/utils/formatters.dart';
+import '../../service/utils/vet_nav.dart';
 import '../../data/vet_repository.dart';
 import '../../models/pet_model.dart';
 import '../../models/vet_models.dart';

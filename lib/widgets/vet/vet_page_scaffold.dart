@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/utils/vet_nav.dart';
+import '../../service/utils/vet_nav.dart';
 import '../../models/pet_model.dart';
 import '../../theme/vet_colors.dart';
 import '../pets/pets_theme.dart';

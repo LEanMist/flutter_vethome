@@ -6,8 +6,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../core/utils/formatters.dart';
-import '../../core/utils/vet_nav.dart';
+import '../../service/utils/formatters.dart';
+import '../../service/utils/vet_nav.dart';
 import '../../data/vet_repository.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets/pets/pets_theme.dart';

@@ -13,7 +13,7 @@ class EnderecoScreen extends StatelessWidget {
         backgroundColor: VH.background,
         body: VHForm(
           title: 'Endereço',
-          next: '/cadastroPet',
+          next: '/sucesso',
           initialData: initialData,
           fields: const [
             VHField('CEP',Icons.home, value: '34556-234', keyboardType: TextInputType.number,),
