@@ -17,29 +17,35 @@ class CadastroPetScreen extends StatelessWidget {
           next: '/sucesso',
           initialData: initialData,
           fields: [
-            const VHField('Nome do Pet', Icons.person, value: 'Fernando'),
-            const VHField('Data de Nascimento', Icons.cake, value: '23/03/2012'),
+            const VHField('Nome do Pet', Icons.person),
+            const VHField('Data de Nascimento', Icons.cake),
             VHField(
               'Tipo de Animal',
               Icons.pets,
-              options: AnimalType.values.map((animal) => animal.label).toList().map((s) => s.toUpperCase()).toList(),
+              options: AnimalType.values
+                  .map((animal) => animal.label)
+                  .toList()
+                  .map((s) => s.toUpperCase())
+                  .toList(),
             ),
             VHField(
               'Gênero/Sexo',
               Icons.person_outline,
-              options: AnimalSex.values.map((animal) => animal.label).toList().map((s) => s.toUpperCase()).toList(),
+              options: AnimalSex.values
+                  .map((animal) => animal.label)
+                  .toList()
+                  .map((s) => s.toUpperCase())
+                  .toList(),
             ),
-            const VHField('Raça', Icons.pets, value: 'Lulu-da-Pomerânia'),
+            const VHField('Raça', Icons.pets),
             const VHField(
               'Peso',
               Icons.scale,
-              value: '24',
               keyboardType: TextInputType.number,
             ),
             const VHField(
               'CPF Cliente',
               Icons.tag,
-              value: '754894724804',
               keyboardType: TextInputType.number,
             ),
           ],

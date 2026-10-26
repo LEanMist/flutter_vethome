@@ -75,7 +75,9 @@ class Despesa {
   final CategoriaDespesa categoria;
 }
 
-enum StatusAgendamento { confirmado, pendente
+enum StatusAgendamento {
+   confirmado, 
+   pendente
 // ,cancelada, 
 //  finalizada 
  }

@@ -28,13 +28,6 @@ class PetService{
       headers: {'Content-Type': 'application/json; charset=UTF-8'},
       body: jsonEncode(body),
     );
-
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Erro ao cadastrar pet: ${response.body}');
-    }
-  }
-
-  
-
+} 
 
 }
