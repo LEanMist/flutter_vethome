@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_vethome/models/usuario.dart';
 import 'package:flutter_vethome/services/perfil_foto_service.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
-import 'package:flutter_vethome/widgets/bordas_circulares.dart';
+import 'package:flutter_vethome/widgets/etiqueta_perfil.dart';
+import 'package:flutter_vethome/widgets/opcao.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -81,117 +83,207 @@ class _PerfilPage extends State<PerfilPage> {
     }
   }
 
+  void _mostrarMensagem(String mensagem) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensagem)));
+  }
+
+  void _salvarUsuario(Usuario usuario) {
+    try {
+      _repository.save(usuario);
+      if (mounted) setState(() {});
+    } catch (error) {
+      if (mounted) {
+        _mostrarMensagem('Não foi possível atualizar os dados: $error');
+      }
+    }
+  }
+
+  Future<void> _editarNome() async {
+    final usuarios = _repository.findAll();
+    if (usuarios.isEmpty) {
+      _mostrarMensagem('Cadastre um usuário antes de editar o perfil.');
+      return;
+    }
+
+    final usuario = usuarios.first;
+    var nomeEditado = usuario.nome;
+    final novoNome = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Mudar Nome de Perfil'),
+        content: TextFormField(
+          initialValue: usuario.nome,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          onChanged: (value) => nomeEditado = value,
+          decoration: const InputDecoration(labelText: 'Nome'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, nomeEditado),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || novoNome == null) return;
+    final nome = novoNome.trim();
+    if (nome.length < 2) {
+      _mostrarMensagem('Informe um nome com pelo menos 2 caracteres.');
+      return;
+    }
+
+    _salvarUsuario(usuario.copyWith(nome: nome));
+  }
+
+  Future<void> _editarDataNascimento() async {
+    final usuarios = _repository.findAll();
+    if (usuarios.isEmpty) {
+      _mostrarMensagem('Cadastre um usuário antes de editar o perfil.');
+      return;
+    }
+
+    final usuario = usuarios.first;
+    final hoje = DateTime.now();
+    final data = await showDatePicker(
+      context: context,
+      initialDate: usuario.dataNascimento ?? DateTime(hoje.year - 18),
+      firstDate: DateTime(1900),
+      lastDate: hoje,
+    );
+
+    if (!mounted || data == null) return;
+    _salvarUsuario(usuario.copyWith(dataNascimento: data));
+  }
+
   @override
   Widget build(BuildContext context) {
     final usuarios = _repository.findAll();
     final usuario = usuarios.isEmpty ? null : usuarios.first;
     final fotoPerfilPath = usuario?.fotoPerfilPath ?? _fotoPerfilPath;
+    final dataNascimento = usuario?.dataNascimento;
+    final dataNascimentoFormatada = dataNascimento == null
+        ? 'Data de nascimento não cadastrada'
+        : '${dataNascimento.day.toString().padLeft(2, '0')}/'
+              '${dataNascimento.month.toString().padLeft(2, '0')}/'
+              '${dataNascimento.year}';
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool compacto =
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
         final double alturaCabecalho = compacto ? 140 : 160;
-        final double alturaEtiqueta = compacto ? 290 : 350;
-        final double larguraEtiqueta = compacto ? 230 : 300;
-        final double alturaFoto = compacto ? 200 : 260;
-        final double larguraFoto = compacto ? 200 : 260;
+        final double alturaIconeNascimento = compacto ? 25 : 30;
+        final double tamanhoFonte = compacto ? 18 : 30;
         return SizedBox.expand(
-          child: Stack(
-            alignment: Alignment.topCenter,
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: double.infinity,
-                height: alturaCabecalho,
-                decoration: BoxDecoration(
-                  color: VetCores.rosaEscuro,
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(20),
-                  ),
-                ),
-                alignment: Alignment.topCenter,
-                padding: const EdgeInsets.only(top: 30),
-                child: Text(
-                  'Perfil',
-                  style: GoogleFonts.comfortaa(
-                    color: VetCores.branco,
-                    fontSize: compacto ? 30 : 35,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 85,
-                child: Container(
-                  width: larguraEtiqueta,
-                  height: alturaEtiqueta,
-                  decoration: BoxDecoration(
-                    color: VetCores.rosaFundo.withValues(alpha: 0.3),
-                    border: Border.all(color: VetCores.rosaEscuro, width: 5),
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(30),
-                      bottom: Radius.circular(200),
-                    ),
-                  ),
-                  child: Column(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: Stack(
+                    alignment: Alignment.topCenter,
+                    clipBehavior: Clip.none,
                     children: [
-                      const SizedBox(height: 15),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      Container(
+                        width: double.infinity,
+                        height: alturaCabecalho,
+                        decoration: BoxDecoration(
+                          color: VetCores.rosaEscuro,
+                          borderRadius: BorderRadius.vertical(
+                            bottom: Radius.circular(20),
+                          ),
+                        ),
+                        alignment: Alignment.topCenter,
+                        padding: const EdgeInsets.only(top: 30),
                         child: Text(
-                          usuario?.nome ?? 'Nome não cadastrado',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
+                          'Perfil',
                           style: GoogleFonts.comfortaa(
-                            color: VetCores.marrom,
-                            fontSize: compacto ? 20 : 22,
+                            color: VetCores.branco,
+                            fontSize: compacto ? 30 : 35,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 25),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: SizedBox(
-                          width: larguraFoto,
-                          height: alturaFoto,
-                          child: Stack(
-                            children: [
-                              Positioned.fill(
-                                child: GestureDetector(
-                                  onTap: _selecionarFoto,
-                                  child: DashedCircle(
-                                    size: 100,
-                                    color: VetCores.marrom50,
-                                    strokeWidth: 3.2,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(11),
-                                      child: ClipOval(
-                                        child: fotoPerfilPath == null? ColoredBox(
-                                          color: VetCores.rosaFundo,
-                                          child: Icon(
-                                            Icons.add_a_photo_outlined,
-                                            size: 90,
-                                            color: VetCores.marrom50,
-                                          ),
-                                        )
-                                        : exibirFotoPerfil(fotoPerfilPath),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        padding: const EdgeInsets.only(
+                          top: EtiquetaPerfil.offsetTop,
                         ),
-                      ),                 
+                        child: EtiquetaPerfil(
+                          nome: usuario?.nome ?? 'Nome não cadastrado',
+                          fotoPerfilPath: fotoPerfilPath,
+                          compacto: compacto,
+                          onSelecionarFoto: _selecionarFoto,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ],
+                SizedBox(height: compacto ? 20 : 30),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.cake_outlined,
+                      size: alturaIconeNascimento,
+                      color: VetCores.marrom,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      dataNascimentoFormatada,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.comfortaa(
+                        color: VetCores.marrom,
+                        fontSize: tamanhoFonte,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: compacto ? 70 : 100),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Opcao(
+                        texto: 'Mudar Foto de Perfil',
+                        compacto: compacto,
+                        onTap: _selecionarFoto,
+                      ),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: VetCores.marrom25,
+                      ),
+                      Opcao(
+                        texto: 'Mudar Nome de Perfil',
+                        compacto: compacto,
+                        onTap: _editarNome,
+                      ),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: VetCores.marrom25,
+                      ),
+                      Opcao(
+                        texto: 'Mudar Data de Nascimento',
+                        compacto: compacto,
+                        onTap: _editarDataNascimento,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         );
       },

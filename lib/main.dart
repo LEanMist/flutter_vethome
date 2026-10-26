@@ -15,7 +15,6 @@ class MeuApp extends StatelessWidget{
       debugShowCheckedModeBanner: false,
       title: 'Login',
       theme: ThemeData(
-        colorSchemeSeed: Colors.blue,
         useMaterial3: true
       ),
       home: const LoginPage(),

@@ -74,12 +74,17 @@ class Usuario {
     return Map<String, String>.unmodifiable(validationErrors);
   }
 
-  Usuario copyWith({String? id, String? fotoPerfilPath}) {
+  Usuario copyWith({
+    String? id,
+    String? fotoPerfilPath,
+    String? nome,
+    DateTime? dataNascimento,
+  }) {
     return Usuario(
       id: id ?? this.id,
       fotoPerfilPath: fotoPerfilPath ?? this.fotoPerfilPath,
-      nome: nome,
-      dataNascimento: dataNascimento,
+      nome: nome ?? this.nome,
+      dataNascimento: dataNascimento ?? this.dataNascimento,
       genero: genero,
       cpf: cpf,
       telefone: telefone,
