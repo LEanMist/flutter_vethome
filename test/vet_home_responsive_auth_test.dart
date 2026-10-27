@@ -193,7 +193,12 @@ void main() {
     expect(decoration.color, Colors.white.withValues(alpha: .2));
     expect(decoration.borderRadius, BorderRadius.circular(30));
     expect(decoration.border!.top.width, 3);
-    final buttonFinder = find.widgetWithText(ElevatedButton, 'Cadastrar');
+    final buttonFinder = find.widgetWithText(ElevatedButton, 'Continuar');
+    final button = tester.widget<ElevatedButton>(buttonFinder);
+    expect(
+      button.style?.backgroundColor?.resolve(const <WidgetState>{}),
+      VetColors.brown,
+    );
     expect(tester.getSize(buttonFinder), const Size(181, 65));
     expect(tester.getTopLeft(buttonFinder).dy, closeTo(683, 1));
   });
@@ -208,7 +213,12 @@ void main() {
     expect(decoration.color, Colors.white.withValues(alpha: .2));
     expect(decoration.borderRadius, BorderRadius.circular(30));
     expect(decoration.border!.top.width, 3);
-    final buttonFinder = find.widgetWithText(ElevatedButton, 'Cadastrar');
+    final buttonFinder = find.widgetWithText(ElevatedButton, 'Continuar');
+    final button = tester.widget<ElevatedButton>(buttonFinder);
+    expect(
+      button.style?.backgroundColor?.resolve(const <WidgetState>{}),
+      VetColors.brown,
+    );
     expect(tester.getSize(buttonFinder), const Size(181, 65));
     expect(
       tester.getTopLeft(buttonFinder).dy - tester.getTopLeft(panelFinder).dy,

@@ -154,7 +154,7 @@ class _AddressFormState extends State<AddressForm> {
     final saveButton = ElevatedButton(
       onPressed: _loading ? null : _save,
       style: ElevatedButton.styleFrom(
-        backgroundColor: VH.secondary,
+        backgroundColor: registration ? VH.primary : VH.secondary,
         foregroundColor: Colors.white,
         shape: const StadiumBorder(),
         textStyle: TextStyle(
@@ -164,7 +164,7 @@ class _AddressFormState extends State<AddressForm> {
         ),
       ),
       child: Text(
-        widget.onSkip == null ? 'Salvar endereço' : 'Cadastrar',
+        widget.onSkip == null ? 'Salvar endereço' : 'Continuar',
         maxLines: 1,
         softWrap: false,
       ),

@@ -169,7 +169,9 @@ class _PetFormState extends State<PetForm> {
       final saveButton = ElevatedButton(
         onPressed: busy ? null : save,
         style: ElevatedButton.styleFrom(
-          backgroundColor: editing ? VetColors.brown : VetColors.rose,
+          backgroundColor: registration || editing
+              ? VetColors.brown
+              : VetColors.rose,
           foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(48),
           shape: registration ? const StadiumBorder() : null,
@@ -182,7 +184,9 @@ class _PetFormState extends State<PetForm> {
               : null,
         ),
         child: Text(
-          editing
+          registration
+              ? 'Continuar'
+              : editing
               ? widget.modal
                     ? 'Salvar'
                     : 'Salvar alterações'
