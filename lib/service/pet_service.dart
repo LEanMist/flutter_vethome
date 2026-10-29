@@ -24,7 +24,7 @@ class PetService{
     };
 
     final response = await http.post(
-      Uri.parse('$baseUrl/cliente/pet'),
+      Uri.parse('$baseUrl/pet'),
       headers: {'Content-Type': 'application/json; charset=UTF-8'},
       body: jsonEncode(body),
     );

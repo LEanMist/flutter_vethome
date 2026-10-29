@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'utils/utils.dart';
 
-class ConsultaService{
-  //emulador android
+class ConsultaService {
+  // emulador android
   static const String baseUrl = 'http://10.0.2.2:8080';
 
   //celular fisico
@@ -12,13 +12,32 @@ class ConsultaService{
   //web
   // static const String baseUrl = 'http://localhost:8080';
 
-  static Future<void> criarConsulta(Map<String, String?> dados) async {
-    final body = {
+  static Map<String, dynamic> buildPayload(Map<String, String?> dados) {
+    final body = <String, dynamic>{
       'cpfCliente': Utils.limparCpf(dados['cpfCliente']),
-      'idPet': (dados['idPet']),
-      'servicos': dados['servicos'],
-      'convenio': dados['complemento'],
+      'idPet': (dados['idPet'] ?? '').trim(),
+      'servicos': (dados['servicos'] ?? '').trim(),
+      'convenio':
+          (dados['convenio'] ?? dados['complemento'] ?? 'Particular').trim(),
     };
+
+    final data = (dados['data'] ?? '').trim();
+    if (data.isNotEmpty) body['data'] = Utils.formatDate(data);
+
+    final horarioInicio = (dados['horarioInicio'] ?? '').trim();
+    if (horarioInicio.isNotEmpty) body['horarioInicio'] = horarioInicio;
+
+    final horarioFim = (dados['horarioFim'] ?? '').trim();
+    if (horarioFim.isNotEmpty) body['horarioFim'] = horarioFim;
+
+    final descricao = (dados['descricao'] ?? '').trim();
+    if (descricao.isNotEmpty) body['descricao'] = descricao;
+
+    return body;
+  }
+
+  static Future<void> criarConsulta(Map<String, String?> dados) async {
+    final body = buildPayload(dados);
 
     final response = await http.post(
       Uri.parse('$baseUrl/consulta'),
@@ -27,7 +46,7 @@ class ConsultaService{
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Erro ao cadastrar endereco: ${response.body}');
+      throw Exception('Erro ao criar consulta: ${response.body}');
     }
   }
   

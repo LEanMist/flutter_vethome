@@ -17,6 +17,7 @@ class VetRepository {
  
 
   static String clientName = 'Liminha';
+  static String clientCpf = '54894724804';
   static DateTime clientBirthDate = DateTime(2007, 2, 5);
   static String clientEmail = '';
   static String clientAddress = '';
@@ -143,6 +144,9 @@ class VetRepository {
     clientName = values['Nome Completo']?.trim().isNotEmpty == true
         ? values['Nome Completo']!.trim()
         : clientName;
+    clientCpf = values['CPF']?.trim().isNotEmpty == true
+        ? values['CPF']!.trim()
+        : clientCpf;
     clientEmail = values['E-mail']?.trim() ?? clientEmail;
     clientPhone = values['Telefone/Celular']?.trim() ?? clientPhone;
     clientAddress = [

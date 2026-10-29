@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/vet_repository.dart';
 import '../../models/pet_model.dart';
-import '../../models/vet_models.dart';
+import '../../service/consulta_service.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets/pets/pet_avatar.dart';
 import '../../widgets/pets/pets_theme.dart';
@@ -84,7 +84,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     if (time != null && mounted) setState(() => _time = time);
   }
 
-  void _schedule() {
+  Future<void> _schedule() async {
     final dateTime = DateTime(
       _date.year,
       _date.month,
@@ -93,27 +93,52 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       _time.minute,
     );
     if (dateTime.isBefore(DateTime.now())) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Escolha uma data e horário futuros.')),
       );
       return;
     }
-    VetRepository.addAgendamento(
-      widget.pet.name,
-      Agendamento(
-        data: dateTime,
-        tipo: widget.service,
-        veterinario: 'Dra. Ana Silva',
-        local: 'VetHome · ${widget.plan}',
-        status: StatusAgendamento.pendente,
-        descricao: _description.text.trim(),
-      ),
-    );
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/agenda',
-      (route) => route.isFirst,
-    );
+
+    try {
+      final payload = {
+        'cpfCliente': VetRepository.clientCpf,
+        'idPet': widget.pet.name,
+        'convenio': widget.plan,
+        'servicos': widget.service,
+        'data': '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year}',
+        'horarioInicio': '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
+        'horarioFim': '${((_time.hour + 1) % 24).toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
+        'descricao': _description.text.trim(),
+      };
+
+      await ConsultaService.criarConsulta(payload);
+
+      if (!mounted) return;
+
+      // VetRepository.addAgendamento(
+      //   widget.pet.name,
+      //   Agendamento(
+      //     data: dateTime,
+      //     tipo: widget.service,
+      //     veterinario: 'Dra. Ana Silva',
+      //     local: 'VetHome · ${widget.plan}',
+      //     status: StatusAgendamento.pendente,
+      //     descricao: _description.text.trim(),
+      //   ),
+      // );
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/agenda',
+        (route) => route.isFirst,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível criar a consulta: $e')),
+      );
+    }
   }
 
   @override

@@ -26,13 +26,15 @@ static Future<void> cadastrarEndereco(Map<String, String?> dados) async {
     };
 
     final response = await http.post(
-      Uri.parse('$baseUrl/cliente/endereco'),
+      Uri.parse('$baseUrl/endereco'),
       headers: {'Content-Type': 'application/json; charset=UTF-8'},
       body: jsonEncode(body),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Erro ao cadastrar endereco: ${response.body}');
+      throw Exception(
+        'Erro ao cadastrar endereço (${response.statusCode}): ${response.body}',
+      );
     }
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../data/vet_repository.dart';
@@ -18,7 +19,7 @@ class VHForm extends StatefulWidget {
   final List<VHField> fields;
   final String next;
   final Map<String, String> initialData;
-  final ValueChanged<Map<String, String>>? onSubmit;
+  final FutureOr<void> Function(Map<String, String>)? onSubmit;
 
   @override
   State<VHForm> createState() => _VHFormState();
@@ -132,8 +133,9 @@ class _VHFormState extends State<VHForm> {
         !date.isAfter(DateTime.now());
   }
 
-  void _continue() {
+  Future<void> _continue() async {
     if (!_formKey.currentState!.validate()) return;
+
     final data = <String, String>{
       ...widget.initialData,
       for (var i = 0; i < widget.fields.length; i++)
@@ -142,8 +144,20 @@ class _VHFormState extends State<VHForm> {
             ? _controllers[i].text.trim().toUpperCase()
             : _controllers[i].text.trim(),
     };
-    widget.onSubmit?.call(data);
-    Navigator.pushNamed(context, widget.next, arguments: data);
+
+    try {
+      if (widget.onSubmit != null) {
+        await widget.onSubmit!(data);
+      }
+
+      if (!mounted) return;
+      Navigator.pushNamed(context, widget.next, arguments: data);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Falha ao enviar: $e')),
+      );
+    }
   }
 
   @override
