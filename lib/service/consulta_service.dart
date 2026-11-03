@@ -19,7 +19,11 @@ class ConsultaService {
       'servicos': (dados['servicos'] ?? '').trim(),
       'convenio':
           (dados['convenio'] ?? dados['complemento'] ?? 'Particular').trim(),
+      'data': (dados['data'] ?? '').trim(),
+      'horario': (dados['horarioInicio'] ?? '').trim(),
+      'descricao': (dados['descricao'] ?? '').trim(),
     };
+
 
     final data = (dados['data'] ?? '').trim();
     if (data.isNotEmpty) body['data'] = Utils.formatDate(data);

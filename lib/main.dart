@@ -47,10 +47,19 @@ PetModel _petFromRoute(BuildContext context) {
   final image = args['petImage'];
   final description = args['description'];
 
+  if (VetRepository.pets.isEmpty) {
+    return PetModel(
+      name: name is String ? name : 'Pet',
+      imagePath: image is String ? image : '',
+      description: description is String ? description : 'Pet sem cadastro',
+    );
+  }
+
+  final pet = VetRepository.pets.first;
   return PetModel(
-    name: name is String ? name : VetRepository.pets.first.name,
-    imagePath: image is String ? image : VetRepository.pets.first.imagePath,
-    description: description is String ? description : '',
+    name: name is String ? name : pet.name,
+    imagePath: image is String ? image : pet.imagePath,
+    description: description is String ? description : pet.description,
   );
 }
 
@@ -108,7 +117,11 @@ class VetHomeApp extends StatelessWidget {
             final values = args is Map ? args : const <String, dynamic>{};
             final pet = values['pet'] is PetModel
                 ? values['pet'] as PetModel
-                : VetRepository.pets.first;
+                : (VetRepository.pets.isNotEmpty ? VetRepository.pets.first : PetModel(
+                    name: 'Pet',
+                    imagePath: '',
+                    description: 'Pet sem cadastro',
+                  ));
             final service = values['service'];
             final plan = values['plan'];
             return NovaConsultaPage(

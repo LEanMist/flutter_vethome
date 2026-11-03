@@ -19,6 +19,24 @@ class PetsPage extends StatefulWidget {
 }
 
 class _PetsPageState extends State<PetsPage> {
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarPets();
+  }
+
+  Future<void> _carregarPets() async {
+    try {
+      await VetRepository.carregarPets();
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
@@ -30,9 +48,11 @@ class _PetsPageState extends State<PetsPage> {
         children: [
           _buildHeader(s, top),
           Expanded(
-            child: SingleChildScrollView(
-              child: _buildPetListSection(context, s),
-            ),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    child: _buildPetListSection(context, s),
+                  ),
           ),
           SafeArea(
             top: false,
@@ -120,6 +140,34 @@ class _PetsPageState extends State<PetsPage> {
 
   Widget _buildPetListSection(BuildContext context, double s) {
     final List<PetModel> pets = VetRepository.pets;
+
+    if (pets.isEmpty) {
+      return Container(
+        width: double.infinity,
+        margin: EdgeInsets.fromLTRB(12 * s, 18 * s, 12 * s, 18 * s),
+        padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 14 * s),
+        decoration: BoxDecoration(
+          color: VetColors.rose.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(24 * s),
+        ),
+        child: Column(
+          children: [
+            SizedBox(height: 24 * s),
+            const Text('Nenhum pet cadastrado ainda.'),
+            SizedBox(height: 18 * s),
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/cadastroPet'),
+              child: Image.asset(
+                'assets/imagens/figma/frame-48.png',
+                width: 110 * s,
+                height: 51 * s,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       width: double.infinity,

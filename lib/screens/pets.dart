@@ -7,8 +7,31 @@ import '../widgets.dart';
 String servicoAtual = 'Consulta Geral';
 String convenioAtual = 'Particular';
 
-class PetsScreen extends StatelessWidget {
+class PetsScreen extends StatefulWidget {
   const PetsScreen({super.key});
+
+  @override
+  State<PetsScreen> createState() => _PetsScreenState();
+}
+
+class _PetsScreenState extends State<PetsScreen> {
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarPets();
+  }
+
+  Future<void> _carregarPets() async {
+    try {
+      await VetRepository.carregarPets();
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,24 +39,30 @@ class PetsScreen extends StatelessWidget {
       tab: '/pets',
       children: [
         const VHHeader('Pets'),
-        Container(
-          margin: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-          constraints: const BoxConstraints(minHeight: 240),
-          padding: const EdgeInsets.all(16),
-          decoration: insetBox(color: VH.muted),
-          child: Column(
-            children: [
-              for (var i = 0; i < pets.length; i++)
-                PetRow(
-                  pets[i],
-                  onTap: () {
-                    VetRepository.selectedPetIndex = i;
-                    Navigator.pushNamed(context, '/pet');
-                  },
-                ),
-            ],
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.only(top: 32),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else
+          Container(
+            margin: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+            constraints: const BoxConstraints(minHeight: 240),
+            padding: const EdgeInsets.all(16),
+            decoration: insetBox(color: VH.muted),
+            child: Column(
+              children: [
+                for (var i = 0; i < pets.length; i++)
+                  PetRow(
+                    pets[i],
+                    onTap: () {
+                      VetRepository.selectedPetIndex = i;
+                      Navigator.pushNamed(context, '/pet');
+                    },
+                  ),
+              ],
+            ),
           ),
-        ),
         const SizedBox(height: 24),
         Center(
           child: PillButton(

@@ -1,5 +1,6 @@
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
+import '../service/pet_service.dart';
 import '../widgets/pets/pets_theme.dart';
 // import 'dart:convert';
 // import 'package:http/http.dart' as http;
@@ -8,13 +9,12 @@ import '../widgets/pets/pets_theme.dart';
 class VetRepository {
   VetRepository._();
 
- // Emulador Android:
- static const String baseUrl = 'http://10.0.2.2:8080';
+  // Emulador Android:
+  static const String baseUrl = 'http://10.0.2.2:8080';
 
   // Celular físico:
   // static const String baseUrl = 'http://10.106.75.47:8080';
- // static const String baseUrl = 'http://localhost:8080';
- 
+  // static const String baseUrl = 'http://localhost:8080';
 
   static String clientName = 'Liminha';
   static String clientCpf = '54894724804';
@@ -25,49 +25,22 @@ class VetRepository {
   static String? clientPhotoPath;
   static int selectedPetIndex = 0;
 
-  static final List<PetModel> pets = [
-    PetModel(
-      name: 'Fernando',
-      imagePath: 'assets/imagens/figma/cachorroegatopng-3.png',
-      description: _petSummary('Cachorro', 14, true),
-      species: 'Cachorro',
-      sex: 'M',
-      weightKg: 24,
-      birthDate: DateTime(2012, 3, 23),
-      breed: 'Lulu-da-Pomerânia',
-      neutered: true,
-    ),
-    PetModel(
-      name: 'Kelly',
-      imagePath: 'assets/imagens/figma/cachorroegatopng-2.png',
-      description: _petSummary('Gato', 2, false),
-      species: 'Gato',
-      sex: 'Fêmea',
-      weightKg: 4.2,
-      breed: 'Sem raça definida',
-      neutered: false,
-    ),
-    PetModel(
-      name: 'Escarola',
-      imagePath: 'assets/imagens/figma/cachorroegatopng-3.png',
-      description: _petSummary('Cachorro', 6, true),
-      species: 'Cachorro',
-      sex: 'Fêmea',
-      weightKg: 18,
-      breed: 'Sem raça definida',
-      neutered: true,
-    ),
-    PetModel(
-      name: 'Eduardido',
-      imagePath: 'assets/imagens/figma/cachorroegatopng-2.png',
-      description: _petSummary('Gato', 1, false),
-      species: 'Gato',
-      sex: 'Macho',
-      weightKg: 3.4,
-      breed: 'Sem raça definida',
-      neutered: false,
-    ),
-  ];
+  static final List<PetModel> pets = [];
+
+  static Future<void> carregarPets({String? cpfCliente}) async {
+    try {
+      final petsDoBanco = await PetService.listarPets(cpfCliente: cpfCliente);
+      pets
+        ..clear()
+        ..addAll(petsDoBanco);
+      selectedPetIndex = pets.isEmpty
+          ? 0
+          : selectedPetIndex.clamp(0, pets.length - 1).toInt();
+    } catch (_) {
+      pets.clear();
+      selectedPetIndex = 0;
+    }
+  }
 
   static const PetProfile _padrao = PetProfile(
     especie: 'Cachorro',
@@ -274,11 +247,6 @@ class VetRepository {
       years--;
     }
     return years;
-  }
-
-  static String _petSummary(String species, int age, bool neutered) {
-    return '$species • $age ${age == 1 ? 'ano' : 'anos'} • '
-        '${neutered ? 'Castrado' : 'Não castrado'}';
   }
 
   static DateTime get _hoje {

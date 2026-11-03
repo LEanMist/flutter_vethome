@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
+import '../models/pet_model.dart';
 import 'utils/utils.dart';
 
-class PetService{
+class PetService {
   //emulador android
   static const String baseUrl = 'http://10.0.2.2:8080';
 
@@ -12,12 +14,40 @@ class PetService{
   //web
   // static const String baseUrl = 'http://localhost:8080';
 
+  static Future<List<PetModel>> listarPets({String? cpfCliente}) async {
+    final uri = cpfCliente == null || cpfCliente.trim().isEmpty
+        ? Uri.parse('$baseUrl/pet')
+        : Uri.parse(
+            '$baseUrl/pet?cpfCliente=${Uri.encodeQueryComponent(cpfCliente)}',
+          );
+
+    final response = await http.get(
+      uri,
+      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Erro ao buscar pets: ${response.statusCode} - ${response.body}',
+      );
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      throw Exception('Resposta inválida do backend para pets.');
+    }
+
+    return decoded
+        .map((item) => PetModel.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
   static Future<void> cadastrarPet(Map<String, String?> dados) async {
     final body = {
       'nome': dados['nome'],
-      'dataNasc':Utils.formatDate(dados['dataNasc']),
+      'dataNasc': Utils.formatDate(dados['dataNasc']),
       'especie': dados['especie'],
-      'sexo': dados['sexo'],  
+      'sexo': dados['sexo'],
       'raca': dados['raca'] ?? '',
       'peso': dados['peso'],
       'cpfCliente': Utils.limparCpf(dados['cpfCliente']),
@@ -28,6 +58,11 @@ class PetService{
       headers: {'Content-Type': 'application/json; charset=UTF-8'},
       body: jsonEncode(body),
     );
-} 
 
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        'Erro ao cadastrar pet: ${response.statusCode} - ${response.body}',
+      );
+    }
+  }
 }

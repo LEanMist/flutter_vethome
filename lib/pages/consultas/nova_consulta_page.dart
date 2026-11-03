@@ -104,11 +104,11 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       final payload = {
         'cpfCliente': VetRepository.clientCpf,
         'idPet': widget.pet.name,
-        'convenio': widget.plan,
         'servicos': widget.service,
+        'convenio': widget.plan,
         'data': '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year}',
         'horarioInicio': '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
-        'horarioFim': '${((_time.hour + 1) % 24).toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
+        // 'horarioFim': '${((_time.hour + 1) % 24).toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
         'descricao': _description.text.trim(),
       };
 
