@@ -1,10 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 
-class ContatoPage extends StatelessWidget {
-  const ContatoPage({super.key});
+class ContatoPage extends StatefulWidget {
+  const ContatoPage({super.key, this.usuarioRepository});
+
+  final UsuarioRepository? usuarioRepository;
+
+  @override
+  State<ContatoPage> createState() => _ContatoPageState();
+}
+
+class _ContatoPageState extends State<ContatoPage> {
+  final _controladorMensagem = TextEditingController();
+  final _controladorLista = ScrollController();
+  late final List<Widget> _mensagens;
+
+  UsuarioRepository get _repository =>
+      widget.usuarioRepository ?? InMemoryUsuarioRepository.instance;
+
+  String get _nomeUsuario {
+    final usuarios = _repository.findAll();
+    if (usuarios.isEmpty || usuarios.first.nome.trim().isEmpty) {
+      return 'Nome não cadastrado';
+    }
+    return usuarios.first.nome.trim();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _mensagens = [
+      const _MensagemChat(
+        nome: 'Gabriela Falcão',
+        texto:
+            'Que tal experimentar um clássico feito na sua própria casa? Veja como preparar um brownie simples e rápido. Esta receita oferece uma maneira prática de criar esses deliciosos quadrados de chocolate, com ingredientes básicos como manteiga, ovos, achocolatado, açúcar e farinha de trigo.',
+      ),
+      _MensagemChat(
+        nome: _nomeUsuario,
+        texto: 'Que tal experimentar um clássico feito na sua própria casa?',
+        enviada: true,
+      ),
+      const _MensagemChat(
+        nome: 'Gabriela Falcão',
+        texto:
+            'Que tal experimentar um clássico feito na sua própria casa? Veja como preparar um brownie simples e rápido. Cola sua boca para tu enche muito o saco namoral, que chatice',
+      ),
+      _MensagemChat(
+        nome: _nomeUsuario,
+        texto:
+            'Que tal experimentar um clássico feito na sua própria casa? Veja como preparar um brownie simples e rápido.',
+        enviada: true,
+      ),
+    ];
+  }
+
+  void _enviarMensagem() {
+    final texto = _controladorMensagem.text.trim();
+    if (texto.isEmpty) return;
+
+    setState(() {
+      _mensagens.add(
+        _MensagemChat(nome: _nomeUsuario, texto: texto, enviada: true),
+      );
+    });
+    _controladorMensagem.clear();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_controladorLista.hasClients) {
+        _controladorLista.animateTo(
+          _controladorLista.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controladorMensagem.dispose();
+    _controladorLista.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +109,7 @@ class ContatoPage extends StatelessWidget {
               child: Text(
                 'Contato',
                 style: GoogleFonts.comfortaa(
-                  color: Color(0xFFFFFFFF),
+                  color: VetCores.branco,
                   fontSize: compacto ? 30 : 35,
                   fontWeight: FontWeight.bold,
                 ),
@@ -59,35 +139,14 @@ class ContatoPage extends StatelessWidget {
                     child: Column(
                       children: [
                         Expanded(
-                          child: ListView(
+                          child: ListView.builder(
+                            controller: _controladorLista,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 4,
                               vertical: 4,
                             ),
-                            children: const [
-                              _MensagemChat(
-                                nome: 'Gabriela Falcão',
-                                texto:
-                                    'Que tal experimentar um clássico feito na sua própria casa? Veja como preparar um brownie simples e rápido. Esta receita oferece uma maneira prática de criar esses deliciosos quadrados de chocolate, com ingredientes básicos como manteiga, ovos, achocolatado, açúcar e farinha de trigo.',
-                              ),
-                              _MensagemChat(
-                                nome: 'Liminha',
-                                texto:
-                                    'Que tal experimentar um clássico feito na sua própria casa?',
-                                enviada: true,
-                              ),
-                              _MensagemChat(
-                                nome: 'Gabriela Falcão',
-                                texto:
-                                    'Que tal experimentar um clássico feito na sua própria casa? Veja como preparar um brownie simples e rápido. Cola sua boca para tu enche muito o saco namoral, que chatice',
-                              ),
-                              _MensagemChat(
-                                nome: 'Liminha',
-                                texto:
-                                    'Que tal experimentar um clássico feito na sua própria casa? Veja como preparar um brownie simples e rápido.',
-                                enviada: true,
-                              ),
-                            ],
+                            itemCount: _mensagens.length,
+                            itemBuilder: (context, index) => _mensagens[index],
                           ),
                         ),
                         SizedBox(height: compacto ? 15 : 30),
@@ -116,8 +175,10 @@ class ContatoPage extends StatelessWidget {
                                     ),
                                   ),
                                   TextField(
+                                    controller: _controladorMensagem,
                                     textAlign: TextAlign.center,
                                     cursorColor: VetCores.marrom,
+                                    onSubmitted: (_) => _enviarMensagem(),
                                     decoration: InputDecoration(
                                       hintText: 'Mensagem',
                                       hintStyle: GoogleFonts.comfortaa(
@@ -140,17 +201,20 @@ class ContatoPage extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Container(
+                            SizedBox(height: compacto ? 12 : 20),
+                            SizedBox(
                               width: 48,
                               height: 48,
-                              decoration: BoxDecoration(
-                                color: VetCores.marrom,
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: const Icon(
-                                Icons.send_rounded,
-                                color: VetCores.branco,
+                              child: IconButton(
+                                tooltip: 'Enviar mensagem',
+                                onPressed: _enviarMensagem,
+                                style: IconButton.styleFrom(
+                                  backgroundColor: VetCores.marrom,
+                                  foregroundColor: VetCores.branco,
+                                  shape: const CircleBorder(),
+                                  padding: EdgeInsets.zero,
+                                ),
+                                icon: const Icon(Icons.send_rounded),
                               ),
                             ),
                           ],
@@ -180,6 +244,9 @@ class _MensagemChat extends StatelessWidget {
   final String texto;
   final bool enviada;
 
+  static const double _tamanhoFonteNome = 20;
+  static const double _tamanhoFonteMensagem = 12;
+
   @override
   Widget build(BuildContext context) {
     final alinhamento = enviada ? CrossAxisAlignment.end : CrossAxisAlignment.start;
@@ -189,34 +256,24 @@ class _MensagemChat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: alinhamento,
         children: [
-          if (!enviada)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 6, bottom: 3),
-                child: Text(
-                  nome,
-                  style: const TextStyle(
-                    color: Color(0xFF8F6B58),
-                    fontSize: 18,
-                  ),
-                ),
+          Align(
+            alignment: enviada ? Alignment.centerRight : Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: enviada ? 0 : 6,
+                right: enviada ? 6 : 0,
+                bottom: 3,
               ),
-            )
-          else
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 6, bottom: 3),
-                child: Text(
-                  nome,
-                  style: const TextStyle(
-                    color: Color(0xFF8F6B58),
-                    fontSize: 18,
-                  ),
+              child: Text(
+                nome,
+                style: GoogleFonts.comfortaa(
+                  color: VetCores.marrom75,
+                  fontSize: _tamanhoFonteNome,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
+          ),
           Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.sizeOf(context).width * 0.72,
@@ -224,15 +281,15 @@ class _MensagemChat extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
             decoration: BoxDecoration(
               color: enviada
-                  ? const Color(0xFFAA8274)
+                  ? VetCores.marrom50
                   : const Color(0xFFD8A3A3),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Text(
               texto,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
+              style: GoogleFonts.comfortaa(
+                color: VetCores.branco,
+                fontSize: _tamanhoFonteMensagem,
               ),
             ),
           ),

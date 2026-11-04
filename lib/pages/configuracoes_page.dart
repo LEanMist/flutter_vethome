@@ -10,10 +10,14 @@ class ConfiguracoesPage extends StatefulWidget {
 class _ConfiguracoesPage extends State<ConfiguracoesPage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Text('Configuracoes Page'),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
+          children: [
+            Text('Configuracoes Page'),
+          ],
+        );
+      },
     );
   }
 }
