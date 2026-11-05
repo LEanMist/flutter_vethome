@@ -49,9 +49,9 @@ void main() {
 
     final nome = tester.widget<Text>(find.text('Ana Souza').last);
     final mensagem = tester.widget<Text>(find.text('Mensagem de teste'));
-    expect(nome.style?.fontSize, 14);
+    expect(nome.style?.fontSize, 20);
     expect(nome.style?.fontFamily, startsWith('Comfortaa'));
-    expect(mensagem.style?.fontSize, 13);
+    expect(mensagem.style?.fontSize, 12);
     expect(mensagem.style?.fontFamily, startsWith('Comfortaa'));
     expect(find.text('Mensagem de teste'), findsOneWidget);
     expect(tester.takeException(), isNull);

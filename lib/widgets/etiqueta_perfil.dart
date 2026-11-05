@@ -9,23 +9,35 @@ import 'package:flutter_vethome/widgets/bordas_circulares.dart';
 class EtiquetaPerfil extends StatelessWidget {
   const EtiquetaPerfil({
     super.key,
-    required this.nome,
-    required this.fotoPerfilPath,
     required this.compacto,
-    required this.onSelecionarFoto,
-  });
+    this.nome,
+    this.fotoPerfilPath,
+    this.onSelecionarFoto,
+    this.conteudo,
+    this.largura,
+    this.altura,
+    this.raioInferior,
+    this.espessuraBorda = 5,
+  }) : assert(
+         conteudo != null || (nome != null && onSelecionarFoto != null),
+       );
 
   static const double offsetTop = 85;
 
-  final String nome;
+  final String? nome;
   final String? fotoPerfilPath;
   final bool compacto;
-  final VoidCallback onSelecionarFoto;
+  final VoidCallback? onSelecionarFoto;
+  final Widget? conteudo;
+  final double? largura;
+  final double? altura;
+  final double? raioInferior;
+  final double espessuraBorda;
 
   @override
   Widget build(BuildContext context) {
-    final double altura = compacto ? 290 : 350;
-    final double largura = compacto ? 230 : 300;
+    final double altura = this.altura ?? (compacto ? 290 : 350);
+    final double largura = this.largura ?? (compacto ? 230 : 300);
     final double alturaFoto = compacto ? 200 : 260;
     final double larguraFoto = compacto ? 200 : 260;
 
@@ -33,20 +45,25 @@ class EtiquetaPerfil extends StatelessWidget {
       width: largura,
       height: altura,
       decoration: BoxDecoration(
-        color: VetCores.rosaFundo.withValues(alpha: 0.4),
-        border: Border.all(color: VetCores.rosaEscuro, width: 5),
+        color: VetCores.rosaFundo.withValues(alpha: 0.5),
+        border: Border.all(
+          color: VetCores.rosaEscuro,
+          width: espessuraBorda,
+        ),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(30),
-          bottom: Radius.circular(200),
+          bottom: Radius.circular(raioInferior ?? 200),
         ),
       ),
-      child: Column(
+        child: conteudo != null
+          ? Center(child: conteudo!)
+          : Column(
         children: [
           const SizedBox(height: 15),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
-              nome,
+              nome!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -67,7 +84,7 @@ class EtiquetaPerfil extends StatelessWidget {
                 children: [
                   Positioned.fill(
                     child: GestureDetector(
-                      onTap: onSelecionarFoto,
+                      onTap: onSelecionarFoto!,
                       child: DashedCircle(
                         size: 100,
                         color: VetCores.marrom50,

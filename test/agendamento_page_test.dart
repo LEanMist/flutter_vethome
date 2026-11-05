@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_vethome/models/agendamento.dart';
+import 'package:flutter_vethome/models/pet.dart';
+import 'package:flutter_vethome/models/usuario.dart';
 import 'package:flutter_vethome/pages/agendamento_page.dart';
+import 'package:flutter_vethome/repositories/agendamento_repository.dart';
+import 'package:flutter_vethome/repositories/pet_repository.dart';
+import 'package:flutter_vethome/repositories/usuario_repository.dart';
 
 void main() {
   testWidgets('exibe o mes atual, navega adiante e seleciona um dia', (
@@ -43,9 +49,130 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('selected-calendar-day')), findsOneWidget);
-    expect(find.textContaining(' - '), findsNothing);
+    expect(
+      find.text('15 - ${_diasDaSemana[diaSelecionado.weekday % 7]}'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('avisa quando nao ha pets cadastrados', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AgendamentoPage(petRepository: InMemoryPetRepository()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Agendar consulta'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Cadastre um pet primeiro para agendar consulta.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('seleciona pet, horario e serviços e salva agendamento', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final petRepository = InMemoryPetRepository()..save(_petTeste('Luna'));
+    final usuarioRepository = InMemoryUsuarioRepository()
+      ..save(_usuarioTeste());
+    final agendamentoRepository = InMemoryAgendamentoRepository();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AgendamentoPage(
+            petRepository: petRepository,
+            usuarioRepository: usuarioRepository,
+            agendamentoRepository: agendamentoRepository,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Agendar consulta'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Escolha seu Pet'), findsOneWidget);
+    expect(find.text('Luna'), findsOneWidget);
+    await tester.tap(find.text('Luna'));
+    await tester.pumpAndSettle();
+
+    final hoje = DateUtils.dateOnly(DateTime.now());
+    final dataEsperada =
+        '${hoje.day} - ${_diasDaSemana[hoje.weekday % 7]}, '
+        '${_meses[hoje.month - 1]} ${hoje.year}';
+    expect(find.text(dataEsperada), findsOneWidget);
+    for (final horario in ['12:00', '13:00', '14:00', '15:00', '16:00']) {
+      expect(find.text(horario), findsOneWidget);
+    }
+
+    await tester.tap(find.byKey(const ValueKey('horario-13:00')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Serviços'), findsOneWidget);
+    expect(find.textContaining('Luna'), findsOneWidget);
+    expect(find.textContaining('13:00'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('servico-hemograma')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Convênio'), 250);
+    await tester.tap(find.byKey(const ValueKey('convenio-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Petlove').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Concluir agendamento'));
+    await tester.pumpAndSettle();
+
+    final agendamentos = await agendamentoRepository.findAll();
+    expect(agendamentos, hasLength(1));
+    expect(agendamentos.single.usuarioId, usuarioRepository.findAll().single.id);
+    expect(agendamentos.single.petId, petRepository.findAll().single.id);
+    expect(agendamentos.single.horario, '13:00');
+    expect(agendamentos.single.convenio, ConvenioAgendamento.petlove);
+    expect(agendamentos.single.servicos.single.id, 'hemograma');
+    expect(find.text('Luna - 13:00'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+Pet _petTeste(String nome) {
+  return Pet(
+    tipo: PetType.cachorro,
+    nome: nome,
+    genero: PetGenero.femea,
+    peso: 5,
+    dataNascimento: DateTime(2023, 1, 1),
+    raca: 'Poodle',
+  );
+}
+
+Usuario _usuarioTeste() {
+  return Usuario(
+    nome: 'Ana Souza',
+    dataNascimento: DateTime(1990, 5, 20),
+    genero: GeneroUsuario.feminino,
+    cpf: '529.982.247-25',
+    telefone: '11987654321',
+    cep: '01001000',
+    endereco: 'Rua das Flores',
+    numero: '42',
+    complemento: '',
+    cidade: 'São Paulo',
+    email: 'ana@example.com',
+  );
 }
 
 const _meses = [
@@ -61,4 +188,14 @@ const _meses = [
   'Outubro',
   'Novembro',
   'Dezembro',
+];
+
+const _diasDaSemana = [
+  'Domingo',
+  'Segunda-feira',
+  'Terça-feira',
+  'Quarta-feira',
+  'Quinta-feira',
+  'Sexta-feira',
+  'Sábado',
 ];
