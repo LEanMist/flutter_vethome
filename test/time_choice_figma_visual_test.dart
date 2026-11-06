@@ -51,6 +51,17 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await openPicker(tester, const Size(390, 844));
+    final panelFinder = find.byKey(const ValueKey('time-choice-panel'));
+    final panelRect = tester.getRect(panelFinder);
+    expect(panelRect.width, 390);
+    expect(panelRect.height, 168);
+    final panel = tester.widget<Container>(panelFinder);
+    final panelDecoration = panel.decoration! as BoxDecoration;
+    expect(panelDecoration.color, VetColors.pink);
+    expect(panelDecoration.borderRadius, BorderRadius.circular(30));
+    expect(panelDecoration.boxShadow, isNull);
+    expect(find.text('Escolha o horário'), findsNothing);
+    expect(find.text('Cancelar'), findsNothing);
     final grid = find.byKey(const ValueKey('time-choice-grid'));
     final gridOrigin = tester.getTopLeft(grid);
 
@@ -65,7 +76,7 @@ void main() {
       final rect = tester.getRect(buttonFinder);
       expect(rect.width, closeTo(100, .01));
       expect(rect.height, closeTo(45, .01));
-      expect(rect.left - gridOrigin.dx, closeTo(expectedX, 1));
+      expect(rect.left - gridOrigin.dx, closeTo(expectedX, .01));
       expect(rect.top - gridOrigin.dy, expectedY);
 
       final wrapper = tester.widget<Container>(
@@ -120,9 +131,9 @@ void main() {
       VetColors.brown,
     );
 
-    await tester.tap(find.text('Cancelar'));
+    await tester.tapAt(const Offset(195, 100));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('time-choice-panel')), findsNothing);
+    expect(panelFinder, findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -139,8 +150,38 @@ void main() {
       expect(rect.width, closeTo(100, .01));
       expect(rect.height, closeTo(45, .01));
     }
-    await tester.tap(find.text('Cancelar'));
+    await tester.tapAt(const Offset(160, 80));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('seletor anuncia a rota e cada horário para acessibilidade', (
+    tester,
+  ) async {
+    final semanticsHandle = tester.ensureSemantics();
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    try {
+      await openPicker(tester, const Size(390, 844));
+      final route = tester.getSemantics(
+        find.byKey(const ValueKey('time-choice-semantics')),
+      );
+      expect(route.label, startsWith('Escolha o horário'));
+      expect(route.flagsCollection.scopesRoute, isTrue);
+      expect(route.flagsCollection.namesRoute, isTrue);
+
+      final timeButton = tester.getSemantics(
+        find.byKey(const ValueKey('time-choice-12')),
+      );
+      expect(timeButton.label, contains('12:00'));
+      expect(timeButton.flagsCollection.isButton, isTrue);
+
+      await tester.tapAt(const Offset(195, 100));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    } finally {
+      semanticsHandle.dispose();
+    }
   });
 }

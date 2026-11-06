@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/chat_page.dart';
 import 'package:flutter_vethome/theme.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
@@ -75,6 +76,46 @@ void main() {
       find.byIcon(Icons.done_all_rounded),
       findsNWidgets(VetRepository.chatMessages.length),
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('MESSAGE_PAGE_2: balões dos dois remetentes usam rosa Figma', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: ChatScreen()));
+    await tester.pumpAndSettle();
+
+    final incoming = VetRepository.chatMessages.firstWhere(
+      (message) => !message.fromClient,
+    );
+    final outgoing = VetRepository.chatMessages.firstWhere(
+      (message) => message.fromClient,
+    );
+
+    Finder bubbleFor(String messageText) => find
+        .ancestor(
+          of: find.text(messageText).first,
+          matching: find.byType(Container),
+        )
+        .first;
+
+    final receivedBubble = bubbleFor(incoming.text);
+    final sentBubble = bubbleFor(outgoing.text);
+    for (final bubble in [receivedBubble, sentBubble]) {
+      final decoration = tester.widget<Container>(bubble).decoration;
+      expect(decoration, isA<BoxDecoration>());
+      expect((decoration! as BoxDecoration).color, VetColors.roseOverlay50);
+      expect(tester.getSize(bubble).width, closeTo(273, 0.1));
+    }
+    expect(
+      tester.getTopLeft(receivedBubble).dx,
+      lessThan(tester.getTopLeft(sentBubble).dx),
+    );
+    expect(find.byKey(const ValueKey('chat-locality-notice')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

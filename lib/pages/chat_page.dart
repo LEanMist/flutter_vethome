@@ -167,9 +167,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 margin: const EdgeInsets.only(top: 2),
                                 padding: const EdgeInsets.all(13),
                                 decoration: BoxDecoration(
-                                  color: message.fromClient
-                                      ? VetColors.brown.withValues(alpha: .5)
-                                      : VetColors.roseOverlay50,
+                                  color: VetColors.roseOverlay50,
                                   borderRadius: BorderRadius.circular(25),
                                 ),
                                 child: Text(
