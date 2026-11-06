@@ -328,7 +328,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   item.agendamento.tipo,
                   maxLines: 1,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: VetColors.calendarTextOnRose,
                     fontSize: 15 * scale,
                     fontWeight: FontWeight.w600,
                     fontFamily: VH.bodyFontFamily,
@@ -445,7 +445,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: VetColors.calendarTextOnRose,
                             ),
                           ),
                           Text(
@@ -455,14 +455,14 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             ),
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Colors.white,
+                              color: VetColors.calendarTextOnRose,
                             ),
                           ),
                           Text(
                             '${item.demo ? 'Demonstração · ' : ''}${item.name} · ${item.agendamento.local}',
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Colors.white,
+                              color: VetColors.calendarTextOnRose,
                             ),
                           ),
                         ],
