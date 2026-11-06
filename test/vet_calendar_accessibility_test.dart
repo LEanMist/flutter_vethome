@@ -199,6 +199,72 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('calendário de consulta expõe ações de mês e atalhos acessíveis', (
+    tester,
+  ) async {
+    var previousMonthCalls = 0;
+    var nextMonthCalls = 0;
+    await pumpCalendar(
+      tester,
+      1,
+      agendaPageStyle: false,
+      onPreviousMonth: () => previousMonthCalls++,
+      onNextMonth: () => nextMonthCalls++,
+    );
+
+    final semantics = tester.ensureSemantics();
+    try {
+      final navigation = find.byKey(
+        const ValueKey('calendar-month-navigation'),
+      );
+      expect(navigation, findsOneWidget);
+      final node = tester.getSemantics(navigation);
+      final data = node.getSemanticsData();
+      expect(data.label, 'Calendário Janeiro 2026');
+      expect(
+        data.hint,
+        'Deslize para mudar o mês. Use Page Up para o mês anterior e Page Down para o próximo mês.',
+      );
+      final actionIds = data.customSemanticsActionIds!;
+      expect(
+        actionIds.map(CustomSemanticsAction.getAction).map((a) => a?.label),
+        containsAll(['Mês anterior', 'Próximo mês']),
+      );
+
+      final nextAction = CustomSemanticsAction.getIdentifier(
+        const CustomSemanticsAction(label: 'Próximo mês'),
+      );
+      node.owner!.performAction(
+        node.id,
+        SemanticsAction.customAction,
+        nextAction,
+      );
+      expect(nextMonthCalls, 1);
+    } finally {
+      semantics.dispose();
+    }
+
+    var focusedDay = false;
+    for (var index = 0; index < 40 && !focusedDay; index++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      focusedDay = tester
+          .widgetList<InkWell>(find.byType(InkWell))
+          .any(
+            (day) =>
+                day.statesController?.value.contains(WidgetState.focused) ??
+                false,
+          );
+    }
+    expect(focusedDay, isTrue, reason: 'Tab precisa alcançar uma data');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+    expect(nextMonthCalls, 2);
+    await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+    expect(previousMonthCalls, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('datas expõem nomes completos e respeitam limites inclusivos', (
     tester,
   ) async {
