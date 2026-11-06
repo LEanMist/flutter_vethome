@@ -13,8 +13,14 @@ import '../vet_choice_pill.dart';
 class PetCardWidget extends StatelessWidget {
   final PetModel pet;
   final VoidCallback? onTap;
+  final Color nameColor;
 
-  const PetCardWidget({super.key, required this.pet, this.onTap});
+  const PetCardWidget({
+    super.key,
+    required this.pet,
+    this.onTap,
+    this.nameColor = Colors.white,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +71,7 @@ class PetCardWidget extends StatelessWidget {
                         fontSize: 20 * s,
                         fontWeight: FontWeight.w700,
                         fontFamily: PetsTheme.fontComfortaa,
-                        color: Colors.white,
+                        color: nameColor,
                       ),
                     ),
                   ),

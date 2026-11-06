@@ -45,6 +45,7 @@ class EscolhaPetScreen extends StatelessWidget {
                       width: width,
                       child: PetCardWidget(
                         pet: pet,
+                        nameColor: VetColors.brownOnRose,
                         onTap: () {
                           VetRepository.selectedPetId = pet.id;
                           Navigator.pushNamed(context, '/servicos');

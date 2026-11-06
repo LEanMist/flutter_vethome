@@ -3,7 +3,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/screens/pets.dart' show EscolhaPetScreen;
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pets/pet_card_widget.dart';
+
+double _contrastRatio(Color first, Color second) {
+  final firstLuminance = first.computeLuminance();
+  final secondLuminance = second.computeLuminance();
+  final lighter = firstLuminance > secondLuminance
+      ? firstLuminance
+      : secondLuminance;
+  final darker = firstLuminance > secondLuminance
+      ? secondLuminance
+      : firstLuminance;
+  return (lighter + 0.05) / (darker + 0.05);
+}
 
 class _MemoryStorage extends LocalStorage {
   @override
@@ -59,6 +72,18 @@ void main() {
       (widget) => widget is PetCardWidget && widget.pet.id == target.id,
     );
     expect(selectedCard, findsOneWidget);
+    final name = tester.widget<Text>(
+      find.descendant(of: selectedCard, matching: find.text(target.name)),
+    );
+    expect(name.style?.color, VetColors.brownOnRose);
+    final figmaSurface = Color.alphaBlend(
+      VetColors.roseOverlay50,
+      const Color(0xFFECBEC0),
+    );
+    expect(
+      _contrastRatio(name.style!.color!, figmaSurface),
+      greaterThanOrEqualTo(4.5),
+    );
     await tester.ensureVisible(selectedCard);
     await tester.tap(selectedCard);
     await tester.pumpAndSettle();
@@ -67,5 +92,19 @@ void main() {
     expect(VetRepository.selectedPet?.id, target.id);
     expect(find.text('Rota de teste: /servicos'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('PetCardWidget mantém o texto branco fora da escolha de Pet', (
+    tester,
+  ) async {
+    final pet = VetRepository.pets.first;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: PetCardWidget(pet: pet)),
+      ),
+    );
+
+    final name = tester.widget<Text>(find.text(pet.name));
+    expect(name.style?.color, Colors.white);
   });
 }

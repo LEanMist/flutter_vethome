@@ -11,8 +11,9 @@ class VetColors {
   static const Color brown = Color(0xFF68442E); // 68442E (ícones, textos)
   // Contraste >= 4.5:1 para valores sobre o cartão rosa de Endereços.
   static const Color brownOnRoseCard = Color(0xFF603D28);
-  // Contraste >= 4.5:1 sobre as camadas rosa do balão de mensagem.
-  static const Color chatMessageText = Color(0xFF573820);
+  // Contraste >= 4.5:1 sobre superfícies e gradientes rosa claros.
+  static const Color brownOnRose = Color(0xFF573820);
+  static const Color chatMessageText = brownOnRose;
 
   // Cores e transparências dos nós do Figma Education.
   static const Color roseOverlay25 = Color.fromRGBO(192, 128, 129, .25);

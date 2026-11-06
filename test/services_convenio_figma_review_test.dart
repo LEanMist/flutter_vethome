@@ -82,7 +82,7 @@ void main() {
       expect(category.style?.fontFamily, 'MontserratAlternates');
       expect(category.style?.fontSize, 20);
       expect(category.style?.fontWeight, FontWeight.bold);
-      expect(category.style?.color, VetColors.chatMessageText);
+      expect(category.style?.color, VetColors.brownOnRose);
       final endpointContrasts = [
         _contrastRatio(category.style!.color!, VetColors.rose),
         _contrastRatio(category.style!.color!, VetColors.pink),
