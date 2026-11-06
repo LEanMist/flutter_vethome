@@ -33,7 +33,7 @@ class _AddressesPageState extends State<AddressesPage> {
     fontSize: 12,
     fontWeight: FontWeight.bold,
     height: 1.67,
-    color: VetColors.brown,
+    color: VetColors.brownOnRoseCard,
   );
 
   Future<void> _edit([SavedAddress? address]) async {

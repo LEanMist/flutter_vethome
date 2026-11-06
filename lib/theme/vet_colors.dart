@@ -9,6 +9,8 @@ class VetColors {
   static const Color pink = Color(0xFFFAD3D5); // FAD3D5 (fundo, botões)
   static const Color rose = Color(0xFFC08081); // C08081 (header, cards)
   static const Color brown = Color(0xFF68442E); // 68442E (ícones, textos)
+  // Contraste >= 4.5:1 para valores sobre o cartão rosa de Endereços.
+  static const Color brownOnRoseCard = Color(0xFF603D28);
 
   // Cores e transparências dos nós do Figma Education.
   static const Color roseOverlay25 = Color.fromRGBO(192, 128, 129, .25);

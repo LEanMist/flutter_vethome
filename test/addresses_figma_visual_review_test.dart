@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_test/flutter_test.dart';
@@ -130,8 +132,17 @@ void main() {
       expect(text.style?.fontSize, 12);
       expect(text.style?.fontWeight, FontWeight.bold);
       expect(text.style?.height, 1.67);
-      expect(text.style?.color, VetColors.brown);
+      expect(text.style?.color, VetColors.brownOnRoseCard);
     }
+    final cardTextColor = VetColors.brownOnRoseCard;
+    final cardBackground = Color.alphaBlend(
+      VetColors.roseOverlay50,
+      VetColors.pink,
+    );
+    expect(
+      _contrastRatio(cardTextColor, cardBackground),
+      greaterThanOrEqualTo(4.5),
+    );
 
     final newAddressButton = find.widgetWithText(
       ElevatedButton,
@@ -240,4 +251,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+}
+
+double _contrastRatio(Color first, Color second) {
+  final luminances = [_relativeLuminance(first), _relativeLuminance(second)]
+    ..sort();
+  return (luminances.last + 0.05) / (luminances.first + 0.05);
+}
+
+double _relativeLuminance(Color color) {
+  double linearize(double value) {
+    return value <= 0.04045
+        ? value / 12.92
+        : math.pow((value + 0.055) / 1.055, 2.4).toDouble();
+  }
+
+  return 0.2126 * linearize(color.r) +
+      0.7152 * linearize(color.g) +
+      0.0722 * linearize(color.b);
 }
