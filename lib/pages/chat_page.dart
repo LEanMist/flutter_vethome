@@ -22,7 +22,7 @@ class ChatListScreen extends StatelessWidget {
 
     return VHPage(
       tab: '/chat',
-      showPetsTab: false,
+      showPetsTab: true,
       children: [
         const VHHeader('Whatsapp'),
         Padding(
@@ -246,7 +246,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return VHPage(
       tab: '/chat',
-      showPetsTab: false,
+      showPetsTab: true,
       children: [
         const VHHeader('Whatsapp'),
         Padding(

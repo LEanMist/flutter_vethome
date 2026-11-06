@@ -103,7 +103,7 @@ void main() {
     );
     expect(
       tester.widget<VetBottomNav>(find.byType(VetBottomNav)).showPetsTab,
-      isFalse,
+      isTrue,
     );
     _expectFigmaChatNavigation(tester);
     expect(find.text('Nicolly'), findsNothing);
@@ -139,10 +139,15 @@ void main() {
             .hasAction(SemanticsAction.tap),
         isTrue,
       );
-      for (final label in ['Perfil', 'Conversa', 'Agenda', 'Configurações']) {
+      for (final label in [
+        'Pets',
+        'Perfil',
+        'Conversa',
+        'Agenda',
+        'Configurações',
+      ]) {
         expect(find.bySemanticsLabel(label), findsOneWidget);
       }
-      expect(find.bySemanticsLabel('Pets'), findsNothing);
       expect(
         tester
                 .getSemantics(find.bySemanticsLabel('Conversa'))
@@ -165,7 +170,7 @@ void main() {
     expect(find.byKey(const ValueKey('chat-locality-notice')), findsOneWidget);
     expect(
       tester.widget<VetBottomNav>(find.byType(VetBottomNav)).showPetsTab,
-      isFalse,
+      isTrue,
     );
     _expectFigmaChatNavigation(tester);
 
@@ -197,8 +202,9 @@ void main() {
     expect(tester.getSize(conversation), const Size(366, 556));
     expect(
       tester.widget<VetBottomNav>(find.byType(VetBottomNav)).showPetsTab,
-      isFalse,
+      isTrue,
     );
+    _expectFigmaChatNavigation(tester);
 
     final composer = find.byKey(const ValueKey('chat-composer'));
     expect(tester.getSize(composer), const Size(366, 80));
@@ -444,10 +450,11 @@ void main() {
 void _expectFigmaChatNavigation(WidgetTester tester) {
   final nav = find.byType(VetBottomNav);
   for (final (index, label) in const [
-    (0, 'Perfil'),
-    (1, 'Conversa'),
-    (2, 'Agenda'),
-    (3, 'Configurações'),
+    (0, 'Pets'),
+    (1, 'Perfil'),
+    (2, 'Conversa'),
+    (3, 'Agenda'),
+    (4, 'Configurações'),
   ]) {
     final destination = find.descendant(
       of: nav,
@@ -460,7 +467,7 @@ void _expectFigmaChatNavigation(WidgetTester tester) {
     );
     expect(destination, findsOneWidget);
     final rect = tester.getRect(destination);
-    expect(rect.left, closeTo(43 + index * 84, 1));
+    expect(rect.left, closeTo(30 + index * 70, 0.5));
     expect(rect.top, closeTo(734, 0.5));
     expect(rect.size, const Size(50, 50));
   }

@@ -2,6 +2,7 @@
 
 ## Estado consolidado — 06/11/2026
 
+- Correção da referência do Chat: existem duas variantes no Figma. `MESSAGE_PAGE`/`MESSAGE_PAGE_2` em `TELA_GABRIELA` (`2783:314`) mostram quatro destinos; a tela do fluxo cliente `MENSSAGE_PAGE` (`2783:1032`, em `TELA_CLIENTE`) mostra cinco. O app segue o fluxo cliente: lista e conversa agora exibem Pets, Perfil, Conversa, Agenda e Configurações. `chat_figma_layout_test.dart`: **12/12** nativo e **12/12** Chrome; `flutter analyze --no-pub`: sem problemas.
 - Validação integrada após os três lotes de acessibilidade: `flutter test --no-pub` — **390 aprovados, 1 ignorado**; `flutter test --no-pub -d chrome` — **390 aprovados, 1 ignorado**; `flutter analyze --no-pub` sem problemas; checagens de formatação e `git diff --check` aprovadas.
 - Na variação desktop de Convênio, os títulos de plano de 16 px estavam brancos sobre o gradiente rosa e não alcançavam o contraste de texto normal. Agora usam `#352216` (**4,78:1** no rosa e **11,02:1** no rosa-claro); a tela mobile `CONVENIO_PAGE` continua intacta. Teste focado Serviços/Convênio: **3/3**; `flutter analyze --no-pub`: sem problemas; `git diff --check`: aprovado.
 - Em `EDIT_ADRESS_WIDGET` (`2783:638`), o botão Figma `Salvar` usa marrom `#68442E`; a edição atual usava rosa. O modo de edição agora usa `VH.primary` com texto branco, e o cadastro de novo endereço mantém o rosa com texto `#352216` para contraste. Layout e fluxo de salvamento não mudaram. `address_form_figma_style_test.dart`: **4/4**; `flutter analyze --no-pub`: sem problemas; `git diff --check`: aprovado.
