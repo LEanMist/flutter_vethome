@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
@@ -15,8 +17,30 @@ import '../widgets/vet/vet_page_scaffold.dart';
 
 String servicoAtual = 'Consulta Geral';
 
+Future<void> openPetChoiceDialog(BuildContext context) async {
+  if (VetRepository.pets.isEmpty) {
+    await Navigator.pushNamed(context, '/pets');
+    return;
+  }
+
+  final petId = await showDialog<String>(
+    context: context,
+    builder: (dialogContext) => EscolhaPetScreen(
+      compact: true,
+      onPetSelected: (id) => Navigator.pop(dialogContext, id),
+    ),
+  );
+  if (!context.mounted || petId == null) return;
+
+  VetRepository.selectedPetId = petId;
+  Navigator.pushNamed(context, '/servicos');
+}
+
 class EscolhaPetScreen extends StatefulWidget {
-  const EscolhaPetScreen({super.key});
+  const EscolhaPetScreen({super.key, this.compact = false, this.onPetSelected});
+
+  final bool compact;
+  final ValueChanged<String>? onPetSelected;
 
   @override
   State<EscolhaPetScreen> createState() => _EscolhaPetScreenState();
@@ -47,6 +71,27 @@ class _EscolhaPetScreenState extends State<EscolhaPetScreen> {
   @override
   Widget build(BuildContext context) {
     if (VetRepository.pets.isEmpty) return const PetsPage();
+
+    if (widget.compact) {
+      final size = MediaQuery.sizeOf(context);
+      final scale = math.min(
+        1.0,
+        math.min(size.width / 390, size.height / 408),
+      );
+      return Dialog(
+        key: const ValueKey('pet-choice-dialog'),
+        insetPadding: EdgeInsets.zero,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        elevation: 0,
+        child: SizedBox(
+          width: 390 * scale,
+          height: 408 * scale,
+          child: _mobilePanel(context, scale),
+        ),
+      );
+    }
 
     final desktop = MediaQuery.sizeOf(context).width >= 900;
     if (desktop) {
@@ -88,110 +133,7 @@ class _EscolhaPetScreenState extends State<EscolhaPetScreen> {
         LayoutBuilder(
           builder: (context, constraints) {
             final scale = (constraints.maxWidth / 390).clamp(0.8, 1.0);
-            final width = 390 * scale;
-            return Center(
-              child: SizedBox(
-                key: const ValueKey('pet-choice-panel'),
-                width: width,
-                height: 408 * scale,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(25 * scale),
-                  child: ColoredBox(
-                    color: VetColors.petChoicePanel,
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          top: 37 * scale,
-                          left: 37 * scale,
-                          width: 316 * scale,
-                          child: Text(
-                            'Escolha seu Pet',
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            style: TextStyle(
-                              fontFamily: PetsTheme.fontComfortaa,
-                              fontSize: 35 * scale,
-                              fontWeight: FontWeight.w700,
-                              color: VetColors.brownSecondary,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 110 * scale,
-                          left: 28 * scale,
-                          width: 275 * scale,
-                          height: 262 * scale,
-                          child: ListView.separated(
-                            key: const ValueKey('pet-choice-mobile-list'),
-                            controller: _petsController,
-                            padding: EdgeInsets.zero,
-                            itemCount: VetRepository.pets.length,
-                            separatorBuilder: (_, _) =>
-                                SizedBox(height: 18 * scale),
-                            itemBuilder: (context, index) {
-                              final pet = VetRepository.pets[index];
-                              return SizedBox(
-                                width: 275 * scale,
-                                height: 52 * scale,
-                                child: PetCardWidget(
-                                  key: ValueKey('pet-choice-${pet.id}'),
-                                  pet: pet,
-                                  // Dark text keeps AA contrast over the Figma rose pill.
-                                  nameColor: VetColors.brownOnRose,
-                                  onTap: () => _selectPet(context, pet.id),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        Positioned(
-                          left: 330 * scale,
-                          top: 130 * scale,
-                          width: 48,
-                          height: 48,
-                          child: IconButton(
-                            tooltip: 'Rolar pets para cima',
-                            onPressed: VetRepository.pets.length > 4
-                                ? () => _scrollPets(-70 * scale)
-                                : null,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints.tightFor(
-                              width: 48,
-                              height: 48,
-                            ),
-                            color: VetColors.brown,
-                            disabledColor: VetColors.brown,
-                            iconSize: 30 * scale,
-                            icon: const Icon(Icons.keyboard_arrow_up),
-                          ),
-                        ),
-                        Positioned(
-                          left: 330 * scale,
-                          top: 300 * scale,
-                          width: 48,
-                          height: 48,
-                          child: IconButton(
-                            tooltip: 'Rolar pets para baixo',
-                            onPressed: VetRepository.pets.length > 4
-                                ? () => _scrollPets(70 * scale)
-                                : null,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints.tightFor(
-                              width: 48,
-                              height: 48,
-                            ),
-                            color: VetColors.brown,
-                            disabledColor: VetColors.brown,
-                            iconSize: 30 * scale,
-                            icon: const Icon(Icons.keyboard_arrow_down),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
+            return Center(child: _mobilePanel(context, scale));
           },
         ),
       ],
@@ -199,9 +141,115 @@ class _EscolhaPetScreenState extends State<EscolhaPetScreen> {
   }
 
   void _selectPet(BuildContext context, String petId) {
+    final onPetSelected = widget.onPetSelected;
+    if (onPetSelected != null) {
+      onPetSelected(petId);
+      return;
+    }
     VetRepository.selectedPetId = petId;
     Navigator.pushNamed(context, '/servicos');
   }
+
+  Widget _mobilePanel(BuildContext context, double scale) => SizedBox(
+    key: const ValueKey('pet-choice-panel'),
+    width: 390 * scale,
+    height: 408 * scale,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(25 * scale),
+      child: ColoredBox(
+        color: VetColors.petChoicePanel,
+        child: Stack(
+          children: [
+            Positioned(
+              top: 37 * scale,
+              left: 37 * scale,
+              width: 316 * scale,
+              child: Text(
+                'Escolha seu Pet',
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                style: TextStyle(
+                  fontFamily: PetsTheme.fontComfortaa,
+                  fontSize: 35 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: VetColors.brownSecondary,
+                ),
+              ),
+            ),
+            Positioned(
+              top: 110 * scale,
+              left: 28 * scale,
+              width: 275 * scale,
+              height: 262 * scale,
+              child: ListView.separated(
+                key: const ValueKey('pet-choice-mobile-list'),
+                controller: _petsController,
+                padding: EdgeInsets.zero,
+                itemCount: VetRepository.pets.length,
+                separatorBuilder: (_, _) => SizedBox(height: 18 * scale),
+                itemBuilder: (context, index) {
+                  final pet = VetRepository.pets[index];
+                  return SizedBox(
+                    width: 275 * scale,
+                    height: 52 * scale,
+                    child: PetCardWidget(
+                      key: ValueKey('pet-choice-${pet.id}'),
+                      pet: pet,
+                      // Dark text keeps AA contrast over the Figma rose pill.
+                      nameColor: VetColors.brownOnRose,
+                      onTap: () => _selectPet(context, pet.id),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Positioned(
+              left: 330 * scale,
+              top: 130 * scale,
+              width: 48 * scale,
+              height: 48 * scale,
+              child: IconButton(
+                tooltip: 'Rolar pets para cima',
+                onPressed: VetRepository.pets.length > 4
+                    ? () => _scrollPets(-70 * scale)
+                    : null,
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints.tightFor(
+                  width: 48 * scale,
+                  height: 48 * scale,
+                ),
+                color: VetColors.brown,
+                disabledColor: VetColors.brown,
+                iconSize: 30 * scale,
+                icon: const Icon(Icons.keyboard_arrow_up),
+              ),
+            ),
+            Positioned(
+              left: 330 * scale,
+              top: 300 * scale,
+              width: 48 * scale,
+              height: 48 * scale,
+              child: IconButton(
+                tooltip: 'Rolar pets para baixo',
+                onPressed: VetRepository.pets.length > 4
+                    ? () => _scrollPets(70 * scale)
+                    : null,
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints.tightFor(
+                  width: 48 * scale,
+                  height: 48 * scale,
+                ),
+                color: VetColors.brown,
+                disabledColor: VetColors.brown,
+                iconSize: 30 * scale,
+                icon: const Icon(Icons.keyboard_arrow_down),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class ServicosScreen extends StatefulWidget {

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
+import 'package:flutter_vethome/pages/agenda_page.dart';
 import 'package:flutter_vethome/screens/pets.dart' show EscolhaPetScreen;
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pets/pet_card_widget.dart';
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
 double _contrastRatio(Color first, Color second) {
   final firstLuminance = first.computeLuminance();
@@ -94,6 +96,43 @@ void main() {
     expect(VetRepository.selectedPetId, target.id);
     expect(VetRepository.selectedPet?.id, target.id);
     expect(find.text('Rota de teste: /servicos'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await VetRepository.flush();
+  });
+
+  testWidgets('Agenda abre o painel compacto do Figma e segue para Serviços', (
+    tester,
+  ) async {
+    final pet = VetRepository.pets.first;
+
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AgendaScreen(initialDate: DateTime(2026, 11, 6)),
+        routes: {
+          '/servicos': (_) => const Scaffold(body: Text('Serviços abertos')),
+        },
+      ),
+    );
+
+    await tester.ensureVisible(find.text('Nova Consulta'));
+    await tester.tap(find.text('Nova Consulta'));
+    await tester.pumpAndSettle();
+
+    final panel = find.byKey(const ValueKey('pet-choice-panel'));
+    expect(panel, findsOneWidget);
+    expect(tester.getRect(panel), const Rect.fromLTWH(0, 218, 390, 408));
+    expect(find.byType(VetBottomNav), findsOneWidget);
+
+    await tester.tap(find.byKey(ValueKey('pet-choice-${pet.id}')));
+    await tester.pumpAndSettle();
+
+    expect(VetRepository.selectedPetId, pet.id);
+    expect(find.text('Serviços abertos'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

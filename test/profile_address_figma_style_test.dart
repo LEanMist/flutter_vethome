@@ -141,7 +141,6 @@ void main() {
       addTearDown(tester.view.resetPadding);
       addTearDown(tester.view.resetViewPadding);
       Object? editedAddress;
-
       await tester.pumpWidget(
         MaterialApp(
           home: const AddressesPage(),
@@ -213,8 +212,21 @@ void main() {
       await tester.ensureVisible(find.text('Editar'));
       await tester.tap(find.text('Editar'));
       await tester.pumpAndSettle();
-      expect(editedAddress, same(address));
-      expect(find.text('Editor aberto'), findsOneWidget);
+      if (viewport.width < 900) {
+        expect(
+          find.byKey(const ValueKey('address-editor-dialog')),
+          findsOneWidget,
+        );
+        expect(find.byType(AddressEditorPage), findsOneWidget);
+        expect(
+          tester.getSize(find.byKey(const ValueKey('address-editor-panel'))),
+          const Size(290, 633),
+        );
+        expect(find.text('Editar endereço'), findsNothing);
+      } else {
+        expect(editedAddress, same(address));
+        expect(find.text('Editor aberto'), findsOneWidget);
+      }
       expect(tester.takeException(), isNull);
     });
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../core/utils/formatters.dart';
 import '../data/vet_repository.dart';
+import '../screens/pets.dart' show openPetChoiceDialog;
 import '../models/vet_models.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
@@ -229,7 +230,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(100 * scale),
-                  onTap: () => Navigator.pushNamed(context, '/escolhaPet'),
+                  onTap: () => openPetChoiceDialog(context),
                   child: Container(
                     decoration: BoxDecoration(
                       color: VH.primary,
@@ -383,7 +384,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final button = SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () => Navigator.pushNamed(context, '/escolhaPet'),
+        onPressed: () => openPetChoiceDialog(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: VH.primary,
           foregroundColor: Colors.white,

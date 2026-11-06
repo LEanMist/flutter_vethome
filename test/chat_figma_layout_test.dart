@@ -33,11 +33,29 @@ double _relativeLuminance(Color color) {
 }
 
 void main() {
-  testWidgets('a rota /chat abre a lista de conversas do Figma', (
-    tester,
-  ) async {
+  testWidgets('a rota /chat abre a conversa do fluxo cliente', (tester) async {
     final chatRoute = AppRoutes.routes['/chat']!;
     await tester.pumpWidget(MaterialApp(home: Builder(builder: chatRoute)));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ChatScreen), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('chat-conversation-card')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('chat-locality-notice')), findsOneWidget);
+    expect(
+      tester.widget<VetBottomNav>(find.byType(VetBottomNav)).selectedIndex,
+      2,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a variante de lista continua disponível em /chat/lista', (
+    tester,
+  ) async {
+    final listRoute = AppRoutes.routes['/chat/lista']!;
+    await tester.pumpWidget(MaterialApp(home: Builder(builder: listRoute)));
     await tester.pumpAndSettle();
 
     expect(find.byType(ChatListScreen), findsOneWidget);
@@ -48,7 +66,7 @@ void main() {
   testWidgets('a aba Pets abre a lista a partir do Chat', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: const ChatListScreen(),
+        home: Builder(builder: AppRoutes.routes['/chat']!),
         routes: {'/pets': AppRoutes.routes['/pets']!},
       ),
     );

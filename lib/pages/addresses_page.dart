@@ -37,11 +37,19 @@ class _AddressesPageState extends State<AddressesPage> {
   );
 
   Future<void> _edit([SavedAddress? address]) async {
-    final saved = await Navigator.pushNamed(
-      context,
-      '/editar-endereco',
-      arguments: address,
-    );
+    final compactEditor =
+        address != null && MediaQuery.sizeOf(context).width < 900;
+    final saved = compactEditor
+        ? await showDialog<Object?>(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => AddressEditorPage(address: address, modal: true),
+          )
+        : await Navigator.pushNamed(
+            context,
+            '/editar-endereco',
+            arguments: address,
+          );
     if (!mounted) return;
     setState(() {});
     if (saved == false) _showSaveFailure();
@@ -352,8 +360,9 @@ class _AddressesPageState extends State<AddressesPage> {
 }
 
 class AddressEditorPage extends StatelessWidget {
-  const AddressEditorPage({super.key, this.address});
+  const AddressEditorPage({super.key, this.address, this.modal = false});
   final SavedAddress? address;
+  final bool modal;
 
   @override
   Widget build(BuildContext context) {
@@ -393,6 +402,21 @@ class AddressEditorPage extends StatelessWidget {
       },
     );
 
+    if (modal && compactEditor) {
+      return Dialog(
+        key: const ValueKey('address-editor-dialog'),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        elevation: 0,
+        child: SingleChildScrollView(
+          key: const ValueKey('address-editor-viewport'),
+          child: _editorPanel(form),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: VetColors.pink,
       appBar: compactEditor ? null : AppBar(backgroundColor: VetColors.pink),
@@ -406,27 +430,7 @@ class AddressEditorPage extends StatelessWidget {
                       minWidth: constraints.maxWidth,
                       minHeight: constraints.maxHeight,
                     ),
-                    child: Center(
-                      child: Container(
-                        key: const ValueKey('address-editor-panel'),
-                        width: 290,
-                        height: 633,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: inset_shadow.BoxDecoration(
-                          color: VetColors.pink,
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: const [
-                            inset_shadow.BoxShadow(
-                              color: VetColors.shadowDark,
-                              offset: Offset(2, 2),
-                              blurRadius: 5,
-                              inset: true,
-                            ),
-                          ],
-                        ),
-                        child: form,
-                      ),
-                    ),
+                    child: Center(child: _editorPanel(form)),
                   ),
                 ),
               )
@@ -434,4 +438,24 @@ class AddressEditorPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _editorPanel(Widget form) => Container(
+    key: const ValueKey('address-editor-panel'),
+    width: 290,
+    height: 633,
+    clipBehavior: Clip.antiAlias,
+    decoration: inset_shadow.BoxDecoration(
+      color: VetColors.pink,
+      borderRadius: BorderRadius.circular(30),
+      boxShadow: const [
+        inset_shadow.BoxShadow(
+          color: VetColors.shadowDark,
+          offset: Offset(2, 2),
+          blurRadius: 5,
+          inset: true,
+        ),
+      ],
+    ),
+    child: form,
+  );
 }
