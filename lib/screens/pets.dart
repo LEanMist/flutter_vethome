@@ -138,7 +138,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                         ...categories.entries.map(
                           (entry) => _category(pet, entry),
                         ),
-                        _continueButton(pet.id),
+                        _continueButton(pet.id, topPadding: 9),
                       ],
                     ),
                   ),
@@ -257,8 +257,8 @@ class _ServicosScreenState extends State<ServicosScreen> {
     ),
   );
 
-  Widget _continueButton(String petId) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 16),
+  Widget _continueButton(String petId, {double topPadding = 16}) => Padding(
+    padding: EdgeInsets.only(top: topPadding, bottom: 16),
     child: Center(
       child: SizedBox(
         width: 157,

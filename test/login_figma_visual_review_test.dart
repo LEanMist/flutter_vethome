@@ -128,6 +128,110 @@ void main() {
     });
   }
 
+  testWidgets('LOGIN_PAGE: logotipo, redes e rodapé em 390x844', (
+    tester,
+  ) async {
+    await showLogin(tester, const Size(390, 844));
+
+    final logo = find.byWidgetPredicate(
+      (widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName ==
+              'assets/imagens/figma/vethomepng-2.png',
+    );
+    expect(logo, findsOneWidget);
+    final logoRect = tester.getRect(logo);
+    expect(logoRect.top, 180);
+    expect(logoRect.size, const Size(166, 166));
+    expect(logoRect.left, closeTo(111, 1.1));
+
+    for (final (name, left) in const [
+      ('Google', 73.0),
+      ('Facebook', 166.0),
+      ('Instagram', 260.0),
+    ]) {
+      final control = find.byTooltip(name);
+      final rect = tester.getRect(control);
+      expect(rect.left, closeTo(left, 1));
+      expect(rect.size, const Size(56, 56));
+      expect(rect.top, closeTo(636, 2.5));
+    }
+
+    for (final (name, top) in const [
+      ('Ainda não possui uma conta?', 722.0),
+      ('CADASTRE-SE', 743.0),
+    ]) {
+      final rect = tester.getRect(find.text(name));
+      // O TextButton mantém área de toque ampliada: tolerar métricas da fonte.
+      expect(rect.top, closeTo(top, name == 'CADASTRE-SE' ? 6 : 2));
+    }
+
+    expect(
+      tester.getRect(find.byKey(const ValueKey('remember-me-marker'))),
+      const Rect.fromLTWH(79, 458, 16, 15),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final (viewport, textScale) in const [
+    (Size(320, 640), 1.5),
+    (Size(320, 640), 2.0),
+    (Size(390, 844), 1.5),
+    (Size(390, 844), 2.0),
+    (Size(1280, 800), 2.0),
+  ]) {
+    testWidgets(
+      'Login em $viewport com texto ${textScale}x não corta digitação',
+      (tester) async {
+        tester.view.physicalSize = viewport;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: VetTheme.light(VH.primary),
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(textScale)),
+              child: child!,
+            ),
+            home: const LoginPage(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        RenderEditable? locateEditable(RenderObject parent) {
+          if (parent is RenderEditable) return parent;
+          RenderEditable? found;
+          parent.visitChildren((child) {
+            found ??= locateEditable(child);
+          });
+          return found;
+        }
+
+        for (final field in find.byType(EditableText).evaluate()) {
+          final editor = locateEditable(field.renderObject!);
+          expect(editor, isNotNull);
+          // Evita regressão: antes, 2x tinha apenas 18 px para uma linha de 45.
+          expect(
+            editor!.size.height,
+            greaterThanOrEqualTo(editor.preferredLineHeight - 1),
+          );
+        }
+
+        final remember = tester.getRect(find.text('Lembre-se de mim'));
+        final forgot = tester.getRect(find.text('Esqueceu sua senha?'));
+        expect(remember.bottom, lessThanOrEqualTo(forgot.top));
+        await tester.ensureVisible(find.text('CADASTRE-SE'));
+        await tester.pumpAndSettle();
+        expect(find.text('CADASTRE-SE'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('CADASTRE-SE preserva a rota de cadastro', (tester) async {
     await showLogin(tester, const Size(390, 844));
     await tester.tap(find.text('CADASTRE-SE'));

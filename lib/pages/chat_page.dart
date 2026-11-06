@@ -80,7 +80,7 @@ class _ChatScreenState extends State<ChatScreen> {
               height: 120,
             ),
             const Text(
-              'Gabriella Falcão',
+              'Gabriela Falcão',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: VH.headingFontFamily,
@@ -145,7 +145,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   child: Text(
                                     message.fromClient
                                         ? VetRepository.clientName
-                                        : 'Gabriella Falcão',
+                                        : 'Gabriela Falcão',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: message.fromClient

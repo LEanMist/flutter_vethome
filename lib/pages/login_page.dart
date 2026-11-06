@@ -404,6 +404,13 @@ class _LoginPageState extends State<LoginPage> {
     ),
   );
 
+  double _loginFieldHeight(BuildContext context) {
+    final scaledFontSize = MediaQuery.textScalerOf(context).scale(15);
+    // Mantém os 48 px exatos do Figma na escala 1. Acima disso,
+    // reserva espaço para a linha ampliada sem recortá-la.
+    return 48 + (scaledFontSize - 15).clamp(0.0, double.infinity) * 2.3;
+  }
+
   Widget _loginField(
     String label,
     TextEditingController controller, {
@@ -412,7 +419,7 @@ class _LoginPageState extends State<LoginPage> {
     bool password = false,
   }) => SizedBox(
     width: 242 * scale,
-    height: 48,
+    height: _loginFieldHeight(context),
     child: DecoratedBox(
       decoration: inset_shadow.BoxDecoration(
         borderRadius: BorderRadius.circular(100),

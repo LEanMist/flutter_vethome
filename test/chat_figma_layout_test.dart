@@ -4,6 +4,8 @@ import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/chat_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/widgets.dart';
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
 void main() {
   testWidgets('Chat móvel segue as dimensões principais do Figma', (
@@ -30,7 +32,31 @@ void main() {
     final composer = find.byKey(const ValueKey('chat-composer'));
     expect(tester.getSize(composer), const Size(366, 80));
 
-    final sender = tester.widget<Text>(find.text('Gabriella Falcão').first);
+    final bottomNav = find.byType(VetBottomNav);
+    final navSurface = tester
+        .widgetList<Container>(
+          find.descendant(of: bottomNav, matching: find.byType(Container)),
+        )
+        .firstWhere(
+          (item) =>
+              item.decoration is inset_shadow.BoxDecoration &&
+              item.margin == const EdgeInsets.fromLTRB(12, 6, 12, 50),
+        );
+    final navRect = tester.getRect(
+      find.descendant(
+        of: find.byWidget(navSurface),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is DecoratedBox &&
+              widget.decoration == navSurface.decoration,
+        ),
+      ),
+    );
+    expect(navRect.left, closeTo(12, 1));
+    expect(navRect.top, closeTo(724, 1));
+    expect(navRect.size, const Size(366, 70));
+
+    final sender = tester.widget<Text>(find.text('Gabriela Falcão').first);
     expect(sender.style?.fontFamily, VH.headingFontFamily);
     expect(sender.style?.fontSize, 20);
 

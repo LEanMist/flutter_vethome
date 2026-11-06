@@ -35,6 +35,8 @@ void main() {
 
     final panel = find.byKey(const ValueKey('pets-list-panel'));
     expect(tester.getSize(panel), const Size(346, 428));
+    expect(tester.getTopLeft(panel).dx, closeTo(22, 1));
+    expect(tester.getTopLeft(panel).dy, closeTo(182, 1));
     final panelDecoration = tester.widget<Container>(panel).decoration!;
     expect(panelDecoration, isA<BoxDecoration>());
     expect((panelDecoration as BoxDecoration).boxShadow, isNull);
@@ -43,6 +45,39 @@ void main() {
     final card = find.byType(PetCardWidget).first;
     expect(tester.getSize(card).width, closeTo(321, 1));
     expect(tester.getSize(card).height, 52);
+    for (var i = 0; i < 4; i++) {
+      final rect = tester.getRect(find.byType(PetCardWidget).at(i));
+      expect(rect.left, closeTo(34, 1));
+      expect(rect.top, closeTo(203 + 70 * i, 1));
+      expect(rect.size, const Size(321, 52));
+    }
+    final addPet = tester.getRect(find.byTooltip('Adicionar pet'));
+    expect(addPet.left, closeTo(141, 1));
+    expect(addPet.top, closeTo(643, 1));
+    expect(addPet.size, const Size(107, 47));
+    final bottomNav = find.byType(VetBottomNav);
+    final navSurface = tester
+        .widgetList<Container>(
+          find.descendant(of: bottomNav, matching: find.byType(Container)),
+        )
+        .firstWhere(
+          (item) =>
+              item.decoration is inset_shadow.BoxDecoration &&
+              item.margin == const EdgeInsets.fromLTRB(12, 6, 12, 50),
+        );
+    final navRect = tester.getRect(
+      find.descendant(
+        of: find.byWidget(navSurface),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is DecoratedBox &&
+              widget.decoration == navSurface.decoration,
+        ),
+      ),
+    );
+    expect(navRect.left, closeTo(12, 1));
+    expect(navRect.top, closeTo(724, 1));
+    expect(navRect.size, const Size(366, 70));
     final decoration = tester
         .widgetList<DecoratedBox>(
           find.descendant(of: card, matching: find.byType(DecoratedBox)),

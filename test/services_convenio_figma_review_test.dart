@@ -47,6 +47,12 @@ void main() {
         reason: 'Desvio do Figma no texto ${expected.$1}',
       );
     }
+    final continueRect = tester.getRect(
+      find.byKey(const ValueKey('services-continue')),
+    );
+    expect(continueRect.topLeft.dx, closeTo(116, 1));
+    expect(continueRect.topLeft.dy, closeTo(718, 1));
+    expect(continueRect.size, const Size(157, 57));
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
