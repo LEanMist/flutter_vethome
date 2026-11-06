@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import '../theme/vet_colors.dart';
 
 /// Setas duplas usadas nas listas do protótipo.
 class VetChevron extends StatelessWidget {
@@ -98,7 +99,7 @@ class VetChoicePill extends StatelessWidget {
                                 fontFamily: VH.headingFontFamily,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Colors.white,
+                                color: VetColors.calendarTextOnRose,
                               ),
                             ),
                           ),

@@ -223,4 +223,43 @@ void main() {
     expect(received?['service'], isNotEmpty);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Convênio desktop mantém contraste legível nos planos', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('plans-desktop-layout')), findsOneWidget);
+    for (final label in ['PetLove', 'DogLife', 'Particular']) {
+      final titleFinder = find.text(label);
+      final title = tester.widget<Text>(titleFinder);
+      expect(title.style?.fontSize, 16);
+      expect(title.style?.fontWeight, FontWeight.bold);
+      expect(title.style?.color, VetColors.calendarTextOnRose);
+
+      final pill = tester.widget<Ink>(
+        find.ancestor(of: titleFinder, matching: find.byType(Ink)).first,
+      );
+      final gradient = pill.decoration! as BoxDecoration;
+      final colors = (gradient.gradient! as LinearGradient).colors;
+      final minimumContrast = colors
+          .map((background) => _contrastRatio(title.style!.color!, background))
+          .reduce((a, b) => a < b ? a : b);
+      expect(
+        minimumContrast,
+        greaterThanOrEqualTo(4.5),
+        reason: 'Texto desktop de 16 px exige contraste AA de 4,5:1.',
+      );
+    }
+    expect(tester.takeException(), isNull);
+  });
 }
