@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/theme_preferences.dart';
 import '../data/vet_repository.dart';
 import '../theme.dart';
+import '../theme/vet_colors.dart';
 import '../widgets.dart';
 import '../widgets/appointment_card.dart';
 
@@ -163,20 +164,92 @@ class ConfigScreen extends StatelessWidget {
   void _showSupport(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VH.background,
-        title: const Text('Suporte VetHome'),
-        content: const SelectableText(
-          'Estamos aqui para ajudar.\n\n'
-          'Telefone: 11 93244-4392\n'
-          'E-mail: Gabriela@gmail.com',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 349, minHeight: 289),
+          child: Container(
+            key: const ValueKey('support-figma-surface'),
+            width: 349,
+            decoration: BoxDecoration(
+              color: VetColors.pink,
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding: const EdgeInsets.fromLTRB(8, 24, 8, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Suporte',
+                    style: TextStyle(
+                      fontFamily: VH.bodyFontFamily,
+                      fontSize: 40,
+                      height: 1.2,
+                      fontWeight: FontWeight.bold,
+                      color: VetColors.brown,
+                    ),
+                  ),
+                  const SizedBox(height: 21),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'Número',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(text: ':'),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Comfortaa',
+                      fontSize: 20,
+                      height: 1,
+                      color: VetColors.brown,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '11 93244-4392',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Comfortaa',
+                      fontSize: 25,
+                      height: 1,
+                      color: VetColors.brown,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Email:',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Comfortaa',
+                      fontSize: 20,
+                      height: 1,
+                      color: VetColors.brown,
+                    ),
+                  ),
+                  const SizedBox(height: 13),
+                  const Text(
+                    'Gabriela@gmail.com',
+                    textAlign: TextAlign.center,
+                    softWrap: true,
+                    style: TextStyle(
+                      fontFamily: 'Comfortaa',
+                      fontSize: 30,
+                      height: 1,
+                      color: VetColors.brown,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
