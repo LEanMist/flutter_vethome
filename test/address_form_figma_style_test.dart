@@ -55,6 +55,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Numero'), findsOneWidget);
+    expect(find.text('Logradouro'), findsOneWidget);
+    expect(find.text('Endereço'), findsNothing);
     expect(find.text('Número'), findsNothing);
     expect(find.text('Complemento'), findsOneWidget);
     expect(find.text('Complemento (opcional)'), findsNothing);

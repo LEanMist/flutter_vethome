@@ -173,14 +173,15 @@ class _AddressFormState extends State<AddressForm> {
     final registrationLayout =
         widget.onSkip != null &&
         MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
+    final editingLayout =
+        widget.initial != null &&
+        widget.onDelete != null &&
+        MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
     return VHField(
       label,
       icon,
       compact: true,
-      figmaForm:
-          registrationLayout ||
-          (widget.initial != null && widget.onDelete != null) &&
-              MediaQuery.sizeOf(context).width < VH.desktopBreakpoint,
+      figmaForm: registrationLayout || editingLayout,
       labelAbove: true,
       labelHorizontalPadding: registrationLayout ? 5 : null,
       labelBottomPadding: registrationLayout ? 0 : null,
@@ -357,7 +358,9 @@ class _AddressFormState extends State<AddressForm> {
                                     ),
                                   slot(
                                     _field(
-                                      registration ? 'Logradouro' : 'Endereço',
+                                      registration || editing
+                                          ? 'Logradouro'
+                                          : 'Endereço',
                                       Icons.home_outlined,
                                       _street,
                                       validator: _required,
