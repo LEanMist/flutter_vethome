@@ -7,6 +7,7 @@ import '../pages/chat_page.dart';
 import '../pages/config_page.dart';
 import '../models/saved_address.dart';
 import '../models/pet_model.dart';
+import '../pages/home_page.dart';
 import '../pages/agendamentos_page.dart';
 import '../pages/detalhes_pet_page.dart';
 import '../pages/editar_pet_page.dart';
@@ -58,6 +59,7 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> get routes => {
     '/': (_) => const SplashScreen(),
+    '/home': (_) => const HomePage(),
     '/login': (_) => const LoginPage(),
     '/cadastro': (_) => const CadastroScreen(),
     '/endereco': (context) =>
