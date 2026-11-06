@@ -112,6 +112,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'REGISTER_PAGE mantém coordenadas Figma com barra de status Android',
+    (tester) async {
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+      addTearDown(tester.view.resetPadding);
+      await showRegistration(tester, const Size(390, 1035));
+
+      expect(tester.getTopLeft(find.text('Cadastro')).dy, closeTo(38, 2));
+      final panel = find
+          .ancestor(of: find.byType(Form), matching: find.byType(Container))
+          .first;
+      expect(tester.getTopLeft(panel), const Offset(39, 96));
+      expect(find.byType(TextFormField), findsNWidgets(7));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final viewport in [const Size(320, 640), const Size(1280, 800)]) {
     testWidgets('Cadastro preserva campos e layout em $viewport', (
       tester,
