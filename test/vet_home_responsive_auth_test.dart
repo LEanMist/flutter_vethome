@@ -241,7 +241,11 @@ void main() {
     final button = tester.widget<ElevatedButton>(buttonFinder);
     expect(
       button.style?.backgroundColor?.resolve(const <WidgetState>{}),
-      VetColors.brown,
+      VetColors.rose,
+    );
+    expect(
+      button.style?.foregroundColor?.resolve(const <WidgetState>{}),
+      VetColors.calendarTextOnRose,
     );
     expect(tester.getSize(buttonFinder), const Size(181, 65));
     expect(tester.getTopLeft(buttonFinder).dy, closeTo(683, 1));

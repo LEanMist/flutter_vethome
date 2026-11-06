@@ -416,3 +416,9 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - Após o usuário rejeitar o novo visual mostrado na captura, a tela de detalhe móvel voltou à composição anterior: cabeçalho “Detalhes”, cartão padrão do pet e ações no `VetPageScaffold`. A lista da aba Pets não foi alterada.
 - `lib/pages/detalhes_pet_page.dart` e `lib/widgets/pet_summary.dart` foram restaurados ao estado anterior ao redesenho. Assets de referência do Figma foram preservados, mas não são usados por essa tela.
 - As verificações de imagem e layout foram alinhadas com o cartão anterior. Testes automatizados não foram executados nesta reversão.
+
+## Validação e publicação — 06/11/2026
+
+- Corrigida em `test/vet_home_responsive_auth_test.dart` a expectativa antiga do botão Continuar do cadastro de endereço: o fundo rosa e o texto escuro seguem o Figma e mantêm contraste acessível.
+- Os testes focados de endereço e cadastro passaram (**17/17**), `flutter analyze --no-pub` não encontrou problemas, a formatação e `git diff --check` passaram.
+- A suíte nativa completa terminou com **397 testes aprovados e 1 ignorado**; nenhuma falha.
