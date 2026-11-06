@@ -70,7 +70,7 @@ void main() {
     expect(semantics.properties.label, notice);
     expect(semantics.container, isTrue);
     expect(find.text(notice), findsOneWidget);
-    final button = find.widgetWithText(ElevatedButton, 'Confirmar agendamento');
+    final button = find.byKey(const ValueKey('appointment-booking-save'));
     expect(
       tester.getTopLeft(find.text(notice)).dy,
       lessThan(tester.getTopLeft(button).dy),
@@ -126,7 +126,7 @@ void main() {
           contains('não é enviada à veterinária'),
         );
         await tester.tap(
-          find.widgetWithText(ElevatedButton, 'Confirmar agendamento'),
+          find.byKey(const ValueKey('appointment-booking-save')),
         );
         await tester.pumpAndSettle();
 
@@ -139,7 +139,7 @@ void main() {
         expect(VetRepository.realAppointments(pet.id), hasLength(before));
         expect(blocked.saveCalls, 0);
         expect(find.text('Agenda aberta'), findsNothing);
-        expect(find.text('Confirmar agendamento'), findsOneWidget);
+        expect(find.text('Salvar'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );
@@ -178,10 +178,7 @@ void main() {
     expect(find.text(notice), findsOneWidget);
     expect(tester.widget<Semantics>(noticeFinder).properties.label, notice);
 
-    final confirm = find.widgetWithText(
-      ElevatedButton,
-      'Confirmar agendamento',
-    );
+    final confirm = find.byKey(const ValueKey('appointment-booking-save'));
     expect(
       tester.getTopLeft(noticeFinder).dy,
       lessThan(tester.getTopLeft(confirm).dy),

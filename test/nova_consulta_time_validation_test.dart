@@ -31,7 +31,7 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.text('Data'));
+    await tester.tap(find.byKey(const ValueKey('appointment-booking-date')));
     await tester.pumpAndSettle();
 
     final firstDate = tester

@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
+import '../theme.dart';
 import '../theme/vet_colors.dart';
+import '../widgets/appointment_booking_card.dart';
 import '../widgets/pet_summary.dart';
 import '../widgets/vet_calendar.dart';
 import '../widgets/vet/vet_page_scaffold.dart';
@@ -258,63 +260,63 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   @override
   Widget build(BuildContext context) {
     final pet = VetRepository.petById(widget.pet.id) ?? widget.pet;
+    final isMobile = MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
     final page = VetPageScaffold(
       title: 'Novo agendamento',
       pet: pet,
       selectedIndex: 3,
       contentMaxWidth: 1120,
-      footer: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Semantics(
-            key: const ValueKey('appointment-locality-notice'),
-            container: true,
-            label:
-                'Demonstração local: esta consulta é salva apenas neste dispositivo '
-                'e não é enviada à veterinária.',
-            child: ExcludeSemantics(
-              child: const Padding(
-                padding: EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline, size: 18, color: VetColors.brown),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Demonstração local: esta consulta é salva apenas neste dispositivo '
-                        'e não é enviada à veterinária.',
-                        style: TextStyle(
-                          color: VetColors.brown,
-                          fontSize: 12,
-                          height: 1.35,
-                        ),
-                      ),
+      edgeToEdgeContentOnMobile: true,
+      footer: isMobile
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _localityNotice(),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _saving ? null : _schedule,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VetColors.brown,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.all(16),
+                      minimumSize: const Size.fromHeight(48),
                     ),
-                  ],
+                    child: Text(
+                      _saving ? 'Salvando…' : 'Confirmar agendamento',
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _saving ? null : _schedule,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VetColors.brown,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.all(16),
-                minimumSize: const Size.fromHeight(48),
-              ),
-              child: Text(_saving ? 'Salvando…' : 'Confirmar agendamento'),
-            ),
-          ),
-        ],
-      ),
       children: [
         VetResponsiveLayout(
-          mobile: _form(context, pet, dateDialogEnabled: true),
+          mobile: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _localityNotice(),
+              ),
+              const SizedBox(height: 12),
+              AppointmentBookingCard(
+                service: widget.service,
+                plan: widget.plan,
+                pet: pet,
+                date: _date,
+                start: _time,
+                end: _end,
+                descriptionController: _description,
+                onChooseDate: _chooseDate,
+                onChooseStart: () => _chooseTime(),
+                onChooseEnd: () => _chooseTime(end: true),
+                onSave: _schedule,
+                saving: _saving,
+              ),
+            ],
+          ),
           desktop: Row(
             key: const ValueKey('new-appointment-desktop-layout'),
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,6 +334,37 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       child: AbsorbPointer(absorbing: _saving, child: page),
     );
   }
+
+  Widget _localityNotice() => Semantics(
+    key: const ValueKey('appointment-locality-notice'),
+    container: true,
+    label:
+        'Demonstração local: esta consulta é salva apenas neste dispositivo '
+        'e não é enviada à veterinária.',
+    child: ExcludeSemantics(
+      child: const Padding(
+        padding: EdgeInsets.only(bottom: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline, size: 18, color: VetColors.brown),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Demonstração local: esta consulta é salva apenas neste dispositivo '
+                'e não é enviada à veterinária.',
+                style: TextStyle(
+                  color: VetColors.brown,
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   Widget _inlineCalendar() {
     final today = DateTime.now();

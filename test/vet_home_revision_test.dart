@@ -400,7 +400,7 @@ void main() {
       tester.widget<PetAvatar>(find.byType(PetAvatar)).image,
       original.imagePath,
     );
-    expect(find.text('Vacina: V10'), findsOneWidget);
+    expect(find.text('V10'), findsOneWidget);
   });
   test(
     'início passado ou fim inválido não cria evento; fim válido persiste',
@@ -460,15 +460,19 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.text('Data'));
+    await tester.tap(find.byKey(const ValueKey('appointment-booking-date')));
     await tester.pumpAndSettle();
     final now = DateTime.now(), today = DateTime(now.year, now.month, now.day);
     tester.widget<VetCalendar>(find.byType(VetCalendar)).onSelected(today);
     await tester.pump();
     await tester.tap(find.text('Confirmar'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Início'));
-    await tester.tap(find.text('Início'));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('appointment-booking-start-time')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('appointment-booking-start-time')),
+    );
     await tester.pumpAndSettle();
     for (final hour in [12, 13, 14, 15, 16]) {
       final button = tester.widget<ElevatedButton>(

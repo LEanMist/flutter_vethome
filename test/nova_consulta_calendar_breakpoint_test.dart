@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,11 +62,11 @@ void main() {
         return;
       }
 
-      final dateTile = tester.widget<ListTile>(
-        find.widgetWithText(ListTile, 'Data'),
+      final dateControl = tester.widget<InkWell>(
+        find.byKey(const ValueKey('appointment-booking-date')),
       );
-      expect(dateTile.onTap, isNotNull);
-      dateTile.onTap!();
+      expect(dateControl.onTap, isNotNull);
+      dateControl.onTap!();
       await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey('mobile-calendar-dialog')),
@@ -76,8 +77,8 @@ void main() {
 
   testWidgets('calendário segue acessível em mobile e desktop', (tester) async {
     await pumpAt(tester, 390);
-    final mobileDateTile = tester.widget<ListTile>(
-      find.widgetWithText(ListTile, 'Data'),
+    final mobileDateTile = tester.widget<InkWell>(
+      find.byKey(const ValueKey('appointment-booking-date')),
     );
     expect(mobileDateTile.onTap, isNotNull);
 
@@ -101,22 +102,43 @@ void main() {
     for (final width in [390.0, 1280.0]) {
       await pumpAt(tester, width);
 
-      final tileThemes = tester
-          .widgetList<ListTileTheme>(find.byType(ListTileTheme))
-          .toList();
-      expect(tileThemes, isNotEmpty);
-      for (final tileTheme in tileThemes) {
-        final data = tileTheme.data;
-        for (final color in [
-          data.textColor!,
-          data.titleTextStyle!.color!,
-          data.subtitleTextStyle!.color!,
-        ]) {
-          expect(color, VetColors.calendarTextOnRose);
+      if (width < VH.desktopBreakpoint) {
+        final dateLabel = tester.widget<Text>(
+          find.byWidgetPredicate(
+            (widget) => widget is Text && widget.data?.contains(' de ') == true,
+          ),
+        );
+        expect(dateLabel.style!.color, VetColors.calendarTextOnRose);
+        expect(
+          _contrastRatio(dateLabel.style!.color!, VetColors.rose),
+          greaterThanOrEqualTo(4.5),
+        );
+        for (final timeLabel in ['12:00', '13:00']) {
+          final timeText = tester.widget<Text>(find.text(timeLabel));
+          expect(timeText.style!.color, VetColors.calendarTextOnRose);
           expect(
-            _contrastRatio(color, VetColors.rose),
+            _contrastRatio(timeText.style!.color!, VetColors.rose),
             greaterThanOrEqualTo(4.5),
           );
+        }
+      } else {
+        final tileThemes = tester
+            .widgetList<ListTileTheme>(find.byType(ListTileTheme))
+            .toList();
+        expect(tileThemes, isNotEmpty);
+        for (final tileTheme in tileThemes) {
+          final data = tileTheme.data;
+          for (final color in [
+            data.textColor!,
+            data.titleTextStyle!.color!,
+            data.subtitleTextStyle!.color!,
+          ]) {
+            expect(color, VetColors.calendarTextOnRose);
+            expect(
+              _contrastRatio(color, VetColors.rose),
+              greaterThanOrEqualTo(4.5),
+            );
+          }
         }
       }
 

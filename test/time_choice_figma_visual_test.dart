@@ -37,9 +37,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('time-choice-panel')), findsNothing);
-    final startTile = find.widgetWithText(ListTile, 'Início');
-    await tester.ensureVisible(startTile);
-    await tester.tap(startTile);
+    final startControl = find.byKey(
+      const ValueKey('appointment-booking-start-time'),
+    );
+    await tester.ensureVisible(startControl);
+    await tester.tap(startControl);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('time-choice-panel')), findsOneWidget);
   }

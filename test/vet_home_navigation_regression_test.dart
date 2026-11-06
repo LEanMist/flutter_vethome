@@ -29,8 +29,9 @@ void main() {
       ),
     );
 
-    await tester.ensureVisible(find.text('Confirmar agendamento'));
-    await tester.tap(find.text('Confirmar agendamento'));
+    final save = find.byKey(const ValueKey('appointment-booking-save'));
+    await tester.ensureVisible(save);
+    await tester.tap(save);
     await tester.pumpAndSettle();
 
     const months = [

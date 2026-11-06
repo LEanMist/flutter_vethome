@@ -323,6 +323,9 @@ void main() {
         if (screen is ServicosScreen || screen is ConvenioScreen) {
           // SERVICES_PAGE e CONVENIO_PAGE usam a aba compacta do pet.
           expect(find.byType(PetSummary), findsNothing);
+        } else if (screen is NovaConsultaPage) {
+          expect(find.byType(PetSummary), findsNothing);
+          expect(find.byType(PetAvatar), findsOneWidget);
         } else {
           expect(find.byType(PetSummary), findsOneWidget);
         }

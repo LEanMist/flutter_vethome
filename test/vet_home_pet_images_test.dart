@@ -232,7 +232,8 @@ void main() {
     expect(find.text('Gato Renomeado'), findsOneWidget);
     expect(assetOf(tester.widget<Image>(avatarImages())), PetImages.cat);
     expect(VetRepository.petById(pet.id)!.imagePath, pet.imagePath);
-    expect(find.byType(PetSummary), findsOneWidget);
+    expect(find.byType(PetSummary), findsNothing);
+    expect(find.byType(PetAvatar), findsOneWidget);
   });
 
   testWidgets('editor preserva imagem válida ao trocar a espécie', (

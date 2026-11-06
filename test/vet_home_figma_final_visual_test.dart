@@ -111,7 +111,7 @@ void main() {
       tester,
       NovaConsultaPage(pet: pet, service: 'Hemograma', plan: 'Particular'),
     );
-    await tester.tap(find.text('Data'));
+    await tester.tap(find.byKey(const ValueKey('appointment-booking-date')));
     await tester.pumpAndSettle();
     expect(find.byType(VetCalendar), findsOneWidget);
     expect(
@@ -128,7 +128,9 @@ void main() {
       tester,
       NovaConsultaPage(pet: pet, service: 'Hemograma', plan: 'Particular'),
     );
-    await tester.tap(find.text('Início'));
+    await tester.tap(
+      find.byKey(const ValueKey('appointment-booking-start-time')),
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('time-choice-panel')), findsOneWidget);
     expect(find.byKey(const ValueKey('time-choice-12')), findsOneWidget);

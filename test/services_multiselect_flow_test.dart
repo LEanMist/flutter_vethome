@@ -153,13 +153,10 @@ void main() {
     await tester.tap(find.text('PetLove'));
     await tester.pumpAndSettle();
     expect(find.byType(NovaConsultaPage), findsOneWidget);
-    expect(find.text('Serviço: Hemograma + V10'), findsOneWidget);
-    expect(find.text('Convênio: PetLove'), findsOneWidget);
+    expect(find.text('Hemograma + V10'), findsOneWidget);
+    expect(find.text('PetLove'), findsOneWidget);
 
-    final confirm = find.widgetWithText(
-      ElevatedButton,
-      'Confirmar agendamento',
-    );
+    final confirm = find.byKey(const ValueKey('appointment-booking-save'));
     await tester.ensureVisible(confirm);
     await tester.tap(confirm);
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));

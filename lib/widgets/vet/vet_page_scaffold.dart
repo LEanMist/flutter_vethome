@@ -22,6 +22,7 @@ class VetPageScaffold extends StatelessWidget {
     this.footer,
     this.titleSize = 30,
     this.contentMaxWidth = VH.mobileContentMaxWidth,
+    this.edgeToEdgeContentOnMobile = false,
   });
 
   final String title;
@@ -36,10 +37,17 @@ class VetPageScaffold extends StatelessWidget {
   final Widget? footer;
   final double titleSize;
   final double contentMaxWidth;
+  final bool edgeToEdgeContentOnMobile;
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final contentPadding = VH.pagePaddingFor(width) * s;
+    final horizontalContentPadding =
+        edgeToEdgeContentOnMobile && width < VH.desktopBreakpoint
+        ? 0.0
+        : contentPadding;
 
     return Scaffold(
       backgroundColor: VetColors.pink,
@@ -57,8 +65,11 @@ class VetPageScaffold extends StatelessWidget {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(
-                    VH.pagePaddingFor(MediaQuery.sizeOf(context).width) * s,
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalContentPadding,
+                    contentPadding,
+                    horizontalContentPadding,
+                    contentPadding,
                   ),
                   child: Center(
                     child: ConstrainedBox(
