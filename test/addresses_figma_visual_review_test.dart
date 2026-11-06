@@ -64,6 +64,17 @@ void main() {
         )
         .first;
     expect(tester.getRect(card), const Rect.fromLTWH(30, 153, 320, 173));
+    expect(
+      tester.getRect(find.byKey(const ValueKey('addresses-list-viewport'))),
+      const Rect.fromLTWH(0, 125, 370, 554),
+    );
+    final footer = find.byKey(const ValueKey('addresses-footer'));
+    expect(tester.getRect(footer), const Rect.fromLTWH(0, 679, 390, 165));
+    final footerBackground = find.descendant(
+      of: footer,
+      matching: find.byType(ColoredBox),
+    );
+    expect(tester.widget<ColoredBox>(footerBackground).color, VetColors.pink);
     final decoration =
         tester.widget<Container>(card).decoration!
             as inset_shadow.BoxDecoration;
@@ -91,7 +102,7 @@ void main() {
       VetColors.brown,
     );
     final buttonText = button.style!.textStyle!.resolve(const <WidgetState>{})!;
-    // Figma 2783:716: Montserrat Alternates Bold, 15 px.
+    // Figma ADRESS_PAGE 2704:521: Montserrat Alternates Bold, 15 px.
     expect(buttonText.fontFamily, PetsTheme.fontMontserratAlternates);
     expect(buttonText.fontSize, 15);
     expect(buttonText.fontWeight, FontWeight.bold);

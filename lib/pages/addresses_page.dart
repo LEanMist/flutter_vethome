@@ -134,6 +134,7 @@ class _AddressesPageState extends State<AddressesPage> {
                       child: Scrollbar(
                         thumbVisibility: !desktop && addresses.length >= 3,
                         child: SingleChildScrollView(
+                          key: const ValueKey('addresses-list-viewport'),
                           padding: EdgeInsets.fromLTRB(
                             desktop ? 24 : 30,
                             28,
@@ -167,30 +168,44 @@ class _AddressesPageState extends State<AddressesPage> {
                   },
                 ),
               ),
-              SafeArea(
-                top: false,
-                bottom: desktop,
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: desktop ? 43 : 67),
-                  child: SizedBox(
-                    width: 161,
-                    height: 67,
-                    child: ElevatedButton(
-                      onPressed: () => _edit(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: VetColors.brown,
-                        foregroundColor: Colors.white,
-                        elevation: 2,
-                        shadowColor: VetColors.shadowDark,
-                        padding: EdgeInsets.zero,
-                        shape: const StadiumBorder(),
-                        textStyle: const TextStyle(
-                          fontFamily: PetsTheme.fontMontserratAlternates,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
+              SizedBox(
+                key: const ValueKey('addresses-footer'),
+                width: double.infinity,
+                child: ColoredBox(
+                  color: VetColors.pink,
+                  child: SafeArea(
+                    top: false,
+                    bottom: desktop,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        0,
+                        desktop ? 0 : 31,
+                        0,
+                        desktop ? 43 : 67,
+                      ),
+                      child: Center(
+                        child: SizedBox(
+                          width: 161,
+                          height: 67,
+                          child: ElevatedButton(
+                            onPressed: () => _edit(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: VetColors.brown,
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              shadowColor: VetColors.shadowDark,
+                              padding: EdgeInsets.zero,
+                              shape: const StadiumBorder(),
+                              textStyle: const TextStyle(
+                                fontFamily: PetsTheme.fontMontserratAlternates,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            child: const Text('Novo Endereço'),
+                          ),
                         ),
                       ),
-                      child: const Text('Novo Endereço'),
                     ),
                   ),
                 ),
