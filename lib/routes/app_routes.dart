@@ -18,7 +18,8 @@ import '../pages/perfil_page.dart';
 import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
 import '../pages/sobre_page.dart';
-import '../pages/splashScreen.dart';
+import '../pages/start_page.dart';
+import '../pages/landing_page.dart';
 import '../pages/sucessoScreen.dart';
 import '../pages/vacinacao_page.dart';
 import '../pages/nova_consulta_page.dart';
@@ -60,7 +61,8 @@ class AppRoutes {
   AppRoutes._();
 
   static Map<String, WidgetBuilder> get routes => {
-    '/': (_) => const SplashScreen(),
+    '/': (_) => const StartPage(),
+    '/landing': (_) => const LandingPage(),
     '/home': (_) => const HomePage(),
     '/login': (_) => const LoginPage(),
     '/cadastro': (_) => const CadastroScreen(),
