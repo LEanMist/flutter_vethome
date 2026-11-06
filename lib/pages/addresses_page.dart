@@ -185,7 +185,7 @@ class _AddressesPageState extends State<AddressesPage> {
                         padding: EdgeInsets.zero,
                         shape: const StadiumBorder(),
                         textStyle: const TextStyle(
-                          fontFamily: PetsTheme.fontComfortaa,
+                          fontFamily: PetsTheme.fontMontserratAlternates,
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),

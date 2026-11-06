@@ -186,6 +186,21 @@ void main() {
     expect(decoration.color, Colors.white.withValues(alpha: .2));
     expect(decoration.borderRadius, BorderRadius.circular(30));
     expect(decoration.border!.top.width, 3);
+    final iconCircles = find.byWidgetPredicate(
+      (widget) =>
+          widget is Container &&
+          widget.decoration is BoxDecoration &&
+          (widget.decoration! as BoxDecoration).shape == BoxShape.circle,
+    );
+    expect(iconCircles, findsNWidgets(6));
+    for (var index = 0; index < 6; index++) {
+      final circle = iconCircles.at(index);
+      final icon = tester.widget<Container>(circle);
+      final iconDecoration = icon.decoration! as BoxDecoration;
+      expect(tester.getSize(circle), const Size(58, 56));
+      expect(iconDecoration.shape, BoxShape.circle);
+      expect(iconDecoration.border!.top.width, 4);
+    }
     final buttonFinder = find.widgetWithText(ElevatedButton, 'Continuar');
     final button = tester.widget<ElevatedButton>(buttonFinder);
     expect(

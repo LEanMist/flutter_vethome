@@ -200,7 +200,7 @@ class _VHFieldState extends State<VHField> {
         _ => null,
       };
   Widget _prefix() {
-    if (widget.compact) {
+    if (widget.compact && !widget.figmaForm) {
       return Icon(widget.icon, color: VH.foreground, size: 18);
     }
     final asset = widget.figmaForm
