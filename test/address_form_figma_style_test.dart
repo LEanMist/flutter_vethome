@@ -7,6 +7,7 @@ import 'package:flutter_vethome/models/saved_address.dart';
 import 'package:flutter_vethome/pages/endereco_page.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/widgets/address_form.dart';
+import 'package:flutter_vethome/widgets.dart';
 
 List<String> _addressAssetNames(WidgetTester tester) => tester
     .widgetList<Image>(find.byType(Image))
@@ -205,6 +206,30 @@ void main() {
       tester.getRect(find.byKey(const ValueKey('address-registration-panel'))),
       const Rect.fromLTWH(50, 88, 290, 565),
     );
+    for (final (label, labelTop, fieldTop) in const [
+      ('CEP', 102.0, 122.0),
+      ('Logradouro', 194.0, 215.0),
+      ('Numero', 287.0, 307.0),
+      ('Complemento', 379.0, 399.0),
+      ('Cidade', 471.0, 491.0),
+      ('Nome', 563.0, 583.0),
+    ]) {
+      final labelRect = tester.getRect(find.text(label));
+      expect(labelRect.left, closeTo(69, 1));
+      expect(labelRect.top, closeTo(labelTop, 1));
+
+      final field = find.descendant(
+        of: find.byWidgetPredicate(
+          (widget) => widget is VHField && widget.label == label,
+        ),
+        matching: find.byType(TextFormField),
+      );
+      final fieldRect = tester.getRect(field);
+      expect(fieldRect.left, closeTo(64, 1));
+      expect(fieldRect.top, closeTo(fieldTop, 1));
+      expect(fieldRect.width, closeTo(259, 1));
+      expect(fieldRect.height, closeTo(56, 1));
+    }
     expect(
       tester.getRect(find.widgetWithText(ElevatedButton, 'Continuar')),
       const Rect.fromLTWH(104.5, 683, 181, 65),

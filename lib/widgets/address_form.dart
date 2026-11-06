@@ -169,20 +169,27 @@ class _AddressFormState extends State<AddressForm> {
     TextEditingController controller, {
     FormFieldValidator<String>? validator,
     ValueChanged<String>? onChanged,
-  }) => VHField(
-    label,
-    icon,
-    compact: true,
-    figmaForm:
-        (widget.onSkip != null ||
-            (widget.initial != null && widget.onDelete != null)) &&
-        MediaQuery.sizeOf(context).width < VH.desktopBreakpoint,
-    labelAbove: true,
-    fitSingleLine: true,
-    controller: controller,
-    validator: validator,
-    onChanged: onChanged,
-  );
+  }) {
+    final registrationLayout =
+        widget.onSkip != null &&
+        MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
+    return VHField(
+      label,
+      icon,
+      compact: true,
+      figmaForm:
+          registrationLayout ||
+          (widget.initial != null && widget.onDelete != null) &&
+              MediaQuery.sizeOf(context).width < VH.desktopBreakpoint,
+      labelAbove: true,
+      labelHorizontalPadding: registrationLayout ? 5 : null,
+      labelBottomPadding: registrationLayout ? 0 : null,
+      fitSingleLine: true,
+      controller: controller,
+      validator: validator,
+      onChanged: onChanged,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -260,10 +267,16 @@ class _AddressFormState extends State<AddressForm> {
                         key: registration
                             ? const ValueKey('address-registration-panel')
                             : null,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: registration ? 15.5 : 10,
-                          vertical: registration
-                              ? 12
+                        padding: EdgeInsets.fromLTRB(
+                          registration ? 11 : 10,
+                          registration
+                              ? 11
+                              : compactHeight
+                              ? 8
+                              : 10,
+                          registration ? 14 : 10,
+                          registration
+                              ? 9
                               : compactHeight
                               ? 8
                               : 10,
@@ -301,7 +314,11 @@ class _AddressFormState extends State<AddressForm> {
                                       : 'address-form-mobile-grid',
                                 ),
                                 spacing: 12,
-                                runSpacing: compactHeight ? 8 : 10,
+                                runSpacing: registration
+                                    ? 16.25
+                                    : compactHeight
+                                    ? 8
+                                    : 10,
                                 children: [
                                   slot(
                                     _field(
