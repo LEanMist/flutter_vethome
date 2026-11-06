@@ -218,9 +218,16 @@ void main() {
     await tester.tap(find.byTooltip('Editar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Editar pet'), findsOneWidget);
-    expect(find.text('Nome do pet'), findsOneWidget);
-    expect(find.text('Nascimento'), findsOneWidget);
+    expect(find.text('Editar pet'), findsNothing);
+    expect(find.bySemanticsLabel('Editar pet'), findsOneWidget);
+    expect(find.text('Gênero/Sexo'), findsOneWidget);
+    expect(find.text('Data de Nascimento'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('edit-pet-extra-fields-toggle')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Espécie'), findsOneWidget);
+    expect(find.text('Castração'), findsOneWidget);
     expect(find.text('Excluir'), findsOneWidget);
   });
 

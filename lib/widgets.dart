@@ -42,7 +42,11 @@ class VHField extends StatefulWidget {
     this.suggestions = const [],
     this.onChanged,
     this.inputFormatters,
+    this.textAlign = TextAlign.start,
+    this.figmaContentPaddingLeft,
+    this.figmaContentPaddingRight,
     this.figmaForm = false,
+    this.showChoiceIndicator = true,
     this.compact = false,
     this.labelAbove = false,
     this.labelHorizontalPadding,
@@ -51,6 +55,7 @@ class VHField extends StatefulWidget {
     this.fitSingleLine = false,
   });
   final bool figmaForm;
+  final bool showChoiceIndicator;
   final bool compact;
   final bool labelAbove;
   final double? labelHorizontalPadding;
@@ -68,6 +73,9 @@ class VHField extends StatefulWidget {
   final List<String> suggestions;
   final ValueChanged<String>? onChanged;
   final List<TextInputFormatter>? inputFormatters;
+  final TextAlign textAlign;
+  final double? figmaContentPaddingLeft;
+  final double? figmaContentPaddingRight;
   @override
   State<VHField> createState() => _VHFieldState();
 }
@@ -312,6 +320,7 @@ class _VHFieldState extends State<VHField> {
   }) => TextFormField(
     controller: c,
     focusNode: focus,
+    textAlign: widget.textAlign,
     obscureText: widget.password,
     readOnly: widget.choices != null,
     onTap: widget.choices == null ? null : _toggleChoices,
@@ -366,20 +375,30 @@ class _VHFieldState extends State<VHField> {
             : const EdgeInsets.only(left: 3, right: 10),
         child: _prefix(),
       ),
-      suffixIcon: widget.choices == null
+      suffixIcon: widget.choices == null || !widget.showChoiceIndicator
           ? null
           : AnimatedRotation(
               turns: isOpen ? .5 : 0,
               duration: const Duration(milliseconds: 160),
               child: const Icon(Icons.expand_more, size: 18),
             ),
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: widget.figmaForm
-            ? 8
+      contentPadding: EdgeInsets.only(
+        left: widget.figmaForm
+            ? widget.figmaContentPaddingLeft ?? 8
             : widget.compact
             ? 8
             : 14,
-        vertical: widget.figmaForm
+        right: widget.figmaForm
+            ? widget.figmaContentPaddingRight ?? 8
+            : widget.compact
+            ? 8
+            : 14,
+        top: widget.figmaForm
+            ? 16
+            : widget.compact
+            ? 14
+            : 16,
+        bottom: widget.figmaForm
             ? 16
             : widget.compact
             ? 14

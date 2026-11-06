@@ -74,6 +74,7 @@ class _PetFormState extends State<PetForm> {
   late String? photo = widget.pet?.photoBase64;
   bool busy = false;
   bool validationFailed = false;
+  bool editExtrasExpanded = false;
   @override
   void dispose() {
     for (final c in [name, species, sex, weight, birth, breed, neutered]) {
@@ -115,6 +116,12 @@ class _PetFormState extends State<PetForm> {
     List<String> suggestions = const [],
     String? Function(String?)? validator,
     ValueChanged<String>? onChanged,
+    bool figmaStyle = false,
+    double figmaLabelBottomPadding = 1,
+    double figmaLabelHorizontalPadding = 5,
+    double? figmaContentPaddingLeft,
+    double? figmaContentPaddingRight,
+    TextAlign figmaTextAlign = TextAlign.start,
   }) {
     final size = MediaQuery.sizeOf(context);
     final figmaRegistration =
@@ -123,15 +130,29 @@ class _PetFormState extends State<PetForm> {
         size.height >= 720 &&
         size.width < 600 &&
         MediaQuery.textScalerOf(context).scale(14) <= 15.4;
+    final useFigmaStyle = figmaRegistration || figmaStyle;
     return VHField(
       label,
       icon,
       compact: true,
-      figmaForm: figmaRegistration,
-      labelAbove: figmaRegistration || size.width >= 900,
-      labelHorizontalPadding: figmaRegistration ? 5 : null,
-      labelBottomPadding: figmaRegistration ? 0 : null,
-      labelFitSingleLine: figmaRegistration,
+      textAlign: figmaTextAlign,
+      figmaContentPaddingLeft: figmaContentPaddingLeft,
+      figmaContentPaddingRight: figmaContentPaddingRight,
+      figmaForm: useFigmaStyle,
+      showChoiceIndicator: !figmaStyle,
+      labelAbove: useFigmaStyle || size.width >= 900,
+      labelHorizontalPadding: useFigmaStyle
+          ? figmaStyle
+                ? figmaLabelHorizontalPadding
+                : 5
+          : null,
+      labelBottomPadding: figmaRegistration
+          ? 0
+          : figmaStyle
+          ? figmaLabelBottomPadding
+          : null,
+      labelFitSingleLine: useFigmaStyle,
+      fitSingleLine: figmaStyle && label == 'Raça',
       controller: c,
       value: label == 'Castração' ? 'Não informado' : null,
       choices: choices,
@@ -143,6 +164,16 @@ class _PetFormState extends State<PetForm> {
 
   Future<void> save() async {
     if (busy) return;
+    if (widget.modal && widget.pet != null && species.text.trim().isEmpty) {
+      setState(() {
+        editExtrasExpanded = true;
+        validationFailed = true;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) key.currentState?.validate();
+      });
+      return;
+    }
     if (!key.currentState!.validate()) {
       setState(() => validationFailed = true);
       return;
@@ -204,23 +235,44 @@ class _PetFormState extends State<PetForm> {
           !small &&
           constraints.maxWidth < 600 &&
           MediaQuery.textScalerOf(context).scale(14) <= 15.4;
+      final figmaEditModal =
+          editing &&
+          widget.modal &&
+          constraints.maxWidth >= 310 &&
+          constraints.maxHeight >= 470 &&
+          MediaQuery.textScalerOf(context).scale(14) <= 15.4;
       final saveButton = ElevatedButton(
         onPressed: busy ? null : save,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: registration || editing
-              ? VetColors.brown
-              : VetColors.rose,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(48),
-          shape: registration ? const StadiumBorder() : null,
-          textStyle: registration
-              ? const TextStyle(
-                  fontFamily: VH.headingFontFamily,
-                  fontSize: 18,
+        style: figmaEditModal
+            ? ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF68442E),
+                foregroundColor: Colors.white,
+                minimumSize: Size.zero,
+                padding: EdgeInsets.zero,
+                elevation: 3,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: const StadiumBorder(),
+                textStyle: const TextStyle(
+                  fontFamily: 'Comfortaa',
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
-                )
-              : null,
-        ),
+                ),
+              )
+            : ElevatedButton.styleFrom(
+                backgroundColor: registration || editing
+                    ? VetColors.brown
+                    : VetColors.rose,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+                shape: registration ? const StadiumBorder() : null,
+                textStyle: registration
+                    ? const TextStyle(
+                        fontFamily: VH.headingFontFamily,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      )
+                    : null,
+              ),
         child: Text(
           registration
               ? 'Continuar'
@@ -231,7 +283,7 @@ class _PetFormState extends State<PetForm> {
               : 'Cadastrar',
         ),
       );
-      final content = Padding(
+      final standardContent = Padding(
         padding: EdgeInsets.fromLTRB(
           16,
           figmaRegistration
@@ -403,6 +455,12 @@ class _PetFormState extends State<PetForm> {
           ],
         ),
       );
+      final content = figmaEditModal
+          ? _buildFigmaEditModal(
+              fields: _formFields(editing, figmaEdit: true),
+              saveButton: saveButton,
+            )
+          : standardContent;
       return PopScope(
         canPop: !busy,
         child:
@@ -417,20 +475,183 @@ class _PetFormState extends State<PetForm> {
     },
   );
 
-  List<Widget> _formFields(bool editing, {bool registration = false}) {
+  Widget _buildFigmaEditModal({
+    required List<Widget> fields,
+    required Widget saveButton,
+  }) {
+    final cancelButton = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x40000000),
+            offset: Offset(2, 2),
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: 98,
+        height: 34,
+        child: OutlinedButton(
+          onPressed: busy ? null : widget.onCancel,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF68442E),
+            backgroundColor: const Color(0xFFFFF4F3),
+            minimumSize: Size.zero,
+            padding: EdgeInsets.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: const StadiumBorder(),
+            side: const BorderSide(color: Colors.white),
+            textStyle: const TextStyle(
+              fontFamily: 'Comfortaa',
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          child: const Text('Cancelar'),
+        ),
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(25, 31, 26, 0),
+      child: Form(
+        key: key,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Semantics(
+              container: true,
+              header: true,
+              label: widget.title,
+              child: const SizedBox.shrink(),
+            ),
+            fields[0],
+            const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 122, child: fields[2]),
+                const SizedBox(width: 13),
+                Expanded(flex: 124, child: fields[3]),
+              ],
+            ),
+            const SizedBox(height: 17),
+            fields[5],
+            const SizedBox(height: 16),
+            fields[6],
+            const SizedBox(height: 36),
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  cancelButton,
+                  SizedBox(width: 90, height: 34, child: saveButton),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 22,
+              child: TextButton(
+                key: const ValueKey('edit-pet-extra-fields-toggle'),
+                onPressed: busy
+                    ? null
+                    : () => setState(
+                        () => editExtrasExpanded = !editExtrasExpanded,
+                      ),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF68442E),
+                  minimumSize: Size.zero,
+                  padding: EdgeInsets.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  textStyle: const TextStyle(
+                    fontFamily: 'Montserrat Alternates',
+                    fontSize: 11,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(editExtrasExpanded ? 'Menos opções' : 'Mais opções'),
+                    Icon(
+                      editExtrasExpanded
+                          ? Icons.expand_less
+                          : Icons.expand_more,
+                      size: 15,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (editExtrasExpanded) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  PetAvatar(
+                    image: widget.pet?.imagePath ?? '',
+                    species: species.text.isEmpty ? 'Cachorro' : species.text,
+                    photoBase64: photo,
+                    size: 60,
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Foto do pet',
+                      style: TextStyle(color: Color(0xFF68442E)),
+                    ),
+                  ),
+                  PetPhotoButton(onPressed: choosePhoto, busy: busy),
+                ],
+              ),
+              const SizedBox(height: 8),
+              fields[1],
+              const SizedBox(height: 8),
+              fields[4],
+              if (widget.onDelete != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: busy ? null : () => _runAction(widget.onDelete),
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(widget.modal ? 'Excluir' : 'Excluir pet'),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _formFields(
+    bool editing, {
+    bool registration = false,
+    bool figmaEdit = false,
+  }) {
     final registrationNameLabel = switch (species.text) {
       'Cachorro' => 'Nome do Cachorro(a)',
       'Gato' => 'Nome do Gato(a)',
       _ => 'Nome do Pet',
     };
     final nameField = field(
-      editing
+      figmaEdit
+          ? registrationNameLabel
+          : editing
           ? 'Nome do pet'
           : registration
           ? registrationNameLabel
           : 'Nome do Pet',
       Icons.person_outline,
       name,
+      figmaStyle: figmaEdit,
+      figmaContentPaddingRight: figmaEdit ? 30 : null,
+      figmaTextAlign: figmaEdit ? TextAlign.center : TextAlign.start,
+      figmaLabelBottomPadding: 0,
       validator: (v) {
         final error = requiredValue(v);
         if (error != null) return error;
@@ -447,15 +668,22 @@ class _PetFormState extends State<PetForm> {
       onChanged: (_) => setState(() => breed.clear()),
     );
     final sexField = field(
-      editing ? 'Sexo' : 'Gênero/Sexo',
+      editing && !figmaEdit ? 'Sexo' : 'Gênero/Sexo',
       Icons.wc,
       sex,
       choices: const ['Macho', 'Fêmea'],
+      figmaStyle: figmaEdit,
+      figmaContentPaddingLeft: figmaEdit ? 18 : null,
+      figmaLabelBottomPadding: 0,
     );
     final weightField = field(
-      editing ? 'Peso (kg)' : 'Peso',
+      editing && !figmaEdit ? 'Peso (kg)' : 'Peso',
       Icons.scale_outlined,
       weight,
+      figmaStyle: figmaEdit,
+      figmaLabelHorizontalPadding: 7,
+      figmaContentPaddingLeft: figmaEdit ? 15 : null,
+      figmaLabelBottomPadding: 0,
       validator: (v) =>
           parsePetWeight(v ?? '') == null ? 'Peso inválido (kg)' : null,
     );
@@ -467,9 +695,12 @@ class _PetFormState extends State<PetForm> {
       validator: (_) => null,
     );
     final birthField = field(
-      editing ? 'Nascimento (DD/MM/AAAA)' : 'Data de Nascimento',
+      editing && !figmaEdit ? 'Nascimento (DD/MM/AAAA)' : 'Data de Nascimento',
       Icons.cake_outlined,
       birth,
+      figmaStyle: figmaEdit,
+      figmaContentPaddingRight: figmaEdit ? 30 : null,
+      figmaTextAlign: figmaEdit ? TextAlign.center : TextAlign.start,
       validator: (v) =>
           parseBirthDate(v ?? '') == null ? 'Data inválida' : null,
     );
@@ -478,6 +709,8 @@ class _PetFormState extends State<PetForm> {
       Icons.pets,
       breed,
       suggestions: breedsFor(species.text),
+      figmaStyle: figmaEdit,
+      figmaContentPaddingLeft: figmaEdit ? 18 : null,
     );
     return [
       if (registration) speciesField,

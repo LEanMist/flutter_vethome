@@ -102,6 +102,10 @@ void main() {
     await tester.ensureVisible(editButton);
     await tester.tap(editButton);
     await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('edit-pet-extra-fields-toggle')),
+    );
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Excluir'));
     await tester.tap(find.text('Excluir'));
     await tester.pumpAndSettle();

@@ -100,12 +100,36 @@ class _ChatScreenState extends State<ChatScreen> {
     final viewport = MediaQuery.sizeOf(context);
     final mobile = viewport.width < VH.desktopBreakpoint;
     final bubbleWidth = (viewport.width - 48).clamp(0.0, 273.0).toDouble();
+    final composerHeight = _composerHeight(context);
+    final baseHeight = (viewport.height - (mobile ? 288 : 230))
+        .clamp(420, 680)
+        .toDouble();
+    var cardHeight = baseHeight;
+    if (mobile) {
+      // O aviso cresce com a fonte do sistema. A página já permite rolagem:
+      // ampliar apenas o cartão evita cortar o aviso ou o compositor em 320 px.
+      final noticeText = TextPainter(
+        text: const TextSpan(
+          text: _chatLocalityNotice,
+          style: TextStyle(fontSize: 12, height: 1.35),
+        ),
+        textScaler: MediaQuery.textScalerOf(context),
+        textDirection: Directionality.of(context),
+      )..layout(maxWidth: (viewport.width - 94).clamp(1.0, double.infinity));
+      final minimum =
+          noticeText.height +
+          10 + // Espaço superior do cartão.
+          20 + // Padding vertical do aviso.
+          8 + // Espaço abaixo do aviso.
+          composerHeight +
+          56; // Área mínima da lista de mensagens.
+      noticeText.dispose();
+      if (minimum > cardHeight) cardHeight = minimum;
+    }
 
     return Container(
       key: const ValueKey('chat-conversation-card'),
-      height: (viewport.height - (mobile ? 288 : 230))
-          .clamp(420, 680)
-          .toDouble(),
+      height: cardHeight,
       decoration: insetBox(color: VH.muted),
       child: Column(
         children: [
@@ -200,7 +224,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          _composer(),
+          _composer(context),
         ],
       ),
     );
@@ -240,9 +264,17 @@ class _ChatScreenState extends State<ChatScreen> {
     ),
   );
 
-  Widget _composer() => SizedBox(
+  double _composerHeight(BuildContext context) {
+    final extraText = (MediaQuery.textScalerOf(context).scale(16) - 16).clamp(
+      0.0,
+      double.infinity,
+    );
+    return 80 + extraText * 1.5;
+  }
+
+  Widget _composer(BuildContext context) => SizedBox(
     key: const ValueKey('chat-composer'),
-    height: 80,
+    height: _composerHeight(context),
     child: ColoredBox(
       color: VetColors.chatComposerBackground,
       child: Padding(

@@ -333,7 +333,7 @@ void main() {
     await tester.pumpAndSettle();
     final nameField = find.descendant(
       of: find.byWidgetPredicate(
-        (w) => w is VHField && w.label == 'Nome do pet',
+        (w) => w is VHField && w.label.startsWith('Nome do '),
       ),
       matching: find.byType(TextFormField),
     );

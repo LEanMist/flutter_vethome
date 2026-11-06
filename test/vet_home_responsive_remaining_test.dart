@@ -194,7 +194,7 @@ void main() {
         find.byKey(const ValueKey('edit-pet-modal-surface')),
         findsOneWidget,
       );
-      expect(find.text('Editar pet'), findsOneWidget);
+      expect(find.bySemanticsLabel('Editar pet'), findsOneWidget);
       await tester.ensureVisible(find.text('Cancelar'));
       await tester.tap(find.text('Cancelar'));
       await tester.pumpAndSettle();
