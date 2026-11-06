@@ -108,40 +108,40 @@ class _PerfilPageState extends State<PerfilPage> {
     }
   }
 
-  Future<void> _mudarEndereco() async {
-    final controller = TextEditingController(text: VetRepository.clientAddress);
-    try {
-      final String? value = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: VetColors.pink,
-          title: const Text('Alterar endereço'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            maxLines: 2,
-            decoration: const InputDecoration(hintText: 'Endereço completo'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('Salvar'),
-            ),
-          ],
-        ),
-      );
-      if (value != null && value.isNotEmpty && mounted) {
-        VetRepository.updateClient(address: value);
-        vetSoon(context, 'Endereço atualizado');
-      }
-    } finally {
-      controller.dispose();
-    }
-  }
+  // Future<void> _mudarEndereco() async {
+  //   final controller = TextEditingController(text: VetRepository.clientAddress);
+  //   try {
+  //     final String? value = await showDialog<String>(
+  //       context: context,
+  //       builder: (context) => AlertDialog(
+  //         backgroundColor: VetColors.pink,
+  //         title: const Text('Alterar endereço'),
+  //         content: TextField(
+  //           controller: controller,
+  //           autofocus: true,
+  //           maxLines: 2,
+  //           decoration: const InputDecoration(hintText: 'Endereço completo'),
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.pop(context),
+  //             child: const Text('Cancelar'),
+  //           ),
+  //           TextButton(
+  //             onPressed: () => Navigator.pop(context, controller.text.trim()),
+  //             child: const Text('Salvar'),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //     if (value != null && value.isNotEmpty && mounted) {
+  //       VetRepository.updateClient(address: value);
+  //       vetSoon(context, 'Endereço atualizado');
+  //     }
+  //   } finally {
+  //     controller.dispose();
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +333,7 @@ class _PerfilPageState extends State<PerfilPage> {
       MapEntry('Mudar Foto de Perfil', _mudarFoto),
       MapEntry('Mudar Nome de Perfil', _mudarNome),
       MapEntry('Mudar Data de Nascimento', _mudarNascimento),
-      MapEntry('Alterar endereço', _mudarEndereco),
+      // MapEntry('Alterar endereço', _mudarEndereco),
     ];
 
     return Padding(

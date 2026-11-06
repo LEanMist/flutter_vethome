@@ -18,9 +18,9 @@ class ConfigScreen extends StatelessWidget {
         VHMenu(
           const [
             'Tema do Aplicativo',
-            'Meus Endereços',
+            // 'Meus Endereços',
             'Suporte',
-            'Histórico',
+            // 'Histórico',
             'Sair',
           ],
           onTap: (index) {

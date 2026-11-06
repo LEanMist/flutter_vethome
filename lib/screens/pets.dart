@@ -102,7 +102,7 @@ class PetInfo extends StatelessWidget {
             children: [
               Expanded(
                 child: VHField(
-                  'Gênero/Sexo',
+                  'Sexo',
                   Icons.person_outline,
                   value: pet.sex,
                 ),

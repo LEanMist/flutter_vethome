@@ -25,20 +25,50 @@ class VetRepository {
   static String? clientPhotoPath;
   static int selectedPetIndex = 0;
 
-  static final List<PetModel> pets = [];
+  static final List<PetModel> pets = _defaultPets();
+
+  static PetModel get firstPet => pets.isNotEmpty
+      ? pets.first
+      : PetModel(
+          name: 'Pet',
+          imagePath: 'assets/imagens/pets/img_cachorroegato_png.png',
+          description: 'Pet sem cadastro',
+        );
+
+  static List<PetModel> _defaultPets() {
+    return [
+      PetModel(
+        name: 'Fernando',
+        imagePath: 'assets/imagens/figma/cachorroegatopng-3.png',
+        description: 'Cachorro • 5 anos • Macho',
+        species: 'Cachorro',
+        sex: 'Macho',
+        weightKg: 24.0,
+        birthDate: DateTime(2019, 3, 23),
+        breed: 'Lulu-da-Pomerânia',
+        neutered: true,
+      ),
+    ];
+  }
 
   static Future<void> carregarPets({String? cpfCliente}) async {
     try {
       final petsDoBanco = await PetService.listarPets(cpfCliente: cpfCliente);
-      pets
-        ..clear()
-        ..addAll(petsDoBanco);
+      if (petsDoBanco.isNotEmpty) {
+        pets
+          ..clear()
+          ..addAll(petsDoBanco);
+      } else if (pets.isEmpty) {
+        pets.addAll(_defaultPets());
+      }
       selectedPetIndex = pets.isEmpty
           ? 0
           : selectedPetIndex.clamp(0, pets.length - 1).toInt();
     } catch (_) {
-      pets.clear();
-      selectedPetIndex = 0;
+      if (pets.isEmpty) {
+        pets.addAll(_defaultPets());
+      }
+      selectedPetIndex = pets.isEmpty ? 0 : selectedPetIndex.clamp(0, pets.length - 1).toInt();
     }
   }
 

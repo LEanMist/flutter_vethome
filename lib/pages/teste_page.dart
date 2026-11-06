@@ -26,7 +26,7 @@ class TestePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pet = VetRepository.pets.first;
+    final pet = VetRepository.firstPet;
     final telas = <({String titulo, IconData icone, WidgetBuilder pagina})>[
       (titulo: 'Login', icone: Icons.login, pagina: (_) => const LoginPage()),
       (

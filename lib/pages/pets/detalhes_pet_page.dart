@@ -117,7 +117,7 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
             children: [
               _PetInfoRow(
                 icon: Icons.person_outline,
-                label: 'Gênero/Sexo',
+                label: 'Sexo',
                 value: pet.sex ?? 'Não informado',
               ),
               const Divider(height: 18),

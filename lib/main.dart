@@ -55,7 +55,7 @@ PetModel _petFromRoute(BuildContext context) {
     );
   }
 
-  final pet = VetRepository.pets.first;
+  final pet = VetRepository.firstPet;
   return PetModel(
     name: name is String ? name : pet.name,
     imagePath: image is String ? image : pet.imagePath,
