@@ -89,17 +89,11 @@ class AppointmentCard extends StatelessWidget {
               const SizedBox(height: 5),
               Text(
                 'Veterinário: ${event.veterinario}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: VetColors.brown.withValues(alpha: .8),
-                ),
+                style: TextStyle(fontSize: 12, color: VetColors.brown),
               ),
               Text(
                 'Local/convênio: ${event.local}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: VetColors.brown.withValues(alpha: .8),
-                ),
+                style: TextStyle(fontSize: 12, color: VetColors.brown),
               ),
               if (demo) ...[
                 const SizedBox(height: 6),
