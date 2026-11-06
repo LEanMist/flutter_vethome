@@ -121,10 +121,11 @@ class _AddressesPageState extends State<AddressesPage> {
                       spacing: 18,
                       runSpacing: 22,
                       children: [
-                        for (final address in addresses)
+                        for (var index = 0; index < addresses.length; index++)
                           SizedBox(
                             width: cardWidth,
-                            child: _addressCard(address),
+                            height: desktop || index == 0 ? 173 : 175,
+                            child: _addressCard(addresses[index]),
                           ),
                       ],
                     );

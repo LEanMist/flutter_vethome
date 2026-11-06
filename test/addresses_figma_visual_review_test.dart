@@ -125,6 +125,51 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('ADRESS_PAGE: lista com rolagem termina acima do rodapé Figma', (
+    tester,
+  ) async {
+    VetRepository.addresses.addAll(const [
+      SavedAddress(
+        id: 'figma-address-second',
+        name: 'Trabalho',
+        street: 'Rua do Trabalho',
+        number: '22',
+        city: 'São Paulo',
+        cep: '01234-567',
+      ),
+      SavedAddress(
+        id: 'figma-address-third',
+        name: 'Outro endereço',
+        street: 'Rua da Praça',
+        number: '73',
+        city: 'Perus',
+        cep: '01234-567',
+      ),
+    ]);
+    await showAddresses(tester, const Size(390, 844));
+
+    final thirdCard = find
+        .ancestor(
+          of: find.text('Outro endereço'),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Container &&
+                widget.decoration is inset_shadow.BoxDecoration,
+          ),
+        )
+        .first;
+    expect(tester.getRect(thirdCard), const Rect.fromLTWH(30, 545, 320, 175));
+    expect(
+      tester.getRect(find.byKey(const ValueKey('addresses-list-viewport'))),
+      const Rect.fromLTWH(0, 125, 370, 554),
+    );
+    expect(
+      tester.widget<Scrollbar>(find.byType(Scrollbar)).thumbVisibility,
+      isTrue,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   for (final viewport in [const Size(320, 640), const Size(1280, 800)]) {
     testWidgets('Endereços mantém responsividade em $viewport', (tester) async {
       await showAddresses(tester, viewport);
@@ -134,6 +179,19 @@ void main() {
         find.byType(VetBottomNav),
         viewport.width < 900 ? findsOneWidget : findsNothing,
       );
+      if (viewport.width >= 900) {
+        final card = find
+            .ancestor(
+              of: find.text('Casa da Irmã'),
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Container &&
+                    widget.decoration is inset_shadow.BoxDecoration,
+              ),
+            )
+            .first;
+        expect(tester.getSize(card).height, 173);
+      }
       expect(tester.takeException(), isNull);
     });
   }

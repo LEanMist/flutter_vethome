@@ -326,6 +326,52 @@ void main() {
     }
   });
 
+  for (final (key, label) in [
+    (LogicalKeyboardKey.enter, 'Enter'),
+    (LogicalKeyboardKey.space, 'Espaço'),
+  ]) {
+    testWidgets('Agenda: Tab e $label selecionam uma data do calendário', (
+      tester,
+    ) async {
+      await pumpAgenda(tester);
+
+      final target = find.byKey(const ValueKey('calendar-2026-1-14'));
+      expect(target, findsOneWidget);
+
+      var focused = false;
+      for (var index = 0; index < 50 && !focused; index++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        final day = tester.widget<InkWell>(target);
+        focused =
+            day.statesController?.value.contains(WidgetState.focused) ?? false;
+      }
+      expect(focused, isTrue, reason: 'Tab deve alcançar 14 de janeiro');
+
+      await tester.sendKeyEvent(key);
+      await tester.pumpAndSettle();
+      expect(find.text('14 - Quarta Feira'), findsOneWidget);
+
+      final semantics = tester.ensureSemantics();
+      try {
+        final selected = tester.getSemantics(
+          find.byKey(const ValueKey('calendar-date-semantics-2026-1-14')),
+        );
+        expect(
+          selected.getSemanticsData().flagsCollection.isSelected,
+          Tristate.isTrue,
+        );
+        expect(
+          selected.getSemanticsData().label,
+          'quarta-feira, 14 de janeiro de 2026',
+        );
+      } finally {
+        semantics.dispose();
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('títulos do calendário não são cortados com texto ampliado', (
     tester,
   ) async {
