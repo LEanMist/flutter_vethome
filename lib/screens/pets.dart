@@ -484,14 +484,8 @@ class ConvenioScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Mantém o resumo do pet na faixa de 116 px antes do 1º plano.
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 116),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: PetSummary(pet: pet),
-                    ),
-                  ),
+                  // O Figma deixa esse intervalo livre antes do primeiro plano.
+                  const SizedBox(height: 132),
                   // Alinha o primeiro plano a y≈342 no frame 2783:840.
                   const SizedBox(height: 55),
                   for (final plan in const ['PetLove', 'DogLife', 'Particular'])
@@ -601,43 +595,48 @@ class ConvenioScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 8,
-                          width: 110,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                species,
-                                maxLines: 1,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontFamily: VH.bodyFontFamily,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                    child: Semantics(
+                      label: 'Pet selecionado: ${pet.name}, espécie $species',
+                      child: ExcludeSemantics(
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              left: 8,
+                              width: 110,
+                              top: 0,
+                              bottom: 0,
+                              child: Center(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    species,
+                                    maxLines: 1,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: VH.bodyFontFamily,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
+                            Positioned(
+                              left: 117,
+                              top: 12,
+                              width: 32,
+                              height: 36,
+                              child: PetAvatar(
+                                image: pet.imagePath,
+                                photoBase64: pet.photoBase64,
+                                species: pet.species,
+                                size: 32,
+                                listSilhouette: true,
+                              ),
+                            ),
+                          ],
                         ),
-                        Positioned(
-                          left: 117,
-                          top: 12,
-                          width: 32,
-                          height: 36,
-                          child: PetAvatar(
-                            image: pet.imagePath,
-                            photoBase64: pet.photoBase64,
-                            species: pet.species,
-                            size: 32,
-                            listSilhouette: true,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

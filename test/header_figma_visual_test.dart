@@ -109,7 +109,19 @@ void main() {
           const BorderRadius.vertical(bottom: Radius.circular(30)),
         );
         expect(decoration.boxShadow, isNull);
-        expect(find.text('Pets'), findsOneWidget);
+        final titleFinder = find.text('Pets');
+        final scale = (viewport.width / 390).clamp(.8, 1.0).toDouble();
+        expect(titleFinder, findsOneWidget);
+        expect(find.byTooltip('Telas de teste'), findsNothing);
+        expect(
+          tester.getTopLeft(titleFinder).dx,
+          closeTo((viewport.width - 134 * scale) / 2, .5),
+        );
+        if (viewport == const Size(390, 844)) {
+          // Figma PETS_PAGE 2783:1236: x=128, y=46, width=134.
+          expect(tester.getCenter(titleFinder).dy, closeTo(62.5, .5));
+          expect(tester.getSize(titleFinder).width, closeTo(134, 1));
+        }
         expect(tester.takeException(), isNull);
       }
     },

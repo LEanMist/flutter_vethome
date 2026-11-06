@@ -52,7 +52,20 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.byType(PetSummary), findsOneWidget);
+    final selectedPet = VetRepository.pets.first;
+    expect(find.byType(PetSummary), findsNothing);
+    expect(find.text(selectedPet.name), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label?.startsWith(
+                  'Pet selecionado: ${selectedPet.name}, espécie ',
+                ) ==
+                true,
+      ),
+      findsOneWidget,
+    );
     // Figma CONVENIO_PAGE 2783:840, viewport de 390 × 844.
     // Mantém o fluxo/rotas existentes enquanto alinha a posição dos planos.
     expect(tester.getTopLeft(find.text('Convênio')).dy, closeTo(37, 1));

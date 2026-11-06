@@ -1,5 +1,4 @@
 // lib/pages/pets_page.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/utils/vet_nav.dart';
@@ -8,7 +7,6 @@ import '../theme/vet_colors.dart';
 import '../widgets/pets/pet_card_widget.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet/vet_bottom_nav.dart';
-import 'teste_page.dart';
 
 class PetsPage extends StatefulWidget {
   const PetsPage({super.key});
@@ -59,46 +57,23 @@ class _PetsPageState extends State<PetsPage> {
       width: double.infinity,
       height: 125 + topInset,
       alignment: Alignment.center,
-      padding: EdgeInsets.fromLTRB(12 * s, topInset + 8 * s, 12 * s, 12 * s),
       decoration: BoxDecoration(
         color: VetColors.rose,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              SizedBox(width: 42 * s),
-              const Spacer(),
-              Text(
-                'Pets',
-                style: TextStyle(
-                  fontSize: 30 * s,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: PetsTheme.fontComfortaa,
-                  color: Colors.white,
-                ),
-              ),
-              const Spacer(),
-              if (kDebugMode)
-                IconButton(
-                  tooltip: 'Telas de teste',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TestePage()),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.dashboard_outlined,
-                    color: Colors.white,
-                    size: 23 * s,
-                  ),
-                ),
-            ],
+      padding: EdgeInsets.only(top: topInset),
+      child: SizedBox(
+        width: 134 * s,
+        child: Text(
+          'Pets',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 30 * s,
+            fontWeight: FontWeight.w700,
+            fontFamily: PetsTheme.fontComfortaa,
+            color: Colors.white,
           ),
-        ],
+        ),
       ),
     );
   }
