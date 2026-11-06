@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/theme.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/models/saved_address.dart';
 import 'package:flutter_vethome/pages/endereco_page.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
@@ -111,8 +112,11 @@ void main() {
 
     final deleteButton = find.widgetWithText(OutlinedButton, 'Excluir');
     final saveButton = find.widgetWithText(ElevatedButton, 'Salvar');
+    final saveStyle = tester.widget<ElevatedButton>(saveButton).style!;
     expect(tester.getSize(deleteButton), const Size(90, 34));
     expect(tester.getSize(saveButton), const Size(90, 34));
+    expect(saveStyle.backgroundColor!.resolve({}), VH.primary);
+    expect(saveStyle.foregroundColor!.resolve({}), Colors.white);
     expect(
       tester.getTopLeft(saveButton).dx - tester.getTopRight(deleteButton).dx,
       closeTo(79, 1),
@@ -125,6 +129,27 @@ void main() {
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
     expect(find.byType(AddressEditorPage), findsOneWidget);
+  });
+
+  testWidgets('novo endereço mantém contraste acessível no botão rosa', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: AddressEditorPage()));
+    await tester.pumpAndSettle();
+
+    final saveButton = find.widgetWithText(ElevatedButton, 'Salvar endereço');
+    final saveStyle = tester.widget<ElevatedButton>(saveButton).style!;
+    expect(saveStyle.backgroundColor!.resolve({}), VH.secondary);
+    expect(
+      saveStyle.foregroundColor!.resolve({}),
+      VetColors.calendarTextOnRose,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('REGISTER_ADRESS_PAGE usa os ícones originais do Figma', (

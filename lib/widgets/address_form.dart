@@ -6,6 +6,7 @@ import '../models/saved_address.dart';
 import '../core/utils/form_fields.dart';
 import '../widgets.dart';
 import '../theme.dart';
+import '../theme/vet_colors.dart';
 
 class AddressForm extends StatefulWidget {
   const AddressForm({
@@ -203,11 +204,17 @@ class _AddressFormState extends State<AddressForm> {
         : editing
         ? 'Salvar'
         : 'Salvar endereço';
+    final saveBackgroundColor = registration || editing
+        ? VH.primary
+        : VH.secondary;
+    final saveForegroundColor = registration || editing
+        ? Colors.white
+        : VetColors.calendarTextOnRose;
     final saveButton = ElevatedButton(
       onPressed: _loading || _saving ? null : _save,
       style: ElevatedButton.styleFrom(
-        backgroundColor: registration ? VH.primary : VH.secondary,
-        foregroundColor: Colors.white,
+        backgroundColor: saveBackgroundColor,
+        foregroundColor: saveForegroundColor,
         shape: const StadiumBorder(),
         textStyle: TextStyle(
           fontFamily: VH.headingFontFamily,
