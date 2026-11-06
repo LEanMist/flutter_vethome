@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
@@ -307,8 +308,21 @@ void main() {
     expect(tester.getTopLeft(title).dy, 31);
     expect(
       tester.getRect(find.byKey(const ValueKey('address-registration-panel'))),
-      const Rect.fromLTWH(50, 88, 290, 565),
+      const Rect.fromLTWH(49, 88, 290, 565),
     );
+    final registrationPanel = tester.widget<Container>(
+      find.byKey(const ValueKey('address-registration-panel')),
+    );
+    expect(registrationPanel.clipBehavior, Clip.antiAlias);
+    final panelDecoration =
+        registrationPanel.decoration! as inset_shadow.BoxDecoration;
+    expect(panelDecoration.boxShadow, hasLength(1));
+    final panelShadow =
+        panelDecoration.boxShadow!.single as inset_shadow.BoxShadow;
+    expect(panelShadow.color, VetColors.shadowDark);
+    expect(panelShadow.offset, const Offset(2, 2));
+    expect(panelShadow.blurRadius, 5);
+    expect(panelShadow.inset, isTrue);
     for (final (label, labelTop, fieldTop) in const [
       ('CEP', 102.0, 122.0),
       ('Logradouro', 194.0, 215.0),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import '../data/cep_service.dart';
 import '../models/saved_address.dart';
 import '../core/utils/form_fields.dart';
@@ -263,6 +264,11 @@ class _AddressFormState extends State<AddressForm> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final compactHeight = !registration && constraints.maxHeight < 680;
+            // Align halves its -1..1 range; this places the panel at x=49.
+            final registrationPanelAlignment =
+                registration && constraints.maxWidth > 322
+                ? -2 / (constraints.maxWidth - 32 - 290)
+                : 0.0;
             final content = Padding(
               padding: EdgeInsets.fromLTRB(
                 16,
@@ -295,7 +301,8 @@ class _AddressFormState extends State<AddressForm> {
                         ? 12
                         : 16,
                   ),
-                  Center(
+                  Align(
+                    alignment: Alignment(registrationPanelAlignment, 0),
                     child: SizedBox(
                       width: registration ? 290 : double.infinity,
                       height: registration ? 565 : null,
@@ -303,6 +310,7 @@ class _AddressFormState extends State<AddressForm> {
                         key: registration
                             ? const ValueKey('address-registration-panel')
                             : null,
+                        clipBehavior: registration ? Clip.antiAlias : Clip.none,
                         padding: EdgeInsets.fromLTRB(
                           registration ? 11 : 10,
                           registration
@@ -317,20 +325,31 @@ class _AddressFormState extends State<AddressForm> {
                               ? 8
                               : 10,
                         ),
-                        decoration: BoxDecoration(
-                          color: registration
-                              ? Colors.white.withValues(alpha: .2)
-                              : VH.secondary.withValues(alpha: .12),
-                          borderRadius: BorderRadius.circular(
-                            registration ? 30 : 22,
-                          ),
-                          border: Border.all(
-                            color: registration
-                                ? VH.secondary
-                                : VH.secondary.withValues(alpha: .3),
-                            width: registration ? 3 : 1,
-                          ),
-                        ),
+                        decoration: registration
+                            ? inset_shadow.BoxDecoration(
+                                color: Colors.white.withValues(alpha: .2),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: VH.secondary,
+                                  width: 3,
+                                ),
+                                boxShadow: const [
+                                  inset_shadow.BoxShadow(
+                                    color: VetColors.shadowDark,
+                                    offset: Offset(2, 2),
+                                    blurRadius: 5,
+                                    inset: true,
+                                  ),
+                                ],
+                              )
+                            : BoxDecoration(
+                                color: VH.secondary.withValues(alpha: .12),
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: VH.secondary.withValues(alpha: .3),
+                                  width: 1,
+                                ),
+                              ),
                         child: Form(
                           key: _key,
                           child: LayoutBuilder(
