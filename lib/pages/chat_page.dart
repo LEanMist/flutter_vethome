@@ -489,7 +489,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     border: InputBorder.none,
                     hintText: 'Mensagem',
                     hintStyle: TextStyle(
-                      color: VH.foreground.withValues(alpha: .5),
+                      color: VetColors.brownOnRose,
                       fontFamily: VH.headingFontFamily,
                       fontSize: 15,
                     ),

@@ -201,6 +201,24 @@ void main() {
     final composer = find.byKey(const ValueKey('chat-composer'));
     expect(tester.getSize(composer), const Size(366, 80));
     expect(tester.getTopLeft(composer), const Offset(12, 623));
+    final composerField = tester.widget<TextField>(find.byType(TextField));
+    expect(composerField.decoration?.hintStyle?.color, VetColors.brownOnRose);
+    final composerSurfaces = [
+      Color.alphaBlend(
+        VH.background.withValues(alpha: .5),
+        VetColors.chatComposerBackground,
+      ),
+      Color.alphaBlend(
+        VH.secondary.withValues(alpha: .375),
+        VetColors.chatComposerBackground,
+      ),
+    ];
+    for (final surface in composerSurfaces) {
+      expect(
+        _contrastRatio(VetColors.brownOnRose, surface),
+        greaterThanOrEqualTo(4.5),
+      );
+    }
     expect(
       tester.getTopLeft(find.text('Gabriela Falcão').first).dy,
       closeTo(172, 1.5),
