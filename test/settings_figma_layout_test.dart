@@ -132,6 +132,28 @@ void main() {
       ),
       findsOneWidget,
     );
+    for (final (index, label) in const [
+      (0, 'Pets'),
+      (1, 'Perfil'),
+      (2, 'Conversa'),
+      (3, 'Agenda'),
+      (4, 'Configurações'),
+    ]) {
+      final destination = find.descendant(
+        of: nav,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.button == true &&
+              widget.properties.label == label,
+        ),
+      );
+      expect(destination, findsOneWidget);
+      expect(
+        tester.getRect(destination),
+        Rect.fromLTWH(30 + index * 70, 734, 50, 50),
+      );
+    }
     expect(tester.takeException(), isNull);
   });
 

@@ -105,6 +105,7 @@ void main() {
       tester.widget<VetBottomNav>(find.byType(VetBottomNav)).showPetsTab,
       isFalse,
     );
+    _expectFigmaChatNavigation(tester);
     expect(find.text('Nicolly'), findsNothing);
     expect(find.text('Então você envenou meu cachorro'), findsNothing);
     expect(find.text('15'), findsNothing);
@@ -166,6 +167,7 @@ void main() {
       tester.widget<VetBottomNav>(find.byType(VetBottomNav)).showPetsTab,
       isFalse,
     );
+    _expectFigmaChatNavigation(tester);
 
     await tester.tap(find.byTooltip('Voltar'));
     await tester.pumpAndSettle();
@@ -437,4 +439,29 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+}
+
+void _expectFigmaChatNavigation(WidgetTester tester) {
+  final nav = find.byType(VetBottomNav);
+  for (final (index, label) in const [
+    (0, 'Perfil'),
+    (1, 'Conversa'),
+    (2, 'Agenda'),
+    (3, 'Configurações'),
+  ]) {
+    final destination = find.descendant(
+      of: nav,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.button == true &&
+            widget.properties.label == label,
+      ),
+    );
+    expect(destination, findsOneWidget);
+    final rect = tester.getRect(destination);
+    expect(rect.left, closeTo(43 + index * 84, 1));
+    expect(rect.top, closeTo(734, 0.5));
+    expect(rect.size, const Size(50, 50));
+  }
 }

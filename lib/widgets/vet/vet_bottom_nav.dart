@@ -50,6 +50,11 @@ class VetBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
     final media = MediaQuery.of(context);
+    final followsFigmaMobileSpacing = media.size.width <= PetsTheme.designWidth;
+    final destinations = (showPetsTab
+        ? _allDestinationIndices
+        : _destinationIndicesWithoutPets);
+    final mobileItemGap = (destinations.length == 5 ? 20.0 : 34.0) * s;
     final standardBottomGap = 12 * s;
     final fitsFigmaMobileHeight =
         media.size.width <= PetsTheme.designWidth &&
@@ -84,25 +89,36 @@ class VetBottomNav extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              for (final destination
-                  in (showPetsTab
-                          ? _allDestinationIndices
-                          : _destinationIndicesWithoutPets)
-                      .asMap()
-                      .entries)
-                _VetNavDestination(
-                  label: _labels[destination.value],
-                  icon: _icons[destination.value],
-                  selectedIcon: _selectedIcons[destination.value],
-                  selected: destination.value == selectedIndex,
-                  highlighted: destination.key == 0,
-                  scale: s,
-                  onTap: () => onSelected(destination.value),
-                ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = (50 * s).clamp(48.0, 50.0);
+              final fitsFigmaSpacing =
+                  followsFigmaMobileSpacing &&
+                  itemWidth * destinations.length +
+                          mobileItemGap * (destinations.length - 1) <=
+                      constraints.maxWidth;
+              return Row(
+                mainAxisAlignment: fitsFigmaSpacing
+                    ? MainAxisAlignment.center
+                    : MainAxisAlignment.spaceEvenly,
+                children: [
+                  for (final destination in destinations.asMap().entries) ...[
+                    _VetNavDestination(
+                      label: _labels[destination.value],
+                      icon: _icons[destination.value],
+                      selectedIcon: _selectedIcons[destination.value],
+                      selected: destination.value == selectedIndex,
+                      highlighted: destination.key == 0,
+                      scale: s,
+                      onTap: () => onSelected(destination.value),
+                    ),
+                    if (fitsFigmaSpacing &&
+                        destination.key < destinations.length - 1)
+                      SizedBox(width: mobileItemGap),
+                  ],
+                ],
+              );
+            },
           ),
         ),
       ),
