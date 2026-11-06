@@ -144,7 +144,7 @@ void main() {
     final logoRect = tester.getRect(logo);
     expect(logoRect.top, 180);
     expect(logoRect.size, const Size(166, 166));
-    expect(logoRect.left, closeTo(111, 1.1));
+    expect(logoRect.left, 111);
 
     for (final (name, left) in const [
       ('Google', 73.0),
@@ -155,7 +155,7 @@ void main() {
       final rect = tester.getRect(control);
       expect(rect.left, closeTo(left, 1));
       expect(rect.size, const Size(56, 56));
-      expect(rect.top, closeTo(636, 2.5));
+      expect(rect.top, 636);
     }
 
     for (final (name, top) in const [

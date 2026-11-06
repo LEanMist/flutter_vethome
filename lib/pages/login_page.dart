@@ -192,12 +192,15 @@ class _LoginPageState extends State<LoginPage> {
                     Column(
                       children: [
                         SizedBox(height: 180 * s),
-                        Image.asset(
-                          'assets/imagens/figma/vethomepng-2.png',
-                          width: 166 * s,
-                          height: 166 * s,
-                          fit: BoxFit.contain,
-                          semanticLabel: 'VetHome',
+                        Transform.translate(
+                          offset: Offset(-1 * s, 0),
+                          child: Image.asset(
+                            'assets/imagens/figma/vethomepng-2.png',
+                            width: 166 * s,
+                            height: 166 * s,
+                            fit: BoxFit.contain,
+                            semanticLabel: 'VetHome',
+                          ),
                         ),
                         // O primeiro campo começa em 333 no frame de referência.
                         Transform.translate(
@@ -295,54 +298,57 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                         ),
                         const SizedBox(height: 22),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            for (final (index, social) in const [
-                              ('Google', 'icons8-google-logo-96-1.png'),
-                              ('Facebook', 'icons8-facebook-novo-96-1.png'),
-                              ('Instagram', 'icons8-instagram-96-1.png'),
-                            ].indexed) ...[
-                              if (index > 0) const SizedBox(width: 37.5),
-                              Tooltip(
-                                message: social.$1,
-                                child: DecoratedBox(
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: VH.background,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: VH.shadowSubtle,
-                                        offset: Offset(2, 2),
-                                        blurRadius: 2,
-                                      ),
-                                    ],
-                                  ),
-                                  child: SizedBox(
-                                    width: 56,
-                                    height: 56,
-                                    child: OutlinedButton(
-                                      onPressed: () => mostrarMensagem(
-                                        'Login social em breve.',
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        backgroundColor: VH.background,
-                                        side: BorderSide.none,
-                                        shape: const CircleBorder(),
-                                        padding: EdgeInsets.zero,
-                                      ),
-                                      child: Image.asset(
-                                        'assets/imagens/figma/${social.$2}',
-                                        width: 39,
-                                        height: 39,
-                                        semanticLabel: social.$1,
+                        Transform.translate(
+                          offset: const Offset(0, -2),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              for (final (index, social) in const [
+                                ('Google', 'icons8-google-logo-96-1.png'),
+                                ('Facebook', 'icons8-facebook-novo-96-1.png'),
+                                ('Instagram', 'icons8-instagram-96-1.png'),
+                              ].indexed) ...[
+                                if (index > 0) const SizedBox(width: 37.5),
+                                Tooltip(
+                                  message: social.$1,
+                                  child: DecoratedBox(
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: VH.background,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: VH.shadowSubtle,
+                                          offset: Offset(2, 2),
+                                          blurRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    child: SizedBox(
+                                      width: 56,
+                                      height: 56,
+                                      child: OutlinedButton(
+                                        onPressed: () => mostrarMensagem(
+                                          'Login social em breve.',
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor: VH.background,
+                                          side: BorderSide.none,
+                                          shape: const CircleBorder(),
+                                          padding: EdgeInsets.zero,
+                                        ),
+                                        child: Image.asset(
+                                          'assets/imagens/figma/${social.$2}',
+                                          width: 39,
+                                          height: 39,
+                                          semanticLabel: social.$1,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                         const SizedBox(height: 27),
                         const Text(
