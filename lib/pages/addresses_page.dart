@@ -338,6 +338,29 @@ class AddressEditorPage extends StatelessWidget {
           final saved = await VetRepository.flush();
           if (context.mounted) Navigator.pop(context, saved);
         },
+        onDelete: (value) async {
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Excluir endereço?'),
+              content: Text(value.summary),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Cancelar'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Excluir'),
+                ),
+              ],
+            ),
+          );
+          if (confirmed != true || !context.mounted) return;
+          VetRepository.removeAddress(value.id);
+          final saved = await VetRepository.flush();
+          if (context.mounted) Navigator.pop(context, saved ? null : false);
+        },
       ),
     ),
   );

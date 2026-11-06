@@ -83,8 +83,8 @@ void main() {
       matching: find.byType(TextFormField),
     );
     await tester.enterText(streetField, 'Rua Nova');
-    await tester.ensureVisible(find.text('Salvar endereço'));
-    await tester.tap(find.text('Salvar endereço'));
+    await tester.ensureVisible(find.text('Salvar'));
+    await tester.tap(find.text('Salvar'));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 20)),
     );

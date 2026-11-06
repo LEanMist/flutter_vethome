@@ -186,6 +186,8 @@ void main() {
     expect(decoration.color, Colors.white.withValues(alpha: .2));
     expect(decoration.borderRadius, BorderRadius.circular(30));
     expect(decoration.border!.top.width, 3);
+    expect(find.text('Complemento'), findsOneWidget);
+    expect(find.text('Complemento (opcional)'), findsNothing);
     final iconCircles = find.byWidgetPredicate(
       (widget) =>
           widget is Container &&
@@ -257,8 +259,8 @@ void main() {
     for (final label in [
       'CEP',
       'Endereço',
-      'Número',
-      'Complemento (opcional)',
+      'Numero',
+      'Complemento',
       'Cidade',
       'Nome',
     ]) {

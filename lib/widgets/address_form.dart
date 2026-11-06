@@ -13,12 +13,14 @@ class AddressForm extends StatefulWidget {
     required this.title,
     required this.onSaved,
     this.onSkip,
+    this.onDelete,
     this.initial,
     this.cepService = const CepService(),
   });
   final String title;
   final FutureOr<void> Function(SavedAddress) onSaved;
   final FutureOr<void> Function()? onSkip;
+  final FutureOr<void> Function(SavedAddress)? onDelete;
   final SavedAddress? initial;
   final CepService cepService;
   @override
@@ -147,6 +149,18 @@ class _AddressFormState extends State<AddressForm> {
     }
   }
 
+  Future<void> _delete() async {
+    final initial = widget.initial;
+    final onDelete = widget.onDelete;
+    if (_saving || initial == null || onDelete == null) return;
+    setState(() => _saving = true);
+    try {
+      await onDelete(initial);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   Widget _field(
     String label,
     IconData icon,
@@ -158,7 +172,8 @@ class _AddressFormState extends State<AddressForm> {
     icon,
     compact: true,
     figmaForm:
-        widget.onSkip != null &&
+        (widget.onSkip != null ||
+            (widget.initial != null && widget.onDelete != null)) &&
         MediaQuery.sizeOf(context).width < VH.desktopBreakpoint,
     labelAbove: true,
     fitSingleLine: true,
@@ -171,6 +186,13 @@ class _AddressFormState extends State<AddressForm> {
   Widget build(BuildContext context) {
     final desktop = MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint;
     final registration = widget.onSkip != null && !desktop;
+    final editing =
+        widget.initial != null && widget.onDelete != null && !desktop;
+    final saveLabel = widget.onSkip != null
+        ? 'Continuar'
+        : editing
+        ? 'Salvar'
+        : 'Salvar endereço';
     final saveButton = ElevatedButton(
       onPressed: _loading || _saving ? null : _save,
       style: ElevatedButton.styleFrom(
@@ -184,11 +206,7 @@ class _AddressFormState extends State<AddressForm> {
         ),
       ),
       child: Text(
-        _saving
-            ? 'Salvando…'
-            : widget.onSkip == null
-            ? 'Salvar endereço'
-            : 'Continuar',
+        _saving ? 'Salvando…' : saveLabel,
         maxLines: 1,
         softWrap: false,
       ),
@@ -328,7 +346,7 @@ class _AddressFormState extends State<AddressForm> {
                                   ),
                                   slot(
                                     _field(
-                                      'Número',
+                                      'Numero',
                                       Icons.numbers,
                                       _number,
                                       validator: _required,
@@ -336,7 +354,7 @@ class _AddressFormState extends State<AddressForm> {
                                   ),
                                   slot(
                                     _field(
-                                      'Complemento (opcional)',
+                                      'Complemento',
                                       Icons.home_outlined,
                                       _complement,
                                     ),
@@ -367,7 +385,52 @@ class _AddressFormState extends State<AddressForm> {
                         ? 12
                         : 16,
                   ),
-                  registration
+                  editing
+                      ? Center(
+                          child: SizedBox(
+                            width: 259,
+                            height: 34,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                SizedBox(
+                                  width: 90,
+                                  height: 34,
+                                  child: OutlinedButton(
+                                    onPressed: _saving ? null : _delete,
+                                    style: OutlinedButton.styleFrom(
+                                      backgroundColor: VH.background,
+                                      foregroundColor: VH.foreground,
+                                      side: BorderSide(
+                                        color: Colors.white.withValues(
+                                          alpha: .8,
+                                        ),
+                                      ),
+                                      elevation: 2,
+                                      shadowColor: VH.foreground.withValues(
+                                        alpha: .2,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      shape: const StadiumBorder(),
+                                      textStyle: TextStyle(
+                                        fontFamily: VH.headingFontFamily,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    child: const Text('Excluir'),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 90,
+                                  height: 34,
+                                  child: saveButton,
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : registration
                       ? Center(
                           child: SizedBox(
                             width: 181,

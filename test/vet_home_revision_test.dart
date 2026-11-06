@@ -277,7 +277,7 @@ void main() {
         'São Paulo',
       );
       await fill(tester, 'Endereço', 'Rua editada');
-      await fill(tester, 'Número', '15');
+      await fill(tester, 'Numero', '15');
       await fill(tester, 'Nome', 'Casa da Irmã');
       await tester.ensureVisible(find.text('Salvar endereço'));
       await tester.tap(find.text('Salvar endereço'));
