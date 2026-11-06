@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/theme_preferences.dart';
 import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -16,18 +17,15 @@ class ConfigScreen extends StatelessWidget {
         label: 'Meus Endereços',
         action: () => Navigator.pushNamed(context, '/enderecos'),
       ),
-      (
-        label: 'Sobre a veterinária',
-        action: () => Navigator.pushNamed(context, '/sobre'),
-      ),
       (label: 'Suporte', action: () => _showSupport(context)),
-      (label: 'Histórico', action: () => _showHistory(context)),
+      (label: 'Historico', action: () => _showHistory(context)),
       (label: 'Sair', action: () => _signOut(context)),
     ];
     return VHPage(
       tab: '/config',
       children: [
         const VHHeader('Configurações', showBack: false, settingsStyle: true),
+        const _LocalSaveNotice(),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 26, 12, 24),
           child: Column(
@@ -66,13 +64,7 @@ class ConfigScreen extends StatelessWidget {
   }
 
   Future<void> _chooseTheme(BuildContext context) async {
-    const colors = <({String name, Color color})>[
-      (name: 'Marrom', color: Color(0xFF68442E)),
-      (name: 'Rosa', color: Color(0xFFC08081)),
-      (name: 'Verde', color: Color(0xFF718B70)),
-      (name: 'Azul', color: Color(0xFF6B8FA3)),
-      (name: 'Roxo', color: Color(0xFF9477A8)),
-    ];
+    const colors = ThemePreferences.options;
     var selected = VH.themeSeed.value;
     final color = await showDialog<Color>(
       context: context,
@@ -152,7 +144,20 @@ class ConfigScreen extends StatelessWidget {
         ),
       ),
     );
-    if (color != null) VH.themeSeed.value = color;
+    if (color != null) {
+      VH.themeSeed.value = color;
+      final saved = await ThemePreferences.save(color);
+      if (!context.mounted || saved) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Tema aplicado nesta sessão, mas não foi possível salvá-lo.',
+            ),
+          ),
+        );
+    }
   }
 
   void _showSupport(BuildContext context) {
@@ -295,4 +300,61 @@ class ConfigScreen extends StatelessWidget {
       Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     }
   }
+}
+
+class _LocalSaveNotice extends StatefulWidget {
+  const _LocalSaveNotice();
+
+  @override
+  State<_LocalSaveNotice> createState() => _LocalSaveNoticeState();
+}
+
+class _LocalSaveNoticeState extends State<_LocalSaveNotice> {
+  bool _saving = false;
+
+  Future<void> _retry() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    final saved = await VetRepository.retrySave();
+    if (!mounted) return;
+    setState(() => _saving = false);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            saved
+                ? 'Alterações salvas no dispositivo.'
+                : 'A gravação ainda não foi concluída.',
+          ),
+        ),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+    valueListenable: VetRepository.unsavedChanges,
+    builder: (context, pending, _) => pending || _saving
+        ? Card(
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Há alterações nesta sessão que ainda não foram salvas no dispositivo.',
+                  ),
+                  TextButton(
+                    onPressed: _saving ? null : _retry,
+                    child: Text(
+                      _saving ? 'Salvando…' : 'Tentar salvar novamente',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : const SizedBox.shrink(),
+  );
 }

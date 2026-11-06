@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'theme/vet_colors.dart';
 
@@ -65,13 +64,15 @@ class VH {
     colors: [secondary, background],
   );
 
-  static TextStyle get figmaFieldValueStyle => GoogleFonts.comfortaa(
+  static const TextStyle figmaFieldValueStyle = TextStyle(
+    fontFamily: headingFontFamily,
     fontSize: 15,
     fontWeight: FontWeight.w500,
     color: foreground,
   );
 
-  static TextStyle get figmaFieldLabelStyle => GoogleFonts.montserratAlternates(
+  static const TextStyle figmaFieldLabelStyle = TextStyle(
+    fontFamily: bodyFontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: foreground,
@@ -151,12 +152,16 @@ class VetTheme {
         ),
       ),
     );
-    final bodyTextTheme = GoogleFonts.montserratAlternatesTextTheme(
-      baseTheme.textTheme,
-    ).apply(bodyColor: VH.foreground, displayColor: VH.foreground);
-    final headingTextTheme = GoogleFonts.comfortaaTextTheme(
-      bodyTextTheme,
-    ).apply(bodyColor: VH.foreground, displayColor: VH.foreground);
+    final bodyTextTheme = baseTheme.textTheme.apply(
+      fontFamily: VH.bodyFontFamily,
+      bodyColor: VH.foreground,
+      displayColor: VH.foreground,
+    );
+    final headingTextTheme = bodyTextTheme.apply(
+      fontFamily: VH.headingFontFamily,
+      bodyColor: VH.foreground,
+      displayColor: VH.foreground,
+    );
 
     return baseTheme.copyWith(
       textTheme: bodyTextTheme.copyWith(

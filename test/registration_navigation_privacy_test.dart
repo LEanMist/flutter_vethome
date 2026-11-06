@@ -113,8 +113,11 @@ void main() {
       ),
     );
 
-    await tester.ensureVisible(find.text('Pular por enquanto'));
-    await tester.tap(find.text('Pular por enquanto'));
+    await tester.ensureVisible(find.text('Pular'));
+    await tester.tap(find.text('Pular'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Cadastro Pet aberto'), findsOneWidget);

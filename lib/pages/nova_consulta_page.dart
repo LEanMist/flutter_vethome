@@ -48,6 +48,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   late DateTime _calendarMonth;
   TimeOfDay? _time = const TimeOfDay(hour: 12, minute: 0);
   TimeOfDay? _end = const TimeOfDay(hour: 13, minute: 0);
+  bool _saving = false;
   final _description = TextEditingController();
   DateTime _at(TimeOfDay t) =>
       DateTime(_date.year, _date.month, _date.day, t.hour, t.minute);
@@ -173,7 +174,8 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   void _message(String text) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(text)));
-  void _schedule() {
+  Future<void> _schedule() async {
+    if (_saving) return;
     if (_time == null) {
       _message('Escolha uma data e horário futuros.');
       return;
@@ -188,23 +190,40 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       return;
     }
     final date = _at(_time!);
-    final saved = tryScheduleAppointment(
-      petId: widget.pet.id,
-      appointment: Agendamento(
-        data: date,
-        endDate: _at(_end!),
-        tipo: widget.service,
-        veterinario: 'Dra. Ana Silva',
-        local: 'VetHome · ${widget.plan}',
-        status: StatusAgendamento.pendente,
-        descricao: _description.text.trim(),
-      ),
-      now: DateTime.now(),
-    );
-    if (!saved) {
+    late final bool scheduled;
+    try {
+      scheduled = tryScheduleAppointment(
+        petId: widget.pet.id,
+        appointment: Agendamento(
+          data: date,
+          endDate: _at(_end!),
+          tipo: widget.service,
+          veterinario: 'Dra. Ana Silva',
+          local: 'VetHome · ${widget.plan}',
+          status: StatusAgendamento.pendente,
+          descricao: _description.text.trim(),
+        ),
+        now: DateTime.now(),
+      );
+    } on PersistenceBlockedException {
+      if (!mounted) return;
+      _message('Armazenamento local bloqueado. Nenhuma consulta foi criada.');
+      return;
+    }
+    if (!scheduled) {
       _message('Escolha uma data e horário futuros.');
       return;
     }
+    setState(() => _saving = true);
+    final saved = await VetRepository.flush();
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (!saved) {
+      _message(
+        'Consulta criada nesta sessão. Não foi possível salvar localmente.',
+      );
+    }
+    if (ModalRoute.of(context)?.isCurrent == false) return;
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/agenda',
@@ -235,23 +254,59 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   @override
   Widget build(BuildContext context) {
     final pet = VetRepository.petById(widget.pet.id) ?? widget.pet;
-    return VetPageScaffold(
+    final page = VetPageScaffold(
       title: 'Novo agendamento',
       pet: pet,
       selectedIndex: 3,
       contentMaxWidth: 1120,
-      footer: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _schedule,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: VetColors.brown,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.all(16),
-            minimumSize: const Size.fromHeight(48),
+      footer: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            key: const ValueKey('appointment-locality-notice'),
+            container: true,
+            label:
+                'Demonstração local: esta consulta é salva apenas neste dispositivo '
+                'e não é enviada à veterinária.',
+            child: ExcludeSemantics(
+              child: const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, size: 18, color: VetColors.brown),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Demonstração local: esta consulta é salva apenas neste dispositivo '
+                        'e não é enviada à veterinária.',
+                        style: TextStyle(
+                          color: VetColors.brown,
+                          fontSize: 12,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          child: const Text('Confirmar agendamento'),
-        ),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _saving ? null : _schedule,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VetColors.brown,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.all(16),
+                minimumSize: const Size.fromHeight(48),
+              ),
+              child: Text(_saving ? 'Salvando…' : 'Confirmar agendamento'),
+            ),
+          ),
+        ],
       ),
       children: [
         VetResponsiveLayout(
@@ -267,6 +322,10 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
           ),
         ),
       ],
+    );
+    return PopScope(
+      canPop: !_saving,
+      child: AbsorbPointer(absorbing: _saving, child: page),
     );
   }
 

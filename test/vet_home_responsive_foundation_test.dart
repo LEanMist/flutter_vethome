@@ -99,7 +99,7 @@ void main() {
         for (final label in const [
           'Pets',
           'Perfil',
-          'Whatsapp',
+          'Conversa',
           'Agenda',
           'Configurações',
         ]) {

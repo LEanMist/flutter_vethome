@@ -151,6 +151,16 @@ class _MiniStatus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
+    final textIsEnlarged = MediaQuery.textScalerOf(context).scale(12) > 12.01;
+    final valueText = Text(
+      value,
+      textAlign: textIsEnlarged ? TextAlign.center : null,
+      style: TextStyle(
+        fontSize: 12 * s,
+        fontWeight: FontWeight.w700,
+        color: VetColors.brown,
+      ),
+    );
     return VetCard(
       flat: true,
       color: VetColors.rose.withValues(alpha: .2),
@@ -164,17 +174,12 @@ class _MiniStatus extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 11 * s, color: VetColors.brown),
           ),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 12 * s,
-                fontWeight: FontWeight.w700,
-                color: VetColors.brown,
-              ),
-            ),
-          ),
+          // A composição padrão em 1x conserva o scaleDown original.
+          // Com texto ampliado, permitir quebra de linha evita encolhimento.
+          if (textIsEnlarged)
+            valueText
+          else
+            FittedBox(fit: BoxFit.scaleDown, child: valueText),
         ],
       ),
     );
@@ -188,26 +193,32 @@ class _ConsultaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
+    final textIsEnlarged = MediaQuery.textScalerOf(context).scale(12) > 12.01;
+    final dateText = Text(
+      fmtData(c.data),
+      style: TextStyle(
+        fontSize: 13 * s,
+        fontWeight: FontWeight.w700,
+        color: VetColors.brown,
+      ),
+    );
+    const status = StatusChip('Concluído', VetTones.success, dense: true);
     return VetCard(
       flat: true,
       color: VetColors.rose.withValues(alpha: .16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                fmtData(c.data),
-                style: TextStyle(
-                  fontSize: 13 * s,
-                  fontWeight: FontWeight.w700,
-                  color: VetColors.brown,
-                ),
-              ),
-              const Spacer(),
-              const StatusChip('Concluído', VetTones.success, dense: true),
-            ],
-          ),
+          if (textIsEnlarged)
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 12,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [dateText, status],
+            )
+          else
+            Row(children: [dateText, const Spacer(), status]),
           SizedBox(height: 8 * s),
           Text(
             c.tipo,

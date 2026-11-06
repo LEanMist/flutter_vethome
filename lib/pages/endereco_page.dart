@@ -14,6 +14,34 @@ class EnderecoScreen extends StatelessWidget {
   });
   final Map<String, String> initialData;
   final CepService cepService;
+
+  Future<void> _continue(BuildContext context, Map<String, String> data) async {
+    VetRepository.registerClient(data);
+    final saved = await VetRepository.flush();
+    if (!context.mounted) return;
+    if (!saved) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Dados atualizados nesta sessão. Não foi possível salvar localmente.',
+            ),
+          ),
+        );
+    }
+    Navigator.pushNamed(
+      context,
+      '/cadastroPet',
+      arguments: saved
+          ? {
+              for (final entry in data.entries)
+                if (!entry.key.startsWith('client.')) entry.key: entry.value,
+            }
+          : data,
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: VH.background,
@@ -21,22 +49,21 @@ class EnderecoScreen extends StatelessWidget {
       child: AddressForm(
         cepService: cepService,
         title: 'Endereço',
-        onSaved: (address) {
+        onSaved: (address) async {
           final data = withoutRegistrationPasswords({
             ...initialData,
             'client.CEP': address.cep,
             'client.Endereço': address.street,
+            'client.Nome do Endereço': address.name,
             'client.Cidade': address.city,
             'client.Número': address.number,
             'client.Complemento': address.complement,
           });
-          VetRepository.registerClient(data);
-          Navigator.pushNamed(context, '/cadastroPet', arguments: data);
+          await _continue(context, data);
         },
-        onSkip: () {
+        onSkip: () async {
           final data = withoutRegistrationPasswords(initialData);
-          VetRepository.registerClient(data);
-          Navigator.pushNamed(context, '/cadastroPet', arguments: data);
+          await _continue(context, data);
         },
       ),
     ),

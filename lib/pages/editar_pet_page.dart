@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import '../core/utils/formatters.dart';
 import '../core/utils/pet_images.dart';
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
@@ -15,7 +16,10 @@ class EditarPetPage extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Excluir pet?'),
-        content: Text('Deseja excluir ${pet.name} da sua lista?'),
+        content: Text(
+          'Deseja excluir ${pet.name}? As consultas e vacinas salvas para '
+          'este pet também serão excluídas deste dispositivo.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -30,6 +34,17 @@ class EditarPetPage extends StatelessWidget {
     );
     if (!context.mounted || yes != true) return;
     VetRepository.removePet(pet);
+    final saved = await VetRepository.flush();
+    if (!context.mounted) return;
+    if (!saved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Pet removido nesta sessão. Não foi possível salvar localmente.',
+          ),
+        ),
+      );
+    }
     Navigator.pop(context, 'deleted');
   }
 
@@ -43,6 +58,7 @@ class EditarPetPage extends StatelessWidget {
       onCancel: modal ? () => Navigator.pop(context) : null,
       onDelete: () => _delete(context),
       onSaved: (v) async {
+        final age = ageInYears(v.birth, DateTime.now());
         final updated = current.copyWith(
           name: v.name,
           species: v.species,
@@ -57,8 +73,7 @@ class EditarPetPage extends StatelessWidget {
                   PetImages.hasImage(current.imagePath)
               ? current.imagePath
               : PetImages.forSpecies(v.species) ?? '',
-          description:
-              '${v.species} • ${DateTime.now().year - v.birth.year} anos',
+          description: '${v.species} • $age ${age == 1 ? 'ano' : 'anos'}',
         );
         VetRepository.updatePet(current, updated);
         final saved = await VetRepository.flush();

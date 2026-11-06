@@ -255,6 +255,8 @@ void main() {
         expect(_repositorySnapshot(pet), before, reason: entry.key);
       }
 
+      expect(VetRepository.unsavedChanges.value, isFalse);
+      expect(await VetRepository.retrySave(), isFalse);
       expect(switch (storage) {
         _CountingLocalStorage value => value.saveCalls,
         _ResultStorage value => value.saveCalls,

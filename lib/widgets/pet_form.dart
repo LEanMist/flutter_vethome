@@ -43,7 +43,8 @@ class PetForm extends StatefulWidget {
   final String title;
   final PetModel? pet;
   final FutureOr<void> Function(PetFormValue) onSaved;
-  final VoidCallback? onSkip, onDelete, onCancel;
+  final FutureOr<void> Function()? onSkip, onDelete;
+  final VoidCallback? onCancel;
   final bool modal;
   @override
   State<PetForm> createState() => _PetFormState();
@@ -82,6 +83,7 @@ class _PetFormState extends State<PetForm> {
   }
 
   Future<void> choosePhoto() async {
+    if (busy) return;
     setState(() => busy = true);
     try {
       final value = await PetPhoto.choose(context);
@@ -113,47 +115,77 @@ class _PetFormState extends State<PetForm> {
     List<String> suggestions = const [],
     String? Function(String?)? validator,
     ValueChanged<String>? onChanged,
-  }) => VHField(
-    label,
-    icon,
-    compact: true,
-    figmaForm:
+  }) {
+    final size = MediaQuery.sizeOf(context);
+    final figmaRegistration =
         widget.onSkip != null &&
         widget.pet == null &&
-        MediaQuery.sizeOf(context).height >= 720 &&
-        MediaQuery.sizeOf(context).width < VH.desktopBreakpoint,
-    labelAbove: MediaQuery.sizeOf(context).width >= 900,
-    controller: c,
-    value: label == 'Castração' ? 'Não informado' : null,
-    choices: choices,
-    suggestions: suggestions,
-    onChanged: onChanged,
-    validator: validator ?? requiredValue,
-  );
+        size.height >= 720 &&
+        size.width < 600 &&
+        MediaQuery.textScalerOf(context).scale(14) <= 15.4;
+    return VHField(
+      label,
+      icon,
+      compact: true,
+      figmaForm: figmaRegistration,
+      labelAbove: figmaRegistration || size.width >= 900,
+      labelHorizontalPadding: figmaRegistration ? 5 : null,
+      labelBottomPadding: figmaRegistration ? 0 : null,
+      labelFitSingleLine: figmaRegistration,
+      controller: c,
+      value: label == 'Castração' ? 'Não informado' : null,
+      choices: choices,
+      suggestions: suggestions,
+      onChanged: onChanged,
+      validator: validator ?? requiredValue,
+    );
+  }
+
   Future<void> save() async {
+    if (busy) return;
     if (!key.currentState!.validate()) {
       setState(() => validationFailed = true);
       return;
     }
+    await _runAction(() async {
+      try {
+        await widget.onSaved(
+          PetFormValue(
+            name.text.trim(),
+            species.text,
+            sex.text,
+            parsePetWeight(weight.text)!,
+            parseBirthDate(birth.text)!,
+            breed.text.trim(),
+            photo,
+            neutered.text.isEmpty ? null : neutered.text == 'Castrado',
+          ),
+        );
+      } on FormatException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    });
+  }
+
+  Future<void> _runAction(FutureOr<void> Function()? action) async {
+    if (busy) return;
     setState(() => busy = true);
     try {
-      await widget.onSaved(
-        PetFormValue(
-          name.text.trim(),
-          species.text,
-          sex.text,
-          parsePetWeight(weight.text)!,
-          parseBirthDate(birth.text)!,
-          breed.text.trim(),
-          photo,
-          neutered.text.isEmpty ? null : neutered.text == 'Castrado',
-        ),
-      );
-    } on FormatException catch (e) {
+      await action?.call();
+    } on PersistenceBlockedException {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'O armazenamento local está protegido. Nenhuma alteração foi feita.',
+            ),
+          ),
+        );
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -165,7 +197,13 @@ class _PetFormState extends State<PetForm> {
       final small = MediaQuery.sizeOf(context).height < 720;
       final desktop = constraints.maxWidth >= 700 && !widget.modal;
       final editing = widget.pet != null;
-      final registration = widget.onSkip != null && !editing && !desktop;
+      final petRegistration = widget.onSkip != null && !editing;
+      final registration = petRegistration && !desktop;
+      final figmaRegistration =
+          registration &&
+          !small &&
+          constraints.maxWidth < 600 &&
+          MediaQuery.textScalerOf(context).scale(14) <= 15.4;
       final saveButton = ElevatedButton(
         onPressed: busy ? null : save,
         style: ElevatedButton.styleFrom(
@@ -196,7 +234,11 @@ class _PetFormState extends State<PetForm> {
       final content = Padding(
         padding: EdgeInsets.fromLTRB(
           16,
-          registration ? 5 : 7,
+          figmaRegistration
+              ? 36
+              : registration
+              ? 5
+              : 7,
           16,
           registration ? 0 : 7,
         ),
@@ -207,6 +249,8 @@ class _PetFormState extends State<PetForm> {
             Text(
               widget.title,
               textAlign: TextAlign.center,
+              maxLines: figmaRegistration ? 1 : null,
+              softWrap: !figmaRegistration,
               style: TextStyle(
                 fontFamily: 'Comfortaa',
                 fontWeight: FontWeight.bold,
@@ -218,81 +262,108 @@ class _PetFormState extends State<PetForm> {
                 color: VetColors.brown,
               ),
             ),
-            SizedBox(height: registration ? 0 : 6),
-            Center(
-              child: SizedBox(
-                width: small ? 80 : 96,
-                height: small ? 72 : 90,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Align(
-                      alignment: Alignment.center,
-                      child: PetAvatar(
-                        image: widget.pet?.imagePath ?? '',
-                        species: species.text.isEmpty
-                            ? 'Cachorro'
-                            : species.text,
-                        photoBase64: photo,
-                        size: small ? 60 : 76,
+            SizedBox(height: figmaRegistration ? 36 : 6),
+            if (!petRegistration) ...[
+              Center(
+                child: SizedBox(
+                  width: small ? 80 : 96,
+                  height: small ? 72 : 90,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Align(
+                        alignment: Alignment.center,
+                        child: PetAvatar(
+                          image: widget.pet?.imagePath ?? '',
+                          species: species.text.isEmpty
+                              ? 'Cachorro'
+                              : species.text,
+                          photoBase64: photo,
+                          size: small ? 60 : 76,
+                        ),
                       ),
-                    ),
-                    Positioned(
-                      right: -2,
-                      bottom: -2,
-                      child: PetPhotoButton(onPressed: choosePhoto, busy: busy),
-                    ),
-                  ],
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: PetPhotoButton(
+                          onPressed: choosePhoto,
+                          busy: busy,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: registration ? 0 : 8),
-            Center(
-              child: SizedBox(
-                width: registration ? 290 : double.infinity,
-                height: registration && !small ? 480 : null,
-                child: Container(
-                  key: registration
-                      ? const ValueKey('pet-registration-panel')
-                      : null,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: registration ? 15.5 : 12,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(
-                      alpha: registration ? .2 : .16,
+              const SizedBox(height: 8),
+            ],
+            SizedBox(
+              key: figmaRegistration
+                  ? const ValueKey('pet-registration-slot')
+                  : null,
+              height: registration && !small ? 480 : null,
+              child: Center(
+                child: Transform.translate(
+                  offset: figmaRegistration ? const Offset(-1, 0) : Offset.zero,
+                  child: SizedBox(
+                    width: registration ? 290 : double.infinity,
+                    height: registration && !small ? 480 : null,
+                    child: Container(
+                      key: registration
+                          ? const ValueKey('pet-registration-panel')
+                          : null,
+                      padding: registration && !small
+                          ? const EdgeInsets.fromLTRB(12, 11, 13, 12)
+                          : EdgeInsets.symmetric(
+                              horizontal: registration ? 12 : 12,
+                              vertical: 12,
+                            ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(
+                          alpha: registration ? .2 : .16,
+                        ),
+                        borderRadius: BorderRadius.circular(
+                          registration ? 30 : 28,
+                        ),
+                        border: Border.all(
+                          color: registration
+                              ? VetColors.rose
+                              : VetColors.rose.withValues(alpha: .7),
+                          width: registration ? 3 : 2,
+                        ),
+                      ),
+                      child: Form(
+                        key: key,
+                        child: desktop
+                            ? LayoutBuilder(
+                                builder: (context, fieldConstraints) {
+                                  final width =
+                                      (fieldConstraints.maxWidth - 12) / 2;
+                                  return Wrap(
+                                    key: const ValueKey(
+                                      'pet-form-desktop-grid',
+                                    ),
+                                    spacing: 12,
+                                    runSpacing: 10,
+                                    children: [
+                                      for (final item in _formFields(
+                                        editing,
+                                        registration: petRegistration,
+                                      ))
+                                        SizedBox(width: width, child: item),
+                                    ],
+                                  );
+                                },
+                              )
+                            : Column(
+                                key: const ValueKey('pet-form-mobile-grid'),
+                                children: _mobileFields(
+                                  editing,
+                                  registration: registration,
+                                  figmaRegistration: figmaRegistration,
+                                ),
+                              ),
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(registration ? 30 : 28),
-                    border: Border.all(
-                      color: registration
-                          ? VetColors.rose
-                          : VetColors.rose.withValues(alpha: .7),
-                      width: registration ? 3 : 2,
-                    ),
-                  ),
-                  child: Form(
-                    key: key,
-                    child: desktop
-                        ? LayoutBuilder(
-                            builder: (context, fieldConstraints) {
-                              final width =
-                                  (fieldConstraints.maxWidth - 12) / 2;
-                              return Wrap(
-                                key: const ValueKey('pet-form-desktop-grid'),
-                                spacing: 12,
-                                runSpacing: 10,
-                                children: [
-                                  for (final item in _formFields(editing))
-                                    SizedBox(width: width, child: item),
-                                ],
-                              );
-                            },
-                          )
-                        : Column(
-                            key: const ValueKey('pet-form-mobile-grid'),
-                            children: _mobileFields(editing),
-                          ),
                   ),
                 ),
               ),
@@ -307,7 +378,7 @@ class _PetFormState extends State<PetForm> {
                       if (widget.onCancel != null) ...[
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: widget.onCancel,
+                            onPressed: busy ? null : widget.onCancel,
                             child: const Text('Cancelar'),
                           ),
                         ),
@@ -320,31 +391,36 @@ class _PetFormState extends State<PetForm> {
               if (registration) const SizedBox(height: 8),
             if (widget.onSkip != null)
               TextButton(
-                onPressed: widget.onSkip,
-                child: const Text('Pular por enquanto'),
+                onPressed: busy ? null : () => _runAction(widget.onSkip),
+                child: const Text('Pular'),
               ),
             if (widget.onDelete != null)
               TextButton.icon(
-                onPressed: widget.onDelete,
+                onPressed: busy ? null : () => _runAction(widget.onDelete),
                 icon: const Icon(Icons.delete_outline),
                 label: Text(widget.modal ? 'Excluir' : 'Excluir pet'),
               ),
           ],
         ),
       );
-      return widget.modal ||
-              constraints.maxHeight < 560 ||
-              validationFailed ||
-              MediaQuery.viewInsetsOf(context).bottom > 0
-          ? SingleChildScrollView(child: content)
-          : Align(alignment: Alignment.topCenter, child: content);
+      return PopScope(
+        canPop: !busy,
+        child:
+            widget.modal ||
+                small ||
+                constraints.maxHeight < 560 ||
+                validationFailed ||
+                MediaQuery.viewInsetsOf(context).bottom > 0
+            ? SingleChildScrollView(child: content)
+            : Align(alignment: Alignment.topCenter, child: content),
+      );
     },
   );
 
-  List<Widget> _formFields(bool editing) => [
-    field(
+  List<Widget> _formFields(bool editing, {bool registration = false}) {
+    final nameField = field(
       editing ? 'Nome do pet' : 'Nome do Pet',
-      Icons.pets,
+      Icons.person_outline,
       name,
       validator: (v) {
         final error = requiredValue(v);
@@ -353,46 +429,65 @@ class _PetFormState extends State<PetForm> {
             ? 'Já existe um pet com esse nome'
             : null;
       },
-    ),
-    field(
+    );
+    final speciesField = field(
       editing ? 'Espécie' : 'Tipo de Animal',
       Icons.pets_outlined,
       species,
       choices: const ['Cachorro', 'Gato'],
       onChanged: (_) => setState(() => breed.clear()),
-    ),
-    field(
+    );
+    final sexField = field(
       editing ? 'Sexo' : 'Gênero/Sexo',
       Icons.wc,
       sex,
       choices: const ['Macho', 'Fêmea'],
-    ),
-    field(
+    );
+    final weightField = field(
       editing ? 'Peso (kg)' : 'Peso',
       Icons.scale_outlined,
       weight,
       validator: (v) =>
           parsePetWeight(v ?? '') == null ? 'Peso inválido (kg)' : null,
-    ),
-    field(
+    );
+    final neuteredField = field(
       'Castração',
       Icons.health_and_safety_outlined,
       neutered,
       choices: const ['Castrado', 'Não castrado'],
       validator: (_) => null,
-    ),
-    field(
+    );
+    final birthField = field(
       editing ? 'Nascimento (DD/MM/AAAA)' : 'Data de Nascimento',
       Icons.cake_outlined,
       birth,
       validator: (v) =>
           parseBirthDate(v ?? '') == null ? 'Data inválida' : null,
-    ),
-    field('Raça', Icons.pets, breed, suggestions: breedsFor(species.text)),
-  ];
+    );
+    final breedField = field(
+      'Raça',
+      Icons.pets,
+      breed,
+      suggestions: breedsFor(species.text),
+    );
+    return [
+      if (registration) speciesField,
+      nameField,
+      if (!registration) speciesField,
+      sexField,
+      weightField,
+      if (!registration) neuteredField,
+      birthField,
+      breedField,
+    ];
+  }
 
-  List<Widget> _mobileFields(bool editing) {
-    final fields = _formFields(editing);
+  List<Widget> _mobileFields(
+    bool editing, {
+    required bool registration,
+    required bool figmaRegistration,
+  }) {
+    final fields = _formFields(editing, registration: registration);
     final children = <Widget>[];
     for (var i = 0; i < fields.length; i++) {
       if (i == 2) {
@@ -401,9 +496,9 @@ class _PetFormState extends State<PetForm> {
             key: const ValueKey('pet-sex-weight'),
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: fields[2]),
-              const SizedBox(width: 10),
-              Expanded(child: fields[3]),
+              Expanded(flex: figmaRegistration ? 122 : 1, child: fields[2]),
+              SizedBox(width: figmaRegistration ? 13 : 10),
+              Expanded(flex: figmaRegistration ? 124 : 1, child: fields[3]),
             ],
           ),
         );
@@ -411,7 +506,9 @@ class _PetFormState extends State<PetForm> {
       } else {
         children.add(fields[i]);
       }
-      if (i < fields.length - 1) children.add(const SizedBox(height: 8));
+      if (i < fields.length - 1) {
+        children.add(SizedBox(height: figmaRegistration ? 16.8 : 8));
+      }
     }
     return children;
   }

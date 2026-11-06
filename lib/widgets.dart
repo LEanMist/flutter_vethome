@@ -45,11 +45,17 @@ class VHField extends StatefulWidget {
     this.figmaForm = false,
     this.compact = false,
     this.labelAbove = false,
+    this.labelHorizontalPadding,
+    this.labelBottomPadding,
+    this.labelFitSingleLine = false,
     this.fitSingleLine = false,
   });
   final bool figmaForm;
   final bool compact;
   final bool labelAbove;
+  final double? labelHorizontalPadding;
+  final double? labelBottomPadding;
+  final bool labelFitSingleLine;
   final bool fitSingleLine;
   final String label;
   final IconData icon;
@@ -373,22 +379,36 @@ class _VHFieldState extends State<VHField> {
         Padding(
           padding: EdgeInsets.only(
             left: widget.compact
-                ? 12
+                ? (widget.labelHorizontalPadding ?? 12)
                 : widget.figmaForm
                 ? 14
                 : 58,
-            bottom: 5,
+            bottom: widget.labelBottomPadding ?? 5,
           ),
-          child: Text(
-            widget.label,
-            style: widget.figmaForm
-                ? VH.figmaFieldLabelStyle
-                : const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: VH.foreground,
+          child: widget.labelFitSingleLine
+              ? SizedBox(
+                  height: 20,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.topLeft,
+                    child: Text(
+                      widget.label,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: VH.figmaFieldLabelStyle,
+                    ),
                   ),
-          ),
+                )
+              : Text(
+                  widget.label,
+                  style: widget.figmaForm
+                      ? VH.figmaFieldLabelStyle
+                      : const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: VH.foreground,
+                        ),
+                ),
         ),
       TapRegion(
         groupId: this,

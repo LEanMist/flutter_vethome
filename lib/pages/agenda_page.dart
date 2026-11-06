@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../core/utils/formatters.dart';
@@ -64,36 +66,276 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
     ]..sort((a, b) => a.agendamento.data.compareTo(b.agendamento.data));
 
-    return VHPage(
+    final isMobile = MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
+    final page = VHPage(
       tab: '/agenda',
       children: [
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth >= VH.desktopBreakpoint) {
-                return Row(
-                  key: const ValueKey('agenda-desktop-layout'),
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _calendarPanel()),
-                    const SizedBox(width: 32),
-                    Expanded(child: _appointments(consultasDoDia)),
-                  ],
-                );
-              }
-              return Column(
-                key: const ValueKey('agenda-mobile-layout'),
-                children: [
-                  _calendarPanel(),
-                  const SizedBox(height: 16),
-                  _appointments(consultasDoDia),
-                ],
-              );
-            },
+        if (isMobile)
+          _mobileAgenda(consultasDoDia)
+        else
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              key: const ValueKey('agenda-desktop-layout'),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _calendarPanel()),
+                const SizedBox(width: 32),
+                Expanded(child: _appointments(consultasDoDia)),
+              ],
+            ),
           ),
-        ),
       ],
+    );
+    return isMobile
+        ? MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: page,
+          )
+        : page;
+  }
+
+  Widget _mobileAgenda(List<_AgendaItem> appointments) {
+    final width = MediaQuery.sizeOf(context).width;
+    final scale = (width / 390).clamp(0.8, 1.0).toDouble();
+    final actionTop = math.max(
+      651.0,
+      appointments.length > 3 ? 399.0 + 84.0 * appointments.length : 651.0,
+    );
+    final contentHeight = math.max(692.0, actionTop + 41) * scale;
+    final weekdays = const [
+      'Domingo',
+      'Segunda Feira',
+      'Terça Feira',
+      'Quarta Feira',
+      'Quinta Feira',
+      'Sexta Feira',
+      'Sábado',
+    ];
+
+    return SizedBox(
+      key: const ValueKey('agenda-mobile-layout'),
+      width: 390 * scale,
+      height: contentHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 0,
+            top: 0,
+            child: VetCalendar(
+              agendaPageStyle: true,
+              month: _mes,
+              selected: _selecionado,
+              onPreviousMonth: () => _changeMonth(-1),
+              onNextMonth: () => _changeMonth(1),
+              onSelected: (date) => setState(() {
+                _selecionado = date;
+                _mes = DateTime(date.year, date.month);
+              }),
+            ),
+          ),
+          Positioned(
+            left: 67 * scale,
+            top: 323 * scale,
+            width: 258 * scale,
+            height: 41 * scale,
+            child: Container(
+              key: const ValueKey('agenda-selected-date'),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: VetColors.pinkOverlay50,
+                border: Border.all(color: VetColors.rose, width: 5 * scale),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(100 * scale),
+                  bottom: Radius.circular(200 * scale),
+                ),
+              ),
+              child: Text(
+                '${_selecionado.day} - ${weekdays[_selecionado.weekday % 7]}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: VH.headingFontFamily,
+                  fontSize: 22 * scale,
+                  fontWeight: FontWeight.bold,
+                  color: VH.foreground,
+                ),
+              ),
+            ),
+          ),
+          if (appointments.isEmpty)
+            Positioned(
+              left: 35 * scale,
+              right: 35 * scale,
+              top: 414 * scale,
+              child: Text(
+                'Não há consultas neste dia.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: VH.bodyFontFamily,
+                  fontSize: 14 * scale,
+                  color: VH.foreground,
+                ),
+              ),
+            ),
+          for (var index = 0; index < appointments.length; index++) ...[
+            _mobileAppointment(appointments[index], index, scale),
+            if (index < appointments.length - 1)
+              Positioned(
+                left: 88 * scale,
+                top: (466 + 84 * index) * scale,
+                child: _FigmaDottedLine(width: 221 * scale),
+              ),
+          ],
+          Positioned(
+            left: 343 * scale,
+            top: 439 * scale,
+            width: 24 * scale,
+            height: 24 * scale,
+            child: ExcludeSemantics(
+              child: Icon(
+                Icons.expand_less,
+                size: 24 * scale,
+                color: VH.foreground,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 343 * scale,
+            top: 555 * scale,
+            width: 24 * scale,
+            height: 24 * scale,
+            child: ExcludeSemantics(
+              child: Icon(
+                Icons.expand_more,
+                size: 24 * scale,
+                color: VH.foreground,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 145 * scale,
+            top: actionTop * scale,
+            width: 99 * scale,
+            height: 41 * scale,
+            child: Semantics(
+              button: true,
+              label: 'Nova Consulta',
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(100 * scale),
+                  onTap: () => Navigator.pushNamed(context, '/escolhaPet'),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: VH.primary,
+                      borderRadius: BorderRadius.circular(100 * scale),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: VetColors.shadowDark,
+                          offset: Offset(2, 2),
+                          blurRadius: 5,
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Nova Consulta',
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontFamily: VH.bodyFontFamily,
+                        fontSize: 10 * scale,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _mobileAppointment(_AgendaItem item, int index, double scale) {
+    final top = (399 + 84 * index) * scale;
+    final end = item.agendamento.endDate;
+    return Semantics(
+      container: true,
+      label: [
+        item.agendamento.tipo,
+        fmtHorario(item.agendamento.data, end),
+        item.name,
+        item.agendamento.local,
+      ].join(', '),
+      child: Stack(
+        children: [
+          Positioned(
+            left: 40.5 * scale,
+            top: top,
+            width: 50 * scale,
+            height: 50 * scale,
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      fmtHora(item.agendamento.data),
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 15 * scale,
+                        fontFamily: VH.bodyFontFamily,
+                      ),
+                    ),
+                    if (end != null)
+                      Text(
+                        fmtHora(end),
+                        maxLines: 1,
+                        softWrap: false,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 15 * scale,
+                          fontFamily: VH.bodyFontFamily,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 102 * scale,
+            top: top,
+            width: 195 * scale,
+            height: 50 * scale,
+            child: Container(
+              decoration: insetBox(color: VH.secondary, radius: 15 * scale),
+              alignment: Alignment.center,
+              padding: EdgeInsets.symmetric(horizontal: 8 * scale),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  item.agendamento.tipo,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15 * scale,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: VH.bodyFontFamily,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -265,4 +507,33 @@ class _AgendaScreenState extends State<AgendaScreen> {
       );
     });
   }
+}
+
+class _FigmaDottedLine extends StatelessWidget {
+  const _FigmaDottedLine({required this.width});
+
+  final double width;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    size: Size(width, 2),
+    painter: const _FigmaDottedLinePainter(),
+  );
+}
+
+class _FigmaDottedLinePainter extends CustomPainter {
+  const _FigmaDottedLinePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const radius = 1.0;
+    const pitch = 5.0;
+    final paint = Paint()..color = VH.foreground.withValues(alpha: .55);
+    for (var x = radius; x <= size.width - radius; x += pitch) {
+      canvas.drawCircle(Offset(x, size.height / 2), radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FigmaDottedLinePainter oldDelegate) => false;
 }

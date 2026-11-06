@@ -38,7 +38,7 @@ void main() {
     expect(surface.width, lessThanOrEqualTo(520));
   });
 
-  testWidgets('login usa o botão Entrar marrom aprovado no Figma', (
+  testWidgets('login usa o botão Entrar rosa aprovado no Figma', (
     tester,
   ) async {
     await pumpAt(tester, const LoginPage(), const Size(390, 844));
@@ -48,7 +48,7 @@ void main() {
     );
     expect(
       button.style?.backgroundColor?.resolve(const <WidgetState>{}),
-      VetColors.brown,
+      VetColors.rose,
     );
   });
 
@@ -67,17 +67,10 @@ void main() {
     final password = tester.widget<TextField>(passwordFinder);
 
     for (final field in [user, password]) {
-      expect(field.style?.fontFamily, 'MontserratAlternates_500');
-      expect(field.style?.fontFamilyFallback, const ['MontserratAlternates']);
+      expect(field.style?.fontFamily, 'MontserratAlternates');
       expect(field.style?.fontSize, 15);
       expect(field.style?.fontWeight, FontWeight.w500);
-      expect(
-        field.decoration?.hintStyle?.fontFamily,
-        'MontserratAlternates_500',
-      );
-      expect(field.decoration?.hintStyle?.fontFamilyFallback, const [
-        'MontserratAlternates',
-      ]);
+      expect(field.decoration?.hintStyle?.fontFamily, 'MontserratAlternates');
       expect(field.decoration?.hintStyle?.fontSize, 15);
       expect(field.decoration?.hintStyle?.fontWeight, FontWeight.w500);
       expect(
@@ -236,7 +229,7 @@ void main() {
     expect(find.byKey(const ValueKey('vh-form-desktop-grid')), findsOneWidget);
   });
 
-  testWidgets('endereço usa grade desktop sem perder os cinco campos', (
+  testWidgets('endereço usa grade desktop sem perder os seis campos', (
     tester,
   ) async {
     await pumpAt(tester, const EnderecoScreen(), const Size(1280, 800));
@@ -252,6 +245,7 @@ void main() {
       'Número',
       'Complemento (opcional)',
       'Cidade',
+      'Nome',
     ]) {
       expect(find.text(label), findsWidgets);
     }

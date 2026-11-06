@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Attachments captured by remote coding sessions; keep them out of Git.
+.codex-remote-attachments/

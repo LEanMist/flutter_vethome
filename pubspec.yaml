@@ -13,7 +13,6 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  google_fonts: ^6.2.1
   flutter_inset_shadow: ^2.0.3
 
   cupertino_icons: ^1.0.8
@@ -38,9 +37,17 @@ flutter:
   fonts:
     - family: Comfortaa
       fonts:
+        - asset: assets/fonts/ComfortaaRegular.ttf
+          weight: 400
+        - asset: assets/fonts/ComfortaaMedium.ttf
+          weight: 500
         - asset: assets/fonts/ComfortaaBold.ttf
           weight: 700
     - family: MontserratAlternates
       fonts:
+        - asset: assets/fonts/MontserratAlternatesRegular.ttf
+          weight: 400
+        - asset: assets/fonts/MontserratAlternatesMedium.ttf
+          weight: 500
         - asset: assets/fonts/MontserratAlternatesBold.ttf
           weight: 700

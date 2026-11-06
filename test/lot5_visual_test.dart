@@ -136,7 +136,7 @@ void main() {
     tester,
   ) async {
     viewport(tester, const Size(390, 844));
-    const labels = ['Pets', 'Perfil', 'Whatsapp', 'Agenda', 'Configurações'];
+    const labels = ['Pets', 'Perfil', 'Conversa', 'Agenda', 'Configurações'];
     const selectedAssets = [
       'pets-6.png',
       'frame-51-2.png',
@@ -276,7 +276,7 @@ void main() {
         ),
       ),
     );
-    const labels = ['Pets', 'Perfil', 'Whatsapp', 'Agenda', 'Configurações'];
+    const labels = ['Pets', 'Perfil', 'Conversa', 'Agenda', 'Configurações'];
     for (var i = 0; i < labels.length; i++) {
       final destination = find.bySemanticsLabel(labels[i]);
       expect(tester.getSize(destination).width, greaterThanOrEqualTo(48));

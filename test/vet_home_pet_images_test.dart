@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_vethome/core/utils/pet_images.dart';
@@ -254,5 +257,117 @@ void main() {
     await tester.pumpAndSettle();
     expect(VetRepository.petById(pet.id)!.species, 'Gato');
     expect(VetRepository.petById(pet.id)!.imagePath, image);
+  });
+
+  testWidgets(
+    'foto enviada e imagem personalizada prevalecem no detalhe móvel',
+    (tester) async {
+      const customAsset = 'assets/imagens/figma/vethomepng-2.png';
+      final base = PetModel(
+        name: 'Pet com imagem própria',
+        imagePath: customAsset,
+        description: 'Imagem personalizada',
+        species: 'Gato',
+      );
+      final bytes = await rootBundle.load(PetImages.dog);
+      final photo = base64Encode(
+        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+      );
+      final withPhoto = PetModel(
+        name: 'Pet com foto enviada',
+        imagePath: PetImages.cat,
+        photoBase64: photo,
+        description: 'Foto enviada',
+        species: 'Gato',
+      );
+      for (final size in const [Size(320, 640), Size(390, 844)]) {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        // Nova rota independente: evita reaproveitar o State do pet anterior.
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpWidget(MaterialApp(home: DetalhesPetPage(pet: base)));
+        await tester.pumpAndSettle();
+        expect(find.byType(PetAvatar), findsOneWidget);
+        expect(assetOf(tester.widget<Image>(avatarImages())), customAsset);
+        expect(tester.takeException(), isNull);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpWidget(
+          MaterialApp(home: DetalhesPetPage(pet: withPhoto)),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(PetAvatar), findsOneWidget);
+        final image = tester.widget<Image>(avatarImages());
+        final provider = image.image;
+        expect(
+          provider is ResizeImage ? provider.imageProvider : provider,
+          isA<MemoryImage>(),
+        );
+        expect(tester.takeException(), isNull);
+      }
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    },
+  );
+
+  testWidgets('foto no detalhe móvel mantém o botão para alterar a foto', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    var photoTapped = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PetSummary(
+            pet: VetRepository.pets.first,
+            size: PetSummarySize.detailed,
+            onPhoto: () => photoTapped = true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('pet-camera-badge')), findsOneWidget);
+    expect(find.byTooltip('Alterar foto do pet'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('pet-camera-badge')));
+    expect(photoTapped, isTrue);
+    expect(tester.takeException(), isNull);
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
+  testWidgets('resumos compactos, médios e detalhe amplo usam espécie', (
+    tester,
+  ) async {
+    final pet = PetModel(
+      name: 'Pet sem foto no resumo',
+      imagePath: PetImages.dog,
+      description: 'Sem foto',
+      species: 'Cachorro',
+    );
+    for (final size in const [Size(390, 844), Size(600, 844)]) {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      for (final summarySize in [
+        PetSummarySize.compact,
+        PetSummarySize.medium,
+        if (size.width >= 600) PetSummarySize.detailed,
+      ]) {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: PetSummary(pet: pet, size: summarySize),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(assetOf(tester.widget<Image>(avatarImages())), PetImages.dog);
+        expect(tester.takeException(), isNull, reason: '$summarySize em $size');
+      }
+    }
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
   });
 }

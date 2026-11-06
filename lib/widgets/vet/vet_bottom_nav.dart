@@ -10,10 +10,12 @@ class VetBottomNav extends StatelessWidget {
     super.key,
     required this.selectedIndex,
     required this.onSelected,
+    this.compact = false,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final bool compact;
 
   static const List<String> _icons = [
     'assets/imagens/figma/pets.png',
@@ -34,7 +36,7 @@ class VetBottomNav extends StatelessWidget {
   static const List<String> _labels = [
     'Pets',
     'Perfil',
-    'Whatsapp',
+    'Conversa',
     'Agenda',
     'Configurações',
   ];
@@ -53,47 +55,54 @@ class VetBottomNav extends StatelessWidget {
               .clamp(standardBottomGap, referenceBottomGap)
               .toDouble()
         : standardBottomGap;
-    return SafeArea(
-      top: false,
-      left: false,
-      right: false,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: VH.mobileContentMaxWidth),
-          child: Container(
-            margin: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, bottomMargin),
-            padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 8 * s),
-            decoration: inset_shadow.BoxDecoration(
-              color: VH.secondary.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(25 * s),
-              boxShadow: const [
-                inset_shadow.BoxShadow(
-                  color: VetColors.shadowDark,
-                  offset: Offset(2, 2),
-                  blurRadius: 2,
-                  inset: true,
+    final navigation = Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: VH.mobileContentMaxWidth),
+        child: Container(
+          width: compact ? double.infinity : null,
+          margin: compact
+              ? EdgeInsets.zero
+              : EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, bottomMargin),
+          padding: EdgeInsets.symmetric(
+            vertical: compact ? 0 : 10 * s,
+            horizontal: 8 * s,
+          ),
+          decoration: inset_shadow.BoxDecoration(
+            color: VH.secondary.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(25 * s),
+            boxShadow: const [
+              inset_shadow.BoxShadow(
+                color: VetColors.shadowDark,
+                offset: Offset(2, 2),
+                blurRadius: 2,
+                inset: true,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              for (int i = 0; i < _icons.length; i++)
+                _VetNavDestination(
+                  label: _labels[i],
+                  icon: _icons[i],
+                  selectedIcon: _selectedIcons[i],
+                  selected: i == selectedIndex,
+                  highlighted: i == 0,
+                  scale: s,
+                  onTap: () => onSelected(i),
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                for (int i = 0; i < _icons.length; i++)
-                  _VetNavDestination(
-                    label: _labels[i],
-                    icon: _icons[i],
-                    selectedIcon: _selectedIcons[i],
-                    selected: i == selectedIndex,
-                    highlighted: i == 0,
-                    scale: s,
-                    onTap: () => onSelected(i),
-                  ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
     );
+
+    if (compact) {
+      return SizedBox(height: (50 * s).clamp(48.0, 50.0), child: navigation);
+    }
+
+    return SafeArea(top: false, left: false, right: false, child: navigation);
   }
 }
 

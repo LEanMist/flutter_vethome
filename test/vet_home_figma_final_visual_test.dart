@@ -55,7 +55,13 @@ void main() {
       VetRepository.clientPhotoBytes = null;
       await pumpAt(tester, const PerfilPage());
       expect(find.byKey(const ValueKey('profile-empty-photo')), findsOneWidget);
-      expect(find.byIcon(Icons.add_a_photo_outlined), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('profile-empty-photo')),
+          matching: find.byType(Image),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Mudar gênero'), findsNothing);
 
       await pumpAt(tester, const PerfilPage(), size: const Size(1280, 800));
@@ -64,7 +70,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Mudar gênero'), findsNothing);
-      expect(find.text('Alterar endereço'), findsOneWidget);
+      expect(find.text('Alterar endereço'), findsNothing);
     },
   );
 
@@ -123,9 +129,28 @@ void main() {
   testWidgets('Sucesso preserva nome real e confirmação do Figma', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     VetRepository.updateClient(name: 'Cliente Teste');
-    await pumpAt(tester, const SucessoScreen());
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const SucessoScreen(),
+        routes: {'/pets': (_) => const Scaffold(body: Text('Área dos pets'))},
+      ),
+    );
+    await tester.pumpAndSettle();
     expect(find.textContaining('Cliente Teste'), findsOneWidget);
     expect(find.text('Usuário\nCadastrado!'), findsOneWidget);
+    final ring = find.byKey(const ValueKey('success-logo-ring'));
+    expect(ring, findsOneWidget);
+    expect(tester.getTopLeft(ring).dx, closeTo(44.37, .01));
+    expect(tester.getTopLeft(ring).dy, closeTo(274.37, .01));
+    expect(tester.getSize(ring).width, closeTo(300.158, .01));
+    expect(tester.getSize(ring).height, closeTo(300.158, .01));
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pumpAndSettle();
+    expect(find.text('Área dos pets'), findsOneWidget);
   });
 }

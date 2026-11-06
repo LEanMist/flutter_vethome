@@ -299,6 +299,47 @@ void main() {
       );
     },
   );
+  test('idade só aumenta na data do aniversário', () {
+    final birthDate = DateTime(2024, 11, 5);
+    expect(ageInYears(birthDate, DateTime(2026, 10, 31)), 1);
+    expect(ageInYears(birthDate, DateTime(2026, 11, 4)), 1);
+    expect(ageInYears(birthDate, DateTime(2026, 11, 5)), 2);
+  });
+
+  testWidgets('detalhe do pet mostra idade calculada pelo nascimento', (
+    tester,
+  ) async {
+    final today = DateTime.now();
+    final pet = PetModel(
+      id: 'pet-age-regression',
+      name: 'Pet aniversário',
+      imagePath: '',
+      description: 'Idade antiga',
+      birthDate: DateTime(today.year - 3, today.month, today.day + 1),
+      species: 'Cachorro',
+    );
+    final originalPets = List<PetModel>.of(VetRepository.pets);
+    VetRepository.pets
+      ..clear()
+      ..add(pet);
+    addTearDown(() {
+      VetRepository.pets
+        ..clear()
+        ..addAll(originalPets);
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PetSummary(pet: pet, size: PetSummarySize.detailed),
+        ),
+      ),
+    );
+
+    expect(find.text('2 anos · Peso não informado'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('calendário completa semanas sem vazio e sem lacunas', () {
     final days = calendarMonthDays(DateTime(2026, 10));
     expect(days.first, DateTime(2026, 9, 27));
@@ -471,7 +512,12 @@ void main() {
         t.getBottomRight(find.text('Salvar endereço')).dy,
         lessThan(size.height),
       );
-      for (final label in ['Endereço', 'Complemento (opcional)', 'Cidade']) {
+      for (final label in [
+        'Endereço',
+        'Complemento (opcional)',
+        'Cidade',
+        'Nome',
+      ]) {
         final editable = find.descendant(
           of: field(label),
           matching: find.byType(EditableText),
@@ -579,7 +625,7 @@ void main() {
       },
     );
     realWidgetTest(
-      'Agenda adjacentes clicáveis e horários reais e legados em $size',
+      'Agenda mantém grade Figma e horários reais e legados em $size',
       (t) async {
         await VetRepository.initialize(storage: widgetStorage);
         viewport(t, size);
@@ -608,18 +654,22 @@ void main() {
         );
         await t.pumpAndSettle();
         expect(
-          find.byKey(const ValueKey('calendar-2026-9-27')),
+          find.byKey(const ValueKey('calendar-2026-10-1')),
           findsOneWidget,
         );
         expect(
-          find.byKey(const ValueKey('calendar-2026-11-7')),
+          find.byKey(const ValueKey('calendar-2026-10-31')),
           findsOneWidget,
         );
-        expect(find.text('14:30 — 15:30'), findsOneWidget);
-        await t.tap(find.byKey(const ValueKey('calendar-2026-9-27')));
+        expect(find.byKey(const ValueKey('calendar-2026-9-27')), findsNothing);
+        expect(find.byKey(const ValueKey('calendar-2026-11-7')), findsNothing);
+        expect(find.text('14:30'), findsOneWidget);
+        expect(find.text('15:30'), findsOneWidget);
+        await t.tap(find.byKey(const ValueKey('calendar-2026-10-31')));
         await t.pumpAndSettle();
-        expect(find.text('Setembro 2026'), findsOneWidget);
-        expect(find.text('27 - Domingo'), findsOneWidget);
+        expect(find.text('Outubro'), findsOneWidget);
+        expect(find.text('2026'), findsOneWidget);
+        expect(find.text('31 - Sábado'), findsOneWidget);
         await t.pumpWidget(
           MaterialApp(
             home: Scaffold(

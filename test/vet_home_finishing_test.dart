@@ -23,6 +23,19 @@ import 'package:flutter_vethome/widgets/pet_avatar.dart';
 import 'package:flutter_vethome/widgets/pet_form.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
 
+class _FailingStorage extends LocalStorage {
+  int saveCalls = 0;
+
+  @override
+  Future<LocalLoadResult> load() async => const LocalLoadResult.empty();
+
+  @override
+  Future<void> save(LocalState state) async {
+    saveCalls++;
+    throw StateError('falha de armazenamento simulada');
+  }
+}
+
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
   late String photo;
@@ -34,7 +47,14 @@ void main() {
       bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
     );
   });
-  tearDown(() async => VetRepository.flush());
+  tearDown(() async {
+    // The deliberate failed-save test has already awaited its write. Its queue
+    // belongs to injected storage and should not block the next test's fresh
+    // repository initialization.
+    if (VetRepository.lastPersistenceError == null) {
+      await VetRepository.flush();
+    }
+  });
   Finder field(String label) => find.descendant(
     of: find.byWidgetPredicate((w) => w is VHField && w.label == label),
     matching: find.byType(TextFormField),
@@ -138,20 +158,18 @@ void main() {
                 )
                 .decoration!
                 .labelText,
-            'Sexo',
+            editing || size.height < 720 ? 'Sexo' : isNull,
           );
           expect(
             find.descendant(
               of: find.byType(PetForm),
               matching: find.byType(SingleChildScrollView),
             ),
-            findsNothing,
+            size.height < 720 ? findsOneWidget : findsNothing,
           );
           expect(
             tester
-                .getBottomRight(
-                  find.text(editing ? 'Excluir pet' : 'Pular por enquanto'),
-                )
+                .getBottomRight(find.text(editing ? 'Excluir pet' : 'Pular'))
                 .dy,
             lessThan(size.height),
           );
@@ -222,7 +240,7 @@ void main() {
     expect(VetRepository.clientGenderCustom, 'Identificação preservada');
   });
   testWidgets(
-    'picker real compartilhado prepara uma miniatura local no cadastro',
+    'picker real compartilhado prepara uma miniatura local na edição',
     (tester) async {
       binding.defaultBinaryMessenger.setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/image_picker'),
@@ -234,7 +252,9 @@ void main() {
           null,
         ),
       );
-      await tester.pumpWidget(const MaterialApp(home: CadastroPetScreen()));
+      await tester.pumpWidget(
+        MaterialApp(home: EditarPetPage(pet: VetRepository.pets.first)),
+      );
       await tester.tap(find.byTooltip('Alterar foto do pet'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Escolher da galeria'));
@@ -258,6 +278,26 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets('Perfil salva a foto e a restaura depois de reiniciar', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      expect(await VetRepository.updateClientPhoto(photo), isTrue);
+      await VetRepository.initialize();
+    });
+    await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
+    await tester.pumpAndSettle();
+    final profileImage = tester.widget<Image>(
+      find
+          .descendant(of: find.byType(PerfilPage), matching: find.byType(Image))
+          .first,
+    );
+    expect(
+      (profileImage.image as ResizeImage).imageProvider,
+      isA<MemoryImage>(),
+    );
+    expect(tester.takeException(), isNull);
+  });
   testWidgets(
     'foto aparece nas superfícies e telas críticas não têm overflow em 320',
     (tester) async {
@@ -280,7 +320,12 @@ void main() {
           tester.widget<PetAvatar>(find.byType(PetAvatar).first).photoBase64,
           photo,
         );
-        expect(find.byType(PetSummary), findsOneWidget);
+        if (screen is ServicosScreen) {
+          // SERVICES_PAGE 2791:3113 utiliza a aba do pet no cabeçalho.
+          expect(find.byType(PetSummary), findsNothing);
+        } else {
+          expect(find.byType(PetSummary), findsOneWidget);
+        }
         expect(
           tester.takeException(),
           isNull,
@@ -289,4 +334,107 @@ void main() {
       }
     },
   );
+  testWidgets('Perfil informa quando a foto só fica na sessão', (tester) async {
+    final storage = _FailingStorage();
+    await tester.runAsync(() => VetRepository.initialize(storage: storage));
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/image_picker'),
+      (call) async => File(PetImages.dog).absolute.path,
+    );
+    addTearDown(
+      () => binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/image_picker'),
+        null,
+      ),
+    );
+    await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
+    await tester.ensureVisible(find.text('Mudar Foto de Perfil'));
+    await tester.tap(find.text('Mudar Foto de Perfil'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Escolher da galeria'));
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      for (var attempt = 0; attempt < 50; attempt++) {
+        if (VetRepository.clientPhotoBase64 != null) break;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+    await tester.pumpAndSettle();
+
+    expect(VetRepository.clientPhotoBase64, isNotNull);
+    expect(
+      find.text(
+        'Foto atualizada nesta sessão. Não foi possível salvar localmente.',
+      ),
+      findsOneWidget,
+    );
+    final profileImage = tester.widget<Image>(
+      find
+          .descendant(of: find.byType(PerfilPage), matching: find.byType(Image))
+          .first,
+    );
+    expect(
+      (profileImage.image as ResizeImage).imageProvider,
+      isA<MemoryImage>(),
+    );
+
+    ScaffoldMessenger.of(
+      tester.element(find.byType(PerfilPage)),
+    ).hideCurrentSnackBar();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Mudar Nome de Perfil'));
+    await tester.tap(find.text('Mudar Nome de Perfil'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).last, 'Nome atualizado');
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Salvar'),
+      ),
+    );
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(VetRepository.clientName, 'Nome atualizado');
+    expect(storage.saveCalls, 2);
+    expect(VetRepository.lastPersistenceError, isNotNull);
+    expect(
+      find.text(
+        'Dados atualizados nesta sessão. Não foi possível salvar localmente.',
+      ),
+      findsOneWidget,
+    );
+
+    ScaffoldMessenger.of(
+      tester.element(find.byType(PerfilPage)),
+    ).hideCurrentSnackBar();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Mudar Data de Nascimento'));
+    await tester.tap(find.text('Mudar Data de Nascimento'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).last, '01011990');
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Salvar'),
+      ),
+    );
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(VetRepository.clientBirthDate, DateTime(1990, 1, 1));
+    expect(storage.saveCalls, 3);
+    expect(
+      find.text(
+        'Dados atualizados nesta sessão. Não foi possível salvar localmente.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

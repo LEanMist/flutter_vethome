@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
@@ -126,6 +126,124 @@ void main() {
         throwsFormatException,
       );
     }
+  });
+
+  test(
+    'Foto do tutor faz roundtrip e snapshot antigo continua sem foto',
+    () async {
+      final image = await rootBundle.load(
+        'assets/imagens/figma/frame-53-3.png',
+      );
+      final photo = base64Encode(
+        image.buffer.asUint8List(image.offsetInBytes, image.lengthInBytes),
+      );
+      final legacyClient = {
+        'name': 'Tutor',
+        'birthDate': DateTime(1990, 1, 2).toIso8601String(),
+        'address': '',
+        'phone': '',
+        'email': '',
+        'gender': '',
+        'addresses': <dynamic>[],
+      };
+      final restored = ClientData.fromJson({
+        ...legacyClient,
+        'photoBase64': photo,
+      });
+      expect(restored.toJson()['photoBase64'] == photo, isTrue);
+
+      final legacy = ClientData.fromJson(legacyClient);
+      expect(legacy.toJson().containsKey('photoBase64'), isFalse);
+
+      final invalid = ClientData.fromJson({
+        ...legacyClient,
+        'photoBase64': 'blob:temporaria',
+      });
+      expect(invalid.toJson().containsKey('photoBase64'), isFalse);
+      expect(invalid.toJson()['name'], 'Tutor');
+    },
+  );
+
+  test('Atualizar cliente preserva a foto carregada no snapshot', () async {
+    final image = await rootBundle.load('assets/imagens/figma/frame-53-3.png');
+    final photo = base64Encode(
+      image.buffer.asUint8List(image.offsetInBytes, image.lengthInBytes),
+    );
+    final snapshot = LocalState(
+      client: ClientData(
+        name: 'Tutor',
+        birthDate: DateTime(1990, 1, 2),
+        address: '',
+        phone: '',
+        email: '',
+        gender: '',
+        photoBase64: photo,
+      ),
+      pets: List.of(VetRepository.pets),
+      appointments: const {},
+    );
+    SharedPreferences.setMockInitialValues({
+      LocalStorage.stateKey: snapshot.toValidatedJson(),
+    });
+    await VetRepository.initialize();
+
+    VetRepository.updateClient(name: 'Tutor atualizado');
+    await VetRepository.initialize();
+    final savedClient = (await savedJson())['client'] as Map<String, dynamic>;
+    expect(savedClient['photoBase64'] == photo, isTrue);
+    expect(VetRepository.clientName, 'Tutor atualizado');
+  });
+
+  test('Foto do tutor conta no limite combinado das imagens', () async {
+    final largePhoto = base64Encode([
+      137,
+      80,
+      78,
+      71,
+      ...List<int>.filled(129996, 0),
+    ]);
+    expect(largePhoto.length, lessThanOrEqualTo(180000));
+    final pets = [
+      for (var i = 0; i < 8; i++)
+        PetModel(
+          id: 'pet-limit-$i',
+          name: 'Pet limite $i',
+          imagePath: '',
+          description: '',
+          photoBase64: i < 7 ? largePhoto : null,
+        ),
+    ];
+    final snapshot = LocalState(
+      client: ClientData(
+        name: 'Tutor',
+        birthDate: DateTime(1990, 1, 2),
+        address: '',
+        phone: '',
+        email: '',
+        gender: '',
+        photoBase64: largePhoto,
+      ),
+      pets: pets,
+      appointments: const {},
+    );
+    SharedPreferences.setMockInitialValues({
+      LocalStorage.stateKey: snapshot.toValidatedJson(),
+    });
+    await VetRepository.initialize();
+
+    expect(
+      () => VetRepository.addPet(
+        photoBase64: largePhoto,
+        name: 'Novo pet acima da quota',
+        species: 'Gato',
+        sex: 'Fêmea',
+        weightKg: 4,
+        birthDate: DateTime(2020, 1, 1),
+        breed: 'SRD',
+      ),
+      throwsFormatException,
+    );
+    expect(VetRepository.pets, hasLength(8));
   });
 
   test('Primeira execução mantém quatro mocks sem criar snapshot', () async {

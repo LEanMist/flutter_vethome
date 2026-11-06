@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/foundation.dart'
+    show ValueListenable, ValueNotifier, debugPrint;
 
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
@@ -8,6 +9,7 @@ import '../models/saved_address.dart';
 import '../core/utils/pet_images.dart';
 import '../core/utils/pet_photo.dart';
 import '../core/utils/form_fields.dart';
+import '../core/utils/formatters.dart';
 import 'local_storage.dart';
 
 /// Interface de dados das telas, com snapshot local após cada mutação suportada.
@@ -19,10 +21,13 @@ class VetRepository {
   // Último estado persistível validado; base para reverter mutações inválidas.
   static LocalState? _lastValid;
   static Future<bool> _pendingSave = Future.value(true);
+  static Future<bool>? _pendingRetry;
+  static final _unsavedChanges = ValueNotifier(false);
   static Object? lastPersistenceError;
   static LocalLoadStatus _persistenceStatus = LocalLoadStatus.empty;
 
   static LocalLoadStatus get persistenceStatus => _persistenceStatus;
+  static ValueListenable<bool> get unsavedChanges => _unsavedChanges;
 
   static bool get persistenceBlocked =>
       _persistenceStatus == LocalLoadStatus.invalid ||
@@ -44,6 +49,7 @@ class VetRepository {
     clientEmail = state?.client.email ?? '';
     clientGender = state?.client.gender ?? '';
     clientGenderCustom = state?.client.genderCustom ?? '';
+    clientPhotoBase64 = state?.client.photoBase64;
     addresses
       ..clear()
       ..addAll(state?.client.addresses ?? []);
@@ -64,6 +70,7 @@ class VetRepository {
     _pendingSave = Future.value(!persistenceBlocked);
     _storage = persistenceBlocked ? null : local;
     _lastValid = _storage == null ? null : _buildState();
+    _unsavedChanges.value = false;
   }
 
   /// Nova leitura pelo fluxo de [initialize], só quando o armazenamento estava
@@ -75,6 +82,19 @@ class VetRepository {
 
   /// Aguarda a fila; false indica falha, sem lançar erro assíncrono nas telas.
   static Future<bool> flush() => _pendingSave;
+
+  /// Tenta gravar o último estado válido sem reaplicar a ação que o gerou.
+  static Future<bool> retrySave() {
+    final retry = _pendingRetry;
+    if (retry != null) return retry;
+    final storage = _storage;
+    final state = _lastValid;
+    if (storage == null || state == null || !_unsavedChanges.value) {
+      return flush();
+    }
+    _queueSave(storage, state, onlyAfterFailure: true);
+    return _pendingRetry = flush().whenComplete(() => _pendingRetry = null);
+  }
 
   static void _ensurePersistenceWritable() {
     if (persistenceBlocked) {
@@ -91,6 +111,7 @@ class VetRepository {
       email: clientEmail,
       gender: clientGender,
       genderCustom: clientGenderCustom,
+      photoBase64: clientPhotoBase64,
       addresses: List.of(addresses),
     ),
     pets: List.of(pets),
@@ -111,6 +132,7 @@ class VetRepository {
     clientEmail = state.client.email;
     clientGender = state.client.gender;
     clientGenderCustom = state.client.genderCustom;
+    clientPhotoBase64 = state.client.photoBase64;
     addresses
       ..clear()
       ..addAll(state.client.addresses);
@@ -148,14 +170,25 @@ class VetRepository {
       rethrow;
     }
     _lastValid = state;
+    _queueSave(storage, state);
+  }
+
+  static void _queueSave(
+    LocalStorage storage,
+    LocalState state, {
+    bool onlyAfterFailure = false,
+  }) {
     // Captura cada estado e serializa as gravações para evitar inversão de ordem.
-    _pendingSave = _pendingSave.then((_) async {
+    _pendingSave = _pendingSave.then((previousSaved) async {
+      if (onlyAfterFailure && previousSaved) return true;
       try {
         await storage.save(state);
         lastPersistenceError = null;
+        _unsavedChanges.value = false;
         return true;
       } catch (error) {
         lastPersistenceError = error;
+        _unsavedChanges.value = true;
         debugPrint('VetHome: falha ao salvar estado local.');
         return false;
       }
@@ -169,6 +202,7 @@ class VetRepository {
   static String clientPhone = '';
   static String clientGender = '';
   static String clientGenderCustom = '';
+  static String? clientPhotoBase64;
   static final List<SavedAddress> addresses = [];
   static String? clientPhotoPath;
   // No Web, o caminho do picker é temporário; conserva a foto nesta sessão.
@@ -278,7 +312,7 @@ class VetRepository {
     if (model == null) return _padrao;
     final age = model.birthDate == null
         ? model.ageYears ?? _padrao.idadeAnos
-        : _age(model.birthDate!);
+        : ageInYears(model.birthDate!, DateTime.now());
     return PetProfile(
       especie: model.species ?? _padrao.especie,
       idadeAnos: age,
@@ -313,6 +347,9 @@ class VetRepository {
             addresses.firstOrNull?.id ??
             'address-${DateTime.now().microsecondsSinceEpoch}',
         street: values['client.Endereço']!.trim(),
+        name: values.containsKey('client.Nome do Endereço')
+            ? values['client.Nome do Endereço']!.trim()
+            : addresses.firstOrNull?.name ?? '',
         number: values['client.Número']?.trim() ?? '',
         complement: values['client.Complemento']?.trim() ?? '',
         city: values['client.Cidade']?.trim() ?? '',
@@ -346,6 +383,7 @@ class VetRepository {
         final item = SavedAddress(
           id: addresses.firstOrNull?.id ?? 'address-legacy',
           street: address,
+          name: addresses.firstOrNull?.name ?? '',
         );
         if (addresses.isEmpty) {
           addresses.add(item);
@@ -385,17 +423,33 @@ class VetRepository {
       ? []
       : List.unmodifiable(_novosAgendamentos[petId] ?? []);
 
-  static void _checkPhoto(String? photo, {String? exceptId}) {
+  static void _checkPhoto(
+    String? photo, {
+    String? exceptId,
+    bool replacingClientPhoto = false,
+  }) {
     if (photo == null) return;
-    final size = pets
+    final petPhotosSize = pets
         .where((p) => p.id != exceptId)
         .fold<int>(0, (total, p) => total + (p.photoBase64?.length ?? 0));
+    final clientPhotoSize = replacingClientPhoto
+        ? 0
+        : clientPhotoBase64?.length ?? 0;
     if (!PetPhoto.isValid(photo) ||
-        size + photo.length > PetPhoto.maxTotalEncodedLength) {
+        petPhotosSize + clientPhotoSize + photo.length >
+            PetPhoto.maxTotalEncodedLength) {
       throw const FormatException(
         'Limite local de fotos atingido. Escolha uma imagem menor.',
       );
     }
+  }
+
+  static Future<bool> updateClientPhoto(String photoBase64) async {
+    _ensurePersistenceWritable();
+    _checkPhoto(photoBase64, replacingClientPhoto: true);
+    clientPhotoBase64 = photoBase64;
+    _save();
+    return flush();
   }
 
   static Future<bool> updatePetPhoto(String id, String photo) async {
@@ -429,11 +483,12 @@ class VetRepository {
       throw const FormatException('Informe um peso válido em kg (até 250).');
     }
     _checkPhoto(photoBase64);
+    final age = ageInYears(birthDate, DateTime.now());
     final pet = PetModel(
       photoBase64: photoBase64,
       name: name.trim(),
       imagePath: PetImages.forSpecies(species) ?? '',
-      description: '$species • ${_age(birthDate)} anos • $sex',
+      description: '$species • $age anos • $sex',
       species: species,
       sex: sex,
       weightKg: weightKg,
@@ -511,16 +566,6 @@ class VetRepository {
       return null;
     }
     return date;
-  }
-
-  static int _age(DateTime date) {
-    final today = DateTime.now();
-    var years = today.year - date.year;
-    if (today.month < date.month ||
-        (today.month == date.month && today.day < date.day)) {
-      years--;
-    }
-    return years;
   }
 
   static String _petSummary(String species, int age, bool neutered) {

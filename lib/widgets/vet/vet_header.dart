@@ -12,12 +12,14 @@ class VetHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.showBack = true,
+    this.showDebugTools = true,
     this.bottom,
     this.titleSize = 30,
   });
 
   final String title;
   final bool showBack;
+  final bool showDebugTools;
   final Widget? bottom;
   final double titleSize;
 
@@ -81,7 +83,7 @@ class VetHeader extends StatelessWidget {
               ),
               SizedBox(
                 width: 48 * s,
-                child: kDebugMode
+                child: kDebugMode && showDebugTools
                     ? IconButton(
                         tooltip: 'Telas de teste',
                         constraints: BoxConstraints.tightFor(

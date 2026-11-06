@@ -7,7 +7,7 @@ import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
 void main() {
   for (final size in [const Size(390, 844), const Size(320, 640)]) {
-    testWidgets('Configurações preserva seis ações e visual em $size', (
+    testWidgets('Configurações preserva cinco ações e visual em $size', (
       tester,
     ) async {
       tester.view.physicalSize = size;
@@ -33,14 +33,13 @@ void main() {
       expect(title.style?.fontWeight, FontWeight.bold);
       expect(title.style?.color, Colors.white);
       expect(find.byTooltip('Telas de teste'), findsNothing);
-      expect(find.byType(ListTile), findsNWidgets(6));
-      expect(find.byType(Divider), findsNWidgets(5));
+      expect(find.byType(ListTile), findsNWidgets(5));
+      expect(find.byType(Divider), findsNWidgets(4));
       for (final label in [
         'Tema do Aplicativo',
         'Meus Endereços',
-        'Sobre a veterinária',
         'Suporte',
-        'Histórico',
+        'Historico',
         'Sair',
       ]) {
         final text = tester.widget<Text>(find.text(label));
@@ -53,7 +52,7 @@ void main() {
       for (final label in [
         'Pets',
         'Perfil',
-        'Whatsapp',
+        'Conversa',
         'Agenda',
         'Configurações',
       ]) {
@@ -103,15 +102,11 @@ void main() {
         home: const ConfigScreen(),
         routes: {
           '/enderecos': (_) => const Scaffold(body: Text('Destino endereços')),
-          '/sobre': (_) => const Scaffold(body: Text('Destino sobre')),
           '/login': (_) => const Scaffold(body: Text('Destino login')),
         },
       ),
     );
-    for (final entry in {
-      'Meus Endereços': 'Destino endereços',
-      'Sobre a veterinária': 'Destino sobre',
-    }.entries) {
+    for (final entry in {'Meus Endereços': 'Destino endereços'}.entries) {
       await tester.tap(find.text(entry.key));
       await tester.pumpAndSettle();
       expect(find.text(entry.value), findsOneWidget);
@@ -133,7 +128,7 @@ void main() {
     expect(find.text('Suporte VetHome'), findsOneWidget);
     await tester.tap(find.text('Fechar'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Histórico'));
+    await tester.tap(find.text('Historico'));
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsOneWidget);
     await tester.ensureVisible(find.text('Fechar'));

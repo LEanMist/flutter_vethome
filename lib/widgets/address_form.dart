@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../data/cep_service.dart';
 import '../models/saved_address.dart';
@@ -15,8 +17,8 @@ class AddressForm extends StatefulWidget {
     this.cepService = const CepService(),
   });
   final String title;
-  final ValueChanged<SavedAddress> onSaved;
-  final VoidCallback? onSkip;
+  final FutureOr<void> Function(SavedAddress) onSaved;
+  final FutureOr<void> Function()? onSkip;
   final SavedAddress? initial;
   final CepService cepService;
   @override
@@ -25,6 +27,7 @@ class AddressForm extends StatefulWidget {
 
 class _AddressFormState extends State<AddressForm> {
   final _key = GlobalKey<FormState>();
+  late final _name = TextEditingController(text: widget.initial?.name ?? '');
   late final _cep = TextEditingController(text: widget.initial?.cep ?? '');
   late final _street = TextEditingController(
     text: widget.initial?.street ?? '',
@@ -40,9 +43,10 @@ class _AddressFormState extends State<AddressForm> {
   String _status = '';
   int _request = 0;
   bool _loading = false;
+  bool _saving = false;
   @override
   void dispose() {
-    for (final c in [_cep, _street, _city, _number, _complement]) {
+    for (final c in [_name, _cep, _street, _city, _number, _complement]) {
       c.dispose();
     }
     super.dispose();
@@ -88,43 +92,59 @@ class _AddressFormState extends State<AddressForm> {
   }
 
   Future<void> _save() async {
-    if (_loading || !_key.currentState!.validate()) return;
-    final result = _result;
-    if (result != null &&
-        (normalizedText(_street.text) != normalizedText(result.street) ||
-            normalizedText(_city.text) != normalizedText(result.city))) {
-      final proceed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          content: const Text(
-            'O endereço informado não corresponde ao CEP consultado. Deseja continuar mesmo assim?',
+    if (_loading || _saving || !_key.currentState!.validate()) return;
+    setState(() => _saving = true);
+    try {
+      final result = _result;
+      if (result != null &&
+          (normalizedText(_street.text) != normalizedText(result.street) ||
+              normalizedText(_city.text) != normalizedText(result.city))) {
+        final proceed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            content: const Text(
+              'O endereço informado não corresponde ao CEP consultado. Deseja continuar mesmo assim?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Corrigir'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Continuar'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Corrigir'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Continuar'),
-            ),
-          ],
+        );
+        if (!mounted || proceed != true) return;
+      }
+      await widget.onSaved(
+        SavedAddress(
+          id:
+              widget.initial?.id ??
+              'address-${DateTime.now().microsecondsSinceEpoch}',
+          street: _street.text.trim(),
+          name: _name.text.trim(),
+          city: _city.text.trim(),
+          number: _number.text.trim(),
+          complement: _complement.text.trim(),
+          cep: _cep.text.trim(),
         ),
       );
-      if (!mounted || proceed != true) return;
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-    widget.onSaved(
-      SavedAddress(
-        id:
-            widget.initial?.id ??
-            'address-${DateTime.now().microsecondsSinceEpoch}',
-        street: _street.text.trim(),
-        city: _city.text.trim(),
-        number: _number.text.trim(),
-        complement: _complement.text.trim(),
-        cep: _cep.text.trim(),
-      ),
-    );
+  }
+
+  Future<void> _skip() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      await widget.onSkip?.call();
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   Widget _field(
@@ -152,7 +172,7 @@ class _AddressFormState extends State<AddressForm> {
     final desktop = MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint;
     final registration = widget.onSkip != null && !desktop;
     final saveButton = ElevatedButton(
-      onPressed: _loading ? null : _save,
+      onPressed: _loading || _saving ? null : _save,
       style: ElevatedButton.styleFrom(
         backgroundColor: registration ? VH.primary : VH.secondary,
         foregroundColor: Colors.white,
@@ -164,7 +184,11 @@ class _AddressFormState extends State<AddressForm> {
         ),
       ),
       child: Text(
-        widget.onSkip == null ? 'Salvar endereço' : 'Continuar',
+        _saving
+            ? 'Salvando…'
+            : widget.onSkip == null
+            ? 'Salvar endereço'
+            : 'Continuar',
         maxLines: 1,
         softWrap: false,
       ),
@@ -175,10 +199,15 @@ class _AddressFormState extends State<AddressForm> {
         constraints: BoxConstraints(maxWidth: desktop ? 900 : 440),
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final compactHeight = !registration && constraints.maxHeight < 680;
             final content = Padding(
               padding: EdgeInsets.fromLTRB(
                 16,
-                registration ? 24 : 16,
+                registration
+                    ? 24
+                    : compactHeight
+                    ? 12
+                    : 16,
                 16,
                 registration ? 0 : 16,
               ),
@@ -195,7 +224,13 @@ class _AddressFormState extends State<AddressForm> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: registration ? 21 : 16),
+                  SizedBox(
+                    height: registration
+                        ? 21
+                        : compactHeight
+                        ? 12
+                        : 16,
+                  ),
                   Center(
                     child: SizedBox(
                       width: registration ? 290 : double.infinity,
@@ -206,7 +241,11 @@ class _AddressFormState extends State<AddressForm> {
                             : null,
                         padding: EdgeInsets.symmetric(
                           horizontal: registration ? 15.5 : 10,
-                          vertical: registration ? 12 : 10,
+                          vertical: registration
+                              ? 12
+                              : compactHeight
+                              ? 8
+                              : 10,
                         ),
                         decoration: BoxDecoration(
                           color: registration
@@ -241,12 +280,12 @@ class _AddressFormState extends State<AddressForm> {
                                       : 'address-form-mobile-grid',
                                 ),
                                 spacing: 12,
-                                runSpacing: 10,
+                                runSpacing: compactHeight ? 8 : 10,
                                 children: [
                                   slot(
                                     _field(
                                       'CEP',
-                                      Icons.pin_drop_outlined,
+                                      Icons.home_outlined,
                                       _cep,
                                       onChanged: _lookup,
                                       validator: (v) =>
@@ -280,8 +319,8 @@ class _AddressFormState extends State<AddressForm> {
                                     ),
                                   slot(
                                     _field(
-                                      'Endereço',
-                                      Icons.location_on_outlined,
+                                      registration ? 'Logradouro' : 'Endereço',
+                                      Icons.home_outlined,
                                       _street,
                                       validator: _required,
                                     ),
@@ -290,7 +329,7 @@ class _AddressFormState extends State<AddressForm> {
                                   slot(
                                     _field(
                                       'Número',
-                                      Icons.tag,
+                                      Icons.numbers,
                                       _number,
                                       validator: _required,
                                     ),
@@ -310,6 +349,9 @@ class _AddressFormState extends State<AddressForm> {
                                       validator: _required,
                                     ),
                                   ),
+                                  slot(
+                                    _field('Nome', Icons.home_outlined, _name),
+                                  ),
                                 ],
                               );
                             },
@@ -318,7 +360,13 @@ class _AddressFormState extends State<AddressForm> {
                       ),
                     ),
                   ),
-                  SizedBox(height: registration ? 30 : 16),
+                  SizedBox(
+                    height: registration
+                        ? 30
+                        : compactHeight
+                        ? 12
+                        : 16,
+                  ),
                   registration
                       ? Center(
                           child: SizedBox(
@@ -330,8 +378,8 @@ class _AddressFormState extends State<AddressForm> {
                       : SizedBox(height: 48, child: saveButton),
                   if (widget.onSkip != null)
                     TextButton(
-                      onPressed: widget.onSkip,
-                      child: const Text('Pular por enquanto'),
+                      onPressed: _saving ? null : _skip,
+                      child: Text(_saving ? 'Salvando…' : 'Pular'),
                     ),
                 ],
               ),

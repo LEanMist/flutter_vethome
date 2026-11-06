@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'data/theme_preferences.dart';
 import 'data/vet_repository.dart';
 import 'pages/critical_storage_error_page.dart';
 import 'routes/app_routes.dart';
@@ -9,6 +10,7 @@ import 'theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await VetRepository.initialize();
+  await ThemePreferences.load();
   runApp(const VetHomeApp());
 }
 

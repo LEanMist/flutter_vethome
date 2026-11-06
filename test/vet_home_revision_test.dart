@@ -199,7 +199,7 @@ void main() {
     expect(find.text('Mudar Foto de Perfil'), findsOneWidget);
     expect(find.text('Mudar Nome de Perfil'), findsOneWidget);
     expect(find.text('Mudar Data de Nascimento'), findsOneWidget);
-    expect(find.text('Alterar endereço'), findsOneWidget);
+    expect(find.text('Alterar endereço'), findsNothing);
     expect(VetRepository.clientGender, genderBefore);
     expect(VetRepository.clientGenderCustom, genderCustomBefore);
   });
@@ -212,8 +212,11 @@ void main() {
         },
       ),
     );
-    await tester.ensureVisible(find.text('Pular por enquanto'));
-    await tester.tap(find.text('Pular por enquanto'));
+    await tester.ensureVisible(find.text('Pular'));
+    await tester.tap(find.text('Pular'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Etapa pet'), findsOneWidget);
     expect(VetRepository.addresses, isEmpty);
@@ -231,8 +234,8 @@ void main() {
         routes: {'/sucesso': (_) => const Scaffold(body: Text('Concluído'))},
       ),
     );
-    await tester.ensureVisible(find.text('Pular por enquanto'));
-    await tester.tap(find.text('Pular por enquanto'));
+    await tester.ensureVisible(find.text('Pular'));
+    await tester.tap(find.text('Pular'));
     await tester.pumpAndSettle();
     expect(VetRepository.pets, isEmpty);
     expect(find.text('Concluído'), findsOneWidget);
@@ -275,6 +278,7 @@ void main() {
       );
       await fill(tester, 'Endereço', 'Rua editada');
       await fill(tester, 'Número', '15');
+      await fill(tester, 'Nome', 'Casa da Irmã');
       await tester.ensureVisible(find.text('Salvar endereço'));
       await tester.tap(find.text('Salvar endereço'));
       await tester.pumpAndSettle();
@@ -284,6 +288,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(saved?.street, 'Rua editada');
       expect(saved?.complement, '');
+      expect(saved?.name, 'Casa da Irmã');
     },
   );
   for (final mode in ['inexistente', 'rede']) {
@@ -342,14 +347,32 @@ void main() {
       'Novembro',
       'Dezembro',
     ];
-    expect(find.text('${months[now.month - 1]} ${now.year}'), findsOneWidget);
+    var monthHeading = tester.widget<Text>(
+      find.byKey(const ValueKey('agenda-calendar-month-heading')),
+    );
+    expect(
+      monthHeading.data ?? monthHeading.textSpan?.toPlainText(),
+      anyOf(months[now.month - 1], '${months[now.month - 1]} ${now.year}'),
+    );
+    if (monthHeading.data != null) {
+      expect(find.text('${now.year}'), findsOneWidget);
+    }
     await tester.pumpWidget(
       MaterialApp(
         key: UniqueKey(),
         home: AgendaScreen(initialDate: DateTime(now.year + 1, 7, 8)),
       ),
     );
-    expect(find.text('Julho ${now.year + 1}'), findsOneWidget);
+    monthHeading = tester.widget<Text>(
+      find.byKey(const ValueKey('agenda-calendar-month-heading')),
+    );
+    expect(
+      monthHeading.data ?? monthHeading.textSpan?.toPlainText(),
+      anyOf('Julho', 'Julho ${now.year + 1}'),
+    );
+    if (monthHeading.data != null) {
+      expect(find.text('${now.year + 1}'), findsOneWidget);
+    }
   });
   testWidgets('Novo agendamento exibe nome atual por ID e avatar canônico', (
     tester,
@@ -478,7 +501,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const MaterialApp(home: AddressesPage()));
     expect(find.text('Nenhum endereço cadastrado'), findsOneWidget);
-    expect(find.text('Novo endereço'), findsOneWidget);
+    expect(find.text('Novo Endereço'), findsOneWidget);
   });
   testWidgets('Serviços e Convênio preservam pet, vacina e plano na rota', (
     tester,
@@ -498,13 +521,18 @@ void main() {
         },
       ),
     );
-    await tester.tap(find.text('Vacinas'));
-    await tester.pumpAndSettle();
+    // Vacinas começa expandida; tocar no item apenas seleciona.
     await tester.ensureVisible(find.text('V10'));
     await tester.tap(find.text('V10'));
     await tester.pumpAndSettle();
+    expect(find.byType(ConvenioScreen), findsNothing);
+    final continueButton = find.byKey(const ValueKey('services-continue'));
+    expect(tester.widget<ElevatedButton>(continueButton).onPressed, isNotNull);
+    await tester.ensureVisible(continueButton);
+    await tester.tap(continueButton);
+    await tester.pumpAndSettle();
     expect(find.byType(ConvenioScreen), findsOneWidget);
-    expect(find.text('Continuar'), findsNothing);
+    await tester.ensureVisible(find.text('Particular'));
     await tester.tap(find.text('Particular'));
     await tester.pumpAndSettle();
     expect(received, {'petId': pet.id, 'service': 'V10', 'plan': 'Particular'});

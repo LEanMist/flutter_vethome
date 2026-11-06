@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/utils/pet_photo.dart';
 import '../models/json_fields.dart';
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
@@ -37,12 +38,14 @@ class ClientData {
     required this.phone,
     required this.email,
     required this.gender,
+    this.photoBase64,
     this.genderCustom = '',
     this.addresses = const [],
   });
 
   final String name, address, phone, email, gender;
   final String genderCustom;
+  final String? photoBase64;
   final List<SavedAddress> addresses;
   final DateTime birthDate;
 
@@ -53,6 +56,7 @@ class ClientData {
     'phone': phone,
     'email': email,
     'gender': gender,
+    if (photoBase64 != null) 'photoBase64': photoBase64,
     'genderCustom': genderCustom,
     'addresses': addresses.map((a) => a.toJson()).toList(),
   };
@@ -64,9 +68,15 @@ class ClientData {
     phone: jsonString(json, 'phone'),
     email: jsonString(json, 'email'),
     gender: jsonString(json, 'gender'),
+    photoBase64: _photo(json),
     genderCustom: jsonOptionalString(json, 'genderCustom') ?? '',
     addresses: _addresses(json),
   );
+
+  static String? _photo(Map<String, dynamic> json) {
+    final value = json['photoBase64'];
+    return value is String && PetPhoto.isValid(value) ? value : null;
+  }
 
   static List<SavedAddress> _addresses(Map<String, dynamic> json) {
     if (!json.containsKey('addresses')) {
@@ -193,7 +203,7 @@ class LocalState {
   }
 }
 
-/// Snapshot local; não grava senha, foto do cliente ou mocks clínicos.
+/// Snapshot local; fotos ficam como miniaturas PNG Base64, sem senha ou mocks clínicos.
 class LocalStorage {
   LocalStorage({
     Future<SharedPreferences> Function()? preferencesLoader,

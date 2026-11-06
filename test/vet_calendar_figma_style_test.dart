@@ -33,6 +33,7 @@ void main() {
                   onSelected: (_) {},
                   onPreviousMonth: () {},
                   onNextMonth: () {},
+                  hasIndicator: (date) => date == DateTime(2026, 10, 9),
                 ),
               ),
             ),
@@ -62,6 +63,24 @@ void main() {
     tester,
   ) async {
     await pumpCalendar(tester, viewport: const Size(390, 844));
+    final semantics = tester.ensureSemantics();
+    try {
+      await tester.pump();
+      expect(
+        find.bySemanticsLabel(
+          RegExp(r'sexta-feira, 9 de outubro de 2026, possui agendamento'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(
+          RegExp(r'quinta-feira, 8 de outubro de 2026, possui agendamento'),
+        ),
+        findsNothing,
+      );
+    } finally {
+      semantics.dispose();
+    }
 
     final panel = tester.widget<Container>(
       find.byKey(const ValueKey('vet-calendar')),
@@ -198,9 +217,21 @@ void main() {
   ) async {
     await pumpAgenda(tester, const Size(390, 844));
 
+    final appointmentBoxes = [
+      for (final label in ['Hemograma', 'Creatinina', 'Urina'])
+        tester.getRect(
+          find
+              .ancestor(of: find.text(label), matching: find.byType(Container))
+              .first,
+        ),
+    ];
+    for (final rect in appointmentBoxes) {
+      expect(rect.left, greaterThanOrEqualTo(0));
+      expect(rect.right, lessThanOrEqualTo(390));
+    }
     for (final finder in [
       find.text('Sáb'),
-      find.byTooltip('Próximo mês'),
+      find.byKey(const ValueKey('agenda-calendar-month-navigation')),
       find.byTooltip('Configurações'),
       find.text('Hemograma'),
       find.text('Urina'),

@@ -13,6 +13,9 @@ import '../widgets/status_chip.dart';
 import '../widgets/vet/vet_card.dart';
 import '../widgets/vet/vet_page_scaffold.dart';
 
+const _blockedVaccineMessage =
+    'Armazenamento local bloqueado. Nenhuma alteração na vacina foi realizada.';
+
 class VacinacaoPage extends StatefulWidget {
   const VacinacaoPage({required this.pet, super.key});
   final PetModel pet;
@@ -21,20 +24,27 @@ class VacinacaoPage extends StatefulWidget {
 }
 
 class _VacinacaoPageState extends State<VacinacaoPage> {
+  bool _saving = false;
+
   Future<void> _edit([Vacina? vaccine]) async {
-    final changed = await showModalBottomSheet<bool>(
+    if (_saving) return;
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: VetColors.pink,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _VaccineEditor(petId: widget.pet.id, vaccine: vaccine),
+      builder: (_) => _VaccineEditor(
+        vaccine: vaccine,
+        onSave: (value) =>
+            _persist(() => VetRepository.saveVaccine(widget.pet.id, value)),
+      ),
     );
-    if (changed == true && mounted) setState(() {});
   }
 
   Future<void> _delete(Vacina vaccine) async {
+    if (_saving) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -53,12 +63,36 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
-    VetRepository.removeVaccine(widget.pet.id, vaccine.id!);
+    if (confirmed != true || !mounted || _saving) return;
+    try {
+      await _persist(
+        () => VetRepository.removeVaccine(widget.pet.id, vaccine.id!),
+      );
+    } on PersistenceBlockedException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text(_blockedVaccineMessage)));
+    }
+  }
+
+  Future<void> _persist(VoidCallback update) async {
+    update();
+    setState(() => _saving = true);
     final saved = await VetRepository.flush();
     if (!mounted) return;
-    setState(() {});
-    if (!saved) _storageWarning(context);
+    setState(() => _saving = false);
+    if (!saved) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Alteração na carteira feita nesta sessão. Não foi possível salvar localmente.',
+            ),
+          ),
+        );
+    }
   }
 
   @override
@@ -99,7 +133,7 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: () => _edit(),
+            onPressed: _saving ? null : () => _edit(),
             icon: const Icon(Icons.add, size: 18),
             label: const Text('Adicionar vacina'),
           ),
@@ -122,6 +156,7 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
                     width: width,
                     child: _VacinaCard(
                       vaccine,
+                      enabled: !_saving,
                       onEdit: demo ? null : () => _edit(vaccine),
                       onDelete: demo ? null : () => _delete(vaccine),
                     ),
@@ -136,18 +171,9 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
   }
 }
 
-void _storageWarning(BuildContext context) =>
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Não foi possível salvar no dispositivo. Tente novamente.',
-        ),
-      ),
-    );
-
 class _VaccineEditor extends StatefulWidget {
-  const _VaccineEditor({required this.petId, this.vaccine});
-  final String petId;
+  const _VaccineEditor({required this.onSave, this.vaccine});
+  final Future<void> Function(Vacina) onSave;
   final Vacina? vaccine;
   @override
   State<_VaccineEditor> createState() => _VaccineEditorState();
@@ -165,6 +191,7 @@ class _VaccineEditorState extends State<_VaccineEditor> {
         : fmtData(widget.vaccine!.proxima!),
   );
   bool _saving = false;
+  bool _blocked = false;
   @override
   void dispose() {
     _name.dispose();
@@ -174,11 +201,13 @@ class _VaccineEditorState extends State<_VaccineEditor> {
   }
 
   Future<void> _save() async {
-    if (!_form.currentState!.validate() || _saving) return;
-    setState(() => _saving = true);
+    if (_saving || !_form.currentState!.validate()) return;
+    setState(() {
+      _saving = true;
+      _blocked = false;
+    });
     try {
-      VetRepository.saveVaccine(
-        widget.petId,
+      await widget.onSave(
         Vacina(
           id: widget.vaccine?.id,
           nome: _name.text,
@@ -186,10 +215,11 @@ class _VaccineEditorState extends State<_VaccineEditor> {
           proxima: _next.text.isEmpty ? null : parseCalendarDate(_next.text),
         ),
       );
-      final saved = await VetRepository.flush();
-      if (!mounted) return;
-      if (!saved) _storageWarning(context);
-      Navigator.pop(context, true);
+      if (mounted && ModalRoute.of(context)?.isCurrent == true) {
+        Navigator.pop(context);
+      }
+    } on PersistenceBlockedException {
+      if (mounted) setState(() => _blocked = true);
     } on FormatException catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -264,6 +294,20 @@ class _VaccineEditorState extends State<_VaccineEditor> {
                       : null;
                 },
               ),
+              if (_blocked) ...[
+                const SizedBox(height: 12),
+                Semantics(
+                  liveRegion: true,
+                  child: const Text(
+                    _blockedVaccineMessage,
+                    key: ValueKey('vaccine-storage-blocked-message'),
+                    style: TextStyle(
+                      color: VetColors.brown,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: _saving ? null : _save,
@@ -282,8 +326,14 @@ class _VaccineEditorState extends State<_VaccineEditor> {
 }
 
 class _VacinaCard extends StatelessWidget {
-  const _VacinaCard(this.vaccine, {this.onEdit, this.onDelete});
+  const _VacinaCard(
+    this.vaccine, {
+    required this.enabled,
+    this.onEdit,
+    this.onDelete,
+  });
   final Vacina vaccine;
+  final bool enabled;
   final VoidCallback? onEdit, onDelete;
   @override
   Widget build(BuildContext context) {
@@ -323,6 +373,7 @@ class _VacinaCard extends StatelessWidget {
                   width: 32,
                   height: 32,
                   child: PopupMenuButton<String>(
+                    enabled: enabled,
                     tooltip: 'Opções da vacina ${vaccine.nome}',
                     padding: EdgeInsets.zero,
                     iconSize: 18,

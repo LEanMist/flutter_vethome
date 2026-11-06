@@ -1,15 +1,17 @@
 // lib/pages/perfil_page.dart
 // Requer: flutter pub add image_picker
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:image_picker/image_picker.dart';
 
 import '../core/utils/formatters.dart';
 import '../core/utils/form_fields.dart';
-import '../core/utils/photo_picker.dart';
+import '../core/utils/pet_photo.dart';
 import '../widgets.dart';
 import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
@@ -33,8 +35,18 @@ class _PerfilPageState extends State<PerfilPage> {
   @override
   void initState() {
     super.initState();
+    final savedPhoto = VetRepository.clientPhotoBase64;
+    if (savedPhoto != null) {
+      try {
+        _fotoBytes = base64Decode(savedPhoto);
+      } catch (_) {
+        // Dados legados inválidos seguem para o avatar padrão/fallback abaixo.
+      }
+    }
     final path = VetRepository.clientPhotoPath;
-    if (kIsWeb) {
+    if (_fotoBytes != null) {
+      // A miniatura persistida independe do caminho temporário do picker.
+    } else if (kIsWeb) {
       _fotoBytes = VetRepository.clientPhotoBytes;
       if (_fotoBytes == null && path != null) _carregarFotoWeb(path);
     } else if (path != null) {
@@ -59,19 +71,30 @@ class _PerfilPageState extends State<PerfilPage> {
 
   Future<void> _mudarFoto() async {
     try {
-      final picked = await pickLocalPhoto(context);
-      if (picked != null && mounted) {
-        final bytes = kIsWeb ? await picked.readAsBytes() : null;
-        if (!mounted) return;
-        setState(() {
-          if (kIsWeb) {
-            _fotoBytes = bytes;
-            VetRepository.clientPhotoBytes = bytes;
-          } else {
-            _foto = File(picked.path);
-          }
-          VetRepository.clientPhotoPath = picked.path;
-        });
+      final photo = await PetPhoto.choose(context);
+      if (photo == null || !mounted) return;
+      final bytes = base64Decode(photo);
+      final persisted = await VetRepository.updateClientPhoto(photo);
+      if (!mounted) return;
+      setState(() {
+        _fotoBytes = bytes;
+        _foto = null;
+        VetRepository.clientPhotoBytes = bytes;
+        VetRepository.clientPhotoPath = null;
+      });
+      if (!persisted) {
+        vetSoon(
+          context,
+          'Foto atualizada nesta sessão. Não foi possível salvar localmente.',
+        );
+      }
+    } on FormatException catch (error) {
+      if (mounted) {
+        vetSoon(context, error.message.toString());
+      }
+    } on PersistenceBlockedException {
+      if (mounted) {
+        vetSoon(context, 'Não foi possível salvar a foto localmente.');
       }
     } catch (_) {
       if (mounted) vetSoon(context, 'Não foi possível abrir a imagem.');
@@ -84,7 +107,7 @@ class _PerfilPageState extends State<PerfilPage> {
       builder: (_) => _NomeDialog(inicial: _nome),
     );
     if (novo != null && novo.isNotEmpty && mounted) {
-      setState(() {
+      await _saveProfileChange(() {
         _nome = novo;
         VetRepository.updateClient(name: novo);
       });
@@ -97,16 +120,22 @@ class _PerfilPageState extends State<PerfilPage> {
       builder: (_) => _BirthDialog(initial: _nascimento),
     );
     if (data != null && mounted) {
-      setState(() {
+      await _saveProfileChange(() {
         _nascimento = data;
         VetRepository.updateClient(birthDate: data);
       });
     }
   }
 
-  Future<void> _mudarEndereco() async {
-    await Navigator.pushNamed(context, '/enderecos');
-    if (mounted) setState(() {});
+  Future<void> _saveProfileChange(VoidCallback update) async {
+    setState(update);
+    final saved = await VetRepository.flush();
+    if (!saved && mounted) {
+      vetSoon(
+        context,
+        'Dados atualizados nesta sessão. Não foi possível salvar localmente.',
+      );
+    }
   }
 
   @override
@@ -151,13 +180,16 @@ class _PerfilPageState extends State<PerfilPage> {
           alignment: Alignment.topCenter,
           children: [
             Positioned(top: 0, left: 0, right: 0, child: _buildHeader(s, top)),
-            Positioned(top: top + 72 * s, child: _buildAvatarTab(s)),
+            Positioned(
+              top: top + 72 * s,
+              child: _buildAvatarTab(s, mobileFigma: true),
+            ),
           ],
         ),
       ),
-      SizedBox(height: 18 * s),
+      SizedBox(height: 13 * s),
       _buildBirthday(s),
-      SizedBox(height: 28 * s),
+      SizedBox(height: 62 * s),
       _buildOptions(s),
     ],
   );
@@ -195,7 +227,7 @@ class _PerfilPageState extends State<PerfilPage> {
       width: double.infinity,
       height: top + 131 * s,
       alignment: Alignment.topCenter,
-      padding: EdgeInsets.only(top: top + 16 * s),
+      padding: EdgeInsets.only(top: top + 27 * s),
       decoration: BoxDecoration(
         color: VetColors.rose,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(30 * s)),
@@ -205,22 +237,10 @@ class _PerfilPageState extends State<PerfilPage> {
           Text(
             'Perfil',
             style: TextStyle(
-              fontSize: 26 * s,
+              fontSize: 30 * s,
               fontFamily: PetsTheme.fontComfortaa,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.bold,
               color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 18 * s),
-          Container(
-            width: 220 * s,
-            height: 59 * s,
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(30 * s),
-                bottom: Radius.circular(10 * s),
-              ),
             ),
           ),
         ],
@@ -228,7 +248,7 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 
-  Widget _buildAvatarTab(double s) {
+  Widget _buildAvatarTab(double s, {bool mobileFigma = false}) {
     return Container(
       width: 220 * s,
       height: 280 * s,
@@ -240,56 +260,114 @@ class _PerfilPageState extends State<PerfilPage> {
           bottom: Radius.circular(200 * s),
         ),
       ),
-      child: Column(
-        children: [
-          SizedBox(height: 15 * s),
-          GestureDetector(
-            onTap: _mudarNome,
-            child: Text(
-              _nome,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: TextStyle(
-                fontSize: 22 * s,
-                fontFamily: PetsTheme.fontComfortaa,
-                fontWeight: FontWeight.bold,
-                color: VetColors.brown,
-              ),
-            ),
-          ),
-          SizedBox(height: 12 * s),
-          GestureDetector(
-            onTap: _mudarFoto,
-            child: SizedBox(
-              width: 178 * s,
-              height: 178 * s,
-              child: CustomPaint(
-                painter: _DashedCirclePainter(
-                  color: VetColors.profileOutline,
-                  strokeWidth: 2 * s,
-                ),
-                child: Center(
-                  child: Container(
-                    width: 156 * s,
-                    height: 156 * s,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      color: VetColors.pink,
-                      shape: BoxShape.circle,
-                    ),
-                    child: _buildProfileImage(),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      child: mobileFigma
+          ? _buildMobileFigmaAvatar(s)
+          : _buildLegacyAvatarContent(s),
     );
   }
 
+  Widget _buildMobileFigmaAvatar(double s) => Stack(
+    clipBehavior: Clip.none,
+    children: [
+      Positioned(left: 22 * s, top: 83 * s, child: _buildPhotoAction(s)),
+      Positioned(
+        left: 9.9486 * s,
+        top: 72.3448 * s,
+        child: IgnorePointer(
+          child: CustomPaint(
+            key: const ValueKey('profile-avatar-dashes'),
+            size: Size(190.103 * s, 186.971 * s),
+            painter: _FigmaProfileEllipsePainter(scale: s),
+          ),
+        ),
+      ),
+      Positioned(top: 15 * s, left: 0, right: 0, child: _buildNameAction(s)),
+    ],
+  );
+
+  Widget _buildLegacyAvatarContent(double s) => Column(
+    children: [
+      SizedBox(height: 15 * s),
+      _buildNameAction(s),
+      SizedBox(height: 33 * s),
+      SizedBox(
+        width: 196 * s,
+        height: 190 * s,
+        child: CustomPaint(
+          painter: _DashedCirclePainter(
+            color: VetColors.profileOutline,
+            strokeWidth: 2 * s,
+          ),
+          child: Center(child: _buildPhotoAction(s)),
+        ),
+      ),
+    ],
+  );
+
+  Widget _buildNameAction(double s) => Semantics(
+    key: const ValueKey('profile-change-name-action'),
+    button: true,
+    label: 'Alterar nome do perfil. Nome atual: $_nome',
+    onTap: _mudarNome,
+    child: ExcludeSemantics(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _mudarNome,
+          borderRadius: BorderRadius.circular(8 * s),
+          child: Text(
+            _nome,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: TextStyle(
+              fontSize: 22 * s,
+              fontFamily: PetsTheme.fontComfortaa,
+              fontWeight: FontWeight.bold,
+              color: VetColors.brown,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  Widget _buildPhotoAction(double s) => Semantics(
+    key: const ValueKey('profile-change-photo-action'),
+    button: true,
+    label: 'Alterar foto do perfil',
+    onTap: _mudarFoto,
+    child: ExcludeSemantics(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _mudarFoto,
+          customBorder: const CircleBorder(),
+          child: SizedBox.square(
+            dimension: 165 * s,
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: inset_shadow.BoxDecoration(
+                color: VetColors.pink,
+                shape: BoxShape.circle,
+                boxShadow: const [
+                  inset_shadow.BoxShadow(
+                    color: VetColors.shadowDark,
+                    offset: Offset(2, 2),
+                    blurRadius: 5,
+                    inset: true,
+                  ),
+                ],
+              ),
+              child: _buildProfileImage(),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
   Widget _buildProfileImage() {
-    if (kIsWeb && _fotoBytes != null) {
+    if (_fotoBytes != null) {
       return Image.memory(_fotoBytes!, fit: BoxFit.cover, cacheWidth: 400);
     }
     if (!kIsWeb && _foto != null) {
@@ -297,34 +375,11 @@ class _PerfilPageState extends State<PerfilPage> {
     }
     return Container(
       key: const ValueKey('profile-empty-photo'),
-      color: VetColors.pink.withValues(alpha: .45),
-      alignment: Alignment.center,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(
-            Icons.person_outline,
-            size: 76,
-            color: VetColors.profileOutline.withValues(alpha: .7),
-          ),
-          Positioned(
-            right: 20,
-            bottom: 20,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: const BoxDecoration(
-                color: VetColors.brown,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.add_a_photo_outlined,
-                size: 19,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+      clipBehavior: Clip.antiAlias,
+      decoration: const BoxDecoration(shape: BoxShape.circle),
+      child: Image.asset(
+        'assets/imagens/figma/profile-pet-placeholder.png',
+        fit: BoxFit.cover,
       ),
     );
   }
@@ -333,8 +388,17 @@ class _PerfilPageState extends State<PerfilPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.cake_outlined, size: 16 * s, color: VetColors.brown),
-        SizedBox(width: 6 * s),
+        Transform.translate(
+          offset: Offset(0, -4 * s),
+          child: Image.asset(
+            'assets/imagens/figma/profile-birthday-icon.png',
+            key: const ValueKey('profile-birthday-icon'),
+            width: 18 * s,
+            height: 22 * s,
+            excludeFromSemantics: true,
+          ),
+        ),
+        SizedBox(width: 8 * s),
         Text(
           _nascimentoTexto,
           style: TextStyle(
@@ -353,39 +417,58 @@ class _PerfilPageState extends State<PerfilPage> {
       MapEntry('Mudar Foto de Perfil', _mudarFoto),
       MapEntry('Mudar Nome de Perfil', _mudarNome),
       MapEntry('Mudar Data de Nascimento', _mudarNascimento),
-      MapEntry('Alterar endereço', _mudarEndereco),
     ];
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 22 * s),
+      padding: EdgeInsets.symmetric(horizontal: 12 * s),
       child: Column(
         children: [
           for (int i = 0; i < items.length; i++) ...[
             if (i > 0)
-              Divider(height: 1, thickness: 1, color: VetColors.profileOutline),
-            InkWell(
-              onTap: items[i].value,
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 14 * s),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        items[i].key,
-                        style: TextStyle(
-                          fontSize: 18 * s,
-                          fontFamily: PetsTheme.fontComfortaa,
-                          fontWeight: FontWeight.bold,
-                          color: VetColors.brown,
+              Divider(height: s, thickness: s, color: VetColors.profileOutline),
+            SizedBox(
+              height:
+                  (i == 0
+                      ? 53
+                      : i == 1
+                      ? 56
+                      : 57) *
+                  s,
+              child: InkWell(
+                onTap: items[i].value,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 16 * s,
+                    right: 16 * s,
+                    top: (i == 0 ? 16 : 19) * s,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            items[i].key,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              fontSize: 18 * s,
+                              fontFamily: PetsTheme.fontComfortaa,
+                              fontWeight: FontWeight.bold,
+                              color: VetColors.brown,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    Icon(
-                      Icons.chevron_right,
-                      size: 26 * s,
-                      color: VetColors.brown,
-                    ),
-                  ],
+                      Icon(
+                        Icons.chevron_right,
+                        size: 20 * s,
+                        color: VetColors.brown,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -509,7 +592,7 @@ class _DashedCirclePainter extends CustomPainter {
       center: size.center(Offset.zero),
       radius: r,
     );
-    const int dashes = 36;
+    const int dashes = 20;
     const double sweep = 2 * math.pi / dashes;
     for (int i = 0; i < dashes; i++) {
       canvas.drawArc(rect, i * sweep, sweep * 0.55, false, paint);
@@ -519,4 +602,40 @@ class _DashedCirclePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _DashedCirclePainter old) =>
       old.color != color || old.strokeWidth != strokeWidth;
+}
+
+/// Contorno oval tracejado conforme o vetor exportado do Figma para mobile.
+class _FigmaProfileEllipsePainter extends CustomPainter {
+  const _FigmaProfileEllipsePainter({required this.scale});
+
+  final double scale;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final outline = Path()
+      ..addOval(
+        Rect.fromLTWH(
+          1.5 * scale,
+          1.5 * scale,
+          187.103 * scale,
+          183.971 * scale,
+        ),
+      );
+    final paint = Paint()
+      ..color = VetColors.profileOutline
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3 * scale
+      ..strokeCap = StrokeCap.round;
+
+    for (final metric in outline.computeMetrics()) {
+      for (double start = 0; start < metric.length; start += 30 * scale) {
+        final end = math.min(start + 15 * scale, metric.length);
+        canvas.drawPath(metric.extractPath(start, end), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FigmaProfileEllipsePainter old) =>
+      old.scale != scale;
 }

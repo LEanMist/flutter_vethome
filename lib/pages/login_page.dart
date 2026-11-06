@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/vet_repository.dart';
 import '../theme.dart';
@@ -17,12 +17,53 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  static const _rememberedEmailKey = 'vethome.login.rememberedEmail.v1';
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _rememberFocusNode = FocusNode(debugLabel: 'Lembre-se de mim');
 
   bool esconderSenha = true;
   bool lembrarDeMim = false;
+  bool _signingIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreRememberedEmail();
+  }
+
+  Future<void> _restoreRememberedEmail() async {
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      final email = preferences.getString(_rememberedEmailKey);
+      if (!mounted ||
+          email == null ||
+          email.trim().isEmpty ||
+          _emailController.text.isNotEmpty) {
+        return;
+      }
+      setState(() {
+        _emailController.text = email;
+        lembrarDeMim = true;
+      });
+    } catch (_) {
+      // Login continua disponível se a preferência opcional não puder ser lida.
+    }
+  }
+
+  Future<bool> _saveRememberedEmail() async {
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      if (!lembrarDeMim) return await preferences.remove(_rememberedEmailKey);
+      return await preferences.setString(
+        _rememberedEmailKey,
+        _emailController.text.trim(),
+      );
+    } catch (_) {
+      return false;
+    }
+  }
 
   void mostrarMensagem(String mensagem) {
     ScaffoldMessenger.of(
@@ -30,7 +71,8 @@ class _LoginPageState extends State<LoginPage> {
     ).showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
-  void entrar() {
+  Future<void> entrar() async {
+    if (_signingIn) return;
     if (!VetRepository.authenticate(
       _emailController.text,
       _passwordController.text,
@@ -38,7 +80,21 @@ class _LoginPageState extends State<LoginPage> {
       mostrarMensagem('Informe um e-mail válido e uma senha com 6 caracteres.');
       return;
     }
+    _signingIn = true;
+    final emailSaved = await _saveRememberedEmail();
+    _signingIn = false;
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
     Navigator.pushReplacementNamed(context, '/pets');
+    if (!emailSaved) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível lembrar o usuário neste dispositivo.',
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -61,6 +117,47 @@ class _LoginPageState extends State<LoginPage> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final s = (constraints.maxWidth / 390).clamp(.8, 1.0);
+              final textScale = MediaQuery.textScalerOf(context).scale(1);
+              final rememberControl = _RememberMeControl(
+                value: lembrarDeMim,
+                focusNode: _rememberFocusNode,
+                onChanged: (value) => setState(() => lembrarDeMim = value),
+              );
+              final forgotPassword = TextButton(
+                style: TextButton.styleFrom(
+                  alignment: Alignment.centerLeft,
+                  minimumSize: const Size(0, 48),
+                  padding: const EdgeInsets.only(left: 8),
+                ),
+                onPressed: () => mostrarMensagem(
+                  'Procure o suporte para recuperar o acesso.',
+                ),
+                child: const Text(
+                  'Esqueceu sua senha?',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color.fromRGBO(0, 0, 0, .5),
+                  ),
+                ),
+              );
+              final secondaryActions = textScale >= 1.4
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(width: 258, child: rememberControl),
+                        SizedBox(width: 258, child: forgotPassword),
+                      ],
+                    )
+                  : SizedBox(
+                      height: 48,
+                      child: Row(
+                        children: [
+                          SizedBox(width: 130, child: rememberControl),
+                          Expanded(child: forgotPassword),
+                        ],
+                      ),
+                    );
               return SingleChildScrollView(
                 child: Stack(
                   children: [
@@ -126,41 +223,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         Transform.translate(
                           offset: Offset((258 - 242 * s) / 2, -17.5),
-                          child: SizedBox(
-                            width: 258,
-                            height: 48,
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: 130,
-                                  child: _RememberMeControl(
-                                    value: lembrarDeMim,
-                                    focusNode: _rememberFocusNode,
-                                    onChanged: (value) =>
-                                        setState(() => lembrarDeMim = value),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: TextButton(
-                                    style: TextButton.styleFrom(
-                                      alignment: Alignment.centerLeft,
-                                      padding: const EdgeInsets.only(left: 26),
-                                    ),
-                                    onPressed: () => mostrarMensagem(
-                                      'Procure o suporte para recuperar o acesso.',
-                                    ),
-                                    child: const Text(
-                                      'Esqueceu sua senha?',
-                                      style: TextStyle(
-                                        fontSize: 8,
-                                        color: Color.fromRGBO(0, 0, 0, .5),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          child: SizedBox(width: 258, child: secondaryActions),
                         ),
                         const SizedBox(height: 11),
                         SizedBox(
@@ -169,7 +232,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: ElevatedButton.icon(
                             onPressed: entrar,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: VetColors.brown,
+                              backgroundColor: VetColors.rose,
                               foregroundColor: Colors.white,
                               elevation: 2,
                               shadowColor: Colors.black.withValues(alpha: .25),
@@ -189,31 +252,47 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 28),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color: VH.foreground.withValues(alpha: .5),
-                                ),
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 26),
-                                child: Text(
+                          child: textScale >= 1.4
+                              ? const Text(
                                   'Ou continue com',
+                                  textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     color: VetColors.brownSecondary,
                                   ),
+                                )
+                              : Row(
+                                  children: [
+                                    Expanded(
+                                      child: Divider(
+                                        color: VH.foreground.withValues(
+                                          alpha: .5,
+                                        ),
+                                      ),
+                                    ),
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 26,
+                                      ),
+                                      child: Text(
+                                        'Ou continue com',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: VetColors.brownSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Divider(
+                                        color: VH.foreground.withValues(
+                                          alpha: .5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color: VH.foreground.withValues(alpha: .5),
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                         const SizedBox(height: 22),
                         Row(
@@ -356,14 +435,16 @@ class _LoginPageState extends State<LoginPage> {
             ? TextInputType.text
             : TextInputType.emailAddress,
         onSubmitted: (_) => entrar(),
-        style: GoogleFonts.montserratAlternates(
+        style: const TextStyle(
+          fontFamily: VH.bodyFontFamily,
           fontSize: 15,
           fontWeight: FontWeight.w500,
           color: VH.foreground,
         ),
         decoration: InputDecoration(
           hintText: label,
-          hintStyle: GoogleFonts.montserratAlternates(
+          hintStyle: TextStyle(
+            fontFamily: VH.bodyFontFamily,
             color: VH.foreground.withValues(alpha: .5),
             fontSize: 15,
             fontWeight: FontWeight.w500,
@@ -459,7 +540,7 @@ class _RememberMeControlState extends State<_RememberMeControl> {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
-          height: 48,
+          constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.only(left: 5),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(100),
@@ -506,14 +587,9 @@ class _RememberMeControlState extends State<_RememberMeControl> {
               ),
               const SizedBox(width: 4),
               const Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Lembre-se de mim',
-                    maxLines: 1,
-                    style: TextStyle(fontSize: 8, color: VetColors.brown),
-                  ),
+                child: Text(
+                  'Lembre-se de mim',
+                  style: TextStyle(fontSize: 12, color: VetColors.brown),
                 ),
               ),
             ],

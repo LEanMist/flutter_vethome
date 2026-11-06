@@ -67,7 +67,33 @@ class ServicosScreen extends StatefulWidget {
 }
 
 class _ServicosScreenState extends State<ServicosScreen> {
-  String? open = 'Exames';
+  final Set<String> _expanded = {'Exames', 'Vacinas'};
+  final Set<String> _selected = <String>{};
+
+  void _toggleCategory(String name) => setState(() {
+    if (!_expanded.remove(name)) _expanded.add(name);
+  });
+
+  void _toggleService(String name) => setState(() {
+    if (!_selected.remove(name)) _selected.add(name);
+  });
+
+  void _continueToPlan(String petId) {
+    if (_selected.isEmpty) return;
+    final ordered = [
+      for (final group in categories.values)
+        for (final service in group)
+          if (_selected.contains(service)) service,
+    ];
+    final combined = ordered.join(' + ');
+    servicoAtual = combined;
+    Navigator.pushNamed(
+      context,
+      '/convenio',
+      arguments: {'petId': petId, 'service': combined},
+    );
+  }
+
   static const categories = <String, List<String>>{
     'Exames': ['Hemograma', 'Creatinina', 'Urina'],
     'Vacinas': ['V8', 'V10', 'Antirrábica'],
@@ -88,37 +114,11 @@ class _ServicosScreenState extends State<ServicosScreen> {
     return VHPage(
       tab: '/servicos',
       children: [
-        VHHeader(
-          'Serviços',
-          bottom: desktop
-              ? null
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      species,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontFamily: VH.headingFontFamily,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    PetAvatar(
-                      image: pet.imagePath,
-                      photoBase64: pet.photoBase64,
-                      species: pet.species,
-                      size: 32,
-                      listSilhouette: true,
-                    ),
-                  ],
-                ),
-        ),
+        desktop ? const VHHeader('Serviços') : _servicesHeader(pet, species),
         Padding(
           padding: EdgeInsets.fromLTRB(
             desktop ? 20 : 0,
-            desktop ? 20 : 32,
+            desktop ? 20 : 28,
             desktop ? 20 : 0,
             20,
           ),
@@ -127,16 +127,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
             mobile: LayoutBuilder(
               builder: (context, constraints) => Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: PetSummary(pet: pet),
-                  ),
-                  const SizedBox(height: 12),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: Divider(),
-                  ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Align(
                     alignment: constraints.maxWidth > 390
                         ? Alignment.topCenter
@@ -147,6 +138,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                         ...categories.entries.map(
                           (entry) => _category(pet, entry),
                         ),
+                        _continueButton(pet.id),
                       ],
                     ),
                   ),
@@ -161,9 +153,12 @@ class _ServicosScreenState extends State<ServicosScreen> {
                 const SizedBox(width: 32),
                 Expanded(
                   child: Column(
-                    children: categories.entries
-                        .map((entry) => _category(pet, entry))
-                        .toList(),
+                    children: [
+                      ...categories.entries.map(
+                        (entry) => _category(pet, entry),
+                      ),
+                      _continueButton(pet.id),
+                    ],
                   ),
                 ),
               ],
@@ -174,36 +169,213 @@ class _ServicosScreenState extends State<ServicosScreen> {
     );
   }
 
+  Widget _servicesHeader(dynamic pet, String species) => SizedBox(
+    height: 157,
+    child: DecoratedBox(
+      decoration: const BoxDecoration(
+        color: VH.secondary,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+      ),
+      child: Stack(
+        children: [
+          const Positioned(
+            top: 37,
+            left: 40,
+            right: 40,
+            child: Text(
+              'Serviços',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: VH.headingFontFamily,
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          if (Navigator.of(context).canPop())
+            Positioned(
+              top: 8,
+              left: 10,
+              child: IconButton(
+                tooltip: 'Voltar',
+                onPressed: () => Navigator.maybePop(context),
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+              ),
+            ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 173,
+                height: 59,
+                decoration: inset_shadow.BoxDecoration(
+                  color: VH.secondary.withValues(alpha: .2),
+                  borderRadius: VH.headerInsetBorderRadius,
+                  boxShadow: const [
+                    inset_shadow.BoxShadow(
+                      color: VH.shadowSubtle,
+                      offset: Offset(2, 2),
+                      blurRadius: 2,
+                      inset: true,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        species,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: VH.bodyFontFamily,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    PetAvatar(
+                      image: pet.imagePath,
+                      photoBase64: pet.photoBase64,
+                      species: pet.species,
+                      size: 32,
+                      listSilhouette: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _continueButton(String petId) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 16),
+    child: Center(
+      child: SizedBox(
+        width: 157,
+        height: 57,
+        child: ElevatedButton(
+          key: const ValueKey('services-continue'),
+          onPressed: _selected.isEmpty ? null : () => _continueToPlan(petId),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: VH.primary,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: VH.primary.withValues(alpha: .45),
+            shape: const StadiumBorder(),
+          ),
+          child: const Text(
+            'Continuar',
+            style: TextStyle(
+              fontFamily: VH.headingFontFamily,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  // Ajuste exclusivo de Serviços: categoria Montserrat Alternates 20 px,
+  // sem alterar VetChoicePill utilizado pelas outras telas.
+  Widget _servicePill(String name) => Row(
+    children: [
+      Expanded(
+        child: Material(
+          color: Colors.transparent,
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: VH.softGradient,
+              borderRadius: BorderRadius.circular(100),
+              boxShadow: VH.controlShadow,
+            ),
+            child: InkWell(
+              onTap: () => _toggleCategory(name),
+              borderRadius: BorderRadius.circular(100),
+              overlayColor: WidgetStateProperty.resolveWith(
+                VH.interactionOverlay,
+              ),
+              child: SizedBox(
+                height: 59,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 30,
+                        height: 30,
+                        child: VetPictogram(name),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: VH.bodyFontFamily,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      SizedBox(
+        width: 42,
+        height: 48,
+        child: IconButton(
+          tooltip: name,
+          onPressed: () => _toggleCategory(name),
+          icon: _expanded.contains(name)
+              ? const Icon(Icons.keyboard_arrow_down, color: VH.foreground)
+              : const VetChevron(),
+        ),
+      ),
+    ],
+  );
+
   Widget _category(
     dynamic pet,
     MapEntry<String, List<String>> entry,
   ) => SizedBox(
     width: 306,
     child: Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.sizeOf(context).width < VH.compactBreakpoint
+            ? (entry.key == 'Microchipagem' ? 22 : 20)
+            : 14,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Semantics(
             button: true,
             label: entry.key,
-            expanded: open == entry.key,
-            onTap: () =>
-                setState(() => open = open == entry.key ? null : entry.key),
-            child: ExcludeSemantics(
-              child: VetChoicePill(
-                label: entry.key,
-                icon: VetPictogram(entry.key),
-                expanded: open == entry.key,
-                onTap: () =>
-                    setState(() => open = open == entry.key ? null : entry.key),
-              ),
-            ),
+            expanded: _expanded.contains(entry.key),
+            onTap: () => _toggleCategory(entry.key),
+            child: ExcludeSemantics(child: _servicePill(entry.key)),
           ),
           AnimatedSize(
             duration: const Duration(milliseconds: 240),
             alignment: Alignment.topLeft,
-            child: open != entry.key
+            child: !_expanded.contains(entry.key)
                 ? const SizedBox(width: 228)
                 : ClipRRect(
                     borderRadius: const BorderRadius.only(
@@ -218,25 +390,19 @@ class _ServicosScreenState extends State<ServicosScreen> {
                             for (final option in entry.value)
                               Semantics(
                                 button: true,
-                                selected: servicoAtual == option,
+                                selected: _selected.contains(option),
                                 child: InkWell(
-                                  onTap: () {
-                                    setState(() => servicoAtual = option);
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/convenio',
-                                      arguments: {
-                                        'petId': pet.id,
-                                        'service': option,
-                                      },
-                                    );
-                                  },
+                                  onTap: () => _toggleService(option),
                                   overlayColor: WidgetStateProperty.resolveWith(
                                     VH.interactionOverlay,
                                   ),
                                   child: ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      minHeight: 48,
+                                    constraints: BoxConstraints(
+                                      minHeight:
+                                          MediaQuery.sizeOf(context).width <
+                                              VH.compactBreakpoint
+                                          ? 33
+                                          : 48,
                                     ),
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -249,15 +415,17 @@ class _ServicosScreenState extends State<ServicosScreen> {
                                               option,
                                               style: const TextStyle(
                                                 color: VH.foreground,
-                                                fontSize: 14,
+                                                fontFamily: VH.bodyFontFamily,
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w500,
                                               ),
                                             ),
                                           ),
                                           Container(
-                                            width: 14,
-                                            height: 14,
+                                            width: 15,
+                                            height: 15,
                                             decoration: BoxDecoration(
-                                              color: servicoAtual == option
+                                              color: _selected.contains(option)
                                                   ? VH.primary.withValues(
                                                       alpha: .65,
                                                     )
@@ -324,6 +492,8 @@ class ConvenioScreen extends StatelessWidget {
                       child: PetSummary(pet: pet),
                     ),
                   ),
+                  // Alinha o primeiro plano a y≈342 no frame 2783:840.
+                  const SizedBox(height: 55),
                   for (final plan in const ['PetLove', 'DogLife', 'Particular'])
                     Padding(
                       padding: const EdgeInsets.only(bottom: 60),
@@ -538,7 +708,7 @@ class ConvenioScreen extends StatelessWidget {
                           const SizedBox(width: 18),
                           Expanded(
                             child: Text(
-                              plan,
+                              plan == 'DogLife' ? 'Doglife' : plan,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(

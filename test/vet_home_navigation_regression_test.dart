@@ -47,10 +47,8 @@ void main() {
       'Novembro',
       'Dezembro',
     ];
-    expect(
-      find.text('${months[tomorrow.month - 1]} ${tomorrow.year}'),
-      findsOneWidget,
-    );
+    expect(find.text(months[tomorrow.month - 1]), findsOneWidget);
+    expect(find.text('${tomorrow.year}'), findsOneWidget);
     expect(find.text('Consulta'), findsWidgets);
   });
 
@@ -103,7 +101,8 @@ void main() {
       'Novembro',
       'Dezembro',
     ];
-    expect(find.text('${months[date.month - 1]} ${date.year}'), findsOneWidget);
+    expect(find.text(months[date.month - 1]), findsOneWidget);
+    expect(find.text('${date.year}'), findsOneWidget);
     expect(find.text('Retorno teste'), findsWidgets);
   });
 

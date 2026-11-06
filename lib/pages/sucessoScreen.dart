@@ -81,22 +81,28 @@ class _SucessoScreenState extends State<SucessoScreen>
                             curve: Curves.easeOutCubic,
                           ),
                         ),
-                    child: Container(
+                    child: SizedBox(
                       width: 350 * scale,
                       height: 350 * scale,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color.fromRGBO(0, 0, 0, .08),
-                            offset: Offset(2, 2),
-                            blurRadius: 2,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Positioned(
+                            left: 24.37 * scale,
+                            top: 24.37 * scale,
+                            width: 300.158 * scale,
+                            height: 300.158 * scale,
+                            child: Image.asset(
+                              'assets/imagens/figma/success-logo-ring.png',
+                              key: const ValueKey('success-logo-ring'),
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Image.asset(
+                            'assets/imagens/figma/vethomepng-2.png',
+                            fit: BoxFit.contain,
                           ),
                         ],
-                      ),
-                      child: Image.asset(
-                        'assets/imagens/figma/vethomepng-2.png',
-                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
