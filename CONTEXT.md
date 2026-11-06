@@ -2,11 +2,11 @@
 
 ## Estado consolidado — 06/11/2026
 
-- Estado conferido no repositório: branch `kelvin`; `HEAD` e `origin/kelvin` em `1a79cdb` (`Align appointment calendar with Figma`). O código rastreado não tinha mudanças locais pendentes. O arquivo local não rastreado `CONTINUACAO_OUTRA_CONTA.md` foi preservado fora dos commits.
-- Avanços visuais publicados mais recentes: `caf82ce` (Chat e Suporte), `f13f418` (ação de cadastro Pet), `593d9b8` (geometria dos campos de endereço) e `1a79cdb` (calendário de Nova Consulta alinhado ao Figma).
-- O calendário usa a grade compacta do frame `CALENDAR_WIDGET_2` (`2783:768`), continua posicionando as datas pelo calendário gregoriano e navega por gesto, teclado e ações de acessibilidade. Os testes focados de estilo, acessibilidade e breakpoints passaram **19/19**; `flutter analyze --no-pub` não encontrou problemas.
-- A tela Perfil foi conferida contra `PROFILE_PAGE` (`2783:1073`). Tipografia, avatar e posições das ações mobile correspondem aos pontos medidos. Os testes de Perfil/acessibilidade e a validação visual focada passaram **20/20**; nenhum arquivo do Perfil foi alterado.
-- O ChatGPT “Teste integração Meu PC” está auditando Configurações contra `SETTINGS_PAGE` (`2783:718`), sem editar Git. Aguardar o resultado antes de consolidar essa tela.
+- Estado conferido no repositório: branch `kelvin`; último commit publicado `5dd135e` (`Test pet selection navigation`). O arquivo local não rastreado `CONTINUACAO_OUTRA_CONTA.md` foi preservado fora dos commits.
+- Avanços visuais publicados recentes: `caf82ce` (Chat e Suporte), `f13f418` (ação de cadastro Pet), `593d9b8` (campos de endereço), `1a79cdb` (calendário de Nova Consulta) e `29559cf` (acessibilidade do calendário). O teste de toque no cartão de `EscolhaPetScreen`, seleção do ID e navegação para `/servicos` foi acrescentado em `5dd135e`; teste focado: **1/1 passou**.
+- O calendário usa a grade compacta do frame `CALENDAR_WIDGET_2` (`2783:768`), mantém o posicionamento gregoriano e navega por gesto, teclado e ações semânticas. Os testes focados mais recentes de estilo e acessibilidade passaram **16/16**; `flutter analyze --no-pub` não encontrou problemas na rodada anterior.
+- Perfil (`PROFILE_PAGE`, `2783:1073`) e lista Pets (`PETS_PAGE`, `2783:1233`) foram comparados ao Figma; medições e testes focados corresponderam, sem mudanças nessas telas. Perfil/acessibilidade: **20/20**; Pets/header: **11/11**.
+- O ChatGPT “Teste integração Meu PC” auditou Configurações (`SETTINGS_PAGE`, `2783:718`), Serviços (`2791:3113`), Convênio (`2783:840`) e a apresentação de Escolha de Pet (`CHOICE_PET_WIDGET`, `2783:916`). Os testes informados passaram (11/11, 6/6, 5/5; a auditoria visual de Escolha não alterou código). Foi confirmada uma diferença estrutural em Escolha: o Figma mostra um componente compacto, enquanto o app abre uma página completa; qualquer redesenho exige definir o contexto de abertura.
 - O Figma atual confirmado pelo usuário é a cópia `Doutoura_Do_Vinicius` (`nDOqCVJ57JpWhHrVaaKcHy`) e o MCP está acessível. As notas mais antigas abaixo registram estados históricos e podem mencionar outro arquivo ou branches anteriores.
 
 ## Estado anterior — Detalhes do Pet e persistência local (05/11/2026)
