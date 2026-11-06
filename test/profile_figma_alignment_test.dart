@@ -56,6 +56,39 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('PROFILE_PAGE: área segura superior não desloca o Figma', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+
+    await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
+    await tester.pumpAndSettle();
+
+    expect(tester.getTopLeft(find.text('Perfil')).dy, closeTo(27, .5));
+    final avatar = tester
+        .widgetList<Container>(find.byType(Container))
+        .singleWhere(
+          (widget) =>
+              widget.decoration is BoxDecoration &&
+              (widget.decoration! as BoxDecoration).color ==
+                  VetColors.pinkOverlay50,
+        );
+    expect(
+      tester.getRect(find.byWidget(avatar)),
+      const Rect.fromLTWH(85, 72, 220, 280),
+    );
+    expect(
+      tester.getTopLeft(find.text('Mudar Foto de Perfil')).dy,
+      closeTo(469, .5),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'PROFILE_PAGE: nascimento, ações, separadores e navegação em 390x844',
     (tester) async {

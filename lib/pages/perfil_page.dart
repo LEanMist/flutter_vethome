@@ -154,7 +154,9 @@ class _PerfilPageState extends State<PerfilPage> {
               Expanded(
                 child: desktop
                     ? _buildDesktopProfile(s, top)
-                    : SingleChildScrollView(child: _buildMobileProfile(s, top)),
+                    // O frame móvel do Figma começa em y=0; a barra de
+                    // status sobrepõe o cabeçalho rosa, sem deslocá-lo.
+                    : SingleChildScrollView(child: _buildMobileProfile(s, 0)),
               ),
               SafeArea(
                 top: false,
