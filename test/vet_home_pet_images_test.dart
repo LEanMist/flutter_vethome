@@ -15,6 +15,7 @@ import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/pages/saude_page.dart';
 import 'package:flutter_vethome/pages/vacinacao_page.dart';
 import 'package:flutter_vethome/screens/pets.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/pet_avatar.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
@@ -31,6 +32,18 @@ String assetOf(Image image) {
 
 Finder avatarImages() =>
     find.descendant(of: find.byType(PetAvatar), matching: find.byType(Image));
+
+double _contrastRatio(Color foreground, Color background) {
+  final foregroundLuminance = foreground.computeLuminance();
+  final backgroundLuminance = background.computeLuminance();
+  final lighter = foregroundLuminance > backgroundLuminance
+      ? foregroundLuminance
+      : backgroundLuminance;
+  final darker = foregroundLuminance > backgroundLuminance
+      ? backgroundLuminance
+      : foregroundLuminance;
+  return (lighter + .05) / (darker + .05);
+}
 
 void main() {
   setUp(() async {
@@ -179,12 +192,18 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: PetAvatar(image: '', species: 'Coelho'),
+          body: PetAvatar(image: '', species: 'Coelho', size: 32),
         ),
       ),
     );
     expect(avatarImages(), findsNothing);
     expect(find.text('?'), findsOneWidget);
+    final fallback = tester.widget<Text>(find.text('?'));
+    expect(fallback.style?.color, VetColors.calendarTextOnRose);
+    expect(
+      _contrastRatio(fallback.style!.color!, VetColors.rose),
+      greaterThanOrEqualTo(4.5),
+    );
     expect(find.byType(Icon), findsNothing);
   });
 

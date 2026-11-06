@@ -38,7 +38,10 @@ class PetAvatar extends StatelessWidget {
           ? Center(
               child: Text(
                 '?',
-                style: TextStyle(fontSize: width * .55, color: Colors.white),
+                style: TextStyle(
+                  fontSize: width * .55,
+                  color: VetColors.calendarTextOnRose,
+                ),
               ),
             )
           : Image.asset(
