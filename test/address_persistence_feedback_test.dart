@@ -78,7 +78,7 @@ void main() {
     await tester.pumpAndSettle();
     final streetField = find.descendant(
       of: find.byWidgetPredicate(
-        (widget) => widget is VHField && widget.label == 'Endereço',
+        (widget) => widget is VHField && widget.label == 'Logradouro',
       ),
       matching: find.byType(TextFormField),
     );
