@@ -204,10 +204,8 @@ class _AddressFormState extends State<AddressForm> {
         : editing
         ? 'Salvar'
         : 'Salvar endereço';
-    final saveBackgroundColor = registration || editing
-        ? VH.primary
-        : VH.secondary;
-    final saveForegroundColor = registration || editing
+    final saveBackgroundColor = editing ? VH.primary : VH.secondary;
+    final saveForegroundColor = editing
         ? Colors.white
         : VetColors.calendarTextOnRose;
     final saveButton = ElevatedButton(

@@ -29,6 +29,18 @@ Size _addressAssetSize(WidgetTester tester, String assetName) => tester.getSize(
       .first,
 );
 
+double _contrastRatio(Color first, Color second) {
+  final firstLuminance = first.computeLuminance();
+  final secondLuminance = second.computeLuminance();
+  final lighter = firstLuminance > secondLuminance
+      ? firstLuminance
+      : secondLuminance;
+  final darker = firstLuminance > secondLuminance
+      ? secondLuminance
+      : firstLuminance;
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 void main() {
   const address = SavedAddress(
     id: 'figma-edit-address',
@@ -260,6 +272,21 @@ void main() {
     expect(
       tester.getRect(find.widgetWithText(ElevatedButton, 'Continuar')),
       const Rect.fromLTWH(104.5, 683, 181, 65),
+    );
+    final continueButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Continuar'),
+    );
+    expect(
+      continueButton.style?.backgroundColor?.resolve(const <WidgetState>{}),
+      VH.secondary,
+    );
+    expect(
+      continueButton.style?.foregroundColor?.resolve(const <WidgetState>{}),
+      VetColors.calendarTextOnRose,
+    );
+    expect(
+      _contrastRatio(VetColors.calendarTextOnRose, VH.secondary),
+      greaterThanOrEqualTo(4.5),
     );
     expect(tester.getTopLeft(find.text('Pular')).dy, closeTo(764, 1));
     final skipStyle = tester
