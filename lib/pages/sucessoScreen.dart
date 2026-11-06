@@ -113,14 +113,21 @@ class _SucessoScreenState extends State<SucessoScreen>
                   child: AnimatedOpacity(
                     opacity: _arrived ? 1 : 0,
                     duration: const Duration(milliseconds: 250),
-                    child: Text(
-                      'Usuário\nCadastrado!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: VH.headingFontFamily,
-                        fontSize: 40 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: VH.foreground,
+                    child: Semantics(
+                      key: const ValueKey('registration-success-announcement'),
+                      label: _arrived ? 'Usuário cadastrado!' : null,
+                      liveRegion: _arrived,
+                      child: ExcludeSemantics(
+                        child: Text(
+                          'Usuário\nCadastrado!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: VH.headingFontFamily,
+                            fontSize: 40 * scale,
+                            fontWeight: FontWeight.bold,
+                            color: VH.foreground,
+                          ),
+                        ),
                       ),
                     ),
                   ),
