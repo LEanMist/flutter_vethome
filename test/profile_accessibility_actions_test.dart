@@ -108,4 +108,56 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  for (final entry in [
+    (key: LogicalKeyboardKey.enter, label: 'Enter'),
+    (key: LogicalKeyboardKey.space, label: 'Espaço'),
+  ]) {
+    testWidgets('Tab e ${entry.label} abrem edição do nascimento do perfil', (
+      tester,
+    ) async {
+      await _openProfileForKeyboard(tester);
+      final action = find
+          .ancestor(
+            of: find.text('Mudar Data de Nascimento'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      final actionElement = tester.element(action);
+
+      bool actionIsFocused() {
+        final focusedElement = FocusManager.instance.primaryFocus?.context;
+        if (focusedElement == null) return false;
+        if (identical(focusedElement, actionElement)) return true;
+        var insideAction = false;
+        focusedElement.visitAncestorElements((ancestor) {
+          if (identical(ancestor, actionElement)) {
+            insideAction = true;
+            return false;
+          }
+          return true;
+        });
+        return insideAction;
+      }
+
+      var reached = actionIsFocused();
+      for (var step = 0; step < 25 && !reached; step++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        reached = actionIsFocused();
+      }
+      expect(
+        reached,
+        isTrue,
+        reason: 'Tab deve alcançar Mudar Data de Nascimento',
+      );
+
+      await tester.sendKeyEvent(entry.key);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('Mudar data de nascimento'), findsOneWidget);
+      expect(find.text('Data de nascimento'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

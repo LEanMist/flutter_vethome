@@ -1,5 +1,7 @@
 // ignore_for_file: file_names
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
@@ -24,26 +26,55 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final logoSize = width >= VH.desktopBreakpoint ? 196.0 : 152.0;
     return Scaffold(
       backgroundColor: VH.background,
-      body: Center(
-        child: Container(
-          width: logoSize,
-          height: logoSize,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: VH.secondary.withValues(alpha: 0.45)),
-          ),
-          child: Image.asset(
-            _logo,
-            width: logoSize * .82,
-            height: logoSize * .82,
-            semanticLabel: 'VetHome',
-          ),
-        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final scale = math
+              .min(constraints.maxWidth / 390, constraints.maxHeight / 844)
+              .clamp(.5, 1.0)
+              .toDouble();
+          return Center(
+            child: SizedBox(
+              key: const ValueKey('splash-figma-frame'),
+              width: 390 * scale,
+              height: 844 * scale,
+              child: Stack(
+                children: [
+                  Positioned(
+                    key: const ValueKey('splash-logo-group'),
+                    left: 20 * scale,
+                    top: 250 * scale,
+                    width: 350 * scale,
+                    height: 350 * scale,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Positioned(
+                          left: 24.37 * scale,
+                          top: 24.37 * scale,
+                          width: 300.158 * scale,
+                          height: 300.158 * scale,
+                          child: Image.asset(
+                            'assets/imagens/figma/success-logo-ring.png',
+                            key: const ValueKey('splash-logo-ring'),
+                            fit: BoxFit.fill,
+                          ),
+                        ),
+                        Image.asset(
+                          _logo,
+                          key: const ValueKey('splash-logo'),
+                          fit: BoxFit.contain,
+                          semanticLabel: 'VetHome',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
