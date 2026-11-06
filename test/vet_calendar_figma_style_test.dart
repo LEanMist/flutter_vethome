@@ -12,6 +12,10 @@ void main() {
   Future<void> pumpCalendar(
     WidgetTester tester, {
     required Size viewport,
+    DateTime? month,
+    DateTime? selected,
+    VoidCallback? onPreviousMonth,
+    VoidCallback? onNextMonth,
   }) async {
     tester.view.physicalSize = viewport;
     tester.view.devicePixelRatio = 1;
@@ -28,11 +32,11 @@ void main() {
               child: SizedBox(
                 width: viewport.width >= 900 ? 390 : viewport.width,
                 child: VetCalendar(
-                  month: DateTime(2026, 10),
-                  selected: DateTime(2026, 10, 9),
+                  month: month ?? DateTime(2026, 10),
+                  selected: selected ?? DateTime(2026, 10, 9),
                   onSelected: (_) {},
-                  onPreviousMonth: () {},
-                  onNextMonth: () {},
+                  onPreviousMonth: onPreviousMonth ?? () {},
+                  onNextMonth: onNextMonth ?? () {},
                   hasIndicator: (date) => date == DateTime(2026, 10, 9),
                 ),
               ),
@@ -87,10 +91,7 @@ void main() {
     );
     final panelDecoration = panel.decoration! as BoxDecoration;
     expect(panelDecoration.color, const Color(0xFFC08081));
-    expect(
-      panelDecoration.borderRadius,
-      const BorderRadius.vertical(bottom: Radius.circular(30)),
-    );
+    expect(panelDecoration.borderRadius, BorderRadius.circular(30));
 
     final weekday = tester.widget<Text>(find.text('Dom'));
     expect(weekday.style?.fontFamily, VH.headingFontFamily);
@@ -98,10 +99,14 @@ void main() {
     expect(weekday.style?.fontWeight, FontWeight.bold);
     expect(weekday.style?.color, const Color(0xFF68442E));
 
-    final monthTitle = tester.widget<Text>(find.text('Outubro 2026'));
+    final monthTitle = tester.widget<Text>(find.text('Outubro'));
     expect(monthTitle.style?.fontFamily, VH.headingFontFamily);
     expect(monthTitle.style?.fontSize, 15);
     expect(monthTitle.style?.fontWeight, FontWeight.bold);
+    final yearTitle = tester.widget<Text>(find.text('2026'));
+    expect(yearTitle.style?.fontFamily, VH.headingFontFamily);
+    expect(yearTitle.style?.fontSize, 15);
+    expect(yearTitle.style?.fontWeight, FontWeight.bold);
 
     final selectedDay = find.byKey(
       const ValueKey('calendar-2026-10-9-surface'),
@@ -133,6 +138,64 @@ void main() {
       outsideText.style?.color,
       const Color(0xFF68442E).withValues(alpha: .30),
     );
+  });
+
+  testWidgets('calendário de consulta segue a geometria do Figma', (
+    tester,
+  ) async {
+    await pumpCalendar(
+      tester,
+      viewport: const Size(390, 844),
+      month: DateTime(2026, 1),
+      selected: DateTime(2026, 1, 13),
+    );
+
+    expect(VetCalendar.monthDays(DateTime(2026, 1)), hasLength(35));
+    final panelRect = tester.getRect(
+      find.byKey(const ValueKey('vet-calendar')),
+    );
+    expect(panelRect.size, const Size(390, 383));
+    expect(
+      tester.getRect(find.byKey(const ValueKey('calendar-month-label'))),
+      Rect.fromLTWH(128, panelRect.top + 22, 71, 35),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('calendar-year-label'))),
+      Rect.fromLTWH(226, panelRect.top + 22, 35, 35),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('calendar-month-grid'))),
+      Rect.fromLTWH(42, panelRect.top + 75, 305, 260),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('calendar-2026-1-1-surface'))),
+      Rect.fromLTWH(222, panelRect.top + 120, 35, 35),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('calendar-2026-1-31-surface'))),
+      Rect.fromLTWH(312, panelRect.top + 300, 35, 35),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('calendário de consulta permite avançar o mês por gesto', (
+    tester,
+  ) async {
+    var nextMonthCalls = 0;
+    await pumpCalendar(
+      tester,
+      viewport: const Size(390, 844),
+      onNextMonth: () => nextMonthCalls++,
+    );
+
+    await tester.drag(
+      find.byKey(const ValueKey('vet-calendar')),
+      const Offset(-120, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(nextMonthCalls, 1);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('hover, foco por teclado e splash são pintados no dia', (
@@ -171,13 +234,18 @@ void main() {
     final firstDay = find.byKey(const ValueKey('calendar-2026-9-27'));
     InkWell firstDayWidget() => tester.widget<InkWell>(firstDay);
     expect(firstDayWidget().statesController, isNotNull);
-    for (var index = 0; index < 3; index++) {
+    var firstDayFocused = false;
+    for (var index = 0; index < 50 && !firstDayFocused; index++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pump();
+      firstDayFocused = firstDayWidget().statesController!.value.contains(
+        WidgetState.focused,
+      );
     }
     expect(
-      firstDayWidget().statesController!.value,
-      contains(WidgetState.focused),
+      firstDayFocused,
+      isTrue,
+      reason: 'Tab precisa alcançar a primeira data da grade',
     );
     final focusColor = firstDayWidget().overlayColor!.resolve(
       firstDayWidget().statesController!.value,
@@ -205,7 +273,9 @@ void main() {
         lessThanOrEqualTo(panel.right),
       );
       expect(
-        tester.getRect(find.byTooltip('Próximo mês')).right,
+        tester
+            .getRect(find.byKey(const ValueKey('calendar-month-label')))
+            .right,
         lessThanOrEqualTo(panel.right),
       );
       expect(tester.takeException(), isNull, reason: '$viewport');

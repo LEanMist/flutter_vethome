@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -56,8 +58,10 @@ class VetCalendar extends StatelessWidget {
   static List<DateTime> monthDays(DateTime month) {
     final first = DateTime(month.year, month.month);
     final offset = first.weekday % 7;
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+    final weekCount = ((offset + daysInMonth + 6) ~/ 7).clamp(5, 6);
     return List.generate(
-      42,
+      weekCount * 7,
       (index) => DateTime(month.year, month.month, 1 - offset + index),
     );
   }
@@ -84,94 +88,232 @@ class VetCalendar extends StatelessWidget {
   Widget build(BuildContext context) {
     final today = DateTime.now();
     if (agendaPageStyle) return _buildAgendaPageCalendar(context, today);
-    return Container(
-      key: const ValueKey('vet-calendar'),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: VH.secondary,
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(VH.radiusXLarge),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return _buildAppointmentCalendar(context, today);
+  }
+
+  Widget _buildAppointmentCalendar(BuildContext context, DateTime today) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final scale = (math.min(390.0, availableWidth) / 390)
+            .clamp(.55, 1.0)
+            .toDouble();
+        final dates = monthDays(month);
+        final weekCount = dates.length ~/ 7;
+        final cellDimension = 35 * scale;
+        final columnGap = 10 * scale;
+        final rowGap = 10 * scale;
+        final gridHeight =
+            (cellDimension * (weekCount + 1)) + rowGap * weekCount;
+        final height =
+            (22 + 35 + 18 + 35 * (weekCount + 1) + 10 * weekCount + 48) * scale;
+        final monthLabel = monthNames[month.month - 1];
+        final pointerDownPositions = <int, Offset>{};
+
+        Widget calendarRow(List<Widget> children) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                tooltip: 'Mês anterior',
-                onPressed: onPreviousMonth,
-                icon: const Icon(Icons.chevron_left),
-              ),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    '${monthNames[month.month - 1]} ${month.year}',
-                    style: const TextStyle(
-                      color: VH.foreground,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: VH.headingFontFamily,
-                    ),
-                  ),
+              for (var index = 0; index < children.length; index++) ...[
+                SizedBox.square(
+                  dimension: cellDimension,
+                  child: children[index],
                 ),
-              ),
-              IconButton(
-                tooltip: 'Próximo mês',
-                onPressed: onNextMonth,
-                icon: const Icon(Icons.chevron_right),
-              ),
+                if (index < children.length - 1) SizedBox(width: columnGap),
+              ],
             ],
-          ),
-          GridView.count(
-            crossAxisCount: 7,
-            mainAxisExtent: 41,
-            padding: EdgeInsets.zero,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              for (var index = 0; index < weekdayNames.length; index++)
-                Semantics(
-                  container: true,
-                  label: weekdayNames[index],
-                  child: ExcludeSemantics(
-                    child: Center(
-                      child: Text(
-                        const [
-                          'Dom',
-                          'Seg',
-                          'Ter',
-                          'Qua',
-                          'Qui',
-                          'Sex',
-                          'Sáb',
-                        ][index],
-                        style: const TextStyle(
-                          color: VH.foreground,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: VH.headingFontFamily,
+          );
+        }
+
+        return Semantics(
+          key: const ValueKey('calendar-month-navigation'),
+          container: true,
+          explicitChildNodes: true,
+          header: true,
+          label: 'Calendário $monthLabel ${month.year}',
+          hint:
+              'Deslize para mudar o mês. Use Page Up para o mês anterior e Page Down para o próximo mês.',
+          customSemanticsActions: {
+            CustomSemanticsAction(label: 'Mês anterior'): onPreviousMonth,
+            CustomSemanticsAction(label: 'Próximo mês'): onNextMonth,
+          },
+          child: Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: (event) {
+              pointerDownPositions[event.pointer] = event.position;
+            },
+            onPointerUp: (event) {
+              final start = pointerDownPositions.remove(event.pointer);
+              if (start == null) return;
+              final delta = event.position - start;
+              if (delta.dx.abs() < 40 || delta.dx.abs() <= delta.dy.abs()) {
+                return;
+              }
+              if (delta.dx < 0) {
+                onNextMonth();
+              } else {
+                onPreviousMonth();
+              }
+            },
+            onPointerCancel: (event) =>
+                pointerDownPositions.remove(event.pointer),
+            child: Container(
+              key: const ValueKey('vet-calendar'),
+              width: 390 * scale,
+              height: height,
+              decoration: BoxDecoration(
+                color: VH.secondary,
+                borderRadius: BorderRadius.circular(VH.radiusXLarge * scale),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: 128 * scale,
+                    top: 22 * scale,
+                    width: 71 * scale,
+                    height: 35 * scale,
+                    child: SizedBox(
+                      key: const ValueKey('calendar-month-label'),
+                      child: Semantics(
+                        label: 'Mês $monthLabel',
+                        child: ExcludeSemantics(
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                monthLabel,
+                                maxLines: 1,
+                                softWrap: false,
+                                style: TextStyle(
+                                  color: VH.foreground,
+                                  fontSize: 15 * scale,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: VH.headingFontFamily,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              for (final date in monthDays(month))
-                _CalendarDay(
-                  date: date,
-                  selected: _sameDay(date, selected),
-                  today: _sameDay(date, today),
-                  inMonth: date.month == month.month,
-                  enabled: _enabled(date),
-                  indicator: hasIndicator?.call(date) ?? false,
-                  onTap: () => onSelected(date),
-                ),
-            ],
+                  Positioned(
+                    left: 226 * scale,
+                    top: 22 * scale,
+                    width: 35 * scale,
+                    height: 35 * scale,
+                    child: SizedBox(
+                      key: const ValueKey('calendar-year-label'),
+                      child: Semantics(
+                        label: 'Ano ${month.year}',
+                        child: ExcludeSemantics(
+                          child: Center(
+                            child: Text(
+                              '${month.year}',
+                              maxLines: 1,
+                              softWrap: false,
+                              style: TextStyle(
+                                color: VH.foreground,
+                                fontSize: 15 * scale,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: VH.headingFontFamily,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 42 * scale,
+                    top: 75 * scale,
+                    width: 305 * scale,
+                    height: gridHeight,
+                    child: SizedBox(
+                      key: const ValueKey('calendar-month-grid'),
+                      width: 305 * scale,
+                      height: gridHeight,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          calendarRow([
+                            for (
+                              var index = 0;
+                              index < weekdayNames.length;
+                              index++
+                            )
+                              Semantics(
+                                container: true,
+                                label: weekdayNames[index],
+                                child: ExcludeSemantics(
+                                  child: Center(
+                                    child: Text(
+                                      const [
+                                        'Dom',
+                                        'Seg',
+                                        'Ter',
+                                        'Qua',
+                                        'Qui',
+                                        'Sex',
+                                        'Sáb',
+                                      ][index],
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      style: TextStyle(
+                                        color: VH.foreground,
+                                        fontSize: 15 * scale,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: VH.headingFontFamily,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ]),
+                          SizedBox(height: rowGap),
+                          for (var row = 0; row < weekCount; row++) ...[
+                            calendarRow([
+                              for (var column = 0; column < 7; column++)
+                                _CalendarDay(
+                                  date: dates[row * 7 + column],
+                                  selected: _sameDay(
+                                    dates[row * 7 + column],
+                                    selected,
+                                  ),
+                                  today: _sameDay(
+                                    dates[row * 7 + column],
+                                    today,
+                                  ),
+                                  inMonth:
+                                      dates[row * 7 + column].month ==
+                                      month.month,
+                                  enabled: _enabled(dates[row * 7 + column]),
+                                  indicator:
+                                      hasIndicator?.call(
+                                        dates[row * 7 + column],
+                                      ) ??
+                                      false,
+                                  onTap: () =>
+                                      onSelected(dates[row * 7 + column]),
+                                  scale: scale,
+                                  onPreviousMonth: onPreviousMonth,
+                                  onNextMonth: onNextMonth,
+                                ),
+                            ]),
+                            if (row < weekCount - 1) SizedBox(height: rowGap),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
