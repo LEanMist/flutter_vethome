@@ -70,11 +70,11 @@ class SobreScreen extends StatelessWidget {
         SizedBox(height: 18),
         ListTile(
           leading: Icon(Icons.phone_outlined),
-          title: SelectableText('11 93244-4392'),
+          title: SelectableText('11 9793-8918'),
         ),
         ListTile(
           leading: Icon(Icons.email_outlined),
-          title: SelectableText('Gabriela@gmail.com'),
+          title: SelectableText('Kelvinpro@gmail.com'),
         ),
       ],
     ),

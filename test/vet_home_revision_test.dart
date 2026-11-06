@@ -622,4 +622,17 @@ void main() {
       );
     }
   });
+
+  testWidgets('Sobre usa os contatos fictícios alinhados a Suporte', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: SobreScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('11 9793-8918'), findsOneWidget);
+    expect(find.text('Kelvinpro@gmail.com'), findsOneWidget);
+    expect(find.text('11 93244-4392'), findsNothing);
+    expect(find.text('Gabriela@gmail.com'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
