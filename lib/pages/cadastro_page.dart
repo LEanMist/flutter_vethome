@@ -14,10 +14,14 @@ class CadastroScreen extends StatelessWidget {
     fields: [
       VHField('Nome Completo', Icons.person, value: 'Matheus Santana Lima'),
       VHField('Data de Nascimento', Icons.cake, value: '05/02/2007'),
-      VHField('CPF', Icons.badge, value: '534.356.874-94'),
+      VHField(
+        'CPF',
+        Icons.account_balance_wallet_outlined,
+        value: '534.356.874-94',
+      ),
       VHField('Telefone/Celular', Icons.phone, value: '11 94345-3266'),
       VHField('E-mail', Icons.mail, value: 'Kelvin231@gmail.com'),
-      VHField('Senha', Icons.lock, password: true),
+      VHField('Senha', Icons.lock_open_outlined, password: true),
       VHField('Confirmar Senha', Icons.lock, password: true),
     ],
   );
