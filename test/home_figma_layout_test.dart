@@ -77,6 +77,7 @@ void main() {
 
       final title = tester.getRect(find.byKey(const ValueKey('home-title')));
       expect(title.top - frame.top, closeTo(458 * scale, 1));
+      expect(title.left - frame.left, closeTo(-1 * scale, .01));
       final titleText = tester.widget<Text>(
         find.byKey(const ValueKey('home-title')),
       );
@@ -93,9 +94,14 @@ void main() {
       final subtitleFinder = find.text('Cuidando de quem\nte faz sorrir');
       expect(subtitleFinder, findsOneWidget);
       final subtitle = tester.widget<Text>(subtitleFinder);
+      expect(
+        tester.getRect(subtitleFinder).left - frame.left,
+        closeTo(-1 * scale, .01),
+      );
       expect(subtitle.style?.fontFamily, VH.headingFontFamily);
       expect(subtitle.style?.fontWeight, FontWeight.bold);
       expect(subtitle.style?.fontSize, 15 * scale);
+      expect(subtitle.style?.height, isNull);
 
       final profile = tester.getRect(
         find.byKey(const ValueKey('home-profile-chip')),

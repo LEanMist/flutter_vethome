@@ -77,6 +77,7 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                       Positioned(
+                        left: -1 * scale,
                         top: 458 * scale,
                         width: 390 * scale,
                         child: Text.rich(
@@ -108,6 +109,7 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                       Positioned(
+                        left: -1 * scale,
                         top: 508 * scale,
                         width: 390 * scale,
                         child: Text(
@@ -119,7 +121,6 @@ class HomePage extends StatelessWidget {
                             fontFamily: VH.headingFontFamily,
                             fontSize: 15 * scale,
                             fontWeight: FontWeight.bold,
-                            height: 1.15,
                           ),
                         ),
                       ),
