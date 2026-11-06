@@ -240,7 +240,7 @@ class ConfigScreen extends StatelessWidget {
                     TextSpan(
                       children: [
                         const TextSpan(
-                          text: 'Número',
+                          text: 'Numero',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const TextSpan(text: ':'),

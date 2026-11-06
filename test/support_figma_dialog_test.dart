@@ -58,14 +58,28 @@ void main() {
     expect(decoration.color, VetColors.pink);
     expect(decoration.borderRadius, BorderRadius.circular(30));
 
+    final surfaceTop = tester.getTopLeft(surface).dy;
+    void expectTopAt(Finder finder, double expectedTop) {
+      expect(
+        tester.getTopLeft(finder).dy - surfaceTop,
+        closeTo(expectedTop, 0.5),
+      );
+    }
+
     final title = tester.widget<Text>(
       find.descendant(of: surface, matching: find.text('Suporte')),
+    );
+    expectTopAt(
+      find.descendant(of: surface, matching: find.text('Suporte')),
+      24,
     );
     expect(title.style?.fontFamily, VH.bodyFontFamily);
     expect(title.style?.fontSize, 40);
     expect(title.style?.fontWeight, FontWeight.bold);
     expect(title.style?.color, VetColors.brown);
-    final numberLabel = tester.widget<Text>(find.textContaining('Número'));
+    final numberFinder = find.textContaining('Numero');
+    final numberLabel = tester.widget<Text>(numberFinder);
+    expectTopAt(numberFinder, 93);
     expect(numberLabel.style?.fontFamily, 'Comfortaa');
     expect(numberLabel.style?.fontSize, 20);
     expect(numberLabel.style?.fontWeight, FontWeight.w500);
@@ -75,10 +89,12 @@ void main() {
         matching: find.byType(SelectableText),
       ),
     );
+    expectTopAt(find.text('11 9793-8918'), 129);
     expect(phone.style?.fontFamily, 'Comfortaa');
     expect(phone.style?.fontSize, 25);
     expect(phone.style?.fontWeight, FontWeight.w500);
     final emailLabel = tester.widget<Text>(find.text('Email:'));
+    expectTopAt(find.text('Email:'), 172);
     expect(emailLabel.style?.fontFamily, 'Comfortaa');
     expect(emailLabel.style?.fontSize, 20);
     expect(emailLabel.style?.fontWeight, FontWeight.w500);
@@ -88,6 +104,7 @@ void main() {
         matching: find.byType(SelectableText),
       ),
     );
+    expectTopAt(find.text('Kelvinpro@gmail.com'), 205);
     expect(email.style?.fontFamily, 'Comfortaa');
     expect(email.style?.fontSize, 30);
     expect(email.style?.fontWeight, FontWeight.w500);
