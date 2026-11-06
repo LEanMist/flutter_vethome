@@ -79,8 +79,23 @@ class HomePage extends StatelessWidget {
                       Positioned(
                         top: 458 * scale,
                         width: 390 * scale,
-                        child: Text(
-                          'Seja Bem Vindo!',
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Seja ',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Bem Vindo!',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                           key: const ValueKey('home-title'),
                           textAlign: TextAlign.center,
                           maxLines: 1,

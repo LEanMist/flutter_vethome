@@ -83,6 +83,13 @@ void main() {
       expect(titleText.style?.color, VetColors.brown);
       expect(titleText.style?.fontFamily, VH.headingFontFamily);
       expect(titleText.style?.fontSize, 30 * scale);
+      final titleSpan = titleText.textSpan! as TextSpan;
+      final firstTitleWord = titleSpan.children![0] as TextSpan;
+      final remainingTitle = titleSpan.children![1] as TextSpan;
+      expect(firstTitleWord.text, 'Seja ');
+      expect(firstTitleWord.style?.fontWeight, FontWeight.w600);
+      expect(remainingTitle.text, 'Bem Vindo!');
+      expect(remainingTitle.style?.fontWeight, FontWeight.bold);
       expect(find.text('Cuidando de quem\nte faz sorrir'), findsOneWidget);
 
       final profile = tester.getRect(
