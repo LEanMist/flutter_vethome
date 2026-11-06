@@ -37,40 +37,52 @@ class CadastroPetScreen extends StatelessWidget {
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
-          child: PetForm(
-            title: 'Cadastro Pet',
-            onSaved: (v) async {
-              final pet = VetRepository.addPet(
-                name: v.name,
-                species: v.species,
-                sex: v.sex,
-                weightKg: v.weight,
-                birthDate: v.birth,
-                breed: v.breed,
-                photoBase64: v.photo,
-                neutered: v.neutered,
-              );
-              _registerClientIfNeeded();
-              await _waitForSave(context);
-              if (!context.mounted) return;
-              if (initialData['flow'] == 'addPet') {
-                VetRepository.selectedPetId = pet.id;
-                Navigator.pop(context, pet);
-              } else {
-                Navigator.pushNamed(context, '/sucesso');
-              }
-            },
-            onSkip: () async {
-              if (_registerClientIfNeeded()) {
+          child: TextButtonTheme(
+            data: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: VH.secondary,
+                textStyle: const TextStyle(
+                  fontFamily: VH.bodyFontFamily,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            child: PetForm(
+              title: 'Cadastro Pet',
+              onSaved: (v) async {
+                final pet = VetRepository.addPet(
+                  name: v.name,
+                  species: v.species,
+                  sex: v.sex,
+                  weightKg: v.weight,
+                  birthDate: v.birth,
+                  breed: v.breed,
+                  photoBase64: v.photo,
+                  neutered: v.neutered,
+                );
+                _registerClientIfNeeded();
                 await _waitForSave(context);
                 if (!context.mounted) return;
-              }
-              if (initialData['flow'] == 'addPet') {
-                Navigator.pop(context);
-              } else {
-                Navigator.pushNamed(context, '/sucesso');
-              }
-            },
+                if (initialData['flow'] == 'addPet') {
+                  VetRepository.selectedPetId = pet.id;
+                  Navigator.pop(context, pet);
+                } else {
+                  Navigator.pushNamed(context, '/sucesso');
+                }
+              },
+              onSkip: () async {
+                if (_registerClientIfNeeded()) {
+                  await _waitForSave(context);
+                  if (!context.mounted) return;
+                }
+                if (initialData['flow'] == 'addPet') {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushNamed(context, '/sucesso');
+                }
+              },
+            ),
           ),
         ),
       ),

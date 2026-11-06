@@ -109,6 +109,9 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: VH.background,
     body: SafeArea(
+      // O Figma posiciona a arte a partir do topo do frame. O fundo rosa pode
+      // continuar atrás da barra de status; controles de retorno ficam abaixo.
+      top: false,
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -377,7 +380,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     if (Navigator.of(context).canPop())
                       Positioned(
-                        top: 4,
+                        top: MediaQuery.viewPaddingOf(context).top + 4,
                         left: 8,
                         child: IconButton(
                           tooltip: 'Voltar',
@@ -387,7 +390,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     if (kDebugMode)
                       Positioned(
-                        top: 4,
+                        top: MediaQuery.viewPaddingOf(context).top + 4,
                         right: 8,
                         child: IconButton(
                           tooltip: 'Telas de teste',

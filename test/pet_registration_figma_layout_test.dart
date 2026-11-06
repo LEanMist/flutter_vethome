@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/models/pet_model.dart';
 import 'package:flutter_vethome/pages/cadastroPet_page.dart';
@@ -85,6 +86,13 @@ void main() {
           ?.resolve(<WidgetState>{}),
       VetColors.rose,
     );
+    final skip = find.text('Pular');
+    expect(skip, findsOneWidget);
+    final skipStyle = tester.renderObject<RenderParagraph>(skip).text.style!;
+    expect(skipStyle.fontFamily, VH.bodyFontFamily);
+    expect(skipStyle.fontSize, 15);
+    expect(skipStyle.fontWeight, FontWeight.bold);
+    expect(skipStyle.color, VetColors.rose);
     expect(tester.takeException(), isNull);
   });
 

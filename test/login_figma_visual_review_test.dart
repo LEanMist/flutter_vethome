@@ -114,6 +114,87 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('LOGIN_PAGE mantém a geometria do Figma com recorte do sistema', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: const LoginPage(),
+        routes: {
+          '/pets': (_) => const Scaffold(body: Text('Pets de teste')),
+          '/cadastro': (_) => const Scaffold(body: Text('Cadastro de teste')),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final logo = find.byWidgetPredicate(
+      (widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName ==
+              'assets/imagens/figma/vethomepng-2.png',
+    );
+    final userField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField && widget.decoration?.hintText == 'Usuário',
+    );
+    final loginButton = find.widgetWithText(ElevatedButton, 'Entrar');
+    expect(tester.getTopLeft(logo).dy, 180);
+    expect(tester.getTopLeft(userField).dy, 333);
+    expect(tester.getTopLeft(loginButton).dy, 518);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Login em rota interna mantém Voltar abaixo da barra de status', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        initialRoute: '/inicio',
+        routes: {
+          '/inicio': (context) => Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/login'),
+                child: const Text('Abrir Login'),
+              ),
+            ),
+          ),
+          '/login': (context) => const LoginPage(),
+          '/pets': (_) => const Scaffold(body: Text('Pets de teste')),
+          '/cadastro': (_) => const Scaffold(body: Text('Cadastro de teste')),
+        },
+      ),
+    );
+    await tester.tap(find.text('Abrir Login'));
+    await tester.pumpAndSettle();
+
+    final back = find.byTooltip('Voltar');
+    expect(back, findsOneWidget);
+    expect(tester.getTopLeft(back).dy, greaterThanOrEqualTo(24));
+    expect(tester.takeException(), isNull);
+  });
+
   for (final size in [const Size(320, 640), const Size(1280, 800)]) {
     testWidgets('Login sem overflow e superfície limitada em $size', (
       tester,
