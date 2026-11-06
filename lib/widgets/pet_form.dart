@@ -418,8 +418,17 @@ class _PetFormState extends State<PetForm> {
   );
 
   List<Widget> _formFields(bool editing, {bool registration = false}) {
+    final registrationNameLabel = switch (species.text) {
+      'Cachorro' => 'Nome do Cachorro(a)',
+      'Gato' => 'Nome do Gato(a)',
+      _ => 'Nome do Pet',
+    };
     final nameField = field(
-      editing ? 'Nome do pet' : 'Nome do Pet',
+      editing
+          ? 'Nome do pet'
+          : registration
+          ? registrationNameLabel
+          : 'Nome do Pet',
       Icons.person_outline,
       name,
       validator: (v) {

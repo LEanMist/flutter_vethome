@@ -106,6 +106,55 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('cadastro mostra rótulo e ícones conforme Figma e espécie', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: const CadastroPetScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Tipo de Animal',
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cachorro').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nome do Cachorro(a)'), findsOneWidget);
+    expect(
+      find.image(
+        const AssetImage('assets/imagens/figma/register-pet-species.png'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.image(const AssetImage('assets/imagens/figma/frame-6.png')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Tipo de Animal',
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Gato').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Nome do Gato(a)'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('cadastro desktop também oculta foto e castração', (
     tester,
   ) async {

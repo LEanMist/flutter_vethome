@@ -205,6 +205,10 @@ class _VHFieldState extends State<VHField> {
     }
     final asset = widget.figmaForm
         ? switch (widget.label) {
+            'Tipo de Animal' => 'register-pet-species.png',
+            'Nome do Pet' ||
+            'Nome do Cachorro(a)' ||
+            'Nome do Gato(a)' => 'frame-6.png',
             'Gênero/Sexo' => 'frame-7.png',
             'Peso' => 'frame-7-2.png',
             'Data de Nascimento' => 'frame-7-3.png',
