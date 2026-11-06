@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
@@ -514,13 +515,27 @@ class _TimeChoicesState extends State<_TimeChoices> {
     final options = widget.minimum == null
         ? [12, 13, 14, 15, 16]
         : [13, 14, 15, 16, 17];
+    final width = math.min(390.0, MediaQuery.sizeOf(context).width);
+    final firstRowGap = ((width - 300) / 2).clamp(10.0, 27.0).toDouble();
+    final secondRowGap = ((width - 300) / 2).clamp(10.0, 26.0).toDouble();
+    final firstRowLeft = (width - 300 - 2 * firstRowGap) / 2;
+    final secondRowLeft = (width - 200 - secondRowGap) / 2 + 4 * width / 390;
+    final buttonLefts = [
+      firstRowLeft,
+      firstRowLeft + 100 + firstRowGap,
+      firstRowLeft + 200 + firstRowGap * 2,
+      secondRowLeft,
+      secondRowLeft + 100 + secondRowGap,
+    ];
+    final buttonTops = [28.0, 28.0, 28.0, 95.0, 95.0];
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+      insetPadding: EdgeInsets.zero,
       child: Container(
         key: const ValueKey('time-choice-panel'),
+        width: width,
         constraints: const BoxConstraints(maxWidth: 390),
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+        padding: const EdgeInsets.fromLTRB(0, 18, 0, 10),
         decoration: BoxDecoration(
           color: VetColors.pink,
           borderRadius: BorderRadius.circular(30),
@@ -535,13 +550,16 @@ class _TimeChoicesState extends State<_TimeChoices> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Escolha o horário',
-              style: TextStyle(
-                color: VetColors.brown,
-                fontFamily: 'Comfortaa',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                'Escolha o horário',
+                style: TextStyle(
+                  color: VetColors.brown,
+                  fontFamily: 'Comfortaa',
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -550,61 +568,96 @@ class _TimeChoicesState extends State<_TimeChoices> {
                 padding: EdgeInsets.only(bottom: 12),
                 child: Text('Nenhum horário disponível. Escolha outra data.'),
               ),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final hour in options)
-                  SizedBox(
-                    key: ValueKey('time-choice-$hour'),
-                    width: 96,
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: _available(hour)
-                          ? () => Navigator.pop(
-                              context,
-                              TimeOfDay(hour: hour, minute: 0),
-                            )
-                          : null,
-                      style: ButtonStyle(
-                        elevation: const WidgetStatePropertyAll(0),
-                        backgroundColor: WidgetStateProperty.resolveWith(
-                          (states) => states.contains(WidgetState.disabled)
-                              ? VetColors.rose.withValues(alpha: .18)
-                              : widget.selected?.hour == hour
-                              ? VetColors.brown
-                              : VetColors.rose,
+            SizedBox(
+              key: const ValueKey('time-choice-grid'),
+              width: width,
+              height: 168,
+              child: Stack(
+                children: [
+                  for (var index = 0; index < options.length; index++)
+                    Positioned(
+                      left: buttonLefts[index],
+                      top: buttonTops[index],
+                      width: 100,
+                      height: 45,
+                      child: Container(
+                        key: ValueKey('time-choice-shadow-${options[index]}'),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color.fromRGBO(0, 0, 0, .25),
+                              offset: Offset(0, 4),
+                              blurRadius: 4,
+                            ),
+                          ],
                         ),
-                        foregroundColor: WidgetStateProperty.resolveWith(
-                          (states) => states.contains(WidgetState.disabled)
-                              ? VetColors.brown.withValues(alpha: .35)
-                              : Colors.white,
-                        ),
-                        shape: WidgetStatePropertyAll(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(100),
+                        child: ElevatedButton(
+                          key: ValueKey('time-choice-${options[index]}'),
+                          onPressed: _available(options[index])
+                              ? () => Navigator.pop(
+                                  context,
+                                  TimeOfDay(hour: options[index], minute: 0),
+                                )
+                              : null,
+                          style: ButtonStyle(
+                            padding: const WidgetStatePropertyAll(
+                              EdgeInsets.zero,
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            elevation: const WidgetStatePropertyAll(0),
+                            backgroundColor: WidgetStateProperty.resolveWith(
+                              (states) => states.contains(WidgetState.disabled)
+                                  ? VetColors.rose.withValues(alpha: .18)
+                                  : widget.selected?.hour == options[index]
+                                  ? VetColors.brown
+                                  : VetColors.rose,
+                            ),
+                            foregroundColor: WidgetStateProperty.resolveWith(
+                              (states) => states.contains(WidgetState.disabled)
+                                  ? VetColors.brown.withValues(alpha: .35)
+                                  : Colors.white,
+                            ),
+                            textStyle: const WidgetStatePropertyAll(
+                              TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 20,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                            shape: const WidgetStatePropertyAll(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(4),
+                                ),
+                              ),
+                            ),
+                            overlayColor: WidgetStateProperty.resolveWith(
+                              (states) =>
+                                  states.contains(WidgetState.focused) ||
+                                      states.contains(WidgetState.hovered)
+                                  ? Colors.white.withValues(alpha: .16)
+                                  : null,
+                            ),
+                          ),
+                          child: Text(
+                            '${options[index].toString().padLeft(2, '0')}:00',
                           ),
                         ),
-                        overlayColor: WidgetStateProperty.resolveWith(
-                          (states) =>
-                              states.contains(WidgetState.focused) ||
-                                  states.contains(WidgetState.hovered)
-                              ? Colors.white.withValues(alpha: .16)
-                              : null,
-                        ),
                       ),
-                      child: Text('${hour.toString().padLeft(2, '0')}:00'),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancelar'),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
               ),
             ),
           ],
