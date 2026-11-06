@@ -129,7 +129,7 @@ class VetChoicePill extends StatelessWidget {
   );
 }
 
-/// Reutiliza exports disponíveis; casa/cruz e cápsulas são desenhos simples.
+/// Ícones dos planos usam os assets visuais do Figma.
 class VetPictogram extends StatelessWidget {
   const VetPictogram(this.kind, {super.key});
   final String kind;
@@ -138,6 +138,8 @@ class VetPictogram extends StatelessWidget {
     final asset = switch (kind) {
       'Exames' || 'DogLife' => 'coisademedico-1.png',
       'Atestados' => 'atestado-1.png',
+      'PetLove' => 'convenio-petlove.png',
+      'Particular' => 'convenio-particular.png',
       _ => null,
     };
     if (asset != null) {
@@ -146,61 +148,10 @@ class VetPictogram extends StatelessWidget {
         excludeFromSemantics: true,
       );
     }
-    if (kind == 'PetLove' || kind == 'Particular') {
-      return CustomPaint(painter: _PlanPainter(kind));
-    }
     return Icon(
       kind == 'Vacinas' ? Icons.vaccines_outlined : Icons.memory_outlined,
       color: Colors.white,
       size: 30,
     );
   }
-}
-
-class _PlanPainter extends CustomPainter {
-  const _PlanPainter(this.kind);
-  final String kind;
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 30, size.height / 30);
-    final p = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    if (kind == 'PetLove') {
-      canvas.drawPath(
-        Path()
-          ..moveTo(2, 13)
-          ..lineTo(15, 3)
-          ..lineTo(28, 13)
-          ..moveTo(6, 11)
-          ..lineTo(6, 27)
-          ..lineTo(24, 27)
-          ..lineTo(24, 11),
-        p,
-      );
-      canvas.drawLine(const Offset(15, 14), const Offset(15, 23), p);
-      canvas.drawLine(const Offset(10.5, 18.5), const Offset(19.5, 18.5), p);
-    } else {
-      for (final center in [const Offset(10, 12), const Offset(21, 19)]) {
-        canvas.save();
-        canvas.translate(center.dx, center.dy);
-        canvas.rotate(.65);
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            const Rect.fromLTWH(-4, -10, 8, 20),
-            const Radius.circular(4),
-          ),
-          p,
-        );
-        canvas.drawLine(const Offset(-4, 0), const Offset(4, 0), p);
-        canvas.restore();
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_PlanPainter oldDelegate) => oldDelegate.kind != kind;
 }

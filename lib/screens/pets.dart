@@ -735,10 +735,18 @@ class ConvenioScreen extends StatelessWidget {
             tooltip: plan,
             padding: EdgeInsets.zero,
             onPressed: open,
-            icon: const SizedBox(
+            icon: SizedBox(
               width: 22,
               height: 29,
-              child: FittedBox(child: VetChevron()),
+              child: Center(
+                child: Image.asset(
+                  'assets/imagens/figma/convenio-chevron.png',
+                  width: 17,
+                  height: 19,
+                  fit: BoxFit.fill,
+                  excludeFromSemantics: true,
+                ),
+              ),
             ),
           ),
         ),

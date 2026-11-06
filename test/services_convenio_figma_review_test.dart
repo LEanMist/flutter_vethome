@@ -96,6 +96,24 @@ void main() {
       expect(tester.getSize(pill).width, closeTo(254, 1));
       expect(tester.getSize(pill).height, closeTo(59, 1));
     }
+    expect(
+      find.image(const AssetImage('assets/imagens/figma/convenio-petlove.png')),
+      findsOneWidget,
+    );
+    expect(
+      find.image(const AssetImage('assets/imagens/figma/coisademedico-1.png')),
+      findsOneWidget,
+    );
+    expect(
+      find.image(
+        const AssetImage('assets/imagens/figma/convenio-particular.png'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.image(const AssetImage('assets/imagens/figma/convenio-chevron.png')),
+      findsNWidgets(3),
+    );
     for (final label in ['Convênio', 'PetLove', 'Doglife', 'Particular']) {
       // ignore: avoid_print
       print('CONVENIO pos $label: ${tester.getTopLeft(find.text(label)).dy}');
