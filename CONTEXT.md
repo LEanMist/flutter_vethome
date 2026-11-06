@@ -1,6 +1,15 @@
 # VetHome — contexto para continuar o projeto
 
-## Estado atual — Detalhes do Pet e persistência local (05/11/2026)
+## Estado consolidado — 06/11/2026
+
+- Estado conferido no repositório: branch `kelvin`; `HEAD` e `origin/kelvin` em `1a79cdb` (`Align appointment calendar with Figma`). O código rastreado não tinha mudanças locais pendentes. O arquivo local não rastreado `CONTINUACAO_OUTRA_CONTA.md` foi preservado fora dos commits.
+- Avanços visuais publicados mais recentes: `caf82ce` (Chat e Suporte), `f13f418` (ação de cadastro Pet), `593d9b8` (geometria dos campos de endereço) e `1a79cdb` (calendário de Nova Consulta alinhado ao Figma).
+- O calendário usa a grade compacta do frame `CALENDAR_WIDGET_2` (`2783:768`), continua posicionando as datas pelo calendário gregoriano e navega por gesto, teclado e ações de acessibilidade. Os testes focados de estilo, acessibilidade e breakpoints passaram **19/19**; `flutter analyze --no-pub` não encontrou problemas.
+- A tela Perfil foi conferida contra `PROFILE_PAGE` (`2783:1073`). Tipografia, avatar e posições das ações mobile correspondem aos pontos medidos. Os testes de Perfil/acessibilidade e a validação visual focada passaram **20/20**; nenhum arquivo do Perfil foi alterado.
+- O ChatGPT “Teste integração Meu PC” está auditando Configurações contra `SETTINGS_PAGE` (`2783:718`), sem editar Git. Aguardar o resultado antes de consolidar essa tela.
+- O Figma atual confirmado pelo usuário é a cópia `Doutoura_Do_Vinicius` (`nDOqCVJ57JpWhHrVaaKcHy`) e o MCP está acessível. As notas mais antigas abaixo registram estados históricos e podem mencionar outro arquivo ou branches anteriores.
+
+## Estado anterior — Detalhes do Pet e persistência local (05/11/2026)
 
 - Branch `kelvin`, HEAD `e237003`; Passo 4B publicado em `e75ea44e099efa0764072016b9fc4d9f2b8e90a9`. Há alterações locais acumuladas e não publicadas em Detalhes do Pet, identidade visual, persistência da foto do tutor, testes e documentação. Nenhuma alteração está staged; preservar tudo ao continuar. A sequência de trabalho deve seguir o pedido atual do usuário.
 - As seções anteriores registram o estado de cada época. Em particular, as limitações antigas de fotos de pet e tutor apenas na sessão foram superadas pelas implementações locais posteriores. A foto do tutor agora é gravada como miniatura Base64 no snapshot local, conforme a seção de persistência de 05/11/2026; ela continua sem sincronização ou backup em nuvem.
@@ -62,9 +71,9 @@ As rotas permanecem `/pets`, `/perfil`, `/chat`, `/agenda` e `/config`.
 ## Referência Figma
 
 - Projeto: `Doutoura_Do_Vinicius`.
-- URL: https://www.figma.com/design/p5Mv2Ej6kbfkgCfePLJKPr/Doutoura_Do_Vinicius?node-id=0-1.
-- O Figma MCP está atualmente limitado pela cota/plano (erro de rate limit do Starter). Não foi possível obter contexto de design, estrutura de nós ou screenshots.
-- O Figma continua sendo a referência visual. Enquanto estiver inacessível, usar cores confirmadas e assets existentes; não apresentar medidas, sombras, breakpoints ou gradientes inferidos como dados do Figma.
+- Arquivo atual confirmado em 06/11/2026: https://www.figma.com/design/nDOqCVJ57JpWhHrVaaKcHy/Doutoura_Do_Vinicius--c%C3%B3pia-?node-id=0-1.
+- O arquivo antigo `p5Mv2Ej6kbfkgCfePLJKPr` e os registros de rate limit abaixo são históricos; o MCP foi acessível nesta revisão.
+- O Figma continua sendo a referência visual. Confirmar os nós e screenshots da cópia atual antes de declarar fidelidade; não transferir dados pessoais demonstrativos do protótipo para o app.
 
 ## Validação e lint preexistente
 
