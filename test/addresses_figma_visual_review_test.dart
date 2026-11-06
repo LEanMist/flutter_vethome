@@ -9,6 +9,7 @@ import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pets/pets_theme.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
+import 'package:flutter_vethome/widgets/vet/vet_header.dart';
 
 void main() {
   const address = SavedAddress(
@@ -178,6 +179,39 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('ADRESS_PAGE: barra de status não desloca o frame do Figma', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    await tester.pumpWidget(const MaterialApp(home: AddressesPage()));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getRect(find.byType(VetHeader)),
+      const Rect.fromLTWH(0, 0, 390, 125),
+    );
+    expect(tester.getTopLeft(find.text('Endereços')).dy, closeTo(46, 3.1));
+    final card = find
+        .ancestor(
+          of: find.text('Casa da Irmã'),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Container &&
+                widget.decoration is inset_shadow.BoxDecoration,
+          ),
+        )
+        .first;
+    expect(tester.getRect(card), const Rect.fromLTWH(30, 153, 320, 173));
     expect(tester.takeException(), isNull);
   });
 

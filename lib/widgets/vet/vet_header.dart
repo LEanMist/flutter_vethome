@@ -6,7 +6,8 @@ import '../../theme/vet_colors.dart';
 import '../pets/pets_theme.dart';
 
 /// Cabeçalho padrão: botão voltar + título centralizado + curva inferior.
-/// Respeita o notch/status bar. `bottom` permite pendurar conteúdo extra.
+/// Mantém a geometria do Figma com insets de status bar. `bottom` permite
+/// pendurar conteúdo extra.
 class VetHeader extends StatelessWidget {
   const VetHeader({
     super.key,
@@ -27,11 +28,12 @@ class VetHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
     final double top = MediaQuery.paddingOf(context).top;
+    final double topPadding = top > 14 * s ? top : 14 * s;
 
     return Container(
       width: double.infinity,
-      constraints: BoxConstraints(minHeight: 125 + top),
-      padding: EdgeInsets.fromLTRB(18 * s, top + 14 * s, 18 * s, 22 * s),
+      constraints: const BoxConstraints(minHeight: 125),
+      padding: EdgeInsets.fromLTRB(18 * s, topPadding, 18 * s, 22 * s),
       decoration: BoxDecoration(
         color: VetColors.rose,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
