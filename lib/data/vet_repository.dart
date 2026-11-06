@@ -549,6 +549,22 @@ class VetRepository {
     _save();
   }
 
+  /// Remove somente a mesma consulta salva; eventos de demonstração ficam fora
+  /// da lista do repositório.
+  static bool removeAgendamento(String petId, Agendamento agendamento) {
+    _ensurePersistenceWritable();
+    final appointments = _novosAgendamentos[petId];
+    if (appointments == null) return false;
+    final index = appointments.indexWhere(
+      (candidate) => identical(candidate, agendamento),
+    );
+    if (index < 0) return false;
+    appointments.removeAt(index);
+    if (appointments.isEmpty) _novosAgendamentos.remove(petId);
+    _save();
+    return true;
+  }
+
   static DateTime? _parseDate(String value) {
     final parts = value.trim().split(RegExp(r'[/.-]'));
     if (parts.length != 3) return DateTime.tryParse(value);

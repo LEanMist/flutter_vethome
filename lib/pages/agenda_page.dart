@@ -9,12 +9,18 @@ import '../models/vet_models.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets.dart';
+import '../widgets/appointment_detail_dialog.dart';
 import '../widgets/vet_calendar.dart';
 
 List<DateTime> calendarMonthDays(DateTime month) =>
     VetCalendar.monthDays(month);
 
-typedef _AgendaItem = ({String name, Agendamento agendamento, bool demo});
+typedef _AgendaItem = ({
+  String petId,
+  String name,
+  Agendamento agendamento,
+  bool demo,
+});
 
 class AgendaScreen extends StatefulWidget {
   const AgendaScreen({super.key, this.initialDate});
@@ -41,6 +47,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
         for (final appointment in VetRepository.agendamentos(pet.id))
           if (_sameDay(appointment.data, _selecionado))
             (
+              petId: pet.id,
               name: pet.name,
               agendamento: appointment,
               demo: !VetRepository.realAppointments(
@@ -54,6 +61,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           (hour: 16, type: 'Creatinina'),
         ])
           (
+            petId: '',
             name: 'VetHome',
             demo: true,
             agendamento: Agendamento(
@@ -267,29 +275,38 @@ class _AgendaScreenState extends State<AgendaScreen> {
   Widget _mobileAppointment(_AgendaItem item, int index, double scale) {
     final top = (399 + 84 * index) * scale;
     final end = item.agendamento.endDate;
-    return Semantics(
-      container: true,
-      label: [
-        item.agendamento.tipo,
-        fmtHorario(item.agendamento.data, end),
-        item.name,
-        item.agendamento.local,
-      ].join(', '),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 40.5 * scale,
-            top: top,
-            width: 50 * scale,
-            height: 50 * scale,
-            child: Center(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+    final label = [
+      item.agendamento.tipo,
+      fmtHorario(item.agendamento.data, end),
+      item.name,
+      item.agendamento.local,
+    ].join(', ');
+    return Stack(
+      children: [
+        Positioned(
+          left: 40.5 * scale,
+          top: top,
+          width: 50 * scale,
+          height: 50 * scale,
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    fmtHora(item.agendamento.data),
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 15 * scale,
+                      fontFamily: VH.bodyFontFamily,
+                    ),
+                  ),
+                  if (end != null)
                     Text(
-                      fmtHora(item.agendamento.data),
+                      fmtHora(end),
                       maxLines: 1,
                       softWrap: false,
                       style: TextStyle(
@@ -298,48 +315,53 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         fontFamily: VH.bodyFontFamily,
                       ),
                     ),
-                    if (end != null)
-                      Text(
-                        fmtHora(end),
-                        maxLines: 1,
-                        softWrap: false,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 15 * scale,
-                          fontFamily: VH.bodyFontFamily,
-                        ),
-                      ),
-                  ],
-                ),
+                ],
               ),
             ),
           ),
-          Positioned(
-            left: 102 * scale,
-            top: top,
-            width: 195 * scale,
-            height: 50 * scale,
-            child: Container(
-              decoration: insetBox(color: VH.secondary, radius: 15 * scale),
-              alignment: Alignment.center,
-              padding: EdgeInsets.symmetric(horizontal: 8 * scale),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  item.agendamento.tipo,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: VetColors.calendarTextOnRose,
-                    fontSize: 15 * scale,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: VH.bodyFontFamily,
+        ),
+        Positioned(
+          left: 102 * scale,
+          top: top,
+          width: 195 * scale,
+          height: 50 * scale,
+          child: Semantics(
+            container: true,
+            button: !item.demo,
+            label: label,
+            onTap: item.demo ? null : () => _showAppointmentDetails(item),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(15 * scale),
+              child: InkWell(
+                key: ValueKey(
+                  'agenda-appointment-${item.agendamento.data.microsecondsSinceEpoch}-${item.agendamento.tipo}',
+                ),
+                borderRadius: BorderRadius.circular(15 * scale),
+                onTap: item.demo ? null : () => _showAppointmentDetails(item),
+                child: Container(
+                  decoration: insetBox(color: VH.secondary, radius: 15 * scale),
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.symmetric(horizontal: 8 * scale),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      item.agendamento.tipo,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: VetColors.calendarTextOnRose,
+                        fontSize: 15 * scale,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: VH.bodyFontFamily,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -411,66 +433,87 @@ class _AgendaScreenState extends State<AgendaScreen> {
           for (final item in appointments)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 54,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 14),
-                      child: Text(
-                        fmtHora(item.agendamento.data),
-                        style: const TextStyle(
-                          color: VH.foreground,
-                          fontWeight: FontWeight.bold,
+              child: Semantics(
+                button: !item.demo,
+                label: [
+                  item.agendamento.tipo,
+                  fmtData(item.agendamento.data),
+                  fmtHorario(item.agendamento.data, item.agendamento.endDate),
+                  item.name,
+                  item.agendamento.local,
+                ].join(', '),
+                onTap: item.demo ? null : () => _showAppointmentDetails(item),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: item.demo
+                        ? null
+                        : () => _showAppointmentDetails(item),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 54,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 14),
+                            child: Text(
+                              fmtHora(item.agendamento.data),
+                              style: const TextStyle(
+                                color: VH.foreground,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: VH.secondary,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: VH.controlShadow,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.agendamento.tipo,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: VetColors.calendarTextOnRose,
+                                  ),
+                                ),
+                                Text(
+                                  fmtHorario(
+                                    item.agendamento.data,
+                                    item.agendamento.endDate,
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: VetColors.calendarTextOnRose,
+                                  ),
+                                ),
+                                Text(
+                                  '${item.demo ? 'Demonstração · ' : ''}${item.name} · ${item.agendamento.local}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: VetColors.calendarTextOnRose,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: VH.secondary,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: VH.controlShadow,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.agendamento.tipo,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: VetColors.calendarTextOnRose,
-                            ),
-                          ),
-                          Text(
-                            fmtHorario(
-                              item.agendamento.data,
-                              item.agendamento.endDate,
-                            ),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: VetColors.calendarTextOnRose,
-                            ),
-                          ),
-                          Text(
-                            '${item.demo ? 'Demonstração · ' : ''}${item.name} · ${item.agendamento.local}',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: VetColors.calendarTextOnRose,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           const SizedBox(height: 4),
@@ -478,6 +521,78 @@ class _AgendaScreenState extends State<AgendaScreen> {
         ],
       ],
     );
+  }
+
+  Future<void> _showAppointmentDetails(_AgendaItem item) async {
+    if (item.demo) return;
+    final pet = VetRepository.petById(item.petId);
+    if (pet == null) return;
+
+    final deleteRequested = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AppointmentDetailDialog(
+        pet: pet,
+        appointment: item.agendamento,
+        onDelete: () => Navigator.pop(dialogContext, true),
+      ),
+    );
+    if (!mounted || deleteRequested != true) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Excluir consulta?'),
+        content: Text(
+          'Remover ${item.agendamento.tipo} de ${item.name} em '
+          '${fmtData(item.agendamento.data)} deste dispositivo?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    try {
+      final removed = VetRepository.removeAgendamento(
+        item.petId,
+        item.agendamento,
+      );
+      if (!removed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Esta consulta já não está salva.')),
+        );
+        return;
+      }
+      setState(() {});
+      final saved = await VetRepository.flush();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            saved
+                ? 'Consulta removida.'
+                : 'Consulta removida nesta sessão. Não foi possível salvar localmente.',
+          ),
+        ),
+      );
+    } on PersistenceBlockedException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Armazenamento local bloqueado. A consulta não foi removida.',
+          ),
+        ),
+      );
+    }
   }
 
   static const _weekdayNames = [
