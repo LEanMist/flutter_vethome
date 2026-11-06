@@ -5,6 +5,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../theme.dart';
+import '../theme/vet_colors.dart';
 
 class VetCalendar extends StatelessWidget {
   const VetCalendar({
@@ -187,7 +188,7 @@ class VetCalendar extends StatelessWidget {
                                 maxLines: 1,
                                 softWrap: false,
                                 style: TextStyle(
-                                  color: VH.foreground,
+                                  color: VetColors.calendarTextOnRose,
                                   fontSize: 15 * scale,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: VH.headingFontFamily,
@@ -215,7 +216,7 @@ class VetCalendar extends StatelessWidget {
                               maxLines: 1,
                               softWrap: false,
                               style: TextStyle(
-                                color: VH.foreground,
+                                color: VetColors.calendarTextOnRose,
                                 fontSize: 15 * scale,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: VH.headingFontFamily,
@@ -262,7 +263,7 @@ class VetCalendar extends StatelessWidget {
                                       maxLines: 1,
                                       softWrap: false,
                                       style: TextStyle(
-                                        color: VH.foreground,
+                                        color: VetColors.calendarTextOnRose,
                                         fontSize: 15 * scale,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: VH.headingFontFamily,
@@ -392,7 +393,7 @@ class VetCalendar extends StatelessWidget {
                           softWrap: false,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: VH.foreground,
+                            color: VetColors.calendarTextOnRose,
                             fontSize: 15 * scale,
                             fontWeight: FontWeight.bold,
                             fontFamily: VH.headingFontFamily,
@@ -417,7 +418,7 @@ class VetCalendar extends StatelessWidget {
                         maxLines: 1,
                         softWrap: false,
                         style: TextStyle(
-                          color: VH.foreground,
+                          color: VetColors.calendarTextOnRose,
                           fontSize: 15 * scale,
                           fontWeight: FontWeight.bold,
                           fontFamily: VH.headingFontFamily,
@@ -439,7 +440,7 @@ class VetCalendar extends StatelessWidget {
                         maxLines: 1,
                         softWrap: false,
                         style: TextStyle(
-                          color: VH.foreground,
+                          color: VetColors.calendarTextOnRose,
                           fontSize: 15 * scale,
                           fontWeight: FontWeight.bold,
                           fontFamily: VH.headingFontFamily,
@@ -473,7 +474,7 @@ class VetCalendar extends StatelessWidget {
                                   maxLines: 1,
                                   softWrap: false,
                                   style: TextStyle(
-                                    color: VH.foreground,
+                                    color: VetColors.calendarTextOnRose,
                                     fontSize: (compactText ? 14 : 15) * scale,
                                     fontWeight: FontWeight.bold,
                                     fontFamily: VH.headingFontFamily,
@@ -666,7 +667,7 @@ class _CalendarDayState extends State<_CalendarDay> {
               shape: CircleBorder(
                 side: widget.today && !widget.selected
                     ? BorderSide(
-                        color: VH.foreground.withValues(alpha: .5),
+                        color: VetColors.calendarTextOnRose,
                         width: widget.scale,
                       )
                     : BorderSide.none,
@@ -694,18 +695,19 @@ class _CalendarDayState extends State<_CalendarDay> {
                         softWrap: false,
                         style: TextStyle(
                           fontSize: 15 * widget.scale * widget.fontSizeFactor,
-                          fontWeight: FontWeight.bold,
                           fontFamily: VH.headingFontFamily,
                           height: widget.fontSizeFactor < 1 ? 1 : null,
                           color: widget.selected
                               ? VH.onSecondary
-                              : VH.foreground.withValues(
-                                  alpha: widget.enabled
-                                      ? widget.inMonth
-                                            ? 1
-                                            : .30
-                                      : .2,
-                                ),
+                              : widget.enabled
+                              ? VetColors.calendarTextOnRose
+                              : VH.foreground.withValues(alpha: .2),
+                          fontWeight:
+                              !widget.selected &&
+                                  !widget.inMonth &&
+                                  widget.enabled
+                              ? FontWeight.w500
+                              : FontWeight.bold,
                         ),
                       ),
                       if (widget.indicator)
@@ -715,7 +717,7 @@ class _CalendarDayState extends State<_CalendarDay> {
                             radius: 2 * widget.scale,
                             backgroundColor: widget.selected
                                 ? VH.onSecondary
-                                : VH.foreground,
+                                : VetColors.calendarTextOnRose,
                           ),
                         ),
                     ],

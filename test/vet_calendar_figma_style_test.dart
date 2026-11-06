@@ -4,7 +4,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/agenda_page.dart';
 import 'package:flutter_vethome/theme.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';
+
+double _contrastRatio(Color foreground, Color background) {
+  final foregroundLuminance = foreground.computeLuminance();
+  final backgroundLuminance = background.computeLuminance();
+  final lighter = foregroundLuminance > backgroundLuminance
+      ? foregroundLuminance
+      : backgroundLuminance;
+  final darker = foregroundLuminance > backgroundLuminance
+      ? backgroundLuminance
+      : foregroundLuminance;
+  return (lighter + .05) / (darker + .05);
+}
 
 void main() {
   const repaintBoundaryKey = ValueKey('calendar-test-boundary');
@@ -63,7 +76,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('calendário reproduz painel e dia selecionado do Figma', (
+  testWidgets('calendário mantém geometria do Figma com contraste acessível', (
     tester,
   ) async {
     await pumpCalendar(tester, viewport: const Size(390, 844));
@@ -97,16 +110,22 @@ void main() {
     expect(weekday.style?.fontFamily, VH.headingFontFamily);
     expect(weekday.style?.fontSize, 15);
     expect(weekday.style?.fontWeight, FontWeight.bold);
-    expect(weekday.style?.color, const Color(0xFF68442E));
+    expect(weekday.style?.color, VetColors.calendarTextOnRose);
+    expect(
+      _contrastRatio(weekday.style!.color!, const Color(0xFFC08081)),
+      greaterThanOrEqualTo(4.5),
+    );
 
     final monthTitle = tester.widget<Text>(find.text('Outubro'));
     expect(monthTitle.style?.fontFamily, VH.headingFontFamily);
     expect(monthTitle.style?.fontSize, 15);
     expect(monthTitle.style?.fontWeight, FontWeight.bold);
+    expect(monthTitle.style?.color, VetColors.calendarTextOnRose);
     final yearTitle = tester.widget<Text>(find.text('2026'));
     expect(yearTitle.style?.fontFamily, VH.headingFontFamily);
     expect(yearTitle.style?.fontSize, 15);
     expect(yearTitle.style?.fontWeight, FontWeight.bold);
+    expect(yearTitle.style?.color, VetColors.calendarTextOnRose);
 
     final selectedDay = find.byKey(
       const ValueKey('calendar-2026-10-9-surface'),
@@ -128,16 +147,14 @@ void main() {
     final normalText = tester.widget<Text>(
       find.descendant(of: normalDay, matching: find.text('8')),
     );
-    expect(normalText.style?.color, const Color(0xFF68442E));
+    expect(normalText.style?.color, VetColors.calendarTextOnRose);
 
     final outsideDay = find.byKey(const ValueKey('calendar-2026-9-27-surface'));
     final outsideText = tester.widget<Text>(
       find.descendant(of: outsideDay, matching: find.text('27')),
     );
-    expect(
-      outsideText.style?.color,
-      const Color(0xFF68442E).withValues(alpha: .30),
-    );
+    expect(outsideText.style?.color, VetColors.calendarTextOnRose);
+    expect(outsideText.style?.fontWeight, FontWeight.w500);
   });
 
   testWidgets('calendário de consulta segue a geometria do Figma', (

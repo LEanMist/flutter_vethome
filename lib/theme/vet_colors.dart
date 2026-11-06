@@ -13,6 +13,8 @@ class VetColors {
   static const Color brownOnRoseCard = Color(0xFF603D28);
   // Contraste >= 4.5:1 sobre superfícies e gradientes rosa claros.
   static const Color brownOnRose = Color(0xFF573820);
+  // Contraste >= 4.5:1 sobre o rosa sólido do calendário (#C08081).
+  static const Color calendarTextOnRose = Color(0xFF352216);
   static const Color chatMessageText = brownOnRose;
 
   // Cores e transparências dos nós do Figma Education.
