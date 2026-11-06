@@ -422,3 +422,9 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - Corrigida em `test/vet_home_responsive_auth_test.dart` a expectativa antiga do botão Continuar do cadastro de endereço: o fundo rosa e o texto escuro seguem o Figma e mantêm contraste acessível.
 - Os testes focados de endereço e cadastro passaram (**17/17**), `flutter analyze --no-pub` não encontrou problemas, a formatação e `git diff --check` passaram.
 - A suíte nativa completa terminou com **397 testes aprovados e 1 ignorado**; nenhuma falha.
+
+## Escolha de Pet e edição de endereço compactas — 06/11/2026
+
+- A tela mobile Escolha de Pet agora usa o painel compacto do Figma (`2783:916`), mantendo seleção e navegação existentes. Quando há mais de quatro pets, controles de rolagem permitem alcançar os demais; desktop mantém a composição anterior. O texto escuro das opções foi mantido para preservar contraste acessível.
+- A edição mobile de endereço agora usa o cartão sem cabeçalho do Figma (`2783:638`), com os seis campos e ações nas posições do desenho. Validação, consulta de CEP, exclusão com confirmação e persistência local continuam integradas; telas baixas permitem rolagem para alcançar Salvar.
+- Validação: suíte Flutter nativa completa — **398 testes aprovados e 1 ignorado**; `flutter analyze --no-pub` sem problemas; formatação e `git diff --check` aprovados.

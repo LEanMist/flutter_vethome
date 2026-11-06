@@ -68,6 +68,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byTooltip('Rolar pets para baixo'));
+    await tester.pumpAndSettle();
+
     final selectedCard = find.byWidgetPredicate(
       (widget) => widget is PetCardWidget && widget.pet.id == target.id,
     );

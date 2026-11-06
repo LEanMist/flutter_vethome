@@ -18,6 +18,7 @@ class AddressForm extends StatefulWidget {
     this.onDelete,
     this.initial,
     this.cepService = const CepService(),
+    this.figmaEditLayout = false,
   });
   final String title;
   final FutureOr<void> Function(SavedAddress) onSaved;
@@ -26,6 +27,7 @@ class AddressForm extends StatefulWidget {
   final FutureOr<void> Function(SavedAddress)? onDelete;
   final SavedAddress? initial;
   final CepService cepService;
+  final bool figmaEditLayout;
   @override
   State<AddressForm> createState() => _AddressFormState();
 }
@@ -184,8 +186,8 @@ class _AddressFormState extends State<AddressForm> {
       compact: true,
       figmaForm: registrationLayout || editingLayout,
       labelAbove: true,
-      labelHorizontalPadding: registrationLayout ? 5 : null,
-      labelBottomPadding: registrationLayout ? 0 : null,
+      labelHorizontalPadding: registrationLayout || editingLayout ? 5 : null,
+      labelBottomPadding: registrationLayout || editingLayout ? 0 : null,
       fitSingleLine: true,
       controller: controller,
       validator: validator,
@@ -199,6 +201,7 @@ class _AddressFormState extends State<AddressForm> {
     final registration = widget.onSkip != null && !desktop;
     final editing =
         widget.initial != null && widget.onDelete != null && !desktop;
+    final figmaEditing = widget.figmaEditLayout && editing;
     final saveLabel = widget.onSkip != null
         ? 'Continuar'
         : editing
@@ -226,6 +229,33 @@ class _AddressFormState extends State<AddressForm> {
         softWrap: false,
       ),
     );
+    final deleteButton = editing
+        ? SizedBox(
+            width: 90,
+            height: 34,
+            child: OutlinedButton(
+              onPressed: _saving ? null : _delete,
+              style: OutlinedButton.styleFrom(
+                backgroundColor: VH.background,
+                foregroundColor: VH.foreground,
+                side: BorderSide(color: Colors.white.withValues(alpha: .8)),
+                elevation: 2,
+                shadowColor: VH.foreground.withValues(alpha: .2),
+                padding: EdgeInsets.zero,
+                shape: const StadiumBorder(),
+                textStyle: TextStyle(
+                  fontFamily: VH.headingFontFamily,
+                  fontSize: figmaEditing ? 15 : 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              child: const Text('Excluir'),
+            ),
+          )
+        : null;
+
+    if (figmaEditing) return _figmaEditorContent(saveButton, deleteButton!);
+
     return Align(
       alignment: registration ? Alignment.topCenter : Alignment.center,
       child: ConstrainedBox(
@@ -421,34 +451,7 @@ class _AddressFormState extends State<AddressForm> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                SizedBox(
-                                  width: 90,
-                                  height: 34,
-                                  child: OutlinedButton(
-                                    onPressed: _saving ? null : _delete,
-                                    style: OutlinedButton.styleFrom(
-                                      backgroundColor: VH.background,
-                                      foregroundColor: VH.foreground,
-                                      side: BorderSide(
-                                        color: Colors.white.withValues(
-                                          alpha: .8,
-                                        ),
-                                      ),
-                                      elevation: 2,
-                                      shadowColor: VH.foreground.withValues(
-                                        alpha: .2,
-                                      ),
-                                      padding: EdgeInsets.zero,
-                                      shape: const StadiumBorder(),
-                                      textStyle: TextStyle(
-                                        fontFamily: VH.headingFontFamily,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    child: const Text('Excluir'),
-                                  ),
-                                ),
+                                deleteButton!,
                                 SizedBox(
                                   width: 90,
                                   height: 34,
@@ -484,6 +487,99 @@ class _AddressFormState extends State<AddressForm> {
                 ? SingleChildScrollView(child: content)
                 : Align(alignment: Alignment.topCenter, child: content);
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _figmaEditorContent(ElevatedButton saveButton, Widget deleteButton) {
+    Widget field(
+      String label,
+      IconData icon,
+      TextEditingController controller, {
+      FormFieldValidator<String>? validator,
+      ValueChanged<String>? onChanged,
+      required double top,
+    }) => Positioned(
+      left: 15,
+      top: top,
+      width: 259,
+      child: _field(
+        label,
+        icon,
+        controller,
+        validator: validator,
+        onChanged: onChanged,
+      ),
+    );
+
+    return SizedBox.expand(
+      child: Form(
+        key: _key,
+        child: Stack(
+          children: [
+            field(
+              'CEP',
+              Icons.home_outlined,
+              _cep,
+              onChanged: _lookup,
+              validator: (value) =>
+                  (value ?? '').replaceAll(RegExp(r'\D'), '').length == 8
+                  ? null
+                  : 'Informe um CEP com 8 números',
+              top: 14,
+            ),
+            field(
+              'Logradouro',
+              Icons.home_outlined,
+              _street,
+              validator: _required,
+              top: 106,
+            ),
+            field(
+              'Numero',
+              Icons.numbers,
+              _number,
+              validator: _required,
+              top: 199,
+            ),
+            field('Complemento', Icons.home_outlined, _complement, top: 291),
+            field(
+              'Cidade',
+              Icons.location_city_outlined,
+              _city,
+              validator: _required,
+              top: 383,
+            ),
+            field('Nome', Icons.home_outlined, _name, top: 475),
+            if (_status.isNotEmpty)
+              Positioned(
+                left: 20,
+                top: 90,
+                width: 254,
+                height: 14,
+                child: Semantics(
+                  liveRegion: true,
+                  label: _status,
+                  child: ExcludeSemantics(
+                    child: Text(
+                      _status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ),
+                ),
+              ),
+            Positioned(left: 15, top: 576, child: deleteButton),
+            Positioned(
+              left: 184,
+              top: 576,
+              width: 90,
+              height: 34,
+              child: saveButton,
+            ),
+          ],
         ),
       ),
     );

@@ -356,42 +356,82 @@ class AddressEditorPage extends StatelessWidget {
   final SavedAddress? address;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: VetColors.pink,
-    appBar: AppBar(backgroundColor: VetColors.pink),
-    body: SafeArea(
-      child: AddressForm(
-        title: address == null ? 'Novo endereço' : 'Editar endereço',
-        initial: address,
-        onSaved: (value) async {
-          VetRepository.saveAddress(value);
-          final saved = await VetRepository.flush();
-          if (context.mounted) Navigator.pop(context, saved);
-        },
-        onDelete: (value) async {
-          final confirmed = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Excluir endereço?'),
-              content: Text(value.summary),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancelar'),
+  Widget build(BuildContext context) {
+    final desktop = MediaQuery.sizeOf(context).width >= 900;
+    final compactEditor = address != null && !desktop;
+    final form = AddressForm(
+      figmaEditLayout: compactEditor,
+      title: address == null ? 'Novo endereço' : 'Editar endereço',
+      initial: address,
+      onSaved: (value) async {
+        VetRepository.saveAddress(value);
+        final saved = await VetRepository.flush();
+        if (context.mounted) Navigator.pop(context, saved);
+      },
+      onDelete: (value) async {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Excluir endereço?'),
+            content: Text(value.summary),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Excluir'),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true || !context.mounted) return;
+        VetRepository.removeAddress(value.id);
+        final saved = await VetRepository.flush();
+        if (context.mounted) Navigator.pop(context, saved ? null : false);
+      },
+    );
+
+    return Scaffold(
+      backgroundColor: VetColors.pink,
+      appBar: compactEditor ? null : AppBar(backgroundColor: VetColors.pink),
+      body: SafeArea(
+        child: compactEditor
+            ? LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  key: const ValueKey('address-editor-viewport'),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: constraints.maxWidth,
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: Center(
+                      child: Container(
+                        key: const ValueKey('address-editor-panel'),
+                        width: 290,
+                        height: 633,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: inset_shadow.BoxDecoration(
+                          color: VetColors.pink,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: const [
+                            inset_shadow.BoxShadow(
+                              color: VetColors.shadowDark,
+                              offset: Offset(2, 2),
+                              blurRadius: 5,
+                              inset: true,
+                            ),
+                          ],
+                        ),
+                        child: form,
+                      ),
+                    ),
+                  ),
                 ),
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Excluir'),
-                ),
-              ],
-            ),
-          );
-          if (confirmed != true || !context.mounted) return;
-          VetRepository.removeAddress(value.id);
-          final saved = await VetRepository.flush();
-          if (context.mounted) Navigator.pop(context, saved ? null : false);
-        },
+              )
+            : form,
       ),
-    ),
-  );
+    );
+  }
 }

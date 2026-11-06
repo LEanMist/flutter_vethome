@@ -24,6 +24,7 @@ class VetColors {
   static const Color brownSecondary = Color.fromRGBO(104, 68, 46, .75);
   static const Color profileOutline = Color(0xFFB18B81);
   static const Color chatComposerBackground = Color(0xFFEBBEC0);
+  static const Color petChoicePanel = Color(0xFFECBEC0);
   static const Color shadowDark = Color.fromRGBO(0, 0, 0, .25);
 
   // Realce existente, sem equivalente confirmado no Figma.

@@ -30,7 +30,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('Pets usa painel do Figma e Escolha seu Pet não usa o painel', (
+  testWidgets('Pets e Escolha de Pet usam seus painéis do Figma', (
     tester,
   ) async {
     await pumpAt(tester, const PetsPage());
@@ -47,6 +47,13 @@ void main() {
 
     await pumpAt(tester, const EscolhaPetScreen());
     expect(find.byKey(const ValueKey('pets-list-panel')), findsNothing);
+    final choicePanel = find.byKey(const ValueKey('pet-choice-panel'));
+    expect(choicePanel, findsOneWidget);
+    expect(tester.getRect(choicePanel), const Rect.fromLTWH(0, 0, 390, 408));
+    expect(find.text('Escolha seu Pet'), findsOneWidget);
+    final choiceList = find.byKey(const ValueKey('pet-choice-mobile-list'));
+    expect(tester.getSize(choiceList), const Size(275, 262));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(

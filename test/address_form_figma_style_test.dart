@@ -67,6 +67,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.text('Editar endereço'), findsNothing);
+    final editorPanel = find.byKey(const ValueKey('address-editor-panel'));
+    final editorRect = tester.getRect(editorPanel);
+    expect(editorRect.size, const Size(290, 633));
+    expect(editorRect.left, 50);
+    expect(editorRect.top, 105.5);
+
     expect(find.text('Numero'), findsOneWidget);
     expect(find.text('Logradouro'), findsOneWidget);
     expect(find.text('Endereço'), findsNothing);
@@ -76,6 +84,30 @@ void main() {
     expect(find.widgetWithText(OutlinedButton, 'Excluir'), findsOneWidget);
     expect(find.widgetWithText(ElevatedButton, 'Salvar'), findsOneWidget);
     expect(find.text('Salvar endereço'), findsNothing);
+
+    for (final (label, labelTop, fieldTop) in const [
+      ('CEP', 14.0, 34.0),
+      ('Logradouro', 106.0, 127.0),
+      ('Numero', 199.0, 219.0),
+      ('Complemento', 291.0, 311.0),
+      ('Cidade', 383.0, 403.0),
+      ('Nome', 475.0, 495.0),
+    ]) {
+      final labelRect = tester.getRect(find.text(label));
+      expect(labelRect.left, closeTo(editorRect.left + 20, 1));
+      expect(labelRect.top, closeTo(editorRect.top + labelTop, 1));
+      final input = find.descendant(
+        of: find.byWidgetPredicate(
+          (widget) => widget is VHField && widget.label == label,
+        ),
+        matching: find.byType(TextFormField),
+      );
+      final fieldRect = tester.getRect(input);
+      expect(fieldRect.left, closeTo(editorRect.left + 15, 1));
+      expect(fieldRect.top, closeTo(editorRect.top + fieldTop, 1));
+      expect(fieldRect.width, closeTo(259, 1));
+      expect(fieldRect.height, closeTo(56, 1));
+    }
 
     final prefixAssets = _addressAssetNames(tester);
     expect(
@@ -125,10 +157,18 @@ void main() {
     final deleteButton = find.widgetWithText(OutlinedButton, 'Excluir');
     final saveButton = find.widgetWithText(ElevatedButton, 'Salvar');
     final saveStyle = tester.widget<ElevatedButton>(saveButton).style!;
-    expect(tester.getSize(deleteButton), const Size(90, 34));
-    expect(tester.getSize(saveButton), const Size(90, 34));
+    expect(
+      tester.getRect(deleteButton),
+      const Rect.fromLTWH(65, 681.5, 90, 34),
+    );
+    expect(tester.getRect(saveButton), const Rect.fromLTWH(234, 681.5, 90, 34));
     expect(saveStyle.backgroundColor!.resolve({}), VH.primary);
     expect(saveStyle.foregroundColor!.resolve({}), Colors.white);
+    expect(
+      saveStyle.textStyle!.resolve(const <WidgetState>{})!.fontFamily,
+      'Comfortaa',
+    );
+    expect(saveStyle.textStyle!.resolve(const <WidgetState>{})!.fontSize, 15);
     expect(
       tester.getTopLeft(saveButton).dx - tester.getTopRight(deleteButton).dx,
       closeTo(79, 1),
@@ -161,6 +201,30 @@ void main() {
       saveStyle.foregroundColor!.resolve({}),
       VetColors.calendarTextOnRose,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('editor Figma mantém Salvar acessível em tela baixa', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+
+    await tester.pumpWidget(
+      const MaterialApp(home: AddressEditorPage(address: address)),
+    );
+    await tester.pumpAndSettle();
+
+    final panel = find.byKey(const ValueKey('address-editor-panel'));
+    expect(tester.getSize(panel), const Size(290, 633));
+    final saveButton = find.widgetWithText(ElevatedButton, 'Salvar');
+    await tester.ensureVisible(saveButton);
+    await tester.pumpAndSettle();
+    expect(tester.getBottomRight(saveButton).dy, lessThanOrEqualTo(617));
     expect(tester.takeException(), isNull);
   });
 
