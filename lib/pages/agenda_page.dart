@@ -184,8 +184,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
             if (index < appointments.length - 1)
               Positioned(
                 left: 88 * scale,
-                top: (466 + 84 * index) * scale,
-                child: _FigmaDottedLine(width: 221 * scale),
+                top: (465 + 85 * index) * scale,
+                child: _FigmaDottedLine(
+                  key: ValueKey('agenda-divider-$index'),
+                  width: 221 * scale,
+                ),
               ),
           ],
           Positioned(
@@ -510,7 +513,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
 }
 
 class _FigmaDottedLine extends StatelessWidget {
-  const _FigmaDottedLine({required this.width});
+  const _FigmaDottedLine({super.key, required this.width});
 
   final double width;
 

@@ -229,6 +229,43 @@ void main() {
       expect(rect.left, greaterThanOrEqualTo(0));
       expect(rect.right, lessThanOrEqualTo(390));
     }
+
+    // Figma CALENDAR_PAGE 2783:950: cartões 195×50 em x=102,
+    // data selecionada em y=323, divisores em y=466/551 e ação em y=651.
+    final cardTopByLabel = {
+      'Hemograma': 399.0,
+      'Urina': 483.0,
+      'Creatinina': 567.0,
+    };
+    for (final entry in cardTopByLabel.entries) {
+      final card = find
+          .ancestor(of: find.text(entry.key), matching: find.byType(Container))
+          .first;
+      expect(tester.getRect(card), Rect.fromLTWH(102, entry.value, 195, 50));
+    }
+    expect(
+      tester.getRect(find.byKey(const ValueKey('agenda-selected-date'))),
+      const Rect.fromLTWH(67, 323, 258, 41),
+    );
+    for (var index = 0; index < 2; index++) {
+      final line = tester.getRect(
+        find.byKey(ValueKey('agenda-divider-$index')),
+      );
+      expect(line.left, closeTo(88, .5));
+      expect(line.width, closeTo(221, .5));
+      expect(line.center.dy, closeTo(466 + 85 * index, .5));
+    }
+    final newAppointmentButton = find
+        .ancestor(
+          of: find.text('Nova Consulta'),
+          matching: find.byType(Container),
+        )
+        .first;
+    expect(
+      tester.getRect(newAppointmentButton),
+      const Rect.fromLTWH(145, 651, 99, 41),
+    );
+
     for (final finder in [
       find.text('Sáb'),
       find.byKey(const ValueKey('agenda-calendar-month-navigation')),
