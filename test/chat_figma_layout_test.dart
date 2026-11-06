@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/chat_page.dart';
+import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
@@ -41,6 +42,26 @@ void main() {
 
     expect(find.byType(ChatListScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('chat-list-card')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a aba Pets abre a lista a partir do Chat', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const ChatListScreen(),
+        routes: {'/pets': AppRoutes.routes['/pets']!},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.bySemanticsLabel('Pets'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PetsPage), findsOneWidget);
+    expect(
+      tester.widget<VetBottomNav>(find.byType(VetBottomNav)).selectedIndex,
+      0,
+    );
     expect(tester.takeException(), isNull);
   });
 
