@@ -238,14 +238,17 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     borderRadius: BorderRadius.circular(100),
     child: ListTileTheme(
       data: const ListTileThemeData(
-        textColor: Colors.white,
+        textColor: VetColors.calendarTextOnRose,
         iconColor: Colors.white,
         titleTextStyle: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: VetColors.calendarTextOnRose,
         ),
-        subtitleTextStyle: TextStyle(fontSize: 14, color: Colors.white),
+        subtitleTextStyle: TextStyle(
+          fontSize: 14,
+          color: VetColors.calendarTextOnRose,
+        ),
         shape: StadiumBorder(),
       ),
       child: child,
@@ -453,12 +456,12 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
         controller: _description,
         minLines: 3,
         maxLines: 5,
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: VetColors.calendarTextOnRose),
         maxLength: 500,
         decoration: InputDecoration(
           filled: true,
           fillColor: VetColors.rose,
-          hintStyle: const TextStyle(color: Colors.white),
+          hintStyle: const TextStyle(color: VetColors.calendarTextOnRose),
           hintText: 'Adicionar uma descrição (opcional)',
           counterText: '',
           border: OutlineInputBorder(

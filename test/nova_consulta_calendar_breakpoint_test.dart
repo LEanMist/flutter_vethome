@@ -2,8 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+double _contrastRatio(Color foreground, Color background) {
+  final foregroundLuminance = foreground.computeLuminance();
+  final backgroundLuminance = background.computeLuminance();
+  final lighter = foregroundLuminance > backgroundLuminance
+      ? foregroundLuminance
+      : backgroundLuminance;
+  final darker = foregroundLuminance > backgroundLuminance
+      ? backgroundLuminance
+      : foregroundLuminance;
+  return (lighter + .05) / (darker + .05);
+}
 
 void main() {
   setUp(() async {
@@ -80,5 +93,45 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('campos da consulta mantêm contraste AA sobre o rosa', (
+    tester,
+  ) async {
+    for (final width in [390.0, 1280.0]) {
+      await pumpAt(tester, width);
+
+      final tileThemes = tester
+          .widgetList<ListTileTheme>(find.byType(ListTileTheme))
+          .toList();
+      expect(tileThemes, isNotEmpty);
+      for (final tileTheme in tileThemes) {
+        final data = tileTheme.data;
+        for (final color in [
+          data.textColor!,
+          data.titleTextStyle!.color!,
+          data.subtitleTextStyle!.color!,
+        ]) {
+          expect(color, VetColors.calendarTextOnRose);
+          expect(
+            _contrastRatio(color, VetColors.rose),
+            greaterThanOrEqualTo(4.5),
+          );
+        }
+      }
+
+      final description = tester.widget<TextField>(find.byType(TextField));
+      final descriptionColor = description.style!.color!;
+      final hintColor = description.decoration!.hintStyle!.color!;
+      expect(description.decoration!.fillColor, VetColors.rose);
+      for (final color in [descriptionColor, hintColor]) {
+        expect(color, VetColors.calendarTextOnRose);
+        expect(
+          _contrastRatio(color, VetColors.rose),
+          greaterThanOrEqualTo(4.5),
+        );
+      }
+      expect(tester.takeException(), isNull);
+    }
   });
 }

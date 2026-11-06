@@ -144,6 +144,16 @@ void main() {
       expect(title.style?.fontFamily, 'MontserratAlternates');
       expect(title.style?.fontSize, 20);
       expect(title.style?.fontWeight, FontWeight.bold);
+      expect(title.style?.color, VetColors.brownOnRose);
+      final gradientContrasts = [
+        _contrastRatio(title.style!.color!, VetColors.rose),
+        _contrastRatio(title.style!.color!, VetColors.pink),
+      ];
+      expect(
+        gradientContrasts.reduce((a, b) => a < b ? a : b),
+        greaterThanOrEqualTo(3),
+        reason: 'Títulos grandes de plano devem manter contraste acessível.',
+      );
       final pill = find.ancestor(
         of: find.text(label),
         matching: find.byWidgetPredicate(

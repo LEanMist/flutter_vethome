@@ -721,7 +721,7 @@ class ConvenioScreen extends StatelessWidget {
                                 fontFamily: VH.bodyFontFamily,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 20,
-                                color: Colors.white,
+                                color: VetColors.brownOnRose,
                               ),
                             ),
                           ),
