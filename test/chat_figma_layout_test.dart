@@ -32,6 +32,11 @@ void main() {
 
     final composer = find.byKey(const ValueKey('chat-composer'));
     expect(tester.getSize(composer), const Size(366, 80));
+    expect(tester.getTopLeft(composer), const Offset(12, 623));
+    expect(
+      tester.getTopLeft(find.text('Gabriela Falcão').first).dy,
+      closeTo(172, 1.5),
+    );
 
     final bottomNav = find.byType(VetBottomNav);
     final navSurface = tester
@@ -142,8 +147,8 @@ void main() {
         );
 
         if (viewport == const Size(320, 640) && scale == 2.0) {
-          // Evita que o aviso ampliado esconda o controle de envio.
-          expect(card.height, greaterThan(420));
+          // O aviso acima do cartão não reduz a área do compositor.
+          expect(card.height, greaterThanOrEqualTo(420));
           await tester.ensureVisible(find.byTooltip('Enviar mensagem'));
           await tester.pumpAndSettle();
           expect(

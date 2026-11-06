@@ -40,13 +40,17 @@ class _ChatScreenState extends State<ChatScreen> {
         const VHHeader('Whatsapp'),
         Padding(
           padding: MediaQuery.sizeOf(context).width < VH.desktopBreakpoint
-              ? const EdgeInsets.fromLTRB(12, 22, 12, 16)
+              ? const EdgeInsets.fromLTRB(12, 0, 12, 16)
               : const EdgeInsets.all(16),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final conversation = _conversation(context);
+              final conversationWithNotice = Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [_localityNotice(), conversation],
+              );
               if (constraints.maxWidth < VH.desktopBreakpoint) {
-                return conversation;
+                return conversationWithNotice;
               }
               return Row(
                 key: const ValueKey('chat-desktop-layout'),
@@ -54,7 +58,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   SizedBox(width: 300, child: _vetCard(context)),
                   const SizedBox(width: 28),
-                  Expanded(child: conversation),
+                  Expanded(child: conversationWithNotice),
                 ],
               );
             },
@@ -100,32 +104,9 @@ class _ChatScreenState extends State<ChatScreen> {
     final viewport = MediaQuery.sizeOf(context);
     final mobile = viewport.width < VH.desktopBreakpoint;
     final bubbleWidth = (viewport.width - 48).clamp(0.0, 273.0).toDouble();
-    final composerHeight = _composerHeight(context);
-    final baseHeight = (viewport.height - (mobile ? 288 : 230))
+    final cardHeight = (viewport.height - (mobile ? 288 : 230))
         .clamp(420, 680)
         .toDouble();
-    var cardHeight = baseHeight;
-    if (mobile) {
-      // O aviso cresce com a fonte do sistema. A página já permite rolagem:
-      // ampliar apenas o cartão evita cortar o aviso ou o compositor em 320 px.
-      final noticeText = TextPainter(
-        text: const TextSpan(
-          text: _chatLocalityNotice,
-          style: TextStyle(fontSize: 12, height: 1.35),
-        ),
-        textScaler: MediaQuery.textScalerOf(context),
-        textDirection: Directionality.of(context),
-      )..layout(maxWidth: (viewport.width - 94).clamp(1.0, double.infinity));
-      final minimum =
-          noticeText.height +
-          10 + // Espaço superior do cartão.
-          20 + // Padding vertical do aviso.
-          8 + // Espaço abaixo do aviso.
-          composerHeight +
-          56; // Área mínima da lista de mensagens.
-      noticeText.dispose();
-      if (minimum > cardHeight) cardHeight = minimum;
-    }
 
     return Container(
       key: const ValueKey('chat-conversation-card'),
@@ -133,14 +114,11 @@ class _ChatScreenState extends State<ChatScreen> {
       decoration: insetBox(color: VH.muted),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-            child: _localityNotice(),
-          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: ListView(
+                padding: const EdgeInsets.only(top: 25),
                 children: [
                   for (final (index, message)
                       in VetRepository.chatMessages.indexed)
@@ -237,23 +215,19 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Container(
         key: const ValueKey('chat-locality-notice'),
         width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: VH.card,
-          borderRadius: BorderRadius.circular(12),
-        ),
+        margin: const EdgeInsets.only(bottom: 2),
         child: const Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.info_outline, size: 18, color: VetColors.brown),
-            SizedBox(width: 8),
-            Expanded(
+            Icon(Icons.info_outline, size: 14, color: VetColors.brown),
+            SizedBox(width: 4),
+            Flexible(
               child: Text(
-                _chatLocalityNotice,
+                'Demonstração local: mensagens não são enviadas à veterinária.',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 12,
-                  height: 1.35,
+                  fontSize: 10,
+                  height: 1,
                   color: VetColors.brown,
                 ),
               ),

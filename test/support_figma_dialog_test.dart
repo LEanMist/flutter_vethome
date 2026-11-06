@@ -71,7 +71,7 @@ void main() {
     expect(numberLabel.style?.fontWeight, FontWeight.w500);
     final phone = tester.widget<SelectableText>(
       find.ancestor(
-        of: find.text('11 93244-4392'),
+        of: find.text('11 9793-8918'),
         matching: find.byType(SelectableText),
       ),
     );
@@ -84,7 +84,7 @@ void main() {
     expect(emailLabel.style?.fontWeight, FontWeight.w500);
     final email = tester.widget<SelectableText>(
       find.ancestor(
-        of: find.text('Gabriela@gmail.com'),
+        of: find.text('Kelvinpro@gmail.com'),
         matching: find.byType(SelectableText),
       ),
     );
@@ -105,8 +105,8 @@ void main() {
     expect(size.width, lessThanOrEqualTo(280));
     expect(size.height, greaterThanOrEqualTo(289));
     expect(size.height, lessThanOrEqualTo(592));
-    expect(find.text('11 93244-4392'), findsOneWidget);
-    expect(find.text('Gabriela@gmail.com'), findsOneWidget);
+    expect(find.text('11 9793-8918'), findsOneWidget);
+    expect(find.text('Kelvinpro@gmail.com'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -126,8 +126,8 @@ void main() {
     await tester.tap(find.text('Suporte'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('support-figma-surface')), findsOneWidget);
-    expect(find.text('11 93244-4392'), findsOneWidget);
-    expect(find.text('Gabriela@gmail.com'), findsOneWidget);
+    expect(find.text('11 9793-8918'), findsOneWidget);
+    expect(find.text('Kelvinpro@gmail.com'), findsOneWidget);
     await tester.tapAt(const Offset(2, 2));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('support-figma-surface')), findsNothing);

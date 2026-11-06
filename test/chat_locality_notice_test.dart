@@ -7,6 +7,8 @@ void main() {
   const notice =
       'Conversa de demonstração local. As mensagens digitadas aparecem somente '
       'nesta sessão e não são enviadas à veterinária.';
+  const visibleNotice =
+      'Demonstração local: mensagens não são enviadas à veterinária.';
 
   testWidgets('aviso local fica visível, fora da lista, e acessível', (
     tester,
@@ -23,18 +25,22 @@ void main() {
     expect(find.text('Whatsapp'), findsOneWidget);
     final banner = find.byKey(const ValueKey('chat-locality-notice'));
     expect(banner, findsOneWidget);
-    expect(find.text(notice), findsOneWidget);
+    expect(find.text(visibleNotice), findsOneWidget);
     expect(find.bySemanticsLabel(notice), findsOneWidget);
     expect(
       find.ancestor(of: banner, matching: find.byType(ListView)),
       findsNothing,
     );
+    final card = tester.getRect(
+      find.byKey(const ValueKey('chat-conversation-card')),
+    );
+    expect(tester.getRect(banner).bottom, lessThanOrEqualTo(card.top));
     expect(tester.takeException(), isNull);
 
     await tester.drag(find.byType(ListView).first, const Offset(0, -160));
     await tester.pump();
     expect(banner, findsOneWidget);
-    expect(find.text(notice), findsOneWidget);
+    expect(find.text(visibleNotice), findsOneWidget);
 
     tester.view.physicalSize = const Size(1200, 900);
     await tester.pumpAndSettle();
@@ -73,7 +79,7 @@ void main() {
     expect(VetRepository.chatMessages.last.text, typed);
     expect(VetRepository.chatMessages.last.fromClient, isTrue);
     expect(find.text(typed), findsOneWidget);
-    expect(find.text(notice), findsOneWidget);
+    expect(find.text(visibleNotice), findsOneWidget);
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller!.text,
       '',
