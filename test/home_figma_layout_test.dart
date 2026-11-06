@@ -90,7 +90,12 @@ void main() {
       expect(firstTitleWord.style?.fontWeight, FontWeight.w600);
       expect(remainingTitle.text, 'Bem Vindo!');
       expect(remainingTitle.style?.fontWeight, FontWeight.bold);
-      expect(find.text('Cuidando de quem\nte faz sorrir'), findsOneWidget);
+      final subtitleFinder = find.text('Cuidando de quem\nte faz sorrir');
+      expect(subtitleFinder, findsOneWidget);
+      final subtitle = tester.widget<Text>(subtitleFinder);
+      expect(subtitle.style?.fontFamily, VH.headingFontFamily);
+      expect(subtitle.style?.fontWeight, FontWeight.bold);
+      expect(subtitle.style?.fontSize, 15 * scale);
 
       final profile = tester.getRect(
         find.byKey(const ValueKey('home-profile-chip')),
@@ -109,6 +114,11 @@ void main() {
         BorderRadius.circular(100 * scale),
       );
       expect(profileDecoration.boxShadow?.single.offset, const Offset(2, 2));
+      final profileIcon = find.byKey(const ValueKey('home-profile-icon'));
+      expect(tester.getSize(profileIcon).width, closeTo(28.6667 * scale, .01));
+      final profileIconRect = tester.getRect(profileIcon);
+      expect(profileIconRect.left - frame.left, closeTo(261 * scale, .01));
+      expect(profileIconRect.top - frame.top, closeTo(27.6667 * scale, .01));
       final userName = tester.widget<Text>(
         find.byKey(const ValueKey('home-user-name')),
       );

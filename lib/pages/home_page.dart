@@ -118,7 +118,7 @@ class HomePage extends StatelessWidget {
                             color: VetColors.brown,
                             fontFamily: VH.headingFontFamily,
                             fontSize: 15 * scale,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
                             height: 1.15,
                           ),
                         ),
@@ -192,12 +192,13 @@ class HomePage extends StatelessWidget {
                                   children: [
                                     SizedBox(width: 19 * scale),
                                     CustomPaint(
-                                      size: Size.square(20 * scale),
+                                      key: const ValueKey('home-profile-icon'),
+                                      size: Size.square(28.6667 * scale),
                                       painter: _ProfileIconPainter(
                                         scale: scale,
                                       ),
                                     ),
-                                    SizedBox(width: 22 * scale),
+                                    SizedBox(width: 13.3333 * scale),
                                     Expanded(
                                       child: Padding(
                                         padding: EdgeInsets.only(
