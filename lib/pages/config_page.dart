@@ -7,6 +7,66 @@ import '../theme/vet_colors.dart';
 import '../widgets.dart';
 import '../widgets/appointment_card.dart';
 
+class _ThemeColorWheel extends StatelessWidget {
+  const _ThemeColorWheel({required this.selectedColor});
+
+  final Color selectedColor;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('theme-color-wheel-frame'),
+    width: 264,
+    height: 261,
+    clipBehavior: Clip.antiAlias,
+    decoration: BoxDecoration(
+      color: VetColors.pink,
+      borderRadius: BorderRadius.circular(30),
+    ),
+    child: Stack(
+      children: [
+        Positioned(
+          left: 12,
+          top: 12,
+          width: 239,
+          height: 237,
+          child: Image.asset(
+            'assets/imagens/figma/image-8.png',
+            key: const ValueKey('theme-color-wheel-image'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        Positioned(
+          left: 15,
+          top: 14,
+          width: 236,
+          height: 236,
+          child: Container(
+            key: const ValueKey('theme-color-wheel-ring'),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: VetColors.rose, width: 5),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 119,
+          top: 118,
+          width: 28,
+          height: 28,
+          child: Container(
+            key: const ValueKey('theme-color-wheel-selection'),
+            decoration: BoxDecoration(
+              color: selectedColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class ConfigScreen extends StatelessWidget {
   const ConfigScreen({super.key});
 
@@ -72,33 +132,16 @@ class ConfigScreen extends StatelessWidget {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: VH.background,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 24,
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(12, 20, 12, 0),
           title: const Text('Tema do Aplicativo'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 132,
-                height: 132,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/imagens/figma/image-8.png',
-                      width: 132,
-                      height: 132,
-                    ),
-                    Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: selected,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _ThemeColorWheel(selectedColor: selected),
               const SizedBox(height: 18),
               Wrap(
                 spacing: 12,

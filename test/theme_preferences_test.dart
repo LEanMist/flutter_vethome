@@ -17,6 +17,40 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ConfigScreen()));
     await tester.tap(find.text('Tema do Aplicativo'));
     await tester.pumpAndSettle();
+    final colorWheel = find.byWidgetPredicate(
+      (widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName ==
+              'assets/imagens/figma/image-8.png',
+    );
+    expect(tester.getSize(colorWheel), const Size(239, 237));
+    final wheelFrame = find.byKey(const ValueKey('theme-color-wheel-frame'));
+    final frameRect = tester.getRect(wheelFrame);
+    final frameDecoration =
+        tester.widget<Container>(wheelFrame).decoration! as BoxDecoration;
+    expect(tester.getSize(wheelFrame), const Size(264, 261));
+    expect(frameDecoration.color, const Color(0xFFFAD3D5));
+    expect(frameDecoration.borderRadius, BorderRadius.circular(30));
+    expect(
+      tester
+              .getRect(find.byKey(const ValueKey('theme-color-wheel-image')))
+              .topLeft -
+          frameRect.topLeft,
+      const Offset(12, 12),
+    );
+    final ring = find.byKey(const ValueKey('theme-color-wheel-ring'));
+    expect(tester.getSize(ring), const Size(236, 236));
+    expect(
+      tester.getRect(ring).topLeft - frameRect.topLeft,
+      const Offset(15, 14),
+    );
+    final selection = find.byKey(const ValueKey('theme-color-wheel-selection'));
+    expect(tester.getSize(selection), const Size(28, 28));
+    expect(
+      tester.getRect(selection).topLeft - frameRect.topLeft,
+      const Offset(119, 118),
+    );
     final rose = find.byWidgetPredicate(
       (widget) =>
           widget is CircleAvatar &&
@@ -33,6 +67,23 @@ void main() {
     VH.themeSeed.value = VH.primary;
     await ThemePreferences.load();
     expect(VH.themeSeed.value, const Color(0xFFC08081));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('seletor de tema cabe em viewport estreito', (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: ConfigScreen()));
+    await tester.tap(find.text('Tema do Aplicativo'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('theme-color-wheel-frame'))),
+      const Size(264, 261),
+    );
     expect(tester.takeException(), isNull);
   });
 
