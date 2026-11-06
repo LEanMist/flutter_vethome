@@ -462,7 +462,7 @@ class _LoginPageState extends State<LoginPage> {
           hintText: label,
           hintStyle: TextStyle(
             fontFamily: VH.bodyFontFamily,
-            color: VH.foreground.withValues(alpha: .5),
+            color: VH.foreground,
             fontSize: 15,
             fontWeight: FontWeight.w500,
           ),
@@ -498,7 +498,7 @@ class _LoginPageState extends State<LoginPage> {
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
                     size: 18,
-                    color: VH.foreground.withValues(alpha: .5),
+                    color: VH.foreground,
                   ),
                 )
               : null,

@@ -6,6 +6,18 @@ import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+double _contrastRatio(Color first, Color second) {
+  final firstLuminance = first.computeLuminance();
+  final secondLuminance = second.computeLuminance();
+  final lighter = firstLuminance > secondLuminance
+      ? firstLuminance
+      : secondLuminance;
+  final darker = firstLuminance > secondLuminance
+      ? secondLuminance
+      : firstLuminance;
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -50,6 +62,29 @@ void main() {
     expect(
       tester.getRect(field('Senha')),
       const Rect.fromLTWH(74, 398, 242, 48),
+    );
+    for (final hint in ['Usuário', 'Senha']) {
+      expect(
+        tester.widget<TextField>(field(hint)).decoration?.hintStyle?.color,
+        VH.foreground,
+      );
+      final gradientStops = [
+        VH.secondary.withValues(alpha: .25),
+        VH.background,
+      ];
+      final surfaces = gradientStops.map(
+        (stop) => Color.alphaBlend(stop, VH.background),
+      );
+      expect(
+        surfaces
+            .map((surface) => _contrastRatio(VH.foreground, surface))
+            .reduce((a, b) => a < b ? a : b),
+        greaterThanOrEqualTo(4.5),
+      );
+    }
+    expect(
+      tester.widget<Icon>(find.byIcon(Icons.visibility_outlined)).color,
+      VH.foreground,
     );
 
     final loginButton = find.widgetWithText(ElevatedButton, 'Entrar');
