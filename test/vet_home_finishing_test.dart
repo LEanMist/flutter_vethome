@@ -320,8 +320,8 @@ void main() {
           tester.widget<PetAvatar>(find.byType(PetAvatar).first).photoBase64,
           photo,
         );
-        if (screen is ServicosScreen) {
-          // SERVICES_PAGE 2791:3113 utiliza a aba do pet no cabeçalho.
+        if (screen is ServicosScreen || screen is ConvenioScreen) {
+          // SERVICES_PAGE e CONVENIO_PAGE usam a aba compacta do pet.
           expect(find.byType(PetSummary), findsNothing);
         } else {
           expect(find.byType(PetSummary), findsOneWidget);
