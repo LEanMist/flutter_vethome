@@ -259,9 +259,7 @@ class _PetFormState extends State<PetForm> {
                 ),
               )
             : ElevatedButton.styleFrom(
-                backgroundColor: registration || editing
-                    ? VetColors.brown
-                    : VetColors.rose,
+                backgroundColor: editing ? VetColors.brown : VetColors.rose,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(48),
                 shape: registration ? const StadiumBorder() : null,

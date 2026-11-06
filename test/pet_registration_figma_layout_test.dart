@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/models/pet_model.dart';
 import 'package:flutter_vethome/pages/cadastroPet_page.dart';
 import 'package:flutter_vethome/theme.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/pet_photo_button.dart';
 import 'package:flutter_vethome/widgets/pet_form.dart';
@@ -76,6 +77,14 @@ void main() {
 
     final continueButton = find.widgetWithText(ElevatedButton, 'Continuar');
     expect(tester.getTopLeft(continueButton).dy, closeTo(663, 1));
+    expect(
+      tester
+          .widget<ElevatedButton>(continueButton)
+          .style
+          ?.backgroundColor
+          ?.resolve(<WidgetState>{}),
+      VetColors.rose,
+    );
     expect(tester.takeException(), isNull);
   });
 

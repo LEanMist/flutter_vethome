@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/models/pet_model.dart';
 import 'package:flutter_vethome/pages/editar_pet_page.dart';
 import 'package:flutter_vethome/theme.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/pet_photo_button.dart';
 
@@ -114,6 +115,14 @@ void main() {
     expect(tester.getSize(cancel), const Size(98, 34));
     expect(tester.getTopLeft(save) - surfaceOrigin, const Offset(194, 422));
     expect(tester.getSize(save), const Size(90, 34));
+    expect(
+      tester
+          .widget<ElevatedButton>(save)
+          .style
+          ?.backgroundColor
+          ?.resolve(<WidgetState>{}),
+      VetColors.brown,
+    );
     expect(find.text('Castração'), findsNothing);
     expect(find.byType(PetPhotoButton), findsNothing);
     expect(tester.takeException(), isNull);

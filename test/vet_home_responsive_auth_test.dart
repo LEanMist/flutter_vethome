@@ -261,7 +261,7 @@ void main() {
     final button = tester.widget<ElevatedButton>(buttonFinder);
     expect(
       button.style?.backgroundColor?.resolve(const <WidgetState>{}),
-      VetColors.brown,
+      VetColors.rose,
     );
     expect(tester.getSize(buttonFinder), const Size(181, 65));
     expect(
