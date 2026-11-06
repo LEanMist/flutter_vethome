@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/saude_page.dart';
 import 'package:flutter_vethome/widgets/vet/vet_card.dart';
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
 void main() {
   testWidgets('Saúde respeita TextScaler sem reduzir valores nem transbordar', (
@@ -113,4 +115,112 @@ void main() {
           '${violations.join("; ")}',
     );
   });
+  testWidgets('Resumo de saúde anuncia cada indicador com seu valor', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final semantics = tester.ensureSemantics();
+
+    await tester.pumpWidget(
+      MaterialApp(home: SaudePage(pet: VetRepository.pets.first)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.bySemanticsLabel(RegExp(r'^Vacinação: \d+/\d+ em dia$')),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel(RegExp(r'^Peso: .+')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^Vermifugação: .+')), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets(
+    'Histórico anuncia data, situação, tipo, veterinário e descrição',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final semantics = tester.ensureSemantics();
+
+      final pet = VetRepository.pets.first;
+      await tester.pumpWidget(MaterialApp(home: SaudePage(pet: pet)));
+      await tester.pumpAndSettle();
+
+      final first = VetRepository.consultas(pet.id).first;
+      final expected = RegExp(
+        '^Atendimento em .+\\. Concluído\\. ${RegExp.escape(first.tipo)}\\. '
+        'Veterinário: ${RegExp.escape(first.veterinario)}\\. '
+        '${RegExp.escape(first.descricao)}',
+      );
+      await tester.ensureVisible(find.text(first.tipo).first);
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel(expected), findsOneWidget);
+      semantics.dispose();
+    },
+  );
+  testWidgets(
+    'Cartões informativos não capturam Tab e navegação permanece focalizável',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(home: SaudePage(pet: VetRepository.pets.first)),
+      );
+      await tester.pumpAndSettle();
+
+      final infoCards = [
+        find
+            .ancestor(
+              of: find.text('Peso').first,
+              matching: find.byType(VetCard),
+            )
+            .first,
+        find
+            .ancestor(
+              of: find.text('Consulta Geral').first,
+              matching: find.byType(VetCard),
+            )
+            .first,
+      ];
+      for (final card in infoCards) {
+        final ink = find.descendant(of: card, matching: find.byType(InkWell));
+        expect(ink, findsOneWidget);
+        final inkwell = tester.widget<InkWell>(ink);
+        expect(inkwell.onTap, isNull);
+        expect(inkwell.canRequestFocus, isFalse);
+      }
+
+      final navElement = tester.element(find.byType(VetBottomNav));
+      bool focusIsInNavigation() {
+        final focused = FocusManager.instance.primaryFocus?.context;
+        if (focused == null) return false;
+        if (identical(focused, navElement)) return true;
+        var inside = false;
+        focused.visitAncestorElements((ancestor) {
+          if (identical(ancestor, navElement)) {
+            inside = true;
+            return false;
+          }
+          return true;
+        });
+        return inside;
+      }
+
+      var navigationFocused = focusIsInNavigation();
+      for (var step = 0; step < 25 && !navigationFocused; step++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        navigationFocused = focusIsInNavigation();
+      }
+      expect(navigationFocused, isTrue);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

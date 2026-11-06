@@ -65,10 +65,32 @@ void main() {
     expect(title.style?.fontSize, 40);
     expect(title.style?.fontWeight, FontWeight.bold);
     expect(title.style?.color, VetColors.brown);
-    expect(find.textContaining('Número'), findsOneWidget);
-    expect(find.text('11 93244-4392'), findsOneWidget);
-    expect(find.text('Email:'), findsOneWidget);
-    expect(find.text('Gabriela@gmail.com'), findsOneWidget);
+    final numberLabel = tester.widget<Text>(find.textContaining('Número'));
+    expect(numberLabel.style?.fontFamily, 'Comfortaa');
+    expect(numberLabel.style?.fontSize, 20);
+    expect(numberLabel.style?.fontWeight, FontWeight.w500);
+    final phone = tester.widget<SelectableText>(
+      find.ancestor(
+        of: find.text('11 93244-4392'),
+        matching: find.byType(SelectableText),
+      ),
+    );
+    expect(phone.style?.fontFamily, 'Comfortaa');
+    expect(phone.style?.fontSize, 25);
+    expect(phone.style?.fontWeight, FontWeight.w500);
+    final emailLabel = tester.widget<Text>(find.text('Email:'));
+    expect(emailLabel.style?.fontFamily, 'Comfortaa');
+    expect(emailLabel.style?.fontSize, 20);
+    expect(emailLabel.style?.fontWeight, FontWeight.w500);
+    final email = tester.widget<SelectableText>(
+      find.ancestor(
+        of: find.text('Gabriela@gmail.com'),
+        matching: find.byType(SelectableText),
+      ),
+    );
+    expect(email.style?.fontFamily, 'Comfortaa');
+    expect(email.style?.fontSize, 30);
+    expect(email.style?.fontWeight, FontWeight.w500);
     expect(find.byType(SelectableText), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });

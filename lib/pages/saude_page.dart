@@ -161,26 +161,31 @@ class _MiniStatus extends StatelessWidget {
         color: VetColors.brown,
       ),
     );
-    return VetCard(
-      flat: true,
-      color: VetColors.rose.withValues(alpha: .2),
-      padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 6 * s),
-      child: Column(
-        children: [
-          Icon(icon, color: VetColors.brown, size: 18 * s),
-          SizedBox(height: 6 * s),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11 * s, color: VetColors.brown),
-          ),
-          // A composição padrão em 1x conserva o scaleDown original.
-          // Com texto ampliado, permitir quebra de linha evita encolhimento.
-          if (textIsEnlarged)
-            valueText
-          else
-            FittedBox(fit: BoxFit.scaleDown, child: valueText),
-        ],
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label: '$title: $value',
+      child: VetCard(
+        flat: true,
+        color: VetColors.rose.withValues(alpha: .2),
+        padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 6 * s),
+        child: Column(
+          children: [
+            Icon(icon, color: VetColors.brown, size: 18 * s),
+            SizedBox(height: 6 * s),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11 * s, color: VetColors.brown),
+            ),
+            // A composição padrão em 1x conserva o scaleDown original.
+            // Com texto ampliado, permitir quebra de linha evita encolhimento.
+            if (textIsEnlarged)
+              valueText
+            else
+              FittedBox(fit: BoxFit.scaleDown, child: valueText),
+          ],
+        ),
       ),
     );
   }
@@ -203,45 +208,52 @@ class _ConsultaCard extends StatelessWidget {
       ),
     );
     const status = StatusChip('Concluído', VetTones.success, dense: true);
-    return VetCard(
-      flat: true,
-      color: VetColors.rose.withValues(alpha: .16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (textIsEnlarged)
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              spacing: 12,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [dateText, status],
-            )
-          else
-            Row(children: [dateText, const Spacer(), status]),
-          SizedBox(height: 8 * s),
-          Text(
-            c.tipo,
-            style: TextStyle(
-              fontSize: 16 * s,
-              fontWeight: FontWeight.w700,
-              color: VetColors.brown,
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label:
+          'Atendimento em ${fmtData(c.data)}. Concluído. '
+          '${c.tipo}. Veterinário: ${c.veterinario}. ${c.descricao}',
+      child: VetCard(
+        flat: true,
+        color: VetColors.rose.withValues(alpha: .16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (textIsEnlarged)
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 12,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [dateText, status],
+              )
+            else
+              Row(children: [dateText, const Spacer(), status]),
+            SizedBox(height: 8 * s),
+            Text(
+              c.tipo,
+              style: TextStyle(
+                fontSize: 16 * s,
+                fontWeight: FontWeight.w700,
+                color: VetColors.brown,
+              ),
             ),
-          ),
-          SizedBox(height: 4 * s),
-          Text(
-            'Veterinário: ${c.veterinario}',
-            style: TextStyle(fontSize: 12 * s, color: VetColors.brown),
-          ),
-          SizedBox(height: 8 * s),
-          Text(
-            c.descricao,
-            style: TextStyle(
-              fontSize: 12 * s,
-              color: VetColors.brown.withValues(alpha: 0.8),
+            SizedBox(height: 4 * s),
+            Text(
+              'Veterinário: ${c.veterinario}',
+              style: TextStyle(fontSize: 12 * s, color: VetColors.brown),
             ),
-          ),
-        ],
+            SizedBox(height: 8 * s),
+            Text(
+              c.descricao,
+              style: TextStyle(
+                fontSize: 12 * s,
+                color: VetColors.brown.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
