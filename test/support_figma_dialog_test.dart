@@ -69,6 +69,7 @@ void main() {
     expect(find.text('11 93244-4392'), findsOneWidget);
     expect(find.text('Email:'), findsOneWidget);
     expect(find.text('Gabriela@gmail.com'), findsOneWidget);
+    expect(find.byType(SelectableText), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
 

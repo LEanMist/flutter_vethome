@@ -212,7 +212,7 @@ class ConfigScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  const SelectableText(
                     '11 93244-4392',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -234,10 +234,9 @@ class ConfigScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 13),
-                  const Text(
+                  const SelectableText(
                     'Gabriela@gmail.com',
                     textAlign: TextAlign.center,
-                    softWrap: true,
                     style: TextStyle(
                       fontFamily: 'Comfortaa',
                       fontSize: 30,
