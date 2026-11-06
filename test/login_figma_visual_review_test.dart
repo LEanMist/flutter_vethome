@@ -110,7 +110,7 @@ void main() {
     expect(registrationStyle.fontFamily, VH.bodyFontFamily);
     expect(registrationStyle.fontSize, 15);
     expect(registrationStyle.fontWeight, FontWeight.bold);
-    expect(registrationStyle.color, VH.secondary);
+    expect(registrationStyle.color, VetColors.brownOnRose);
 
     // O protótipo usa 8 px nesses rótulos; o app preserva 12 px para leitura.
     expect(
@@ -120,6 +120,10 @@ void main() {
     expect(
       tester.widget<Text>(find.text('Esqueceu sua senha?')).style?.fontSize,
       12,
+    );
+    expect(
+      tester.widget<Text>(find.text('Esqueceu sua senha?')).style?.color,
+      VetColors.brownOnRose,
     );
     expect(tester.takeException(), isNull);
   });

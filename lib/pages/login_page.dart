@@ -137,10 +137,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 child: const Text(
                   'Esqueceu sua senha?',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color.fromRGBO(0, 0, 0, .5),
-                  ),
+                  style: TextStyle(fontSize: 12, color: VetColors.brownOnRose),
                 ),
               );
               final secondaryActions = textScale >= 1.4
@@ -375,7 +372,7 @@ class _LoginPageState extends State<LoginPage> {
                               fontFamily: VH.bodyFontFamily,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: VH.secondary,
+                              color: VetColors.brownOnRose,
                             ),
                           ),
                         ),
