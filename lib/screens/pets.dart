@@ -4,6 +4,7 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import '../data/vet_repository.dart';
 import '../pages/pets_page.dart';
 import '../theme.dart';
+import '../theme/vet_colors.dart';
 import '../widgets/pet_summary.dart';
 import '../widgets/pets/pet_avatar.dart';
 import '../widgets/vet_choice_pill.dart';
@@ -294,7 +295,12 @@ class _ServicosScreenState extends State<ServicosScreen> {
           color: Colors.transparent,
           child: Ink(
             decoration: BoxDecoration(
-              gradient: VH.softGradient,
+              // SERVICES_PAGE: 78.98° gradient on the 264 × 59 px pill.
+              gradient: const LinearGradient(
+                begin: Alignment(-1.005, 0.876),
+                end: Alignment(1.005, -0.876),
+                colors: [VH.secondary, VH.background],
+              ),
               borderRadius: BorderRadius.circular(100),
               boxShadow: VH.controlShadow,
             ),
@@ -325,7 +331,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                             fontFamily: VH.bodyFontFamily,
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
-                            color: Colors.white,
+                            color: VetColors.chatMessageText,
                           ),
                         ),
                       ),

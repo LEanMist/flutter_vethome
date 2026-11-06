@@ -2,7 +2,8 @@
 
 ## Estado consolidado — 06/11/2026
 
-- Estado conferido antes deste lote: branch `kelvin`, HEAD `76e5aba`. O arquivo local não rastreado `CONTINUACAO_OUTRA_CONTA.md` foi preservado fora dos commits.
+- Na auditoria atual de Serviços (`SERVICES_PAGE`, `2791:3113`), as posições dos rótulos correspondem ao frame em 390 × 844 px. A seleção múltipla e o botão Continuar já preservam os serviços até o agendamento. Corrigi duas diferenças localizadas: rótulos brancos de 20 px tinham contraste mínimo de 1,37:1 no gradiente rosa; agora usam `#573820`, com mínimo calculado de 3,34:1, e o gradiente da categoria segue o ângulo de 78,98° do Figma. Validação focada: **5/5**; `flutter analyze --no-pub`: **sem problemas**.
+- Estado conferido antes deste lote: branch `kelvin`, HEAD `06dffc6`. O arquivo local não rastreado `CONTINUACAO_OUTRA_CONTA.md` foi preservado fora dos commits.
 - Avanços visuais publicados recentes: `caf82ce` (Chat e Suporte), `f13f418` (ação de cadastro Pet), `593d9b8` (campos de endereço), `1a79cdb` (calendário de Nova Consulta), `29559cf` (acessibilidade do calendário), `b2e1064` (Login e cadastro de Pet) e `64faaa2` (cadastro do cliente).
 - O teste de toque no cartão de `EscolhaPetScreen`, seleção do ID e navegação para `/servicos` está em `5dd135e`; teste focado: **1/1 passou**.
 - A tela `HOME_PAGE_2` (`2783:302`), ausente do app, está implementada em `HomePage` e registrada em `/home`, com ilustração, controles, composição 390 × 844 e barra de sistema rosa. Agora, login válido e cadastro concluído levam à Home; o chip de perfil abre Perfil e o play abre Pets. Testes focados após integrar o fluxo: Home **5/5**, login **3/3** e navegação do cadastro **1/1**.

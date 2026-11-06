@@ -3,7 +3,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/screens/pets.dart'
     show ServicosScreen, ConvenioScreen;
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
+
+double _contrastRatio(Color first, Color second) {
+  final firstLuminance = first.computeLuminance();
+  final secondLuminance = second.computeLuminance();
+  final lighter = firstLuminance > secondLuminance
+      ? firstLuminance
+      : secondLuminance;
+  final darker = firstLuminance > secondLuminance
+      ? secondLuminance
+      : firstLuminance;
+  return (lighter + 0.05) / (darker + 0.05);
+}
 
 void main() {
   testWidgets('Serviços e Convênio: posições e textos no mobile Figma', (
@@ -52,12 +65,33 @@ void main() {
         reason: 'Desvio do Figma no texto ${expected.$1}',
       );
     }
+    final examsPill = tester.widget<Ink>(
+      find.ancestor(of: find.text('Exames'), matching: find.byType(Ink)).first,
+    );
+    final examsGradient =
+        (examsPill.decoration! as BoxDecoration).gradient! as LinearGradient;
+    final gradientBegin = examsGradient.begin as Alignment;
+    final gradientEnd = examsGradient.end as Alignment;
+    expect(examsGradient.colors, [VetColors.rose, VetColors.pink]);
+    expect(gradientBegin.x, closeTo(-1.005, 0.01));
+    expect(gradientBegin.y, closeTo(0.876, 0.01));
+    expect(gradientEnd.x, closeTo(1.005, 0.01));
+    expect(gradientEnd.y, closeTo(-0.876, 0.01));
     for (final label in ['Exames', 'Vacinas', 'Microchipagem', 'Atestados']) {
       final category = tester.widget<Text>(find.text(label));
       expect(category.style?.fontFamily, 'MontserratAlternates');
       expect(category.style?.fontSize, 20);
       expect(category.style?.fontWeight, FontWeight.bold);
-      expect(category.style?.color, Colors.white);
+      expect(category.style?.color, VetColors.chatMessageText);
+      final endpointContrasts = [
+        _contrastRatio(category.style!.color!, VetColors.rose),
+        _contrastRatio(category.style!.color!, VetColors.pink),
+      ];
+      expect(
+        endpointContrasts.reduce((a, b) => a < b ? a : b),
+        greaterThanOrEqualTo(3),
+        reason: 'Rótulos de categoria devem ter contraste de texto grande.',
+      );
     }
     final continueButton = find.byKey(const ValueKey('services-continue'));
     final continueText = tester.widget<Text>(
