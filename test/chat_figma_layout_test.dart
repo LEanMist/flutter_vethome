@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -93,8 +94,16 @@ void main() {
       const Rect.fromLTWH(12, 157, 366, 536),
     );
     expect(
+      tester.getRect(find.byKey(const ValueKey('chat-list-footer'))),
+      const Rect.fromLTWH(12, 623, 366, 80),
+    );
+    expect(
       tester.getRect(find.byKey(const ValueKey('chat-conversation-entry'))),
       const Rect.fromLTWH(31, 182, 328, 61),
+    );
+    expect(
+      tester.widget<VetBottomNav>(find.byType(VetBottomNav)).showPetsTab,
+      isFalse,
     );
     expect(find.text('Nicolly'), findsNothing);
     expect(find.text('Então você envenou meu cachorro'), findsNothing);
@@ -129,6 +138,19 @@ void main() {
             .hasAction(SemanticsAction.tap),
         isTrue,
       );
+      for (final label in ['Perfil', 'Conversa', 'Agenda', 'Configurações']) {
+        expect(find.bySemanticsLabel(label), findsOneWidget);
+      }
+      expect(find.bySemanticsLabel('Pets'), findsNothing);
+      expect(
+        tester
+                .getSemantics(find.bySemanticsLabel('Conversa'))
+                .getSemanticsData()
+                .flagsCollection
+                .isSelected ==
+            Tristate.isTrue,
+        isTrue,
+      );
     } finally {
       semantics.dispose();
     }
@@ -140,6 +162,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('chat-locality-notice')), findsOneWidget);
+    expect(
+      tester.widget<VetBottomNav>(find.byType(VetBottomNav)).showPetsTab,
+      isFalse,
+    );
 
     await tester.tap(find.byTooltip('Voltar'));
     await tester.pumpAndSettle();
@@ -167,6 +193,10 @@ void main() {
     final conversation = find.byKey(const ValueKey('chat-conversation-card'));
     expect(tester.getTopLeft(conversation), const Offset(12, 147));
     expect(tester.getSize(conversation), const Size(366, 556));
+    expect(
+      tester.widget<VetBottomNav>(find.byType(VetBottomNav)).showPetsTab,
+      isFalse,
+    );
 
     final composer = find.byKey(const ValueKey('chat-composer'));
     expect(tester.getSize(composer), const Size(366, 80));

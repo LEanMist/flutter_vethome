@@ -11,11 +11,16 @@ class VetBottomNav extends StatelessWidget {
     required this.selectedIndex,
     required this.onSelected,
     this.compact = false,
+    this.showPetsTab = true,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onSelected;
   final bool compact;
+  final bool showPetsTab;
+
+  static const _allDestinationIndices = [0, 1, 2, 3, 4];
+  static const _destinationIndicesWithoutPets = [1, 2, 3, 4];
 
   static const List<String> _icons = [
     'assets/imagens/figma/pets.png',
@@ -82,15 +87,20 @@ class VetBottomNav extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              for (int i = 0; i < _icons.length; i++)
+              for (final destination
+                  in (showPetsTab
+                          ? _allDestinationIndices
+                          : _destinationIndicesWithoutPets)
+                      .asMap()
+                      .entries)
                 _VetNavDestination(
-                  label: _labels[i],
-                  icon: _icons[i],
-                  selectedIcon: _selectedIcons[i],
-                  selected: i == selectedIndex,
-                  highlighted: i == 0,
+                  label: _labels[destination.value],
+                  icon: _icons[destination.value],
+                  selectedIcon: _selectedIcons[destination.value],
+                  selected: destination.value == selectedIndex,
+                  highlighted: destination.key == 0,
                   scale: s,
-                  onTap: () => onSelected(i),
+                  onTap: () => onSelected(destination.value),
                 ),
             ],
           ),

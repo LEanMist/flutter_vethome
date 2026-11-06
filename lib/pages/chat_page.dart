@@ -22,6 +22,7 @@ class ChatListScreen extends StatelessWidget {
 
     return VHPage(
       tab: '/chat',
+      showPetsTab: false,
       children: [
         const VHHeader('Whatsapp'),
         Padding(
@@ -70,6 +71,18 @@ class ChatListScreen extends StatelessWidget {
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: -10,
+                        height: 80,
+                        child: ExcludeSemantics(
+                          child: CustomPaint(
+                            key: const ValueKey('chat-list-footer'),
+                            painter: _ChatListFooterPainter(),
                           ),
                         ),
                       ),
@@ -173,6 +186,39 @@ class _ChatConversationTile extends StatelessWidget {
   );
 }
 
+class _ChatListFooterPainter extends CustomPainter {
+  const _ChatListFooterPainter();
+
+  static const _background = Color(0xFFEBBEC0);
+  static const _chevron = Color(0xFF886252);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = _background);
+    final stroke = Paint()
+      ..color = _chevron
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final centerX = size.width / 2;
+    final firstChevron = Path()
+      ..moveTo(centerX - 4, 36)
+      ..lineTo(centerX + 4, 44)
+      ..lineTo(centerX + 12, 36);
+    final secondChevron = Path()
+      ..moveTo(centerX - 12, 36)
+      ..lineTo(centerX - 4, 44)
+      ..lineTo(centerX + 4, 36);
+    canvas
+      ..drawPath(firstChevron, stroke)
+      ..drawPath(secondChevron, stroke);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ChatListFooterPainter oldDelegate) => false;
+}
+
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
 
@@ -200,6 +246,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return VHPage(
       tab: '/chat',
+      showPetsTab: false,
       children: [
         const VHHeader('Whatsapp'),
         Padding(
