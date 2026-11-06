@@ -1,5 +1,7 @@
 // ignore_for_file: file_names
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
@@ -42,14 +44,18 @@ class _SucessoScreenState extends State<SucessoScreen>
     backgroundColor: VH.background,
     body: LayoutBuilder(
       builder: (context, constraints) {
-        final scale = (constraints.maxWidth / 390).clamp(0.72, 1.0).toDouble();
+        final scale = math
+            .min(constraints.maxWidth / 390, constraints.maxHeight / 844)
+            .clamp(.5, 1.0)
+            .toDouble();
         final name = VetRepository.clientName.trim().isEmpty
             ? 'usuário'
             : VetRepository.clientName.trim();
         return Center(
           child: SizedBox(
+            key: const ValueKey('registration-success-figma-frame'),
             width: 390 * scale,
-            height: (844 * scale).clamp(0, constraints.maxHeight),
+            height: 844 * scale,
             child: Stack(
               alignment: Alignment.topCenter,
               children: [
