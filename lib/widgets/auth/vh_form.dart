@@ -117,11 +117,16 @@ class _VHFormState extends State<VHForm> {
 
   Widget _buildField(int i) {
     final field = widget.fields[i];
+    final mobileRegistration =
+        widget.dataPrefix == 'client.' &&
+        MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
     return VHField(
       field.label,
       field.icon,
       password: field.password,
       figmaForm: true,
+      labelHorizontalPadding: mobileRegistration ? 28 : null,
+      labelBottomPadding: mobileRegistration ? 0 : null,
       controller: _controllers[i],
       keyboardType: field.keyboardType,
       choices: field.choices,
@@ -135,6 +140,7 @@ class _VHFormState extends State<VHForm> {
   @override
   Widget build(BuildContext context) {
     final desktop = MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint;
+    final mobileRegistration = widget.dataPrefix == 'client.' && !desktop;
     return Scaffold(
       backgroundColor: VH.background,
       body: SafeArea(
@@ -174,11 +180,11 @@ class _VHFormState extends State<VHForm> {
                       color: VH.foreground,
                     ),
                   ),
-                  const SizedBox(height: 25),
+                  SizedBox(height: mobileRegistration ? 15 : 25),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 12,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: mobileRegistration ? 7 : 10,
+                      vertical: mobileRegistration ? 11 : 12,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: .2),
@@ -199,7 +205,7 @@ class _VHFormState extends State<VHForm> {
                                   : 'vh-form-mobile-grid',
                             ),
                             spacing: 14,
-                            runSpacing: 14,
+                            runSpacing: mobileRegistration ? 16 : 14,
                             children: [
                               for (var i = 0; i < widget.fields.length; i++)
                                 SizedBox(

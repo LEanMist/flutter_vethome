@@ -413,11 +413,13 @@ class _VHFieldState extends State<VHField> {
       if (!widget.compact || widget.labelAbove)
         Padding(
           padding: EdgeInsets.only(
-            left: widget.compact
-                ? (widget.labelHorizontalPadding ?? 12)
-                : widget.figmaForm
-                ? 14
-                : 58,
+            left:
+                widget.labelHorizontalPadding ??
+                (widget.compact
+                    ? 12
+                    : widget.figmaForm
+                    ? 14
+                    : 58),
             bottom: widget.labelBottomPadding ?? 5,
           ),
           child: widget.labelFitSingleLine

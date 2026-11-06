@@ -79,6 +79,39 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('REGISTER_PAGE: geometria no viewport do Figma', (tester) async {
+    await showRegistration(tester, const Size(390, 1035));
+    final panel = find
+        .ancestor(of: find.byType(Form), matching: find.byType(Container))
+        .first;
+    final panelRect = tester.getRect(panel);
+    expect(panelRect.topLeft, const Offset(39, 96));
+    expect(panelRect.width, 312);
+    expect(find.text('Gênero/Sexo'), findsNothing);
+
+    for (final expected in const [
+      ('Nome Completo', 110.0, 130.0),
+      ('Data de Nascimento', 202.0, 223.0),
+    ]) {
+      final field = find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == expected.$1,
+      );
+      final input = find.descendant(
+        of: field,
+        matching: find.byType(TextFormField),
+      );
+      expect(
+        tester.getTopLeft(find.text(expected.$1)),
+        Offset(77, expected.$2),
+      );
+      final inputRect = tester.getRect(input);
+      expect(inputRect.left, 49);
+      expect(inputRect.top, closeTo(expected.$3, 1));
+      expect(inputRect.size, const Size(292, 56));
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   for (final viewport in [const Size(320, 640), const Size(1280, 800)]) {
     testWidgets('Cadastro preserva campos e layout em $viewport', (
       tester,
