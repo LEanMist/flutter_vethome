@@ -47,6 +47,24 @@ flutter:
       fonts:
         - asset: assets/fonts/Inter.ttf
           weight: 400
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/MontserratVariable.ttf
+          weight: 100
+        - asset: assets/fonts/MontserratVariable.ttf
+          weight: 900
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+    - family: Raleway
+      fonts:
+        - asset: assets/fonts/RalewayVariable.ttf
+          weight: 100
+        - asset: assets/fonts/RalewayVariable.ttf
+          weight: 900
     - family: MontserratAlternates
       fonts:
         - asset: assets/fonts/MontserratAlternatesRegular.ttf

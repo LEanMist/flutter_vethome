@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
 import '../theme/vet_colors.dart';
 
 /// Landing desktop do Figma (Telas para Entregar / EXTRA / LANDING PAGE).
@@ -12,7 +11,7 @@ class LandingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: VetColors.pink,
       body: LayoutBuilder(
         builder: (context, constraints) => Center(
           child: FittedBox(
@@ -28,19 +27,16 @@ class LandingPage extends StatelessWidget {
                     Positioned(
                       left: 671,
                       top: 2,
-                      width: 872,
+                      width: 872.364,
                       height: 900,
-                      child: Image.asset(
-                        'assets/imagens/figma/landing-hero.jpg',
-                        fit: BoxFit.cover,
-                        semanticLabel:
-                            'Veterinários passeando com cães em um parque',
-                      ),
-                    ),
-                    Positioned.fill(
                       child: ClipPath(
-                        clipper: _LandingPanelClipper(),
-                        child: const ColoredBox(color: VetColors.pink),
+                        clipper: _LandingHeroClipper(),
+                        child: Image.asset(
+                          'assets/imagens/figma/landing-hero.jpg',
+                          fit: BoxFit.cover,
+                          semanticLabel:
+                              'Veterinários passeando com cães em um parque',
+                        ),
                       ),
                     ),
                     const Positioned(
@@ -51,7 +47,7 @@ class LandingPage extends StatelessWidget {
                       child: Text(
                         'Escolha o melhor\npara o seu Pet',
                         style: TextStyle(
-                          fontFamily: VH.bodyFontFamily,
+                          fontFamily: 'Montserrat',
                           fontSize: 47,
                           height: 1.2,
                           fontWeight: FontWeight.w700,
@@ -65,10 +61,9 @@ class LandingPage extends StatelessWidget {
                       child: Text(
                         'NOSSOS SERVIÇOS',
                         style: TextStyle(
-                          fontFamily: VH.bodyFontFamily,
+                          fontFamily: 'Poppins',
                           fontSize: 24,
-                          height: 1.2,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           color: VetColors.brown,
                         ),
                       ),
@@ -80,9 +75,7 @@ class LandingPage extends StatelessWidget {
                       height: 32,
                       child: Material(
                         color: Colors.transparent,
-                        shape: const CircleBorder(
-                          side: BorderSide(color: VetColors.brown, width: 2),
-                        ),
+                        shape: const CircleBorder(),
                         child: Semantics(
                           button: true,
                           label: 'Explorar serviços',
@@ -90,11 +83,12 @@ class LandingPage extends StatelessWidget {
                             key: const ValueKey('landing-services-link'),
                             customBorder: const CircleBorder(),
                             onTap: () => Navigator.pushNamed(context, '/login'),
-                            child: const Center(
-                              child: Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 19,
-                                color: VetColors.brown,
+                            child: Center(
+                              child: Image.asset(
+                                'assets/imagens/figma/landing-services-arrow.png',
+                                width: 32,
+                                height: 32,
+                                excludeFromSemantics: true,
                               ),
                             ),
                           ),
@@ -109,7 +103,7 @@ class LandingPage extends StatelessWidget {
                           _LandingServiceCard(
                             image:
                                 'assets/imagens/figma/landing-service-home.jpg',
-                            label: 'Atendimento a\ndomicílio',
+                            label: 'Atendimento a\ndomicilio',
                             imageLabel: 'Logotipo VetHome',
                           ),
                           SizedBox(width: 40),
@@ -178,14 +172,34 @@ class _LandingServiceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, .12),
-            offset: Offset(2, 3),
-            blurRadius: 4,
+            color: Color(0x04000000),
+            offset: Offset(1.1855, 1.4226),
+            blurRadius: 3.1481,
           ),
           BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, .1),
-            offset: Offset(8, 15),
-            blurRadius: 24,
+            color: Color(0x07000000),
+            offset: Offset(5.2163, 6.2596),
+            blurRadius: 6.5185,
+          ),
+          BoxShadow(
+            color: Color(0x09000000),
+            offset: Offset(12.8037, 15.3644),
+            blurRadius: 13,
+          ),
+          BoxShadow(
+            color: Color(0x0B000000),
+            offset: Offset(24.659, 29.5907),
+            blurRadius: 25.4815,
+          ),
+          BoxShadow(
+            color: Color(0x0E000000),
+            offset: Offset(41.4934, 49.7921),
+            blurRadius: 46.8519,
+          ),
+          BoxShadow(
+            color: Color(0x12000000),
+            offset: Offset(64.0184, 76.8221),
+            blurRadius: 80,
           ),
         ],
       ),
@@ -205,9 +219,9 @@ class _LandingServiceCard extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontFamily: VH.bodyFontFamily,
+              fontFamily: 'Poppins',
               fontSize: 16,
-              height: 1.2,
+              height: 1.245,
               fontWeight: FontWeight.w500,
               color: VetColors.brown,
             ),
@@ -251,9 +265,9 @@ class _LandingNavigation extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               textStyle: const TextStyle(
-                fontFamily: VH.bodyFontFamily,
+                fontFamily: 'Raleway',
                 fontSize: 20,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w700,
               ),
             ),
             child: const Text('Explore'),
@@ -281,9 +295,9 @@ class _LandingNavLabel extends StatelessWidget {
       label,
       textAlign: TextAlign.center,
       style: const TextStyle(
-        fontFamily: VH.bodyFontFamily,
+        fontFamily: 'Raleway',
         fontSize: 20,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w700,
         color: VetColors.brown,
       ),
     );
@@ -296,9 +310,9 @@ class _LandingNavLabel extends StatelessWidget {
           foregroundColor: VetColors.brown,
           padding: EdgeInsets.zero,
           textStyle: const TextStyle(
-            fontFamily: VH.bodyFontFamily,
+            fontFamily: 'Raleway',
             fontSize: 20,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w700,
           ),
         ),
         child: text,
@@ -307,18 +321,23 @@ class _LandingNavLabel extends StatelessWidget {
   }
 }
 
-class _LandingPanelClipper extends CustomClipper<Path> {
+class _LandingHeroClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     return Path()
-      ..moveTo(0, 0)
-      ..lineTo(671, 0)
-      ..cubicTo(694, 67, 740, 128, 758, 193)
-      ..cubicTo(775, 253, 768, 302, 749, 366)
-      ..cubicTo(732, 427, 715, 476, 715, 530)
-      ..cubicTo(715, 608, 752, 687, 775, 754)
-      ..cubicTo(788, 794, 788, 851, 788, 900)
-      ..lineTo(0, 900)
+      ..moveTo(26.6241, 76.317)
+      ..cubicTo(10.3098, 43.5705, 2.07706, 12.7542, 0, 1.43937)
+      ..lineTo(0, 0.441001)
+      ..cubicTo(277.759, 0.108211, 837.13, -0.357694, 852.537, 0.441001)
+      ..cubicTo(867.945, 1.2397, 872.175, 12.4214, 872.364, 17.9124)
+      ..lineTo(872.364, 879.005)
+      ..cubicTo(871.797, 893.98, 858.202, 900.47, 843.474, 898.972)
+      ..cubicTo(599.892, 899.971, 113.181, 900.869, 114.993, 898.473)
+      ..cubicTo(116.806, 896.077, 117.637, 863.53, 117.826, 847.557)
+      ..cubicTo(111.595, 788.154, 111.595, 790.65, 73.6411, 690.313)
+      ..cubicTo(35.6876, 589.977, 36.8206, 480.157, 58.3464, 420.754)
+      ..cubicTo(75.5671, 373.232, 88.5582, 315.426, 92.9011, 292.464)
+      ..cubicTo(101.965, 197.619, 47.017, 117.25, 26.6241, 76.317)
       ..close();
   }
 

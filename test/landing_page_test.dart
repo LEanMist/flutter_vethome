@@ -9,11 +9,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    final montserrat = FontLoader('MontserratAlternates')
-      ..addFont(rootBundle.load('assets/fonts/MontserratAlternatesRegular.ttf'))
-      ..addFont(rootBundle.load('assets/fonts/MontserratAlternatesMedium.ttf'))
-      ..addFont(rootBundle.load('assets/fonts/MontserratAlternatesBold.ttf'));
-    await montserrat.load();
+    final montserrat = FontLoader('Montserrat')
+      ..addFont(rootBundle.load('assets/fonts/MontserratVariable.ttf'));
+    final poppins = FontLoader('Poppins')
+      ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'));
+    final raleway = FontLoader('Raleway')
+      ..addFont(rootBundle.load('assets/fonts/RalewayVariable.ttf'));
+    await Future.wait([montserrat.load(), poppins.load(), raleway.load()]);
   });
 
   testWidgets('landing desktop mantém o frame e conteúdo do Figma', (
@@ -33,10 +36,38 @@ void main() {
     );
     expect(find.text('Escolha o melhor\npara o seu Pet'), findsOneWidget);
     expect(find.text('NOSSOS SERVIÇOS'), findsOneWidget);
-    expect(find.text('Atendimento a\ndomicílio'), findsOneWidget);
+    expect(find.text('Atendimento a\ndomicilio'), findsOneWidget);
     expect(find.text('Exames'), findsOneWidget);
     expect(find.text('Vacinas'), findsOneWidget);
-    expect(find.byType(Image), findsNWidgets(4));
+    expect(find.byType(Image), findsNWidgets(5));
+    final title = tester.widget<Text>(
+      find.text('Escolha o melhor\npara o seu Pet'),
+    );
+    expect(title.style?.fontFamily, 'Montserrat');
+    expect(title.style?.fontWeight, FontWeight.w700);
+
+    final servicesHeading = tester.widget<Text>(find.text('NOSSOS SERVIÇOS'));
+    expect(servicesHeading.style?.fontFamily, 'Poppins');
+    expect(servicesHeading.style?.fontWeight, FontWeight.w600);
+
+    final serviceLabel = tester.widget<Text>(find.text('Exames'));
+    expect(serviceLabel.style?.fontFamily, 'Poppins');
+    expect(serviceLabel.style?.fontWeight, FontWeight.w500);
+
+    final navigationLabel = tester.widget<Text>(find.text('Home'));
+    expect(navigationLabel.style?.fontFamily, 'Raleway');
+    expect(navigationLabel.style?.fontWeight, FontWeight.w700);
+
+    expect(
+      find.byWidgetPredicate((widget) {
+        if (widget is! Container || widget.decoration is! BoxDecoration) {
+          return false;
+        }
+        return (widget.decoration! as BoxDecoration).boxShadow?.length == 6;
+      }),
+      findsNWidgets(3),
+    );
+    expect(find.byType(ClipPath), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
