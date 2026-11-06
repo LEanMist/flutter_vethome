@@ -46,6 +46,7 @@ class EnderecoScreen extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: VH.background,
     body: SafeArea(
+      top: MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint,
       child: AddressForm(
         cepService: cepService,
         title: 'Endereço',

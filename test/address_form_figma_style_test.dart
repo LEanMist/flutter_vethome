@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/models/saved_address.dart';
+import 'package:flutter_vethome/pages/endereco_page.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/widgets/address_form.dart';
 
@@ -168,6 +169,34 @@ void main() {
           .length,
       4,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('REGISTER_ADRESS_PAGE preserva posições com área segura real', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    await tester.pumpWidget(const MaterialApp(home: EnderecoScreen()));
+    await tester.pumpAndSettle();
+
+    final title = find.text('Endereço');
+    expect(tester.getTopLeft(title).dy, 31);
+    expect(
+      tester.getRect(find.byKey(const ValueKey('address-registration-panel'))),
+      const Rect.fromLTWH(50, 88, 290, 565),
+    );
+    expect(
+      tester.getRect(find.widgetWithText(ElevatedButton, 'Continuar')),
+      const Rect.fromLTWH(104.5, 683, 181, 65),
+    );
+    expect(tester.getTopLeft(find.text('Pular')).dy, closeTo(764, 1));
     expect(tester.takeException(), isNull);
   });
 }

@@ -222,7 +222,7 @@ class _AddressFormState extends State<AddressForm> {
               padding: EdgeInsets.fromLTRB(
                 16,
                 registration
-                    ? 24
+                    ? 31
                     : compactHeight
                     ? 12
                     : 16,
@@ -239,6 +239,7 @@ class _AddressFormState extends State<AddressForm> {
                     style: TextStyle(
                       fontFamily: 'Comfortaa',
                       fontSize: registration ? 30 : 24,
+                      height: registration ? 1.2 : null,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -439,11 +440,13 @@ class _AddressFormState extends State<AddressForm> {
                           ),
                         )
                       : SizedBox(height: 48, child: saveButton),
-                  if (widget.onSkip != null)
+                  if (widget.onSkip != null) ...[
+                    const SizedBox(height: 2),
                     TextButton(
                       onPressed: _saving ? null : _skip,
                       child: Text(_saving ? 'Salvando…' : 'Pular'),
                     ),
+                  ],
                 ],
               ),
             );
