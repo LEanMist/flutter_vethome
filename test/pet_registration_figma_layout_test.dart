@@ -77,14 +77,15 @@ void main() {
     }
 
     final continueButton = find.widgetWithText(ElevatedButton, 'Continuar');
+    final continueStyle = tester.widget<ElevatedButton>(continueButton).style!;
     expect(tester.getTopLeft(continueButton).dy, closeTo(663, 1));
     expect(
-      tester
-          .widget<ElevatedButton>(continueButton)
-          .style
-          ?.backgroundColor
-          ?.resolve(<WidgetState>{}),
+      continueStyle.backgroundColor?.resolve(<WidgetState>{}),
       VetColors.rose,
+    );
+    expect(
+      continueStyle.foregroundColor?.resolve(<WidgetState>{}),
+      VetColors.calendarTextOnRose,
     );
     final skip = find.text('Pular');
     expect(skip, findsOneWidget);

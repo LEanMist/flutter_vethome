@@ -239,12 +239,16 @@ class _LoginPageState extends State<LoginPage> {
                             onPressed: entrar,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: VetColors.rose,
-                              foregroundColor: Colors.white,
+                              foregroundColor: VetColors.calendarTextOnRose,
                               elevation: 2,
                               shadowColor: Colors.black.withValues(alpha: .25),
                               shape: const StadiumBorder(),
                             ),
-                            icon: const Icon(Icons.login, size: 21),
+                            icon: const Icon(
+                              Icons.login,
+                              size: 21,
+                              color: Colors.white,
+                            ),
                             iconAlignment: IconAlignment.end,
                             label: const Text(
                               'Entrar',

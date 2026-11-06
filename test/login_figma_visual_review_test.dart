@@ -64,6 +64,16 @@ void main() {
     expect(loginText.fontFamily, VH.bodyFontFamily);
     expect(loginText.fontSize, 14);
     expect(loginText.fontWeight, FontWeight.bold);
+    expect(loginText.color, VetColors.calendarTextOnRose);
+    expect(
+      tester
+          .widget<ElevatedButton>(loginButton)
+          .style
+          ?.foregroundColor
+          ?.resolve(const <WidgetState>{}),
+      VetColors.calendarTextOnRose,
+    );
+    expect(tester.widget<Icon>(find.byIcon(Icons.login)).color, Colors.white);
     expect(
       tester
           .widget<ElevatedButton>(loginButton)
