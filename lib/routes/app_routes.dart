@@ -75,7 +75,8 @@ class AppRoutes {
     '/servicos': (_) => const ServicosScreen(),
     '/convenio': (_) => const ConvenioScreen(),
     '/perfil': (_) => const PerfilPage(),
-    '/chat': (_) => const ChatScreen(),
+    '/chat': (_) => const ChatListScreen(),
+    '/chat/conversa': (_) => const ChatScreen(),
     '/sobre': (_) => const SobreScreen(),
     '/agenda': (context) => AgendaScreen(
       initialDate: ModalRoute.of(context)?.settings.arguments is DateTime

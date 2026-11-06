@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/chat_page.dart';
+import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
@@ -30,6 +31,122 @@ double _relativeLuminance(Color color) {
 }
 
 void main() {
+  testWidgets('a rota /chat abre a lista de conversas do Figma', (
+    tester,
+  ) async {
+    final chatRoute = AppRoutes.routes['/chat']!;
+    await tester.pumpWidget(MaterialApp(home: Builder(builder: chatRoute)));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ChatListScreen), findsOneWidget);
+    expect(find.byKey(const ValueKey('chat-list-card')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('MESSAGE_PAGE limita o cartão em telas largas', (tester) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: ChatListScreen()));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('chat-list-card'))).width,
+      600,
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('chat-conversation-entry')))
+          .width,
+      328,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('MESSAGE_PAGE lista a conversa local e abre seu detalhe', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = FakeViewPadding.zero;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const ChatListScreen(),
+        routes: {'/chat/conversa': (_) => const ChatScreen()},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(AppRoutes.routes.containsKey('/chat/conversa'), isTrue);
+    expect(
+      tester.getRect(find.byType(VHHeader)),
+      const Rect.fromLTWH(0, 0, 390, 125),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('chat-list-card'))),
+      const Rect.fromLTWH(12, 157, 366, 536),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('chat-conversation-entry'))),
+      const Rect.fromLTWH(31, 182, 328, 61),
+    );
+    expect(find.text('Nicolly'), findsNothing);
+    expect(find.text('Então você envenou meu cachorro'), findsNothing);
+    expect(find.text('15'), findsNothing);
+
+    final rowBackground = Color.alphaBlend(
+      VetColors.roseOverlay50,
+      Color.alphaBlend(VetColors.roseOverlay25, VetColors.pink),
+    );
+    for (final value in [
+      find.text('Gabriela Falcão'),
+      find.text(VetRepository.chatMessages.last.text),
+    ]) {
+      final style = tester.widget<Text>(value).style!;
+      expect(style.color, VetColors.brownOnRose);
+      expect(
+        _contrastRatio(style.color!, rowBackground),
+        greaterThanOrEqualTo(4.5),
+      );
+    }
+
+    final semantics = tester.ensureSemantics();
+    try {
+      final accessibleConversation = find.bySemanticsLabel(
+        RegExp(r'Conversa com Gabriela Falcão'),
+      );
+      expect(accessibleConversation, findsOneWidget);
+      expect(
+        tester
+            .getSemantics(accessibleConversation)
+            .getSemanticsData()
+            .hasAction(SemanticsAction.tap),
+        isTrue,
+      );
+    } finally {
+      semantics.dispose();
+    }
+
+    await tester.tap(find.byKey(const ValueKey('chat-conversation-entry')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('chat-conversation-card')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('chat-locality-notice')), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Voltar'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('chat-list-card')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Chat móvel segue as dimensões principais do Figma', (
     tester,
   ) async {

@@ -8,6 +8,170 @@ import '../widgets.dart';
 const String _chatLocalityNotice =
     'Conversa de demonstração local. As mensagens digitadas aparecem somente '
     'nesta sessão e não são enviadas à veterinária.';
+const String _chatVeterinarianName = 'Gabriela Falcão';
+
+class ChatListScreen extends StatelessWidget {
+  const ChatListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final messages = VetRepository.chatMessages;
+    final preview = messages.isEmpty
+        ? 'Nenhuma mensagem nesta conversa.'
+        : messages.last.text;
+
+    return VHPage(
+      tab: '/chat',
+      children: [
+        const VHHeader('Whatsapp'),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 32, 12, 31),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: SizedBox(
+                width: double.infinity,
+                height: 536,
+                child: Container(
+                  key: const ValueKey('chat-list-card'),
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: VetColors.roseOverlay25,
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 7,
+                        top: 8,
+                        right: 7,
+                        bottom: 58,
+                        child: Container(
+                          key: const ValueKey('chat-list-viewport'),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white, width: 3),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(9, 14, 9, 12),
+                            children: [
+                              Align(
+                                alignment: Alignment.topCenter,
+                                child: SizedBox(
+                                  width: 328,
+                                  child: _ChatConversationTile(
+                                    name: _chatVeterinarianName,
+                                    preview: preview,
+                                    onTap: () => Navigator.pushNamed(
+                                      context,
+                                      '/chat/conversa',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ChatConversationTile extends StatelessWidget {
+  const _ChatConversationTile({
+    required this.name,
+    required this.preview,
+    required this.onTap,
+  });
+
+  final String name;
+  final String preview;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: 'Conversa com $name. Última mensagem: $preview',
+    hint: 'Abre a conversa local.',
+    onTap: onTap,
+    child: ExcludeSemantics(
+      child: Material(
+        color: Colors.transparent,
+        child: Ink(
+          decoration: insetBox(color: VetColors.roseOverlay50, radius: 100),
+          child: InkWell(
+            key: const ValueKey('chat-conversation-entry'),
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(100),
+            child: SizedBox(
+              height: 61,
+              child: Row(
+                children: [
+                  Container(
+                    width: 61,
+                    height: 61,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: VetColors.pink,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person,
+                      size: 32,
+                      color: VetColors.brownOnRose,
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: VH.bodyFontFamily,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                              color: VetColors.brownOnRose,
+                            ),
+                          ),
+                          Text(
+                            preview,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: VH.headingFontFamily,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: VetColors.brownOnRose,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -84,7 +248,7 @@ class _ChatScreenState extends State<ChatScreen> {
               height: 120,
             ),
             const Text(
-              'Gabriela Falcão',
+              _chatVeterinarianName,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: VH.headingFontFamily,
@@ -147,7 +311,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   child: Text(
                                     message.fromClient
                                         ? VetRepository.clientName
-                                        : 'Gabriela Falcão',
+                                        : _chatVeterinarianName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: message.fromClient
