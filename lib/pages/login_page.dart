@@ -266,7 +266,7 @@ class _LoginPageState extends State<LoginPage> {
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: VetColors.brownSecondary,
+                                    color: VetColors.brownOnRose,
                                   ),
                                 )
                               : Row(
@@ -287,7 +287,7 @@ class _LoginPageState extends State<LoginPage> {
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
-                                          color: VetColors.brownSecondary,
+                                          color: VetColors.brownOnRose,
                                         ),
                                       ),
                                     ),
@@ -360,7 +360,7 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: VetColors.brownSecondary,
+                            color: VetColors.brownOnRose,
                           ),
                         ),
                         TextButton(

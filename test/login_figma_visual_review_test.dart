@@ -92,7 +92,7 @@ void main() {
     expect(separatorStyle.fontFamily, VH.bodyFontFamily);
     expect(separatorStyle.fontSize, 10);
     expect(separatorStyle.fontWeight, FontWeight.bold);
-    expect(separatorStyle.color, VetColors.brownSecondary);
+    expect(separatorStyle.color, VetColors.brownOnRose);
 
     for (final (name, left) in const [
       ('Google', 73.0),
@@ -111,6 +111,13 @@ void main() {
     expect(registrationStyle.fontSize, 15);
     expect(registrationStyle.fontWeight, FontWeight.bold);
     expect(registrationStyle.color, VetColors.brownOnRose);
+    expect(
+      tester
+          .widget<Text>(find.text('Ainda não possui uma conta?'))
+          .style
+          ?.color,
+      VetColors.brownOnRose,
+    );
 
     // O protótipo usa 8 px nesses rótulos; o app preserva 12 px para leitura.
     expect(
