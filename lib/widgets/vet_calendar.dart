@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 
 import '../theme.dart';
 
@@ -201,6 +202,7 @@ class VetCalendar extends StatelessWidget {
       explicitChildNodes: true,
       header: true,
       label: 'Calendário ${monthNames[month.month - 1]} ${month.year}',
+      hint: 'Use Page Up para o mês anterior e Page Down para o próximo mês.',
       customSemanticsActions: {
         CustomSemanticsAction(label: 'Mês anterior'): onPreviousMonth,
         CustomSemanticsAction(label: 'Próximo mês'): onNextMonth,
@@ -399,6 +401,8 @@ class VetCalendar extends StatelessWidget {
       todayForSemantics: _sameDay(date, today),
       scale: scale,
       fontSizeFactor: fontSizeFactor,
+      onPreviousMonth: onPreviousMonth,
+      onNextMonth: onNextMonth,
       onTap: () => onSelected(date),
     );
   }
@@ -416,6 +420,8 @@ class _CalendarDay extends StatefulWidget {
     this.scale = 1,
     this.fontSizeFactor = 1,
     this.todayForSemantics = false,
+    this.onPreviousMonth,
+    this.onNextMonth,
   });
 
   final DateTime date;
@@ -423,6 +429,7 @@ class _CalendarDay extends StatefulWidget {
   final double scale;
   final double fontSizeFactor;
   final bool todayForSemantics;
+  final VoidCallback? onPreviousMonth, onNextMonth;
   final VoidCallback onTap;
 
   @override
@@ -455,6 +462,30 @@ class _CalendarDayState extends State<_CalendarDay> {
     return null;
   }
 
+  Widget _monthKeyboardShortcuts(Widget child) {
+    if (widget.onPreviousMonth == null && widget.onNextMonth == null) {
+      return child;
+    }
+    return Focus(
+      canRequestFocus: false,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.pageUp &&
+            widget.onPreviousMonth != null) {
+          widget.onPreviousMonth!();
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.pageDown &&
+            widget.onNextMonth != null) {
+          widget.onNextMonth!();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateLabel = [
@@ -480,71 +511,73 @@ class _CalendarDayState extends State<_CalendarDay> {
       child: Center(
         child: SizedBox.square(
           dimension: 35 * widget.scale,
-          child: Material(
-            key: ValueKey(
-              'calendar-${widget.date.year}-${widget.date.month}-${widget.date.day}-surface',
-            ),
-            color: widget.selected
-                ? VH.primary
-                : widget.today
-                ? VH.secondary.withValues(alpha: .25)
-                : Colors.transparent,
-            shape: CircleBorder(
-              side: widget.today && !widget.selected
-                  ? BorderSide(
-                      color: VH.foreground.withValues(alpha: .5),
-                      width: widget.scale,
-                    )
-                  : BorderSide.none,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
+          child: _monthKeyboardShortcuts(
+            Material(
               key: ValueKey(
-                'calendar-${widget.date.year}-${widget.date.month}-${widget.date.day}',
+                'calendar-${widget.date.year}-${widget.date.month}-${widget.date.day}-surface',
               ),
-              statesController: _statesController,
-              customBorder: const CircleBorder(),
-              overlayColor: WidgetStateProperty.resolveWith(_overlayColor),
-              canRequestFocus: widget.enabled,
-              onTap: widget.enabled ? widget.onTap : null,
-              child: CustomPaint(
-                foregroundPainter: widget.selected
-                    ? _InsetCircleShadowPainter(scale: widget.scale)
-                    : null,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Text(
-                      '${widget.date.day}',
-                      maxLines: 1,
-                      softWrap: false,
-                      style: TextStyle(
-                        fontSize: 15 * widget.scale * widget.fontSizeFactor,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: VH.headingFontFamily,
-                        height: widget.fontSizeFactor < 1 ? 1 : null,
-                        color: widget.selected
-                            ? VH.onSecondary
-                            : VH.foreground.withValues(
-                                alpha: widget.enabled
-                                    ? widget.inMonth
-                                          ? 1
-                                          : .30
-                                    : .2,
-                              ),
-                      ),
-                    ),
-                    if (widget.indicator)
-                      Positioned(
-                        bottom: 2 * widget.scale,
-                        child: CircleAvatar(
-                          radius: 2 * widget.scale,
-                          backgroundColor: widget.selected
+              color: widget.selected
+                  ? VH.primary
+                  : widget.today
+                  ? VH.secondary.withValues(alpha: .25)
+                  : Colors.transparent,
+              shape: CircleBorder(
+                side: widget.today && !widget.selected
+                    ? BorderSide(
+                        color: VH.foreground.withValues(alpha: .5),
+                        width: widget.scale,
+                      )
+                    : BorderSide.none,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                key: ValueKey(
+                  'calendar-${widget.date.year}-${widget.date.month}-${widget.date.day}',
+                ),
+                statesController: _statesController,
+                customBorder: const CircleBorder(),
+                overlayColor: WidgetStateProperty.resolveWith(_overlayColor),
+                canRequestFocus: widget.enabled,
+                onTap: widget.enabled ? widget.onTap : null,
+                child: CustomPaint(
+                  foregroundPainter: widget.selected
+                      ? _InsetCircleShadowPainter(scale: widget.scale)
+                      : null,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Text(
+                        '${widget.date.day}',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: TextStyle(
+                          fontSize: 15 * widget.scale * widget.fontSizeFactor,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: VH.headingFontFamily,
+                          height: widget.fontSizeFactor < 1 ? 1 : null,
+                          color: widget.selected
                               ? VH.onSecondary
-                              : VH.foreground,
+                              : VH.foreground.withValues(
+                                  alpha: widget.enabled
+                                      ? widget.inMonth
+                                            ? 1
+                                            : .30
+                                      : .2,
+                                ),
                         ),
                       ),
-                  ],
+                      if (widget.indicator)
+                        Positioned(
+                          bottom: 2 * widget.scale,
+                          child: CircleAvatar(
+                            radius: 2 * widget.scale,
+                            backgroundColor: widget.selected
+                                ? VH.onSecondary
+                                : VH.foreground,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),

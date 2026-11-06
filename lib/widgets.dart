@@ -209,6 +209,12 @@ class _VHFieldState extends State<VHField> {
             'Peso' => 'frame-7-2.png',
             'Data de Nascimento' => 'frame-7-3.png',
             'Raça' => 'frame-7-4.png',
+            'CEP' ||
+            'Logradouro' ||
+            'Endereço' ||
+            'Complemento' ||
+            'Nome' => 'address-prefix-home.png',
+            'Numero' => 'address-prefix-number.png',
             _ => null,
           }
         : null;
@@ -219,6 +225,31 @@ class _VHFieldState extends State<VHField> {
         height: 56,
         fit: BoxFit.contain,
         excludeFromSemantics: true,
+      );
+    }
+    if (widget.figmaForm && widget.label == 'Cidade') {
+      return SizedBox(
+        width: 58,
+        height: 56,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset(
+              'assets/imagens/figma/address-prefix-city-circle.png',
+              width: 58,
+              height: 56,
+              fit: BoxFit.contain,
+              excludeFromSemantics: true,
+            ),
+            Image.asset(
+              'assets/imagens/figma/address-prefix-city.png',
+              width: 29,
+              height: 25,
+              fit: BoxFit.contain,
+              excludeFromSemantics: true,
+            ),
+          ],
+        ),
       );
     }
     return Container(

@@ -188,21 +188,55 @@ void main() {
     expect(decoration.border!.top.width, 3);
     expect(find.text('Complemento'), findsOneWidget);
     expect(find.text('Complemento (opcional)'), findsNothing);
-    final iconCircles = find.byWidgetPredicate(
-      (widget) =>
-          widget is Container &&
-          widget.decoration is BoxDecoration &&
-          (widget.decoration! as BoxDecoration).shape == BoxShape.circle,
+    final addressAssets = tester
+        .widgetList<Image>(find.byType(Image))
+        .map((image) => image.image)
+        .whereType<AssetImage>()
+        .map((image) => image.assetName)
+        .where((assetName) => assetName.contains('address-prefix-'))
+        .toList();
+    expect(
+      addressAssets,
+      containsAll([
+        'assets/imagens/figma/address-prefix-home.png',
+        'assets/imagens/figma/address-prefix-number.png',
+        'assets/imagens/figma/address-prefix-city-circle.png',
+        'assets/imagens/figma/address-prefix-city.png',
+      ]),
     );
-    expect(iconCircles, findsNWidgets(6));
-    for (var index = 0; index < 6; index++) {
-      final circle = iconCircles.at(index);
-      final icon = tester.widget<Container>(circle);
-      final iconDecoration = icon.decoration! as BoxDecoration;
-      expect(tester.getSize(circle), const Size(58, 56));
-      expect(iconDecoration.shape, BoxShape.circle);
-      expect(iconDecoration.border!.top.width, 4);
+    expect(
+      addressAssets
+          .where((assetName) => assetName.endsWith('address-prefix-home.png'))
+          .length,
+      4,
+    );
+    expect(
+      addressAssets
+          .where((assetName) => assetName.endsWith('address-prefix-number.png'))
+          .length,
+      1,
+    );
+    for (final asset in [
+      'assets/imagens/figma/address-prefix-home.png',
+      'assets/imagens/figma/address-prefix-number.png',
+      'assets/imagens/figma/address-prefix-city-circle.png',
+    ]) {
+      final imageFinder = find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is AssetImage &&
+            (widget.image as AssetImage).assetName == asset,
+      );
+      expect(tester.getSize(imageFinder.first), const Size(58, 56));
     }
+    final cityIcon = find.byWidgetPredicate(
+      (widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName ==
+              'assets/imagens/figma/address-prefix-city.png',
+    );
+    expect(tester.getSize(cityIcon), const Size(29, 25));
     final buttonFinder = find.widgetWithText(ElevatedButton, 'Continuar');
     final button = tester.widget<ElevatedButton>(buttonFinder);
     expect(

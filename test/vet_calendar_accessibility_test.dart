@@ -49,6 +49,8 @@ void main() {
     DateTime? selected,
     DateTime? firstDate,
     DateTime? lastDate,
+    VoidCallback? onPreviousMonth,
+    VoidCallback? onNextMonth,
   }) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -74,8 +76,8 @@ void main() {
                   firstDate: firstDate,
                   lastDate: lastDate,
                   onSelected: (_) {},
-                  onPreviousMonth: () {},
-                  onNextMonth: () {},
+                  onPreviousMonth: onPreviousMonth ?? () {},
+                  onNextMonth: onNextMonth ?? () {},
                 ),
               ),
             ),
@@ -104,6 +106,10 @@ void main() {
         previousMonth,
       );
       final navigationNode = tester.getSemantics(monthNavigation);
+      expect(
+        navigationNode.getSemanticsData().hint,
+        'Use Page Up para o mês anterior e Page Down para o próximo mês.',
+      );
       final exposedActions = navigationNode
           .getSemanticsData()
           .customSemanticsActionIds!
@@ -160,6 +166,37 @@ void main() {
     } finally {
       semantics.dispose();
     }
+  });
+
+  testWidgets('Page Up e Page Down trocam o mês pelo teclado', (tester) async {
+    var previousMonthCalls = 0;
+    var nextMonthCalls = 0;
+    await pumpCalendar(
+      tester,
+      1,
+      onPreviousMonth: () => previousMonthCalls++,
+      onNextMonth: () => nextMonthCalls++,
+    );
+
+    var focusedDay = false;
+    for (var index = 0; index < 42 && !focusedDay; index++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      focusedDay = tester
+          .widgetList<InkWell>(find.byType(InkWell))
+          .any(
+            (day) =>
+                day.statesController?.value.contains(WidgetState.focused) ??
+                false,
+          );
+    }
+    expect(focusedDay, isTrue, reason: 'Tab precisa alcançar uma data');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+    expect(nextMonthCalls, 1);
+    await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+    expect(previousMonthCalls, 1);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('datas expõem nomes completos e respeitam limites inclusivos', (
