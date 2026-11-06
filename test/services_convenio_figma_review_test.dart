@@ -23,6 +23,11 @@ void main() {
     // SERVICES_PAGE 2791:3113 não apresenta o resumo do pet no mobile.
     expect(find.byType(PetSummary), findsNothing);
     expect(find.text('Serviços'), findsOneWidget);
+    final title = tester.widget<Text>(find.text('Serviços'));
+    expect(title.style?.fontFamily, 'Comfortaa');
+    expect(title.style?.fontSize, 30);
+    expect(title.style?.fontWeight, FontWeight.bold);
+    expect(title.style?.color, Colors.white);
     for (final label in [
       'Serviços',
       'Exames',
@@ -47,9 +52,29 @@ void main() {
         reason: 'Desvio do Figma no texto ${expected.$1}',
       );
     }
-    final continueRect = tester.getRect(
-      find.byKey(const ValueKey('services-continue')),
+    for (final label in ['Exames', 'Vacinas', 'Microchipagem', 'Atestados']) {
+      final category = tester.widget<Text>(find.text(label));
+      expect(category.style?.fontFamily, 'MontserratAlternates');
+      expect(category.style?.fontSize, 20);
+      expect(category.style?.fontWeight, FontWeight.bold);
+      expect(category.style?.color, Colors.white);
+    }
+    final continueButton = find.byKey(const ValueKey('services-continue'));
+    final continueText = tester.widget<Text>(
+      find.descendant(of: continueButton, matching: find.text('Continuar')),
     );
+    expect(continueText.style?.fontFamily, 'Comfortaa');
+    expect(continueText.style?.fontSize, 18);
+    expect(continueText.style?.fontWeight, FontWeight.bold);
+    expect(
+      tester
+          .widget<ElevatedButton>(continueButton)
+          .style
+          ?.foregroundColor
+          ?.resolve(<WidgetState>{}),
+      Colors.white,
+    );
+    final continueRect = tester.getRect(continueButton);
     expect(continueRect.topLeft.dx, closeTo(116, 1));
     expect(continueRect.topLeft.dy, closeTo(718, 1));
     expect(continueRect.size, const Size(157, 57));
