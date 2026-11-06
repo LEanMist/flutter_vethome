@@ -50,6 +50,14 @@ class EnderecoScreen extends StatelessWidget {
       child: AddressForm(
         cepService: cepService,
         title: 'Endereço',
+        skipButtonStyle: TextButton.styleFrom(
+          foregroundColor: VH.secondary,
+          textStyle: const TextStyle(
+            fontFamily: VH.bodyFontFamily,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         onSaved: (address) async {
           final data = withoutRegistrationPasswords({
             ...initialData,

@@ -276,22 +276,36 @@ class _AddressesPageState extends State<AddressesPage> {
           ),
         ),
         const Spacer(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _addressAction(
-              label: 'Editar',
-              background: const Color.fromRGBO(255, 255, 255, .5),
-              foreground: VetColors.brown,
-              onPressed: () => _edit(address),
-            ),
-            _addressAction(
-              label: 'Deletar',
-              background: const Color(0xFF940000),
-              foreground: Colors.white,
-              onPressed: () => _delete(address),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final matchesMobileFigmaFrame =
+                MediaQuery.sizeOf(context).width < 900 &&
+                constraints.maxWidth >= 320;
+            return Padding(
+              padding: matchesMobileFigmaFrame
+                  ? const EdgeInsets.only(left: 36, right: 37)
+                  : EdgeInsets.zero,
+              child: Row(
+                mainAxisAlignment: matchesMobileFigmaFrame
+                    ? MainAxisAlignment.spaceBetween
+                    : MainAxisAlignment.spaceAround,
+                children: [
+                  _addressAction(
+                    label: 'Editar',
+                    background: const Color.fromRGBO(255, 255, 255, .5),
+                    foreground: VetColors.brown,
+                    onPressed: () => _edit(address),
+                  ),
+                  _addressAction(
+                    label: 'Deletar',
+                    background: const Color(0xFF940000),
+                    foreground: Colors.white,
+                    onPressed: () => _delete(address),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
         const SizedBox(height: 11),
       ],

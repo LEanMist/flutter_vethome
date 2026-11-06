@@ -81,11 +81,56 @@ void main() {
     expect(decoration.color, VetColors.roseOverlay50);
     expect(decoration.borderRadius, BorderRadius.circular(25));
 
+    for (final (label, rect, background, foreground) in [
+      (
+        'Editar',
+        const Rect.fromLTWH(66, 281, 90, 34),
+        const Color.fromRGBO(255, 255, 255, .5),
+        VetColors.brown,
+      ),
+      (
+        'Deletar',
+        const Rect.fromLTWH(223, 281, 90, 34),
+        const Color(0xFF940000),
+        Colors.white,
+      ),
+    ]) {
+      final actionFinder = find.widgetWithText(ElevatedButton, label);
+      final action = tester.widget<ElevatedButton>(actionFinder);
+      expect(tester.getRect(actionFinder), rect);
+      expect(
+        action.style?.backgroundColor?.resolve(const <WidgetState>{}),
+        background,
+      );
+      expect(
+        action.style?.foregroundColor?.resolve(const <WidgetState>{}),
+        foreground,
+      );
+      final textStyle = action.style!.textStyle!.resolve(
+        const <WidgetState>{},
+      )!;
+      expect(textStyle.fontFamily, PetsTheme.fontComfortaa);
+      expect(textStyle.fontSize, 15);
+      expect(textStyle.fontWeight, FontWeight.bold);
+    }
+
     for (final (label, size) in [('Nome:', 18.0), ('Endereço:', 18.0)]) {
       final text = tester.widget<Text>(find.text(label));
       expect(text.style?.fontFamily, PetsTheme.fontComfortaa);
       expect(text.style?.fontWeight, FontWeight.bold);
       expect(text.style?.fontSize, size);
+      expect(text.style?.color, VetColors.brown);
+    }
+    for (final valueFinder in [
+      find.text('Casa da Irmã'),
+      find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
+    ]) {
+      final text = tester.widget<Text>(valueFinder);
+      expect(text.style?.fontFamily, PetsTheme.fontComfortaa);
+      expect(text.style?.fontSize, 12);
+      expect(text.style?.fontWeight, FontWeight.bold);
+      expect(text.style?.height, 1.67);
+      expect(text.style?.color, VetColors.brown);
     }
 
     final newAddressButton = find.widgetWithText(

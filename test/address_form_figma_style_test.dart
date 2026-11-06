@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/models/saved_address.dart';
 import 'package:flutter_vethome/pages/endereco_page.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
@@ -175,6 +178,11 @@ void main() {
   testWidgets('REGISTER_ADRESS_PAGE preserva posições com área segura real', (
     tester,
   ) async {
+    // Carrega a fonte real para não medir o texto de Figma com Ahem.
+    final fontLoader = FontLoader(VH.bodyFontFamily)
+      ..addFont(rootBundle.load('assets/fonts/MontserratAlternatesBold.ttf'));
+    await fontLoader.load();
+
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
@@ -183,7 +191,12 @@ void main() {
     addTearDown(tester.view.resetPadding);
     addTearDown(tester.view.resetViewPadding);
 
-    await tester.pumpWidget(const MaterialApp(home: EnderecoScreen()));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: const EnderecoScreen(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final title = find.text('Endereço');
@@ -197,6 +210,14 @@ void main() {
       const Rect.fromLTWH(104.5, 683, 181, 65),
     );
     expect(tester.getTopLeft(find.text('Pular')).dy, closeTo(764, 1));
+    final skipStyle = tester
+        .renderObject<RenderParagraph>(find.text('Pular'))
+        .text
+        .style!;
+    expect(skipStyle.fontFamily, VH.bodyFontFamily);
+    expect(skipStyle.fontSize, 15);
+    expect(skipStyle.fontWeight, FontWeight.bold);
+    expect(skipStyle.color, VH.secondary);
     expect(tester.takeException(), isNull);
   });
 }

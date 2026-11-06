@@ -13,6 +13,7 @@ class AddressForm extends StatefulWidget {
     required this.title,
     required this.onSaved,
     this.onSkip,
+    this.skipButtonStyle,
     this.onDelete,
     this.initial,
     this.cepService = const CepService(),
@@ -20,6 +21,7 @@ class AddressForm extends StatefulWidget {
   final String title;
   final FutureOr<void> Function(SavedAddress) onSaved;
   final FutureOr<void> Function()? onSkip;
+  final ButtonStyle? skipButtonStyle;
   final FutureOr<void> Function(SavedAddress)? onDelete;
   final SavedAddress? initial;
   final CepService cepService;
@@ -443,6 +445,7 @@ class _AddressFormState extends State<AddressForm> {
                   if (widget.onSkip != null) ...[
                     const SizedBox(height: 2),
                     TextButton(
+                      style: widget.skipButtonStyle,
                       onPressed: _saving ? null : _skip,
                       child: Text(_saving ? 'Salvando…' : 'Pular'),
                     ),
