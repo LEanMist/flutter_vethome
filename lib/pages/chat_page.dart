@@ -180,7 +180,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     fontSize: 10,
                                     height: 1.2,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: VetColors.chatMessageText,
                                   ),
                                 ),
                               ),

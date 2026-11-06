@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +10,24 @@ import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+
+double _contrastRatio(Color first, Color second) {
+  final luminances = [_relativeLuminance(first), _relativeLuminance(second)]
+    ..sort();
+  return (luminances.last + 0.05) / (luminances.first + 0.05);
+}
+
+double _relativeLuminance(Color color) {
+  double linearize(double value) {
+    return value <= 0.04045
+        ? value / 12.92
+        : math.pow((value + 0.055) / 1.055, 2.4).toDouble();
+  }
+
+  return 0.2126 * linearize(color.r) +
+      0.7152 * linearize(color.g) +
+      0.0722 * linearize(color.b);
+}
 
 void main() {
   testWidgets('Chat móvel segue as dimensões principais do Figma', (
@@ -111,6 +131,21 @@ void main() {
       expect((decoration! as BoxDecoration).color, VetColors.roseOverlay50);
       expect(tester.getSize(bubble).width, closeTo(273, 0.1));
     }
+    for (final text in [incoming.text, outgoing.text]) {
+      expect(
+        tester.widget<Text>(find.text(text)).style?.color,
+        VetColors.chatMessageText,
+      );
+    }
+    final cardBackground = Color.alphaBlend(VH.muted, VH.background);
+    final bubbleBackground = Color.alphaBlend(
+      VetColors.roseOverlay50,
+      cardBackground,
+    );
+    expect(
+      _contrastRatio(VetColors.chatMessageText, bubbleBackground),
+      greaterThanOrEqualTo(4.5),
+    );
     expect(
       tester.getTopLeft(receivedBubble).dx,
       lessThan(tester.getTopLeft(sentBubble).dx),
