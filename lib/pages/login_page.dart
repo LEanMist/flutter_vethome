@@ -85,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
     _signingIn = false;
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
-    Navigator.pushReplacementNamed(context, '/pets');
+    Navigator.pushReplacementNamed(context, '/home');
     if (!emailSaved) {
       messenger.showSnackBar(
         const SnackBar(

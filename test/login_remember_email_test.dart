@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_vethome/pages/home_page.dart';
 import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,7 +21,10 @@ Future<void> _pumpLogin(WidgetTester tester, {double textScale = 1}) async {
         child: child!,
       ),
       home: const LoginPage(),
-      routes: {'/pets': (_) => const Scaffold(body: Text('Pets'))},
+      routes: {
+        '/home': (_) => const HomePage(),
+        '/pets': (_) => const Scaffold(body: Text('Pets')),
+      },
     ),
   );
   await tester.pumpAndSettle();
@@ -43,7 +47,7 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Entrar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Pets'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-figma-frame')), findsOneWidget);
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.getString(_rememberedEmailKey), 'ana@example.test');
     expect(preferences.getKeys(), {_rememberedEmailKey});
@@ -72,7 +76,7 @@ void main() {
 
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.getString(_rememberedEmailKey), isNull);
-    expect(find.text('Pets'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-figma-frame')), findsOneWidget);
   });
 
   testWidgets('textos auxiliares do login respeitam ampliação do sistema', (

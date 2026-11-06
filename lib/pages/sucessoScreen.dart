@@ -26,7 +26,7 @@ class _SucessoScreenState extends State<SucessoScreen>
       setState(() => _arrived = true);
       await Future<void>.delayed(const Duration(milliseconds: 1400));
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/pets', (_) => false);
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
       }
     });
   }

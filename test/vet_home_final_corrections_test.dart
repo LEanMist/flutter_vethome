@@ -226,7 +226,7 @@ void main() {
     expect(find.byType(ClipRRect), findsOneWidget);
   });
   testWidgets(
-    'Agenda desktop mantém seis semanas completas e a ação inicial visível',
+    'Agenda desktop mantém semanas completas e a ação inicial visível',
     (tester) async {
       viewport(tester, const Size(1280, 800));
       await tester.pumpWidget(
@@ -239,10 +239,10 @@ void main() {
             widget.key is ValueKey<String> &&
             (widget.key! as ValueKey<String>).value.startsWith('calendar-'),
       );
-      expect(dayCells, findsNWidgets(42));
+      expect(dayCells, findsNWidgets(35));
       expect(
         tester
-            .getRect(find.byKey(const ValueKey('calendar-2026-11-7-surface')))
+            .getRect(find.byKey(const ValueKey('calendar-2026-10-31-surface')))
             .bottom,
         lessThan(tester.getRect(calendar).bottom),
       );

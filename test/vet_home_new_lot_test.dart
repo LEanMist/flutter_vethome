@@ -343,7 +343,9 @@ void main() {
   test('calendário completa semanas sem vazio e sem lacunas', () {
     final days = calendarMonthDays(DateTime(2026, 10));
     expect(days.first, DateTime(2026, 9, 27));
-    expect(days.last, DateTime(2026, 11, 7));
+    expect(days.last, DateTime(2026, 10, 31));
+    expect(calendarMonthDays(DateTime(2026, 8)), hasLength(42));
+    expect(calendarMonthDays(DateTime(2026, 8)).last, DateTime(2026, 9, 5));
     expect(days.length % 7, 0);
     for (var i = 1; i < days.length; i++) {
       expect(
