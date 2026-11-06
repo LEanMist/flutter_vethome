@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
@@ -24,7 +26,7 @@ import '../pages/cadastro_page.dart';
 import '../pages/endereco_page.dart';
 import '../pages/cadastroPet_page.dart';
 import '../screens/pets.dart'
-    show ConvenioScreen, EscolhaPetScreen, ServicosScreen;
+    show ConvenioScreen, EscolhaPetScreen, ServicosScreen, openPetChoiceDialog;
 
 Map<String, String> _formDataFromRoute(BuildContext context) {
   final arguments = ModalRoute.of(context)?.settings.arguments;
@@ -71,7 +73,7 @@ class AppRoutes {
     '/pet': (context) => _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
     '/editPet': (context) =>
         _petPage(context, (pet) => EditarPetPage(pet: pet)),
-    '/escolhaPet': (_) => const EscolhaPetScreen(),
+    '/escolhaPet': (_) => const _PetChoiceFlowRoute(),
     '/servicos': (_) => const ServicosScreen(),
     '/convenio': (_) => const ConvenioScreen(),
     '/perfil': (_) => const PerfilPage(),
@@ -114,4 +116,36 @@ class AppRoutes {
       address: ModalRoute.of(context)?.settings.arguments as SavedAddress?,
     ),
   };
+}
+
+/// A rota móvel mantém a Agenda ao fundo e abre o painel CHOICE_PET_WIDGET.
+/// Em telas largas, a página original de seleção continua disponível.
+class _PetChoiceFlowRoute extends StatefulWidget {
+  const _PetChoiceFlowRoute();
+
+  @override
+  State<_PetChoiceFlowRoute> createState() => _PetChoiceFlowRouteState();
+}
+
+class _PetChoiceFlowRouteState extends State<_PetChoiceFlowRoute> {
+  bool _dialogScheduled = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.sizeOf(context).width >= 900 || _dialogScheduled) return;
+
+    _dialogScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(openPetChoiceDialog(context));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.sizeOf(context).width >= 900) {
+      return const EscolhaPetScreen();
+    }
+    return AgendaScreen();
+  }
 }
