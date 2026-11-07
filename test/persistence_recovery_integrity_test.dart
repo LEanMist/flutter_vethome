@@ -242,10 +242,53 @@ void main() {
       expect(retryCalls, 1);
       expect(find.byType(CriticalStorageErrorPage), findsOneWidget);
       expect(
+        find.text(
+          'Não foi possível concluir a tentativa. Seus dados continuam preservados. Tente novamente.',
+        ),
+        findsOneWidget,
+      );
+      expect(
         tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
         isNotNull,
       );
     });
+
+    testWidgets(
+      'tentativa sem recuperação informa que o acesso segue bloqueado',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: CriticalStorageErrorPage(
+              status: LocalLoadStatus.unavailable,
+              onRetry: () async {},
+            ),
+          ),
+        );
+
+        await tester.tap(find.byKey(const ValueKey('critical-storage-retry')));
+        await tester.pumpAndSettle();
+
+        final message = find.byKey(
+          const ValueKey('critical-storage-retry-message'),
+        );
+        expect(
+          find.text(
+            'O armazenamento continua indisponível. Seus dados não foram alterados. Tente novamente mais tarde.',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          tester
+              .getSemantics(message)
+              .getSemanticsData()
+              .flagsCollection
+              .isLiveRegion,
+          isTrue,
+        );
+        semantics.dispose();
+      },
+    );
 
     testWidgets('snapshot inválido não oferece "Tentar novamente"', (
       tester,

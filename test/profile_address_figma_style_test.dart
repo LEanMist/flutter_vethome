@@ -209,8 +209,11 @@ void main() {
 
       expect(find.text('Deletar'), findsOneWidget);
       expect(find.text('Novo Endereço'), findsOneWidget);
-      await tester.ensureVisible(find.text('Editar'));
-      await tester.tap(find.text('Editar'));
+      final editAddress = find.bySemanticsLabel(
+        'Editar endereço Casa da Irmã, Rua das Flores, 123',
+      );
+      await tester.ensureVisible(editAddress);
+      await tester.tap(editAddress);
       await tester.pumpAndSettle();
       if (viewport.width < 900) {
         expect(

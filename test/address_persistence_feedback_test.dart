@@ -74,7 +74,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Editar'));
+    await tester.tap(find.bySemanticsLabel('Editar endereço Rua Antiga, 12'));
     await tester.pumpAndSettle();
     final streetField = find.descendant(
       of: find.byWidgetPredicate(
@@ -83,8 +83,9 @@ void main() {
       matching: find.byType(TextFormField),
     );
     await tester.enterText(streetField, 'Rua Nova');
-    await tester.ensureVisible(find.text('Salvar'));
-    await tester.tap(find.text('Salvar'));
+    final saveButton = find.bySemanticsLabel('Salvar endereço');
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 20)),
     );
@@ -103,7 +104,7 @@ void main() {
       tester.element(find.byType(AddressesPage)),
     ).hideCurrentSnackBar();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Deletar'));
+    await tester.tap(find.bySemanticsLabel('Deletar endereço Rua Nova, 12'));
     await tester.pumpAndSettle();
     await tester.tap(
       find.descendant(

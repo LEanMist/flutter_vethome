@@ -104,9 +104,16 @@ class _SucessoScreenState extends State<SucessoScreen>
                               fit: BoxFit.fill,
                             ),
                           ),
-                          Image.asset(
-                            'assets/imagens/figma/vethomepng-2.png',
-                            fit: BoxFit.contain,
+                          ClipRRect(
+                            key: const ValueKey(
+                              'registration-success-logo-clip',
+                            ),
+                            borderRadius: BorderRadius.circular(200 * scale),
+                            child: Image.asset(
+                              'assets/imagens/figma/vethomepng-2.png',
+                              key: const ValueKey('registration-success-logo'),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ],
                       ),

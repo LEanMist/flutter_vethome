@@ -183,40 +183,81 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('ADRESS_PAGE: ações de endereços distintos têm nomes acessíveis únicos', (
+  testWidgets(
+    'ADRESS_PAGE: ações de endereços distintos têm nomes acessíveis únicos',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        VetRepository.addresses.add(
+          const SavedAddress(
+            id: 'address-second-semantic',
+            name: 'Trabalho',
+            street: 'Rua do Trabalho',
+            number: '22',
+            city: 'São Paulo',
+            cep: '01234-567',
+          ),
+        );
+        await showAddresses(tester, const Size(390, 844));
+
+        for (final (action, description) in [
+          ('Editar', 'Casa da Irmã, Rua das Flores, 123'),
+          ('Deletar', 'Casa da Irmã, Rua das Flores, 123'),
+          ('Editar', 'Trabalho, Rua do Trabalho, 22'),
+          ('Deletar', 'Trabalho, Rua do Trabalho, 22'),
+        ]) {
+          final target = find.bySemanticsLabel('$action endereço $description');
+          expect(target, findsOneWidget);
+          final data = tester.getSemantics(target).getSemanticsData();
+          expect(data.flagsCollection.isButton, isTrue);
+          expect(data.hasAction(SemanticsAction.tap), isTrue);
+        }
+        expect(tester.takeException(), isNull);
+      } finally {
+        semantics.dispose();
+      }
+    },
+  );
+
+  testWidgets('ADRESS_PAGE: ações mantêm o visual e recebem toque em 48 px', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
     try {
-      VetRepository.addresses.add(
-        const SavedAddress(
-          id: 'address-second-semantic',
-          name: 'Trabalho',
-          street: 'Rua do Trabalho',
-          number: '22',
-          city: 'São Paulo',
-          cep: '01234-567',
-        ),
-      );
-      await showAddresses(tester, const Size(390, 844));
+      for (final viewport in [const Size(390, 844), const Size(320, 640)]) {
+        await showAddresses(tester, viewport);
 
-      for (final (action, description) in [
-        ('Editar', 'Casa da Irmã, Rua das Flores, 123'),
-        ('Deletar', 'Casa da Irmã, Rua das Flores, 123'),
-        ('Editar', 'Trabalho, Rua do Trabalho, 22'),
-        ('Deletar', 'Trabalho, Rua do Trabalho, 22'),
-      ]) {
-        final target = find.bySemanticsLabel('$action endereço $description');
-        expect(target, findsOneWidget);
-        final data = tester.getSemantics(target).getSemanticsData();
-        expect(data.flagsCollection.isButton, isTrue);
-        expect(data.hasAction(SemanticsAction.tap), isTrue);
+        for (final action in ['Editar', 'Deletar']) {
+          final label = '$action endereço Casa da Irmã, Rua das Flores, 123';
+          final target = find.bySemanticsLabel(label);
+          final targetRect = tester.getRect(target);
+          final visual = find.widgetWithText(ElevatedButton, action);
+          final visualRect = tester.getRect(visual);
+
+          expect(targetRect.size, const Size(90, 48));
+          expect(visualRect.size, const Size(90, 34));
+          expect(visualRect.bottom, targetRect.bottom);
+
+          await tester.tapAt(Offset(targetRect.center.dx, targetRect.top + 5));
+          await tester.pumpAndSettle();
+
+          if (action == 'Editar') {
+            final dialog = find.byKey(const ValueKey('address-editor-dialog'));
+            expect(dialog, findsOneWidget);
+            Navigator.of(tester.element(dialog)).pop();
+          } else {
+            expect(find.text('Excluir endereço?'), findsOneWidget);
+            await tester.tap(find.text('Cancelar'));
+          }
+          await tester.pumpAndSettle();
+        }
       }
       expect(tester.takeException(), isNull);
     } finally {
       semantics.dispose();
     }
   });
+
   testWidgets('ADRESS_PAGE: barra de status não desloca o frame do Figma', (
     tester,
   ) async {

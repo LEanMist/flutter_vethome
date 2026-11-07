@@ -5,6 +5,7 @@ import '../data/vet_repository.dart';
 import '../models/saved_address.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/address_form.dart';
+import '../widgets/figma_action_target.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet/vet_header.dart';
 import '../widgets/vet/vet_bottom_nav.dart';
@@ -302,15 +303,17 @@ class _AddressesPageState extends State<AddressesPage> {
                     label: 'Editar',
                     background: const Color.fromRGBO(255, 255, 255, .5),
                     foreground: VetColors.brown,
-                    semanticsLabel: 'Editar endereço ${_addressIdentity(address)}',
-                     onPressed: () => _edit(address),
+                    semanticsLabel:
+                        'Editar endereço ${_addressIdentity(address)}',
+                    onPressed: () => _edit(address),
                   ),
                   _addressAction(
                     label: 'Deletar',
                     background: const Color(0xFF940000),
                     foreground: Colors.white,
-                    semanticsLabel: 'Deletar endereço ${_addressIdentity(address)}',
-                     onPressed: () => _delete(address),
+                    semanticsLabel:
+                        'Deletar endereço ${_addressIdentity(address)}',
+                    onPressed: () => _delete(address),
                   ),
                 ],
               ),
@@ -345,26 +348,29 @@ class _AddressesPageState extends State<AddressesPage> {
     required Color background,
     required Color foreground,
     required VoidCallback onPressed,
-  }) => SizedBox(
+  }) => FigmaActionTarget(
     width: 90,
-    height: 34,
-    child: ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: background,
-        foregroundColor: foreground,
-        elevation: 0,
-        padding: EdgeInsets.zero,
-        shape: const StadiumBorder(),
-        textStyle: TextStyle(
-          fontFamily: PetsTheme.fontComfortaa,
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
+    height: 48,
+    label: semanticsLabel,
+    onPressed: onPressed,
+    child: SizedBox(
+      width: 90,
+      height: 34,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: background,
+          foregroundColor: foreground,
+          elevation: 0,
+          padding: EdgeInsets.zero,
+          shape: const StadiumBorder(),
+          textStyle: TextStyle(
+            fontFamily: PetsTheme.fontComfortaa,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      ),
-      child: Semantics(
-        label: semanticsLabel,
-        child: ExcludeSemantics(child: Text(label)),
+        child: Text(label),
       ),
     ),
   );

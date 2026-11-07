@@ -35,6 +35,18 @@ void main() {
       expect(frame.width, closeTo(390 * scale, .01));
       expect(frame.height, closeTo(844 * scale, .01));
       final confirmation = tester.getRect(find.text('Usuário\nCadastrado!'));
+      final logoClip = tester.widget<ClipRRect>(
+        find.byKey(const ValueKey('registration-success-logo-clip')),
+      );
+      expect(logoClip.borderRadius, BorderRadius.circular(200 * scale));
+      expect(
+        tester
+            .widget<Image>(
+              find.byKey(const ValueKey('registration-success-logo')),
+            )
+            .fit,
+        BoxFit.cover,
+      );
       expect(
         confirmation.bottom,
         lessThanOrEqualTo(frame.bottom + .01),

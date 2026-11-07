@@ -78,9 +78,9 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Editar'));
+    await tester.tap(find.bySemanticsLabel('Editar endereço Rua Antiga, 12'));
     await tester.pumpAndSettle();
-    final deleteButton = find.widgetWithText(OutlinedButton, 'Excluir');
+    final deleteButton = find.bySemanticsLabel('Excluir endereço');
     await tester.ensureVisible(deleteButton);
     await tester.tap(deleteButton);
     await tester.pumpAndSettle();

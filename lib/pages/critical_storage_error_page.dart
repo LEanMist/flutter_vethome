@@ -28,13 +28,30 @@ class CriticalStorageErrorPage extends StatefulWidget {
 class _CriticalStorageErrorPageState extends State<CriticalStorageErrorPage> {
   bool _retrying = false;
   bool _clearing = false;
+  String? _retryMessage;
 
   Future<void> _retry() async {
-    setState(() => _retrying = true);
+    setState(() {
+      _retrying = true;
+      _retryMessage = null;
+    });
     try {
       await widget.onRetry!();
+      await WidgetsBinding.instance.endOfFrame;
+      if (mounted && widget.status == LocalLoadStatus.unavailable) {
+        setState(() {
+          _retryMessage =
+              'O armazenamento continua indisponível. Seus dados não foram alterados. Tente novamente mais tarde.';
+        });
+      }
     } catch (_) {
       debugPrint('VetHome: falha ao tentar acessar o armazenamento novamente.');
+      if (mounted) {
+        setState(() {
+          _retryMessage =
+              'Não foi possível concluir a tentativa. Seus dados continuam preservados. Tente novamente.';
+        });
+      }
     } finally {
       if (mounted) setState(() => _retrying = false);
     }
@@ -132,6 +149,21 @@ class _CriticalStorageErrorPageState extends State<CriticalStorageErrorPage> {
                       height: 1.45,
                     ),
                   ),
+                  if (_retryMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        _retryMessage!,
+                        key: const ValueKey('critical-storage-retry-message'),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: VetColors.brown,
+                          height: 1.45,
+                        ),
+                      ),
+                    ),
+                  ],
                   if (unavailable && widget.onRetry != null) ...[
                     const SizedBox(height: 20),
                     FilledButton(
