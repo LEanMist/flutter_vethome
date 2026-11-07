@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_vethome/widgets/pets/pets_theme.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -134,10 +135,14 @@ void main() {
         expect(textStyle.fontSize, 18);
         expect(textStyle.fontWeight, FontWeight.bold);
 
-        final arrow = find.byIcon(Icons.chevron_right).at(index);
-        expect(tester.widget<Icon>(arrow).color, VetColors.brown);
-        expect(tester.getRect(arrow).center.dx, closeTo(356, 6));
-        expect(tester.getRect(arrow).center.dy, closeTo(y + 8, 6));
+        final arrow = find.byKey(ValueKey('profile-option-chevron-$index'));
+        expect(arrow, findsOneWidget);
+        expect(tester.getSize(arrow), const Size(11, 19.6299));
+        expect(tester.widget<SvgPicture>(arrow).fit, BoxFit.fill);
+        // O SVG export tem 1,5 px de margem de traço fora dos nós 1089-1091.
+        // O viewport expandido mantém o início do caminho em x=352 e y+2.
+        expect(tester.getRect(arrow).left, closeTo(350.508, .1));
+        expect(tester.getRect(arrow).top, closeTo(y + .5, .1));
       }
 
       final dividers = find.byType(Divider);
@@ -208,9 +213,7 @@ void main() {
     },
   );
 
-  testWidgets('PROFILE_PAGE: nascimento tem rótulo semântico', (
-    tester,
-  ) async {
+  testWidgets('PROFILE_PAGE: nascimento tem rótulo semântico', (tester) async {
     final semantics = tester.ensureSemantics();
 
     tester.view.physicalSize = const Size(390, 844);
@@ -222,9 +225,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.bySemanticsLabel(
-        RegExp(r'^Data de nascimento: \d{2}/\d{2}/\d{4}$'),
-      ),
+      find.bySemanticsLabel(RegExp(r'^Data de nascimento: \d{2}/\d{2}/\d{4}$')),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);

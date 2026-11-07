@@ -7,6 +7,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../core/utils/formatters.dart';
@@ -467,10 +468,20 @@ class _PerfilPageState extends State<PerfilPage> {
                           ),
                         ),
                       ),
-                      Icon(
-                        Icons.chevron_right,
-                        size: 20 * s,
-                        color: VetColors.brown,
+                      SizedBox(
+                        width: 12 * s,
+                        height: 20.6299 * s,
+                        child: Center(
+                          child: SizedBox(
+                            width: 11 * s,
+                            height: 19.6299 * s,
+                            child: SvgPicture.asset(
+                              'assets/imagens/figma/services-chevron-right.svg',
+                              key: ValueKey('profile-option-chevron-$i'),
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
