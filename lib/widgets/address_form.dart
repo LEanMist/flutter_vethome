@@ -5,6 +5,7 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import '../data/cep_service.dart';
 import '../models/saved_address.dart';
 import '../core/utils/form_fields.dart';
+import '../widgets/figma_action_target.dart';
 import '../widgets.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
@@ -590,13 +591,29 @@ class _AddressFormState extends State<AddressForm> {
                   ),
                 ),
               ),
-            Positioned(left: 15, top: 576, child: deleteButton),
+            Positioned(
+              left: 15,
+              top: 562,
+              child: FigmaActionTarget(
+                key: const ValueKey('address-delete-target'),
+                width: 90,
+                label: 'Excluir endereço',
+                onPressed: _saving ? null : _delete,
+                child: deleteButton,
+              ),
+            ),
             Positioned(
               left: 184,
-              top: 576,
+              top: 562,
               width: 90,
-              height: 34,
-              child: saveButton,
+              height: 48,
+              child: FigmaActionTarget(
+                key: const ValueKey('address-save-target'),
+                width: 90,
+                label: 'Salvar endereço',
+                onPressed: _loading || _saving ? null : _save,
+                child: SizedBox(width: 90, height: 34, child: saveButton),
+              ),
             ),
           ],
         ),

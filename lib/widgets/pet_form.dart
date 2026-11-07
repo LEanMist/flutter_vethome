@@ -7,6 +7,7 @@ import '../models/pet_model.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets.dart';
+import '../widgets/figma_action_target.dart';
 import 'pets/pet_avatar.dart';
 import 'pet_photo_button.dart';
 
@@ -543,14 +544,26 @@ class _PetFormState extends State<PetForm> {
             fields[5],
             const SizedBox(height: 16),
             fields[6],
-            const SizedBox(height: 36),
+            const SizedBox(height: 22),
             Padding(
               padding: const EdgeInsets.only(left: 2),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  cancelButton,
-                  SizedBox(width: 90, height: 34, child: saveButton),
+                  FigmaActionTarget(
+                    key: const ValueKey('pet-edit-cancel-target'),
+                    width: 98,
+                    label: 'Cancelar',
+                    onPressed: busy ? null : widget.onCancel,
+                    child: cancelButton,
+                  ),
+                  FigmaActionTarget(
+                    key: const ValueKey('pet-edit-save-target'),
+                    width: 90,
+                    label: 'Salvar',
+                    onPressed: busy ? null : save,
+                    child: SizedBox(width: 90, height: 34, child: saveButton),
+                  ),
                 ],
               ),
             ),

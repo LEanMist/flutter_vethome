@@ -111,10 +111,23 @@ void main() {
       matching: find.byType(OutlinedButton),
     );
     final save = find.widgetWithText(ElevatedButton, 'Salvar');
+    final cancelTarget = find.byKey(const ValueKey('pet-edit-cancel-target'));
+    final saveTarget = find.byKey(const ValueKey('pet-edit-save-target'));
     expect(tester.getTopLeft(cancel) - surfaceOrigin, const Offset(27, 422));
     expect(tester.getSize(cancel), const Size(98, 34));
     expect(tester.getTopLeft(save) - surfaceOrigin, const Offset(194, 422));
     expect(tester.getSize(save), const Size(90, 34));
+    for (final (target, visual, size) in [
+      (cancelTarget, cancel, const Size(98, 34)),
+      (saveTarget, save, const Size(90, 34)),
+    ]) {
+      final targetRect = tester.getRect(target);
+      final visualRect = tester.getRect(visual);
+      expect(targetRect.size, Size(size.width, 48));
+      expect(visualRect.size, size);
+      expect(visualRect.bottom, targetRect.bottom);
+      expect(visualRect.top, targetRect.top + 14);
+    }
     expect(
       tester
           .widget<ElevatedButton>(save)
@@ -162,7 +175,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+    await tester.tap(find.byKey(const ValueKey('pet-edit-save-target')));
     await tester.pumpAndSettle();
 
     expect(find.text('Espécie'), findsOneWidget);

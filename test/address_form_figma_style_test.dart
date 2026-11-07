@@ -157,12 +157,24 @@ void main() {
 
     final deleteButton = find.widgetWithText(OutlinedButton, 'Excluir');
     final saveButton = find.widgetWithText(ElevatedButton, 'Salvar');
+    final deleteTarget = find.byKey(const ValueKey('address-delete-target'));
+    final saveTarget = find.byKey(const ValueKey('address-save-target'));
     final saveStyle = tester.widget<ElevatedButton>(saveButton).style!;
+    expect(tester.getSize(deleteTarget), const Size(90, 48));
+    expect(tester.getSize(saveTarget), const Size(90, 48));
     expect(
       tester.getRect(deleteButton),
       const Rect.fromLTWH(65, 681.5, 90, 34),
     );
     expect(tester.getRect(saveButton), const Rect.fromLTWH(234, 681.5, 90, 34));
+    expect(
+      tester.getTopLeft(deleteButton).dy - tester.getTopLeft(deleteTarget).dy,
+      14,
+    );
+    expect(
+      tester.getBottomRight(saveButton).dy,
+      tester.getBottomRight(saveTarget).dy,
+    );
     expect(saveStyle.backgroundColor!.resolve({}), VH.primary);
     expect(saveStyle.foregroundColor!.resolve({}), Colors.white);
     expect(
@@ -176,7 +188,10 @@ void main() {
     );
     expect(tester.takeException(), isNull);
 
-    await tester.tap(deleteButton);
+    final deleteTargetRect = tester.getRect(deleteTarget);
+    await tester.tapAt(
+      Offset(deleteTargetRect.center.dx, deleteTargetRect.top + 5),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Excluir endereço?'), findsOneWidget);
     await tester.tap(find.text('Cancelar'));
