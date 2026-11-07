@@ -473,15 +473,57 @@ class ConfigScreen extends StatelessWidget {
               LocalDataManager.clearUserData());
       if (!context.mounted) return;
       if (!cleared) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(
+        if (VetRepository.lastPersistenceError
+            is LocalStorageConflictException) {
+          final hasUnsavedChanges = VetRepository.unsavedChanges.value;
+          final reload = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: VH.background,
+              title: const Text('Dados atualizados em outra janela'),
               content: Text(
-                'Não foi possível confirmar a remoção dos dados. Tente novamente.',
+                hasUnsavedChanges
+                    ? 'Nenhum dado foi apagado. Para continuar, carregue a versão mais recente. As alterações ainda não salvas nesta janela serão descartadas.'
+                    : 'Nenhum dado foi apagado. Carregue a versão mais recente e confirme a exclusão novamente.',
               ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Agora não'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Carregar dados atuais'),
+                ),
+              ],
             ),
           );
+          if (!context.mounted || reload != true) return;
+
+          final loaded = await VetRepository.reloadLatestAfterConflict();
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  loaded
+                      ? 'Dados atuais carregados. Revise e confirme a exclusão novamente.'
+                      : 'Não foi possível carregar os dados atuais. Nenhum dado foi apagado.',
+                ),
+              ),
+            );
+        } else {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Não foi possível confirmar a remoção dos dados. Tente novamente.',
+                ),
+              ),
+            );
+        }
         return;
       }
     }
@@ -503,6 +545,7 @@ class _LocalSaveNotice extends StatefulWidget {
 
 class _LocalSaveNoticeState extends State<_LocalSaveNotice> {
   bool _saving = false;
+  bool _reloading = false;
 
   Future<void> _retry() async {
     if (_saving) return;
@@ -519,8 +562,55 @@ class _LocalSaveNoticeState extends State<_LocalSaveNotice> {
                 ? 'Alterações salvas no dispositivo.'
                 : VetRepository.lastPersistenceError
                       is LocalStorageConflictException
-                ? 'Outra janela alterou os dados. Esta versão não será gravada por cima; reabra o VetHome para carregar a versão atual.'
+                ? 'Outra janela alterou os dados. Carregue a versão atual para continuar.'
                 : 'A gravação ainda não foi concluída.',
+          ),
+        ),
+      );
+  }
+
+  Future<void> _reloadLatest() async {
+    if (_saving) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VH.background,
+        title: const Text('Carregar dados atualizados?'),
+        content: const Text(
+          'As alterações ainda não salvas nesta janela serão descartadas. O VetHome vai carregar os dados salvos pela outra janela.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Carregar dados'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    setState(() {
+      _saving = true;
+      _reloading = true;
+    });
+    final loaded = await VetRepository.reloadLatestAfterConflict();
+    if (!mounted) return;
+    setState(() {
+      _saving = false;
+      _reloading = false;
+    });
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            loaded
+                ? 'Dados atualizados carregados. As alterações não salvas foram descartadas.'
+                : 'Não foi possível carregar os dados atualizados. As alterações desta janela foram mantidas.',
           ),
         ),
       );
@@ -554,12 +644,18 @@ class _LocalSaveNoticeState extends State<_LocalSaveNotice> {
                         : 'Há alterações nesta sessão que ainda não foram salvas no dispositivo.',
                   ),
                   TextButton(
-                    onPressed: isSaving || conflict ? null : _retry,
+                    onPressed: isSaving
+                        ? null
+                        : conflict
+                        ? _reloadLatest
+                        : _retry,
                     child: Text(
                       isSaving
-                          ? 'Salvando…'
+                          ? _reloading
+                                ? 'Carregando dados…'
+                                : 'Salvando…'
                           : conflict
-                          ? 'Reabra o VetHome para carregar a versão atual'
+                          ? 'Carregar dados atualizados'
                           : 'Tentar salvar novamente',
                     ),
                   ),

@@ -19,13 +19,13 @@ class LocalStorageConflictException extends StateError {
   LocalStorageConflictException.cleared()
     : kind = LocalStorageConflictKind.cleared,
       super(
-        'Os dados foram apagados em outra janela. Reabra o VetHome antes de salvar.',
+        'Os dados foram apagados em outra janela. Carregue os dados atuais antes de salvar.',
       );
 
   LocalStorageConflictException.modified()
     : kind = LocalStorageConflictKind.modified,
       super(
-        'Os dados foram alterados em outra janela. Reabra o VetHome antes de salvar.',
+        'Os dados foram alterados em outra janela. Carregue os dados atuais antes de salvar.',
       );
 
   final LocalStorageConflictKind kind;
@@ -315,6 +315,14 @@ class LocalStorage {
     return _readLegacyMetadata(preferences);
   }
 
+  /// Creates an independent reader so a failed refresh does not invalidate the
+  /// session's last-known-good revision metadata.
+  LocalStorage createReloadInstance() => LocalStorage(
+    preferencesLoader: _preferencesLoader,
+    reloadPreferences: _reloadPreferences,
+    snapshotWriter: _snapshotWriter,
+  );
+
   // API com mock oficial; reload evita ler um cache antigo na inicialização.
   Future<LocalLoadResult> load() async {
     try {
@@ -420,7 +428,10 @@ class LocalStorage {
   Future<void> clear() => _serializeMutation(() async {
     final preferences = await _preferencesLoader();
     await _reloadPreferences(preferences);
+    final knownGeneration = _knownGeneration;
+    final knownRevision = _knownRevision;
     late final _LocalStorageMetadata currentMetadata;
+    var metadataWasCorrupt = false;
     try {
       currentMetadata = _readStoredMetadata(preferences);
     } on FormatException {
@@ -431,6 +442,17 @@ class LocalStorage {
         generation: invalidation,
         revision: invalidation,
       );
+      metadataWasCorrupt = true;
+    }
+    if (!metadataWasCorrupt &&
+        knownGeneration != null &&
+        knownGeneration != currentMetadata.generation) {
+      throw LocalStorageConflictException.cleared();
+    }
+    if (!metadataWasCorrupt &&
+        knownRevision != null &&
+        knownRevision != currentMetadata.revision) {
+      throw LocalStorageConflictException.modified();
     }
     final nextGeneration = currentMetadata.generation + 1;
     final nextRevision = currentMetadata.revision + 1;

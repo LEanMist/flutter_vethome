@@ -52,11 +52,36 @@ class VetRepository {
   /// Deve terminar antes de runApp. Também permite simular reinício nos testes.
   static Future<void> initialize({LocalStorage? storage}) async {
     await flush();
-    _storage = null;
     final local = storage ?? LocalStorage();
+    final result = await local.load();
+    _applyLoadResult(local, result);
+  }
+
+  /// Substitui o estado desta sessão pela revisão salva por outra janela.
+  /// Em caso de falha, conserva a sessão atual e suas alterações pendentes.
+  static Future<bool> reloadLatestAfterConflict() async {
+    if (lastPersistenceError is! LocalStorageConflictException ||
+        _savingChanges.value ||
+        _clearInProgress) {
+      return false;
+    }
+
+    final previousLocal = _lastLocal;
+    if (previousLocal == null) return false;
+    final local = previousLocal.createReloadInstance();
+    final result = await local.load();
+    if (result.status == LocalLoadStatus.invalid ||
+        result.status == LocalLoadStatus.unavailable) {
+      return false;
+    }
+    _applyLoadResult(local, result);
+    return true;
+  }
+
+  static void _applyLoadResult(LocalStorage local, LocalLoadResult result) {
+    _storage = null;
     _lastLocal = local;
     _lastValid = null;
-    final result = await local.load();
     final state = result.state;
     clientName = state?.client.name ?? 'Liminha';
     clientBirthDate = state?.client.birthDate ?? DateTime(2007, 2, 5);

@@ -402,12 +402,39 @@ void main() {
       expect(saved.status, LocalLoadStatus.valid);
       expect(saved.state?.client.name, 'Primeira aba');
 
-      expect((await staleTab.load()).status, LocalLoadStatus.valid);
-      await staleTab.save(validState(name: 'Atualizado após recarregar'));
+      final refreshedTab = staleTab.createReloadInstance();
+      expect((await refreshedTab.load()).status, LocalLoadStatus.valid);
+      await refreshedTab.save(validState(name: 'Atualizado após recarregar'));
       final latest = await LocalStorage().load();
       expect(latest.state?.client.name, 'Atualizado após recarregar');
     },
   );
+
+  test('aba desatualizada não apaga uma revisão mais recente', () async {
+    SharedPreferences.setMockInitialValues({});
+    final staleTab = LocalStorage();
+    final latestTab = LocalStorage();
+    await Future.wait([staleTab.load(), latestTab.load()]);
+
+    await latestTab.save(validState(name: 'Alteração mais recente'));
+    await expectLater(
+      staleTab.clear(),
+      throwsA(
+        isA<LocalStorageConflictException>().having(
+          (error) => error.kind,
+          'kind',
+          LocalStorageConflictKind.modified,
+        ),
+      ),
+    );
+
+    final latest = await LocalStorage().load();
+    expect(latest.status, LocalLoadStatus.valid);
+    expect(latest.state?.client.name, 'Alteração mais recente');
+    final preferences = await SharedPreferences.getInstance();
+    expect(storedMetadata(preferences)['revision'], 1);
+    expect(storedMetadata(preferences)['cleared'], isFalse);
+  });
 
   test(
     'gravações simultâneas preservam uma revisão e detectam conflito',
