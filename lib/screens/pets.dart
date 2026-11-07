@@ -322,6 +322,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
     };
     return VHPage(
       tab: '/servicos',
+      showBottomNav: false,
       children: [
         desktop ? const VHHeader('Serviços') : _servicesHeader(pet, species),
         Padding(
@@ -402,16 +403,6 @@ class _ServicosScreenState extends State<ServicosScreen> {
               ),
             ),
           ),
-          if (Navigator.of(context).canPop())
-            Positioned(
-              top: 8,
-              left: 10,
-              child: IconButton(
-                tooltip: 'Voltar',
-                onPressed: () => Navigator.maybePop(context),
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-              ),
-            ),
           Positioned(
             bottom: 0,
             left: 0,
@@ -917,6 +908,7 @@ class ConvenioScreen extends StatelessWidget {
     final service = values['service'] as String? ?? servicoAtual;
     return VHPage(
       tab: '/convenio',
+      showBottomNav: false,
       children: [
         // Figma 4010:387: cabeçalho de 157 px com aba da espécie (somente mobile).
         VetResponsiveLayout(

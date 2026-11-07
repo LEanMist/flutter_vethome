@@ -741,12 +741,14 @@ class VHPage extends StatelessWidget {
     required this.children,
     this.footer,
     this.showPetsTab = true,
+    this.showBottomNav = true,
   });
 
   final String tab;
   final List<Widget> children;
   final Widget? footer;
   final bool showPetsTab;
+  final bool showBottomNav;
 
   static const _tabRoutes = ['/pets', '/perfil', '/chat', '/agenda', '/config'];
 
@@ -770,20 +772,21 @@ class VHPage extends StatelessWidget {
                   ),
                 ),
                 ?footer,
-                VetBottomNav(
-                  selectedIndex: _tabRoutes.indexOf(tab).clamp(0, 4),
-                  showPetsTab: showPetsTab,
-                  onSelected: (index) {
-                    final route = _tabRoutes[index];
-                    if (route != tab) {
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        route,
-                        (route) => route.isFirst,
-                      );
-                    }
-                  },
-                ),
+                if (showBottomNav)
+                  VetBottomNav(
+                    selectedIndex: _tabRoutes.indexOf(tab).clamp(0, 4),
+                    showPetsTab: showPetsTab,
+                    onSelected: (index) {
+                      final route = _tabRoutes[index];
+                      if (route != tab) {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          route,
+                          (route) => route.isFirst,
+                        );
+                      }
+                    },
+                  ),
               ],
             ),
           ),

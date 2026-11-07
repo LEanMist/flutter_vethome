@@ -130,6 +130,42 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('serviços mobile não adiciona seta e ainda pode voltar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => Navigator.push<void>(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const ServicosScreen()),
+              ),
+              child: const Text('Abrir Serviços'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Abrir Serviços'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ServicosScreen), findsOneWidget);
+    expect(find.byTooltip('Voltar'), findsNothing);
+    await tester.state<NavigatorState>(find.byType(Navigator)).maybePop();
+    await tester.pumpAndSettle();
+    expect(find.text('Abrir Serviços'), findsOneWidget);
+    expect(find.byType(ServicosScreen), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('setas e faixas alternam categorias após o ajuste do Figma', (
     tester,
   ) async {

@@ -8,6 +8,7 @@ import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/pages/teste_page.dart';
 import 'package:flutter_vethome/screens/outros.dart';
 import 'package:flutter_vethome/screens/pets.dart' show ConvenioScreen;
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
 Widget agendaRoute(BuildContext context) {
   final date = ModalRoute.of(context)?.settings.arguments as DateTime?;
@@ -107,22 +108,40 @@ void main() {
     expect(find.text('Retorno teste'), findsWidgets);
   });
 
-  testWidgets('Pets no rodapé de Convênio navega para a rota Pets', (
+  testWidgets('Convênio não mostra abas e retorna pela navegação do sistema', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       MaterialApp(
-        home: const ConvenioScreen(),
-        routes: {
-          '/pets': (context) =>
-              Scaffold(body: Text(ModalRoute.of(context)!.settings.name!)),
-        },
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => Navigator.push<void>(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const ConvenioScreen()),
+              ),
+              child: const Text('Abrir Convênio'),
+            ),
+          ),
+        ),
       ),
     );
 
-    await tester.tap(find.bySemanticsLabel('Pets'));
+    await tester.tap(find.text('Abrir Convênio'));
     await tester.pumpAndSettle();
-    expect(find.text('/pets'), findsOneWidget);
+
+    expect(find.byType(ConvenioScreen), findsOneWidget);
+    expect(find.byType(VetBottomNav), findsNothing);
+    await tester.state<NavigatorState>(find.byType(Navigator)).maybePop();
+    await tester.pumpAndSettle();
+    expect(find.text('Abrir Convênio'), findsOneWidget);
+    expect(find.byType(ConvenioScreen), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('menu de teste abre Pets e Agenda com rotas nomeadas', (

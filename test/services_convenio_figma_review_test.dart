@@ -6,6 +6,7 @@ import 'package:flutter_vethome/screens/pets.dart'
     show ServicosScreen, ConvenioScreen;
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
 double _contrastRatio(Color first, Color second) {
   final firstLuminance = first.computeLuminance();
@@ -34,6 +35,8 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
 
+    // O frame mobile do Figma não mostra a barra inferior do app.
+    expect(find.byType(VetBottomNav), findsNothing);
     // SERVICES_PAGE 2791:3113 não apresenta o resumo do pet no mobile.
     expect(find.byType(PetSummary), findsNothing);
     expect(find.text('Serviços'), findsOneWidget);
@@ -118,6 +121,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
     await tester.pumpAndSettle();
 
+    expect(find.byType(VetBottomNav), findsNothing);
     final selectedPet = VetRepository.pets.first;
     expect(find.byType(PetSummary), findsNothing);
     expect(find.text(selectedPet.name), findsNothing);
@@ -354,6 +358,27 @@ void main() {
         reason: 'Texto desktop de 16 px exige contraste AA de 4,5:1.',
       );
     }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Serviços e Convênio não mostram abas fora do fluxo principal', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1024, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final before = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = before);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
+    await tester.pumpAndSettle();
+    expect(find.byType(VetBottomNav), findsNothing);
+
+    await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
+    await tester.pumpAndSettle();
+    expect(find.byType(VetBottomNav), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
