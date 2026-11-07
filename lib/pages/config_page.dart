@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../data/local_data_manager.dart';
 import '../data/local_storage.dart';
@@ -107,9 +108,14 @@ class ConfigScreen extends StatelessWidget {
                       color: VH.foreground,
                     ),
                   ),
-                  trailing: const Icon(
-                    Icons.chevron_right,
-                    color: VH.foreground,
+                  trailing: SizedBox(
+                    width: 11,
+                    height: 19.6299,
+                    child: SvgPicture.asset(
+                      'assets/imagens/figma/services-chevron-right.svg',
+                      key: ValueKey('settings-chevron-$index'),
+                      fit: BoxFit.fill,
+                    ),
                   ),
                   onTap: items[index].action,
                 ),

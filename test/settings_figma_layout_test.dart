@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/config_page.dart';
 import 'package:flutter_vethome/theme.dart';
@@ -79,6 +80,13 @@ void main() {
     for (final tile in tiles) {
       expect(tile.onTap, isNotNull);
       expect(tile.enabled, isTrue);
+    }
+
+    for (var index = 0; index < 5; index++) {
+      final arrow = find.byKey(ValueKey('settings-chevron-$index'));
+      expect(arrow, findsOneWidget);
+      expect(tester.getSize(arrow), const Size(11, 19.6299));
+      expect(tester.widget<SvgPicture>(arrow).fit, BoxFit.fill);
     }
 
     final dividers = find.byType(Divider);
