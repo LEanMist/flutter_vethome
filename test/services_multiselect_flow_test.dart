@@ -1,4 +1,7 @@
+import 'dart:ui' show CheckedState;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
@@ -128,6 +131,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Recebido: Hemograma / Particular'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('opções expõem o estado de checkbox para acessibilidade', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await openServices(tester);
+
+      final service = find.text('Hemograma');
+      var node = tester.getSemantics(service);
+      var data = node.getSemanticsData();
+      expect(data.flagsCollection.isChecked, CheckedState.isFalse);
+      expect(data.label, 'Hemograma');
+      expect(data.hasAction(SemanticsAction.tap), isTrue);
+
+      await selectService(tester, 'Hemograma');
+      node = tester.getSemantics(service);
+      data = node.getSemanticsData();
+      expect(data.flagsCollection.isChecked, CheckedState.isTrue);
+      expect(data.label, 'Hemograma');
+      expect(data.hasAction(SemanticsAction.tap), isTrue);
+
+      await selectService(tester, 'Hemograma');
+      node = tester.getSemantics(service);
+      data = node.getSemanticsData();
+      expect(data.flagsCollection.isChecked, CheckedState.isFalse);
+      expect(data.label, 'Hemograma');
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('serviços mobile não adiciona seta e ainda pode voltar', (

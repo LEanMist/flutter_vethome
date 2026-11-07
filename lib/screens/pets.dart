@@ -717,9 +717,11 @@ class _ServicosScreenState extends State<ServicosScreen> {
                           children: [
                             for (final option in entry.value)
                               Semantics(
-                                button: true,
-                                selected: _selected.contains(option),
+                                label: option,
+                                checked: _selected.contains(option),
+                                onTap: () => _toggleService(option),
                                 child: InkWell(
+                                  excludeFromSemantics: true,
                                   onTap: () => _toggleService(option),
                                   overlayColor: WidgetStateProperty.resolveWith(
                                     VH.interactionOverlay,
@@ -732,40 +734,43 @@ class _ServicosScreenState extends State<ServicosScreen> {
                                           ? 101 / 3
                                           : 48,
                                     ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              option,
-                                              style: const TextStyle(
-                                                color: VH.foreground,
-                                                fontFamily: VH.bodyFontFamily,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
+                                    child: ExcludeSemantics(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                option,
+                                                style: const TextStyle(
+                                                  color: VH.foreground,
+                                                  fontFamily: VH.bodyFontFamily,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          Container(
-                                            width: 15,
-                                            height: 15,
-                                            decoration: BoxDecoration(
-                                              color: _selected.contains(option)
-                                                  ? VH.primary.withValues(
-                                                      alpha: .65,
-                                                    )
-                                                  : Colors.transparent,
-                                              border: Border.all(
-                                                color: VH.primary,
+                                            Container(
+                                              width: 15,
+                                              height: 15,
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    _selected.contains(option)
+                                                    ? VH.primary.withValues(
+                                                        alpha: .65,
+                                                      )
+                                                    : Colors.transparent,
+                                                border: Border.all(
+                                                  color: VH.primary,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(3),
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(3),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
