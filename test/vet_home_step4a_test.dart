@@ -348,7 +348,11 @@ void main() {
           )
           .first,
     );
-    await tester.tap(find.text('Salvar'));
+    final saveAction = find.descendant(
+      of: find.byKey(const ValueKey('pet-edit-save-target')),
+      matching: find.byType(InkWell),
+    ).first;
+    await tester.tap(saveAction);
     await tester.pumpAndSettle();
     expect(VetRepository.petById(pet.id)?.name, 'Pet modal renomeado 4A');
     expect(VetRepository.selectedPet?.id, pet.id);

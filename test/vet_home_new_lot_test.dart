@@ -381,7 +381,11 @@ void main() {
           },
         ),
       );
-      await t.tap(find.byTooltip('Adicionar pet'));
+      final addPetAction = find.descendant(
+        of: find.byKey(const ValueKey('pets-add-target')),
+        matching: find.byType(InkWell),
+      ).first;
+      await t.tap(addPetAction);
       await t.pumpAndSettle();
       await fill(t, 'Nome do Pet', 'Novo do app');
       await fill(t, 'Tipo de Animal', 'Gato');
