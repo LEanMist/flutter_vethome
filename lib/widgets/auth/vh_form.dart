@@ -130,6 +130,7 @@ class _VHFormState extends State<VHForm> {
       labelHorizontalPadding: mobileRegistration ? 28 : null,
       labelBottomPadding: mobileRegistration ? 0 : null,
       controller: _controllers[i],
+      value: field.value,
       keyboardType: field.keyboardType,
       choices: field.choices,
       onChanged: (value) {

@@ -45,9 +45,13 @@ void main() {
     final fields = tester
         .widgetList<TextFormField>(find.byType(TextFormField))
         .toList();
+    final textFields = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .toList();
     expect(fields, hasLength(7));
-    for (final field in fields) {
-      expect(field.controller?.text, isEmpty);
+    for (var i = 0; i < fields.length; i++) {
+      expect(fields[i].controller?.text, isEmpty);
+      expect(textFields[i].decoration?.hintText, form.fields[i].value);
     }
     for (final i in [5, 6]) {
       final editable = find.descendant(
