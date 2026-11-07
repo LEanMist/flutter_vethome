@@ -67,11 +67,15 @@ class _SplashScreenState extends State<SplashScreen> {
                                 fit: BoxFit.fill,
                               ),
                             ),
-                            Image.asset(
-                              _logo,
-                              key: const ValueKey('splash-logo'),
-                              fit: BoxFit.contain,
-                              semanticLabel: 'VetHome',
+                            ClipRRect(
+                              key: const ValueKey('splash-logo-clip'),
+                              borderRadius: BorderRadius.circular(200 * scale),
+                              child: Image.asset(
+                                _logo,
+                                key: const ValueKey('splash-logo'),
+                                fit: BoxFit.cover,
+                                semanticLabel: 'VetHome',
+                              ),
                             ),
                           ],
                         ),

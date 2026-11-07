@@ -46,6 +46,9 @@ void main() {
         find.byKey(const ValueKey('splash-logo-group')),
       );
       final logo = tester.getRect(find.byKey(const ValueKey('splash-logo')));
+      final logoClip = tester.widget<ClipRRect>(
+        find.byKey(const ValueKey('splash-logo-clip')),
+      );
       final ring = tester.getRect(
         find.byKey(const ValueKey('splash-logo-ring')),
       );
@@ -58,6 +61,11 @@ void main() {
       expect(group.height, closeTo(350 * scale, .01));
       expect(logo.width, closeTo(350 * scale, .01));
       expect(logo.height, closeTo(350 * scale, .01));
+      expect(logoClip.borderRadius, BorderRadius.circular(200 * scale));
+      expect(
+        tester.widget<Image>(find.byKey(const ValueKey('splash-logo'))).fit,
+        BoxFit.cover,
+      );
       expect(ring.left - group.left, closeTo(24.37 * scale, .01));
       expect(ring.top - group.top, closeTo(24.37 * scale, .01));
       expect(ring.width, closeTo(300.158 * scale, .01));
