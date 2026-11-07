@@ -317,31 +317,59 @@ void main() {
       expect(rect.right, lessThanOrEqualTo(390));
     }
 
-    // Figma CALENDAR_PAGE 2783:950: cartões 195×50 em x=102,
-    // data selecionada em y=323, divisores em y=466/551 e ação em y=651.
+    // Figma CALENDAR_PAGE 4133:182: calendário 390×383, grade interna,
+    // data selecionada em y=362 e cartões 195×50 em x=96.
+    expect(
+      tester.getRect(find.byKey(const ValueKey('vet-calendar'))),
+      const Rect.fromLTWH(0, 0, 390, 383),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('agenda-calendar-inner-panel'))),
+      const Rect.fromLTWH(22, 22, 347, 327),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('agenda-calendar-month-slot'))),
+      const Rect.fromLTWH(133, 28, 71, 35),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('agenda-calendar-year-slot'))),
+      const Rect.fromLTWH(214, 28, 35, 35),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('agenda-calendar-month-grid'))),
+      const Rect.fromLTWH(42, 75, 305, 260),
+    );
     final cardTopByLabel = {
-      'Hemograma': 399.0,
-      'Urina': 483.0,
-      'Creatinina': 567.0,
+      'Hemograma': 450.0,
+      'Urina': 534.0,
+      'Creatinina': 618.0,
     };
     for (final entry in cardTopByLabel.entries) {
       final card = find
           .ancestor(of: find.text(entry.key), matching: find.byType(Container))
           .first;
-      expect(tester.getRect(card), Rect.fromLTWH(102, entry.value, 195, 50));
+      expect(tester.getRect(card), Rect.fromLTWH(96, entry.value, 195, 50));
     }
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-selected-date'))),
-      const Rect.fromLTWH(67, 323, 258, 41),
+      const Rect.fromLTWH(66, 362, 258, 41),
     );
     for (var index = 0; index < 2; index++) {
       final line = tester.getRect(
         find.byKey(ValueKey('agenda-divider-$index')),
       );
-      expect(line.left, closeTo(88, .5));
+      expect(line.left, closeTo(82, .5));
       expect(line.width, closeTo(221, .5));
-      expect(line.center.dy, closeTo(466 + 85 * index, .5));
+      expect(line.center.dy, closeTo(517 + 85 * index, .5));
     }
+    expect(
+      tester.getRect(find.byKey(const ValueKey('agenda-chevron-up'))),
+      const Rect.fromLTWH(340, 486, 20, 20),
+    );
+    expect(
+      tester.getRect(find.byKey(const ValueKey('agenda-chevron-down'))),
+      const Rect.fromLTWH(340, 612, 20, 20),
+    );
     final newAppointmentButton = find
         .ancestor(
           of: find.text('Nova Consulta'),
@@ -350,8 +378,9 @@ void main() {
         .first;
     expect(
       tester.getRect(newAppointmentButton),
-      const Rect.fromLTWH(145, 651, 99, 41),
+      const Rect.fromLTWH(145, 676, 99, 41),
     );
+    expect(find.byTooltip('Pets'), findsNothing);
 
     for (final finder in [
       find.text('Sáb'),

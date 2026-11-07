@@ -336,8 +336,8 @@ class VetCalendar extends StatelessWidget {
     final weekLabels = const ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     final compactWeekLabels = const ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     final cellDimension = 35 * scale;
-    final columnGap = 13.142857 * scale;
-    final rowGap = 5 * scale;
+    final columnGap = 10 * scale;
+    final rowGap = 10 * scale;
 
     return Semantics(
       key: const ValueKey('agenda-calendar-month-navigation'),
@@ -362,7 +362,7 @@ class VetCalendar extends StatelessWidget {
         child: Container(
           key: const ValueKey('vet-calendar'),
           width: 390 * scale,
-          height: 344 * scale,
+          height: 383 * scale,
           clipBehavior: Clip.none,
           decoration: BoxDecoration(
             color: VH.secondary,
@@ -373,10 +373,27 @@ class VetCalendar extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
+              Positioned(
+                left: 22 * scale,
+                top: 22 * scale,
+                width: 347 * scale,
+                height: 327 * scale,
+                child: ExcludeSemantics(
+                  child: Container(
+                    key: const ValueKey('agenda-calendar-inner-panel'),
+                    decoration: BoxDecoration(
+                      color: VH.background.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(
+                        VH.radiusXLarge * scale,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               if (compactText)
                 Positioned(
                   left: 0,
-                  top: 10 * scale,
+                  top: 16 * scale,
                   width: 390 * scale,
                   height: 44 * scale,
                   child: Semantics(
@@ -405,45 +422,52 @@ class VetCalendar extends StatelessWidget {
                 )
               else ...[
                 Positioned(
-                  left: 126 * scale,
-                  top: 17 * scale,
+                  left: 133 * scale,
+                  top: 28 * scale,
                   width: 71 * scale,
                   height: 35 * scale,
-                  child: Semantics(
-                    label: 'Mês ${monthNames[month.month - 1]}',
-                    child: Center(
-                      child: Text(
-                        monthNames[month.month - 1],
-                        key: const ValueKey('agenda-calendar-month-heading'),
-                        maxLines: 1,
-                        softWrap: false,
-                        style: TextStyle(
-                          color: VetColors.calendarTextOnRose,
-                          fontSize: 15 * scale,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: VH.headingFontFamily,
+                  child: SizedBox.expand(
+                    key: const ValueKey('agenda-calendar-month-slot'),
+                    child: Semantics(
+                      label: 'Mês ${monthNames[month.month - 1]}',
+                      child: Center(
+                        child: Text(
+                          monthNames[month.month - 1],
+                          key: const ValueKey('agenda-calendar-month-heading'),
+                          maxLines: 1,
+                          softWrap: false,
+                          style: TextStyle(
+                            color: VetColors.calendarTextOnRose,
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: VH.headingFontFamily,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
                 Positioned(
-                  left: 207 * scale,
-                  top: 17 * scale,
+                  left: 214 * scale,
+                  top: 28 * scale,
                   width: 35 * scale,
                   height: 35 * scale,
-                  child: Semantics(
-                    label: 'Ano ${month.year}',
-                    child: Center(
-                      child: Text(
-                        '${month.year}',
-                        maxLines: 1,
-                        softWrap: false,
-                        style: TextStyle(
-                          color: VetColors.calendarTextOnRose,
-                          fontSize: 15 * scale,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: VH.headingFontFamily,
+                  child: SizedBox.expand(
+                    key: const ValueKey('agenda-calendar-year-slot'),
+                    child: Semantics(
+                      label: 'Ano ${month.year}',
+                      child: Center(
+                        child: Text(
+                          '${month.year}',
+                          key: const ValueKey('agenda-calendar-year-heading'),
+                          maxLines: 1,
+                          softWrap: false,
+                          style: TextStyle(
+                            color: VetColors.calendarTextOnRose,
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: VH.headingFontFamily,
+                          ),
                         ),
                       ),
                     ),
@@ -451,10 +475,11 @@ class VetCalendar extends StatelessWidget {
                 ),
               ],
               Positioned(
-                left: 31 * scale,
-                top: 65 * scale,
-                width: 327 * scale,
+                left: 42 * scale,
+                top: 75 * scale,
+                width: 305 * scale,
                 child: Column(
+                  key: const ValueKey('agenda-calendar-month-grid'),
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _agendaCalendarRow(

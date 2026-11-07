@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/theme.dart';
@@ -142,10 +143,22 @@ void main() {
         }
       }
 
-      final description = tester.widget<TextField>(find.byType(TextField));
+      final descriptionFinder = width < VH.desktopBreakpoint
+          ? find.byKey(const ValueKey('appointment-booking-description'))
+          : find.byType(TextField);
+      final description = tester.widget<TextField>(descriptionFinder);
       final descriptionColor = description.style!.color!;
       final hintColor = description.decoration!.hintStyle!.color!;
-      expect(description.decoration!.fillColor, VetColors.rose);
+      if (width < VH.desktopBreakpoint) {
+        expect(description.decoration!.filled, isFalse);
+        final descriptionSurface = tester.widget<Container>(
+          find.byKey(const ValueKey('appointment-booking-description-surface')),
+        );
+        expect(
+          (descriptionSurface.decoration! as inset_shadow.BoxDecoration).color,
+          VetColors.rose,
+        );
+      }
       for (final color in [descriptionColor, hintColor]) {
         expect(color, VetColors.calendarTextOnRose);
         expect(

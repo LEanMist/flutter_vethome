@@ -28,7 +28,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('cartão compacto corresponde à dimensão de referência no 390', (
+  testWidgets('cartão de agendamento corresponde à referência no 390', (
     tester,
   ) async {
     await pumpAt(tester, 390);
@@ -37,18 +37,50 @@ void main() {
       tester.getSize(
         find.byKey(const ValueKey('appointment-booking-scaled-size')),
       ),
-      const Size(390, 461),
+      const Size(390, 453),
     );
     expect(find.text('Hemograma + V10'), findsOneWidget);
     expect(find.text('Particular'), findsOneWidget);
-    expect(find.text(VetRepository.pets.first.name), findsOneWidget);
+    final card = find.byKey(const ValueKey('appointment-booking-card'));
+    expect(
+      find.descendant(
+        of: card,
+        matching: find.text(VetRepository.pets.first.name),
+      ),
+      findsNothing,
+    );
     expect(
       find.byKey(const ValueKey('appointment-booking-description')),
       findsOneWidget,
     );
+    final dateButton = find.byKey(const ValueKey('appointment-booking-date'));
+    expect(tester.getSize(dateButton), const Size(222, 48));
     expect(
-      find.byKey(const ValueKey('appointment-booking-save')),
+      find.descendant(
+        of: dateButton,
+        matching: find.textContaining(RegExp(r'^[A-ZÁÉÍÓÚÂÊÔÃÕ]')),
+      ),
       findsOneWidget,
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('appointment-booking-start-time')))
+          .height,
+      48,
+    );
+    final servicePill = tester.widget<Container>(
+      find.byKey(const ValueKey('appointment-booking-service')),
+    );
+    expect(
+      (servicePill.decoration! as BoxDecoration).borderRadius,
+      BorderRadius.circular(15),
+    );
+    final save = find.byKey(const ValueKey('appointment-booking-save'));
+    expect(save, findsOneWidget);
+    expect(tester.getSize(save), const Size(117, 51));
+    expect(
+      tester.getTopLeft(save) - tester.getTopLeft(card),
+      const Offset(137, 376),
     );
     expect(tester.takeException(), isNull);
   });
@@ -60,7 +92,31 @@ void main() {
       find.byKey(const ValueKey('appointment-booking-scaled-size')),
     );
     expect(size.width, 320);
-    expect(size.height, closeTo(461 * 320 / 390, .01));
+    expect(size.height, closeTo(453 * 320 / 390, .01));
+    final scale = size.width / 390;
+    for (final key in [
+      const ValueKey('appointment-booking-date'),
+      const ValueKey('appointment-booking-start-time'),
+      const ValueKey('appointment-booking-end-time'),
+      const ValueKey('appointment-booking-save'),
+    ]) {
+      expect(tester.getRect(find.byKey(key)).height, closeTo(48, .01));
+    }
+    final dateTarget = tester.getRect(
+      find.byKey(const ValueKey('appointment-booking-date')),
+    );
+    final startTarget = tester.getRect(
+      find.byKey(const ValueKey('appointment-booking-start-time')),
+    );
+    final descriptionRect = tester.getRect(
+      find.byKey(const ValueKey('appointment-booking-description')),
+    );
+    expect(dateTarget.bottom, lessThanOrEqualTo(startTarget.top + .01));
+    expect(startTarget.bottom, lessThan(descriptionRect.top));
+    final description = tester.widget<TextField>(
+      find.byKey(const ValueKey('appointment-booking-description')),
+    );
+    expect(description.style!.fontSize! * scale, closeTo(12, .01));
     expect(find.byType(TextField), findsOneWidget);
     await tester.enterText(
       find.byKey(const ValueKey('appointment-booking-description')),

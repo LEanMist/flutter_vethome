@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/utils/formatters.dart';
 import '../data/vet_repository.dart';
@@ -14,6 +15,9 @@ import '../widgets/vet_calendar.dart';
 
 List<DateTime> calendarMonthDays(DateTime month) =>
     VetCalendar.monthDays(month);
+
+const _agendaChevronUp = 'assets/imagens/figma/agenda-chevron-up.svg';
+const _agendaChevronDown = 'assets/imagens/figma/agenda-chevron-down.svg';
 
 typedef _AgendaItem = ({
   String petId,
@@ -78,6 +82,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final isMobile = MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
     final page = VHPage(
       tab: '/agenda',
+      showPetsTab: !isMobile,
       children: [
         if (isMobile)
           _mobileAgenda(consultasDoDia)
@@ -109,10 +114,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final scale = (width / 390).clamp(0.8, 1.0).toDouble();
     final actionTop = math.max(
-      651.0,
-      appointments.length > 3 ? 399.0 + 84.0 * appointments.length : 651.0,
+      676.0,
+      appointments.length > 3 ? 424.0 + 84.0 * appointments.length : 676.0,
     );
-    final contentHeight = math.max(692.0, actionTop + 41) * scale;
+    final contentHeight = math.max(717.0, actionTop + 41) * scale;
     final weekdays = const [
       'Domingo',
       'Segunda Feira',
@@ -148,8 +153,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           Positioned(
-            left: 67 * scale,
-            top: 323 * scale,
+            left: 66 * scale,
+            top: 362 * scale,
             width: 258 * scale,
             height: 41 * scale,
             child: Container(
@@ -194,8 +199,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
             _mobileAppointment(appointments[index], index, scale),
             if (index < appointments.length - 1)
               Positioned(
-                left: 88 * scale,
-                top: (465 + 85 * index) * scale,
+                left: 82 * scale,
+                top: (516 + 85 * index) * scale,
                 child: _FigmaDottedLine(
                   key: ValueKey('agenda-divider-$index'),
                   width: 221 * scale,
@@ -203,28 +208,44 @@ class _AgendaScreenState extends State<AgendaScreen> {
               ),
           ],
           Positioned(
-            left: 343 * scale,
-            top: 439 * scale,
-            width: 24 * scale,
-            height: 24 * scale,
-            child: ExcludeSemantics(
-              child: Icon(
-                Icons.expand_less,
-                size: 24 * scale,
-                color: VH.foreground,
+            left: 340 * scale,
+            top: 486 * scale,
+            width: 20 * scale,
+            height: 20 * scale,
+            child: SizedBox.expand(
+              key: const ValueKey('agenda-chevron-up'),
+              child: ExcludeSemantics(
+                child: Center(
+                  child: Transform.rotate(
+                    angle: -math.pi / 2,
+                    child: SvgPicture.asset(
+                      _agendaChevronUp,
+                      width: 11 * scale,
+                      height: 19.6299 * scale,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
           Positioned(
-            left: 343 * scale,
-            top: 555 * scale,
-            width: 24 * scale,
-            height: 24 * scale,
-            child: ExcludeSemantics(
-              child: Icon(
-                Icons.expand_more,
-                size: 24 * scale,
-                color: VH.foreground,
+            left: 340 * scale,
+            top: 612 * scale,
+            width: 20 * scale,
+            height: 20 * scale,
+            child: SizedBox.expand(
+              key: const ValueKey('agenda-chevron-down'),
+              child: ExcludeSemantics(
+                child: Center(
+                  child: Transform.rotate(
+                    angle: math.pi / 2,
+                    child: SvgPicture.asset(
+                      _agendaChevronDown,
+                      width: 11 * scale,
+                      height: 19.6299 * scale,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -275,7 +296,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
   }
 
   Widget _mobileAppointment(_AgendaItem item, int index, double scale) {
-    final top = (399 + 84 * index) * scale;
+    final top = (450 + 84 * index) * scale;
     final end = item.agendamento.endDate;
     final label = [
       item.agendamento.tipo,
@@ -323,7 +344,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
         ),
         Positioned(
-          left: 102 * scale,
+          left: 96 * scale,
           top: top,
           width: 195 * scale,
           height: 50 * scale,

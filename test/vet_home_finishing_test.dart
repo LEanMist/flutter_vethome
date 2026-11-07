@@ -316,16 +316,24 @@ void main() {
       ]) {
         await tester.pumpWidget(MaterialApp(key: UniqueKey(), home: screen));
         await tester.pumpAndSettle();
-        expect(
-          tester.widget<PetAvatar>(find.byType(PetAvatar).first).photoBase64,
-          photo,
-        );
+        if (screen is NovaConsultaPage) {
+          expect(
+            find.byKey(const ValueKey('appointment-booking-card')),
+            findsOneWidget,
+          );
+          expect(find.byType(PetAvatar), findsNothing);
+        } else {
+          expect(
+            tester.widget<PetAvatar>(find.byType(PetAvatar).first).photoBase64,
+            photo,
+          );
+        }
         if (screen is ServicosScreen || screen is ConvenioScreen) {
           // SERVICES_PAGE e CONVENIO_PAGE usam a aba compacta do pet.
           expect(find.byType(PetSummary), findsNothing);
         } else if (screen is NovaConsultaPage) {
           expect(find.byType(PetSummary), findsNothing);
-          expect(find.byType(PetAvatar), findsOneWidget);
+          expect(find.byType(PetAvatar), findsNothing);
         } else {
           expect(find.byType(PetSummary), findsOneWidget);
         }

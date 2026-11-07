@@ -375,7 +375,7 @@ void main() {
       expect(find.text('${now.year + 1}'), findsOneWidget);
     }
   });
-  testWidgets('Novo agendamento exibe nome atual por ID e avatar canônico', (
+  testWidgets('Novo agendamento conserva o pet atual sem exibi-lo no cartão', (
     tester,
   ) async {
     final original = VetRepository.pets.first;
@@ -395,11 +395,9 @@ void main() {
         ),
       ),
     );
-    expect(find.text('Pet renomeado'), findsOneWidget);
-    expect(
-      tester.widget<PetAvatar>(find.byType(PetAvatar)).image,
-      original.imagePath,
-    );
+    expect(VetRepository.petById(original.id)?.name, 'Pet renomeado');
+    expect(VetRepository.petById(original.id)?.imagePath, original.imagePath);
+    expect(find.byType(PetAvatar), findsNothing);
     expect(find.text('V10'), findsOneWidget);
   });
   test(

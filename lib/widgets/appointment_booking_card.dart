@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'package:flutter_svg/flutter_svg.dart';
 
-import '../models/pet_model.dart';
 import '../theme/vet_colors.dart';
-import 'pets/pet_avatar.dart';
 
 /// Cartão móvel do fluxo de agendamento, baseado no CALENDAR_WIDGET do Figma.
 class AppointmentBookingCard extends StatelessWidget {
@@ -12,7 +12,6 @@ class AppointmentBookingCard extends StatelessWidget {
     super.key,
     required this.service,
     required this.plan,
-    required this.pet,
     required this.date,
     required this.start,
     required this.end,
@@ -25,11 +24,18 @@ class AppointmentBookingCard extends StatelessWidget {
   });
 
   static const double designWidth = 390;
-  static const double designHeight = 461;
+  static const double designHeight = 453;
+  static const double minimumTouchTarget = 48;
+
+  static const _calendarIcon = 'assets/imagens/figma/appointment-calendar.svg';
+  static const _clockIcon = 'assets/imagens/figma/appointment-clock.svg';
+  static const _descriptionIcon =
+      'assets/imagens/figma/appointment-text-long.svg';
+  static const _timeDivider =
+      'assets/imagens/figma/appointment-time-divider.svg';
 
   final String service;
   final String plan;
-  final PetModel pet;
   final DateTime date;
   final TimeOfDay? start;
   final TimeOfDay? end;
@@ -40,7 +46,7 @@ class AppointmentBookingCard extends StatelessWidget {
   final VoidCallback onSave;
   final bool saving;
 
-  static const _chipColor = Color(0xFFDDA7A8);
+  static const _chipColor = Color.fromRGBO(192, 128, 129, 0.5);
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -62,7 +68,7 @@ class AppointmentBookingCard extends StatelessWidget {
             child: SizedBox(
               width: designWidth,
               height: designHeight,
-              child: _buildDesignCard(context),
+              child: _buildDesignCard(context, scale),
             ),
           ),
         ),
@@ -70,218 +76,217 @@ class AppointmentBookingCard extends StatelessWidget {
     },
   );
 
-  Widget _buildDesignCard(BuildContext context) => Container(
-    key: const ValueKey('appointment-booking-card'),
-    clipBehavior: Clip.antiAlias,
-    decoration: BoxDecoration(
-      color: VetColors.pink,
-      borderRadius: BorderRadius.circular(30),
-    ),
-    child: Stack(
-      children: [
-        _icon(Icons.calendar_today_outlined, left: 32, top: 38),
-        _staticPill(
-          key: const ValueKey('appointment-booking-service'),
-          left: 81,
-          top: 35,
-          label: service,
-          semanticLabel: 'Serviço: $service',
-          color: _chipColor,
-        ),
-        _icon(Icons.calendar_today_outlined, left: 32, top: 86),
-        _staticPill(
-          key: const ValueKey('appointment-booking-plan'),
-          left: 81,
-          top: 83,
-          label: plan,
-          semanticLabel: 'Convênio: $plan',
-          color: _chipColor,
-        ),
-        _icon(Icons.calendar_today_outlined, left: 32, top: 134),
-        _actionPill(
-          key: const ValueKey('appointment-booking-date'),
-          left: 81,
-          top: 131,
-          label: _dateLabel(date),
-          semanticLabel: 'Data: ${_dateLabel(date)}. Alterar data.',
-          color: VetColors.rose,
-          onTap: onChooseDate,
-        ),
-        _icon(Icons.access_time_filled, left: 32, top: 190),
-        Positioned(
-          left: 81,
-          top: 185,
-          width: 222,
-          height: 42,
-          child: Row(
-            children: [
-              _timePill(
-                key: const ValueKey('appointment-booking-start-time'),
-                label: _timeLabel(start),
-                semanticLabel: 'Horário de início: ${_timeLabel(start)}',
-                color: VetColors.rose,
-                onTap: onChooseStart,
+  Widget _buildDesignCard(BuildContext context, double scale) {
+    final textScale = 1 / scale;
+    final timeTargetHeight = minimumTouchTarget / scale;
+    final narrowLayoutOffset = math.max(0.0, timeTargetHeight - 56.0);
+    final saveHeight = math.max(51.0, timeTargetHeight);
+    final saveTop = 376 - (saveHeight - 51) / 2;
+
+    return Container(
+      key: const ValueKey('appointment-booking-card'),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: VetColors.pink,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Stack(
+        children: [
+          _icon(_calendarIcon, left: 33, top: 38),
+          _staticPill(
+            key: const ValueKey('appointment-booking-service'),
+            left: 81,
+            top: 35,
+            label: service,
+            semanticLabel: 'Serviço: $service',
+            color: _chipColor,
+            textScale: textScale,
+          ),
+          _icon(_calendarIcon, left: 33, top: 85),
+          _staticPill(
+            key: const ValueKey('appointment-booking-plan'),
+            left: 81,
+            top: 83,
+            label: plan,
+            semanticLabel: 'Convênio: $plan',
+            color: _chipColor,
+            textScale: textScale,
+          ),
+          _icon(_calendarIcon, left: 33, top: 132),
+          _actionPill(
+            key: const ValueKey('appointment-booking-date'),
+            left: 81,
+            top: 131,
+            label: _dateLabel(date),
+            semanticLabel: 'Data: ${_dateLabel(date)}. Alterar data.',
+            color: VetColors.rose,
+            textScale: textScale,
+            tapTargetHeight: timeTargetHeight,
+            onTap: onChooseDate,
+          ),
+          _icon(_clockIcon, left: 33, top: 187),
+          Positioned(
+            left: 81,
+            top: 187 + narrowLayoutOffset - (timeTargetHeight - 35) / 2,
+            width: 222,
+            height: timeTargetHeight,
+            child: Row(
+              children: [
+                _timePill(
+                  key: const ValueKey('appointment-booking-start-time'),
+                  label: _timeLabel(start),
+                  semanticLabel: 'Horário de início: ${_timeLabel(start)}',
+                  color: VetColors.rose,
+                  textScale: textScale,
+                  tapTargetHeight: timeTargetHeight,
+                  onTap: onChooseStart,
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 12,
+                  height: 2,
+                  child: ExcludeSemantics(
+                    child: SvgPicture.asset(_timeDivider),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _timePill(
+                  key: const ValueKey('appointment-booking-end-time'),
+                  label: _timeLabel(end),
+                  semanticLabel: 'Horário de término: ${_timeLabel(end)}',
+                  color: _chipColor,
+                  textScale: textScale,
+                  tapTargetHeight: timeTargetHeight,
+                  onTap: onChooseEnd,
+                ),
+              ],
+            ),
+          ),
+          _icon(_descriptionIcon, left: 33, top: 252 + narrowLayoutOffset),
+          Positioned(
+            left: 85,
+            top: 231 + narrowLayoutOffset,
+            width: 270,
+            height: 20,
+            child: ExcludeSemantics(
+              child: Text(
+                'Adicionar uma descrição',
+                style: TextStyle(
+                  color: VetColors.brown,
+                  fontFamily: 'MontserratAlternates',
+                  fontSize: 12 * textScale,
+                  fontWeight: FontWeight.w500,
+                  height: 1.2,
+                ),
               ),
-              const SizedBox(width: 8),
-              const SizedBox(
-                width: 12,
-                child: ExcludeSemantics(
-                  child: Text(
-                    '–',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: VetColors.brown,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+            ),
+          ),
+          Positioned(
+            left: 80,
+            top: 252 + narrowLayoutOffset,
+            width: 285,
+            height: 103,
+            child: Semantics(
+              label: 'Descrição opcional do agendamento',
+              textField: true,
+              child: Container(
+                key: const ValueKey('appointment-booking-description-surface'),
+                decoration: inset_shadow.BoxDecoration(
+                  color: VetColors.rose,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: const [
+                    inset_shadow.BoxShadow(
+                      color: Color(0x40000000),
+                      offset: Offset(2, 2),
+                      blurRadius: 5,
+                      inset: true,
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  key: const ValueKey('appointment-booking-description'),
+                  controller: descriptionController,
+                  minLines: 3,
+                  maxLines: 4,
+                  maxLength: 500,
+                  style: TextStyle(
+                    color: VetColors.calendarTextOnRose,
+                    fontFamily: 'MontserratAlternates',
+                    fontSize: 12 * textScale,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    filled: false,
+                    hintText: '. . .',
+                    hintStyle: TextStyle(
+                      color: VetColors.calendarTextOnRose,
+                      fontFamily: 'MontserratAlternates',
+                      fontSize: 12 * textScale,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    counterText: '',
+                    contentPadding: const EdgeInsets.fromLTRB(12, 7, 12, 6),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(
+                        color: VetColors.brown,
+                        width: 1,
+                      ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              _timePill(
-                key: const ValueKey('appointment-booking-end-time'),
-                label: _timeLabel(end),
-                semanticLabel: 'Horário de término: ${_timeLabel(end)}',
-                color: _chipColor,
-                onTap: onChooseEnd,
-              ),
-            ],
-          ),
-        ),
-        _icon(Icons.notes, left: 34, top: 258),
-        const Positioned(
-          left: 85,
-          top: 231,
-          width: 270,
-          height: 20,
-          child: ExcludeSemantics(
-            child: Text(
-              'Adicionar uma descrição',
-              style: TextStyle(
-                color: VetColors.brown,
-                fontSize: 13,
-                height: 1.2,
-              ),
             ),
           ),
-        ),
-        Positioned(
-          left: 80,
-          top: 252,
-          width: 285,
-          height: 103,
-          child: Semantics(
-            label: 'Descrição opcional do agendamento',
-            textField: true,
-            child: TextField(
-              key: const ValueKey('appointment-booking-description'),
-              controller: descriptionController,
-              minLines: 3,
-              maxLines: 4,
-              maxLength: 500,
-              style: const TextStyle(
-                color: VetColors.calendarTextOnRose,
-                fontSize: 14,
+          Positioned(
+            left: 137,
+            top: saveTop,
+            width: 117,
+            height: saveHeight,
+            child: ElevatedButton(
+              key: const ValueKey('appointment-booking-save'),
+              onPressed: saving ? null : onSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VetColors.pink,
+                foregroundColor: VetColors.brown,
+                elevation: 2,
+                shadowColor: const Color(0x40000000),
+                padding: EdgeInsets.zero,
+                minimumSize: Size(117, saveHeight),
+                maximumSize: Size(117, saveHeight),
+                shape: const StadiumBorder(),
               ),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: VetColors.rose,
-                hintText: '...',
-                hintStyle: const TextStyle(color: VetColors.calendarTextOnRose),
-                counterText: '',
-                contentPadding: const EdgeInsets.fromLTRB(12, 7, 12, 6),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: const BorderSide(
-                    color: VetColors.brown,
-                    width: 1,
-                  ),
+              child: Text(
+                saving ? 'Salvando…' : 'Salvar',
+                style: TextStyle(
+                  fontFamily: 'MontserratAlternates',
+                  fontSize: 18 * textScale,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
           ),
-        ),
-        Positioned(
-          left: 32,
-          top: 365,
-          width: 36,
-          height: 36,
-          child: Semantics(
-            image: true,
-            label: 'Foto de ${pet.name}',
-            child: PetAvatar(
-              image: pet.imagePath,
-              photoBase64: pet.photoBase64,
-              species: pet.species,
-              size: 36,
-            ),
-          ),
-        ),
-        Positioned(
-          left: 80,
-          top: 373,
-          width: 170,
-          height: 24,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              pet.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: VetColors.brown,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          right: 20,
-          bottom: 13,
-          width: 105,
-          height: 44,
-          child: ElevatedButton(
-            key: const ValueKey('appointment-booking-save'),
-            onPressed: saving ? null : onSave,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VetColors.pink,
-              foregroundColor: VetColors.brown,
-              elevation: 2,
-              shadowColor: VetColors.shadowDark,
-              padding: EdgeInsets.zero,
-              minimumSize: const Size(105, 44),
-              maximumSize: const Size(105, 44),
-              shape: const StadiumBorder(
-                side: BorderSide(color: Colors.white, width: 1),
-              ),
-            ),
-            child: Text(
-              saving ? 'Salvando…' : 'Salvar',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 
-  Widget _icon(IconData icon, {required double left, required double top}) =>
+  Widget _icon(String asset, {required double left, required double top}) =>
       Positioned(
         left: left,
         top: top,
-        width: 30,
-        height: 30,
+        width: 28,
+        height: 28,
         child: ExcludeSemantics(
-          child: Icon(icon, color: VetColors.brown, size: 29),
+          child: SvgPicture.asset(asset, fit: BoxFit.fill),
         ),
       );
 
@@ -292,6 +297,7 @@ class AppointmentBookingCard extends StatelessWidget {
     required String label,
     required String semanticLabel,
     required Color color,
+    required double textScale,
   }) => Positioned(
     left: left,
     top: top,
@@ -306,14 +312,19 @@ class AppointmentBookingCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(15),
           ),
           child: Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: VetColors.brown, fontSize: 13),
+            style: TextStyle(
+              color: VetColors.brown,
+              fontFamily: 'MontserratAlternates',
+              fontSize: 12 * textScale,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -327,34 +338,66 @@ class AppointmentBookingCard extends StatelessWidget {
     required String label,
     required String semanticLabel,
     required Color color,
+    required double textScale,
+    required double tapTargetHeight,
     required VoidCallback onTap,
-  }) => Positioned(
-    left: left,
-    top: top,
-    width: 222,
-    height: 35,
-    child: Semantics(
-      button: true,
-      label: semanticLabel,
-      child: Material(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          key: key,
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: ExcludeSemantics(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: VetColors.calendarTextOnRose,
-                    fontSize: 13,
+  }) {
+    const visualHeight = 35.0;
+    final verticalInset = (tapTargetHeight - visualHeight) / 2;
+
+    return Positioned(
+      left: left,
+      top: top - verticalInset,
+      width: 222,
+      height: tapTargetHeight,
+      child: Semantics(
+        button: true,
+        label: semanticLabel,
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(15),
+          child: InkWell(
+            key: key,
+            borderRadius: BorderRadius.circular(15),
+            onTap: onTap,
+            child: SizedBox(
+              height: tapTargetHeight,
+              child: Center(
+                child: SizedBox(
+                  width: 222,
+                  height: visualHeight,
+                  child: Ink(
+                    decoration: inset_shadow.BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: const [
+                        inset_shadow.BoxShadow(
+                          color: Color(0x40000000),
+                          offset: Offset(2, 2),
+                          blurRadius: 5,
+                          inset: true,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: ExcludeSemantics(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: VetColors.calendarTextOnRose,
+                              fontFamily: 'MontserratAlternates',
+                              fontSize: 12 * textScale,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -362,14 +405,16 @@ class AppointmentBookingCard extends StatelessWidget {
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _timePill({
     required Key key,
     required String label,
     required String semanticLabel,
     required Color color,
+    required double textScale,
+    required double tapTargetHeight,
     required VoidCallback onTap,
   }) => Expanded(
     child: Semantics(
@@ -379,22 +424,37 @@ class AppointmentBookingCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           key: key,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(15),
           onTap: onTap,
-          child: Center(
-            child: Container(
-              height: 35,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: ExcludeSemantics(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: VetColors.calendarTextOnRose,
-                    fontSize: 13,
+          child: SizedBox(
+            height: tapTargetHeight,
+            child: Center(
+              child: Container(
+                height: 35,
+                alignment: Alignment.center,
+                decoration: inset_shadow.BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: color == VetColors.rose
+                      ? const [
+                          inset_shadow.BoxShadow(
+                            color: Color(0x40000000),
+                            offset: Offset(2, 2),
+                            blurRadius: 5,
+                            inset: true,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: ExcludeSemantics(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: VetColors.calendarTextOnRose,
+                      fontFamily: 'MontserratAlternates',
+                      fontSize: 12 * textScale,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
@@ -433,6 +493,9 @@ class AppointmentBookingCard extends StatelessWidget {
       'novembro',
       'dezembro',
     ];
-    return '${weekdays[date.weekday - 1]}, ${date.day} de ${months[date.month - 1]}';
+    final weekday = weekdays[date.weekday - 1];
+    final capitalizedWeekday =
+        '${weekday[0].toUpperCase()}${weekday.substring(1)}';
+    return '$capitalizedWeekday, ${date.day} de ${months[date.month - 1]}';
   }
 }

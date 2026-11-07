@@ -112,9 +112,17 @@ void main() {
           ]) {
             await tester.pumpWidget(MaterialApp(home: screen));
             await tester.pumpAndSettle();
-            expect(avatarImages(), findsWidgets, reason: '$screen');
-            for (final image in tester.widgetList<Image>(avatarImages())) {
-              expect(assetOf(image), entry.$2, reason: '$screen');
+            if (screen is NovaConsultaPage) {
+              expect(
+                avatarImages(),
+                findsNothing,
+                reason: '$screen omits pet per Figma',
+              );
+            } else {
+              expect(avatarImages(), findsWidgets, reason: '$screen');
+              for (final image in tester.widgetList<Image>(avatarImages())) {
+                expect(assetOf(image), entry.$2, reason: '$screen');
+              }
             }
             if (screen is PetsPage || screen is EscolhaPetScreen) {
               expect(
@@ -207,7 +215,7 @@ void main() {
     expect(find.byType(Icon), findsNothing);
   });
 
-  testWidgets('renomear mantém ID, imagem e fallback no resumo/agendamento', (
+  testWidgets('renomear mantém ID e imagem sem exibir o pet no cartão Figma', (
     tester,
   ) async {
     late PetModel pet;
@@ -228,12 +236,15 @@ void main() {
         home: NovaConsultaPage(pet: pet, service: 'Urina', plan: 'Particular'),
       ),
     );
-    expect(find.text('Gato Renomeado'), findsOneWidget);
-    expect(find.text('Gato Renomeado'), findsOneWidget);
-    expect(assetOf(tester.widget<Image>(avatarImages())), PetImages.cat);
+    expect(find.text('Gato Renomeado'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('appointment-booking-card')),
+      findsOneWidget,
+    );
+    expect(avatarImages(), findsNothing);
     expect(VetRepository.petById(pet.id)!.imagePath, pet.imagePath);
     expect(find.byType(PetSummary), findsNothing);
-    expect(find.byType(PetAvatar), findsOneWidget);
+    expect(find.byType(PetAvatar), findsNothing);
   });
 
   testWidgets('editor preserva imagem válida ao trocar a espécie', (
