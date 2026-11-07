@@ -55,6 +55,13 @@ void main() {
     expect(addPet.left, closeTo(141, 1));
     expect(addPet.top, closeTo(643, 1));
     expect(addPet.size, const Size(107, 47));
+    final addPetTarget = tester.getRect(
+      find.byKey(const ValueKey('pets-add-target')),
+    );
+    expect(addPetTarget.left, closeTo(141, 1));
+    expect(addPetTarget.top, closeTo(643, 1));
+    expect(addPetTarget.size, const Size(107, 48));
+    expect(addPetTarget.bottom - addPet.bottom, 1);
     final bottomNav = find.byType(VetBottomNav);
     final navSurface = tester
         .widgetList<Container>(
@@ -112,10 +119,70 @@ void main() {
     viewport(tester, const Size(320, 640));
     await tester.pumpWidget(const MaterialApp(home: PetsPage()));
     expect(find.byType(PetCardWidget), findsWidgets);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('pets-add-target'))),
+      const Size(107, 48),
+    );
+    expect(
+      tester.getSize(find.byTooltip('Adicionar pet')),
+      const Size(107, 47),
+    );
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const MaterialApp(home: EscolhaPetScreen()));
     expect(find.byType(PetCardWidget), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('D8 mantém o botão visível e ativa o alvo de 48px', (
+    tester,
+  ) async {
+    viewport(tester, const Size(390, 844));
+    final semantics = tester.ensureSemantics();
+    try {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: const PetsPage(),
+          routes: {
+            '/cadastroPet': (_) => const Scaffold(
+              body: Center(child: Text('Cadastro de pet aberto')),
+            ),
+          },
+        ),
+      );
+
+      final visualRect = tester.getRect(find.byTooltip('Adicionar pet'));
+      final targetRect = tester.getRect(
+        find.byKey(const ValueKey('pets-add-target')),
+      );
+      expect(visualRect.size, const Size(107, 47));
+      expect(visualRect.top, 643);
+      expect(targetRect.size, const Size(107, 48));
+      expect(targetRect.bottom, visualRect.bottom + 1);
+      expect(find.bySemanticsLabel('Adicionar pet'), findsOneWidget);
+
+      await tester.tapAt(Offset(targetRect.center.dx, targetRect.bottom - 0.5));
+      await tester.pumpAndSettle();
+      expect(find.text('Cadastro de pet aberto'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
+  testWidgets('D8 preserva o alvo do botão na composição desktop', (
+    tester,
+  ) async {
+    viewport(tester, const Size(1280, 800));
+    await tester.pumpWidget(const MaterialApp(home: PetsPage()));
+
+    final visualRect = tester.getRect(find.byTooltip('Adicionar pet'));
+    final targetRect = tester.getRect(
+      find.byKey(const ValueKey('pets-add-target')),
+    );
+    expect(visualRect.size, const Size(107, 47));
+    expect(targetRect.size, const Size(107, 48));
+    expect(targetRect.bottom, visualRect.bottom + 1);
     expect(tester.takeException(), isNull);
   });
 

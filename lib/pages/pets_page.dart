@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
+import '../widgets/figma_action_target.dart';
 import '../widgets/pets/pet_card_widget.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet/vet_bottom_nav.dart';
@@ -84,9 +85,34 @@ class _PetsPageState extends State<PetsPage> {
       final top = 57 * s;
       final gap = 33 * s;
       // A lista rola internamente; o botão permanece fora dela em telas pequenas.
-      final height = (constraints.maxHeight - top - gap - 47 - 24)
+      // O alvo do botão tem 48 px; os 23 px finais preservam o espaço da navegação.
+      final height = (constraints.maxHeight - top - gap - 48 - 23)
           .clamp(0.0, 428 * s)
           .toDouble();
+      Future<void> addPet() async {
+        final created = await Navigator.pushNamed(
+          context,
+          '/cadastroPet',
+          arguments: {'flow': 'addPet'},
+        );
+        if (!mounted) return;
+        setState(() {});
+        if (created != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _listScroll.hasClients) {
+              _listScroll.animateTo(
+                _listScroll.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+          ScaffoldMessenger.of(
+            this.context,
+          ).showSnackBar(const SnackBar(content: Text('Pet cadastrado.')));
+        }
+      }
+
       return Column(
         children: [
           SizedBox(height: top),
@@ -132,40 +158,27 @@ class _PetsPageState extends State<PetsPage> {
             ),
           ),
           SizedBox(height: gap),
-          SizedBox(
+          FigmaActionTarget(
+            key: const ValueKey('pets-add-target'),
             width: 107,
-            height: 47,
-            child: IconButton.filled(
-              tooltip: 'Adicionar pet',
-              onPressed: () async {
-                final created = await Navigator.pushNamed(
-                  context,
-                  '/cadastroPet',
-                  arguments: {'flow': 'addPet'},
-                );
-                if (!mounted) return;
-                setState(() {});
-                if (created != null) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted && _listScroll.hasClients) {
-                      _listScroll.animateTo(
-                        _listScroll.position.maxScrollExtent,
-                        duration: const Duration(milliseconds: 240),
-                        curve: Curves.easeOut,
-                      );
-                    }
-                  });
-                  ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(content: Text('Pet cadastrado.')),
-                  );
-                }
-              },
-              style: IconButton.styleFrom(
-                backgroundColor: VetColors.brown,
-                foregroundColor: Colors.white,
-                shape: const StadiumBorder(),
+            label: 'Adicionar pet',
+            onPressed: addPet,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: 107,
+                height: 47,
+                child: IconButton.filled(
+                  tooltip: 'Adicionar pet',
+                  onPressed: addPet,
+                  style: IconButton.styleFrom(
+                    backgroundColor: VetColors.brown,
+                    foregroundColor: Colors.white,
+                    shape: const StadiumBorder(),
+                  ),
+                  icon: const Icon(Icons.add, size: 30),
+                ),
               ),
-              icon: const Icon(Icons.add, size: 30),
             ),
           ),
         ],
