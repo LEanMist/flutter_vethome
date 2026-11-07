@@ -147,10 +147,11 @@ class ConfigScreen extends StatelessWidget {
               _ThemeColorWheel(selectedColor: selected),
               const SizedBox(height: 18),
               Wrap(
-                spacing: 12,
+                spacing: 0,
                 children: [
                   for (final palette in colors)
                     Semantics(
+                      key: ValueKey('theme-swatch-target-${palette.name}'),
                       button: true,
                       selected: selected == palette.color,
                       label: 'Tema ${palette.name}',
@@ -160,16 +161,24 @@ class ConfigScreen extends StatelessWidget {
                           customBorder: const CircleBorder(),
                           onTap: () =>
                               setDialogState(() => selected = palette.color),
-                          child: CircleAvatar(
-                            radius: selected == palette.color ? 19 : 16,
-                            backgroundColor: palette.color,
-                            child: selected == palette.color
-                                ? const Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 18,
-                                  )
-                                : null,
+                          child: SizedBox.square(
+                            dimension: 48,
+                            child: Center(
+                              child: CircleAvatar(
+                                key: ValueKey(
+                                  'theme-swatch-visual-${palette.name}',
+                                ),
+                                radius: selected == palette.color ? 19 : 16,
+                                backgroundColor: palette.color,
+                                child: selected == palette.color
+                                    ? const Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 18,
+                                      )
+                                    : null,
+                              ),
+                            ),
                           ),
                         ),
                       ),

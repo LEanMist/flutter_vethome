@@ -76,22 +76,45 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('seletor de tema cabe em viewport estreito', (tester) async {
-    tester.view.physicalSize = const Size(320, 640);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  for (final size in [const Size(320, 640), const Size(390, 844)]) {
+    testWidgets('alvos do seletor de tema cabem em $size', (tester) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: ConfigScreen()));
-    await tester.tap(find.text('Tema do Aplicativo'));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(const MaterialApp(home: ConfigScreen()));
+      await tester.tap(find.text('Tema do Aplicativo'));
+      await tester.pumpAndSettle();
 
-    expect(
-      tester.getSize(find.byKey(const ValueKey('theme-color-wheel-frame'))),
-      const Size(264, 261),
-    );
-    expect(tester.takeException(), isNull);
-  });
+      expect(
+        tester.getSize(find.byKey(const ValueKey('theme-color-wheel-frame'))),
+        const Size(264, 261),
+      );
+      final swatches = [
+        for (final palette in ThemePreferences.options)
+          find.byKey(ValueKey('theme-swatch-target-${palette.name}')),
+      ];
+      expect(swatches, hasLength(5));
+      final bounds = [for (final swatch in swatches) tester.getRect(swatch)];
+      for (final (index, rect) in bounds.indexed) {
+        expect(rect.width, greaterThanOrEqualTo(48));
+        expect(rect.height, greaterThanOrEqualTo(48));
+        expect(rect.left, greaterThanOrEqualTo(0));
+        expect(rect.right, lessThanOrEqualTo(size.width));
+        final palette = ThemePreferences.options[index];
+        final visual = find.byKey(
+          ValueKey('theme-swatch-visual-${palette.name}'),
+        );
+        final visualRect = tester.getRect(visual);
+        final isSelected = palette.color == VH.themeSeed.value;
+        expect(visualRect.size, Size.square(isSelected ? 38 : 32));
+        expect(visualRect.center, rect.center);
+      }
+      expect(bounds.map((rect) => rect.top).toSet(), hasLength(1));
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   test(
     'prefere o tema padrão quando o armazenamento contém uma cor inválida',
