@@ -86,9 +86,12 @@ class _PetSummaryState extends State<PetSummary> {
                         ),
                         if (widget.onPhoto != null)
                           Positioned(
-                            right: -10,
-                            bottom: -10,
-                            child: PetPhotoButton(onPressed: widget.onPhoto),
+                            right: 0,
+                            bottom: 0,
+                            child: PetPhotoButton(
+                              onPressed: widget.onPhoto,
+                              visualOffset: const Offset(14, 14),
+                            ),
                           ),
                       ],
                     ),

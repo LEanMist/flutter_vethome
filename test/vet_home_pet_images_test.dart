@@ -18,6 +18,7 @@ import 'package:flutter_vethome/screens/pets.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/pet_avatar.dart';
+import 'package:flutter_vethome/widgets/pet_photo_button.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
 
 String assetOf(Image image) {
@@ -362,7 +363,13 @@ void main() {
 
     expect(find.byKey(const ValueKey('pet-camera-badge')), findsOneWidget);
     expect(find.byTooltip('Alterar foto do pet'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('pet-camera-badge')));
+    final button = find.byType(PetPhotoButton);
+    final badge = find.byKey(const ValueKey('pet-camera-badge'));
+    final target = tester.getRect(button);
+    expect(target.size, const Size(48, 48));
+    expect(tester.getSize(badge), const Size(26, 26));
+    expect(tester.getRect(badge).center, target.center + const Offset(14, 14));
+    await tester.tapAt(target.topLeft + const Offset(2, 2));
     expect(photoTapped, isTrue);
     expect(tester.takeException(), isNull);
     tester.view.resetPhysicalSize();

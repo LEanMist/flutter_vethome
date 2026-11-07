@@ -251,8 +251,18 @@ void main() {
     await tester.tap(find.text('PetLove'));
     await tester.pumpAndSettle();
     expect(find.byType(NovaConsultaPage), findsOneWidget);
-    expect(find.text('Hemograma + V10'), findsOneWidget);
+    expect(find.text('2 serviços selecionados'), findsOneWidget);
     expect(find.text('PetLove'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('appointment-booking-service-details')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Serviços selecionados'), findsOneWidget);
+    expect(find.text('Hemograma'), findsOneWidget);
+    expect(find.text('V10'), findsOneWidget);
+    await tester.tap(find.text('Fechar'));
+    await tester.pumpAndSettle();
 
     final confirm = find.byKey(const ValueKey('appointment-booking-save'));
     await tester.ensureVisible(confirm);

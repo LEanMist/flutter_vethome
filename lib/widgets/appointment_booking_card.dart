@@ -93,15 +93,7 @@ class AppointmentBookingCard extends StatelessWidget {
       child: Stack(
         children: [
           _icon(_calendarIcon, left: 33, top: 38),
-          _staticPill(
-            key: const ValueKey('appointment-booking-service'),
-            left: 81,
-            top: 35,
-            label: service,
-            semanticLabel: 'Serviço: $service',
-            color: _chipColor,
-            textScale: textScale,
-          ),
+          _servicePill(context, scale, textScale),
           _icon(_calendarIcon, left: 33, top: 85),
           _staticPill(
             key: const ValueKey('appointment-booking-plan'),
@@ -330,6 +322,134 @@ class AppointmentBookingCard extends StatelessWidget {
       ),
     ),
   );
+
+  Widget _servicePill(BuildContext context, double scale, double textScale) {
+    final services = service
+        .split(' + ')
+        .map((name) => name.trim())
+        .where((name) => name.isNotEmpty)
+        .toList();
+    if (services.length <= 1) {
+      return _staticPill(
+        key: const ValueKey('appointment-booking-service'),
+        left: 81,
+        top: 35,
+        label: service,
+        semanticLabel: 'Serviço: $service',
+        color: _chipColor,
+        textScale: textScale,
+      );
+    }
+
+    const visualHeight = 35.0;
+    final touchTargetHeight = minimumTouchTarget / scale;
+    final verticalInset = (touchTargetHeight - visualHeight) / 2;
+    final accessibleLabel = 'Serviços selecionados: ${services.join(', ')}';
+
+    return Positioned(
+      left: 81,
+      top: 35 - verticalInset,
+      width: 222,
+      height: touchTargetHeight,
+      child: Semantics(
+        button: true,
+        label: accessibleLabel,
+        hint: 'Toque para conferir todos os serviços selecionados.',
+        child: ExcludeSemantics(
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(15),
+            child: InkWell(
+              key: const ValueKey('appointment-booking-service-details'),
+              borderRadius: BorderRadius.circular(15),
+              onTap: () => _showServicesDialog(context, services),
+              child: SizedBox(
+                height: touchTargetHeight,
+                child: Center(
+                  child: SizedBox(
+                    width: 222,
+                    height: visualHeight,
+                    child: Ink(
+                      key: const ValueKey('appointment-booking-service'),
+                      decoration: BoxDecoration(
+                        color: _chipColor,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${services.length} serviços selecionados',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: VetColors.brown,
+                                  fontFamily: 'MontserratAlternates',
+                                  fontSize: 12 * textScale,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.expand_more,
+                              color: VetColors.brown,
+                              size: 18 * textScale,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showServicesDialog(BuildContext context, List<String> services) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        scrollable: true,
+        title: const Text('Serviços selecionados'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final name in services)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.circle, color: VetColors.brown, size: 7),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: const TextStyle(color: VetColors.brown),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _actionPill({
     required Key key,

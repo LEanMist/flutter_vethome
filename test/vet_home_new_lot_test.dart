@@ -535,7 +535,7 @@ void main() {
       expect(t.takeException(), isNull);
     });
     realWidgetTest(
-      'castração inline conectada e badge 26 com toque40 em $size',
+      'castração inline conectada e badge 26 com alvo48 em $size',
       (t) async {
         await VetRepository.initialize(storage: widgetStorage);
         viewport(t, size);
@@ -567,7 +567,11 @@ void main() {
           t.getSize(find.byKey(const ValueKey('pet-camera-badge'))),
           const Size(26, 26),
         );
-        expect(t.getSize(find.byType(PetPhotoButton)), const Size(40, 40));
+        expect(t.getSize(find.byType(PetPhotoButton)), const Size(48, 48));
+        expect(
+          t.getRect(find.byKey(const ValueKey('pet-camera-badge'))).center,
+          t.getRect(find.byType(PetPhotoButton)).center + const Offset(6, 6),
+        );
         expect(
           t.widget<TextFormField>(field('Peso (kg)')).controller!.text,
           '4.2',

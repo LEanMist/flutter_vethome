@@ -11,7 +11,11 @@ void main() {
     await VetRepository.initialize();
   });
 
-  Future<void> pumpAt(WidgetTester tester, double width) async {
+  Future<void> pumpAt(
+    WidgetTester tester,
+    double width, {
+    String service = 'Hemograma',
+  }) async {
     tester.view.physicalSize = Size(width, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -20,7 +24,7 @@ void main() {
       MaterialApp(
         home: NovaConsultaPage(
           pet: VetRepository.pets.first,
-          service: 'Hemograma + V10',
+          service: service,
           plan: 'Particular',
         ),
       ),
@@ -39,7 +43,7 @@ void main() {
       ),
       const Size(390, 453),
     );
-    expect(find.text('Hemograma + V10'), findsOneWidget);
+    expect(find.text('Hemograma'), findsOneWidget);
     expect(find.text('Particular'), findsOneWidget);
     final card = find.byKey(const ValueKey('appointment-booking-card'));
     expect(
@@ -132,6 +136,39 @@ void main() {
       'Retorno de exame',
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cartão permite consultar todos os serviços selecionados', (
+    tester,
+  ) async {
+    const services = [
+      'Hemograma',
+      'Creatinina',
+      'Urina',
+      'V10',
+      'Microchipagem',
+    ];
+    final combined = services.join(' + ');
+
+    for (final width in [390.0, 320.0]) {
+      await pumpAt(tester, width, service: combined);
+      expect(find.text('5 serviços selecionados'), findsOneWidget);
+      final details = find.byKey(
+        const ValueKey('appointment-booking-service-details'),
+      );
+      expect(tester.getRect(details).height, closeTo(48, .01));
+      await tester.ensureVisible(details);
+      await tester.tap(details);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Serviços selecionados'), findsOneWidget);
+      for (final name in services) {
+        expect(find.text(name), findsOneWidget);
+      }
+      await tester.tap(find.text('Fechar'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
   });
 
   testWidgets('data e horários preservam os seletores existentes', (

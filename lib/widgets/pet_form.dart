@@ -335,11 +335,12 @@ class _PetFormState extends State<PetForm> {
                         ),
                       ),
                       Positioned(
-                        right: -2,
-                        bottom: -2,
+                        right: 0,
+                        bottom: 0,
                         child: PetPhotoButton(
                           onPressed: choosePhoto,
                           busy: busy,
+                          visualOffset: const Offset(6, 6),
                         ),
                       ),
                     ],
