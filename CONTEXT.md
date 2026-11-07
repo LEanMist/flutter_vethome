@@ -1,6 +1,14 @@
 # VetHome — contexto para continuar o projeto
 
-## Estado consolidado — 06/11/2026
+## Estado consolidado — 07/11/2026
+
+- **Landing:** a referência desktop LANDING PAGE (2783:261) permanece alinhada em 1543 × 900. Quando o quadro completo não cabe sem reduzir alvos abaixo de 48 px, o app usa layout de tablet (largura mínima 700 px) ou coluna rolável móvel. Os frames móveis não existem no Figma; tablet e celular estão documentados como adaptações inferidas. Testes cobrem 320 × 640, 390 × 844, 900 × 800 e 1280 × 800, navegação e rolagem.
+- **Persistência:** snapshots JSON v1 antigos continuam sendo carregados. Novas gravações guardam dados, revisão e geração em uma única entrada SharedPreferences; a exclusão substitui o snapshot por tombstone sem perfil, pets ou fotos. No Web, alterações exigem Web Locks; sem a API o app mantém leitura e bloqueia gravação/exclusão. save() exige leitura válida prévia; o repositório bloqueia mutações e retries enquanto a exclusão está em andamento. Configurações sinaliza gravação pendente até a última gravação da fila.
+- **Validação atual:** análise estática sem problemas; git diff --check aprovado; suíte nativa **474 aprovados, 3 ignorados**; suíte Chrome **474 aprovados, 3 ignorados**; build Web release concluído.
+- **Git:** código revisado publicado na branch kelvin no commit 93ab62a. CONTINUACAO_OUTRA_CONTA.md foi preservado localmente e excluído dos commits.
+- **Limites ainda relevantes:** o armazenamento deste protótipo permanece local e sem criptografia implementada por esta camada; não houve ensaio real de concorrência entre duas abas independentes. A suíte do Chrome cobre Web Locks e o fallback bloqueado, não uma corrida real entre duas janelas.
+
+## Histórico consolidado — 06/11/2026
 
 - Revalidação nesta continuação: os fluxos móveis de `CHOICE_PET_WIDGET` e `EDIT_ADRESS_WIDGET` continuam compactos conforme as escolhas do usuário. Os testes focados de navegação de pets, formulário/endereço, perfil/endereço e revisão visual de endereços passaram **19/19**; `appointment_booking_card_test.dart` passou **3/3**. A compilação Web release também concluiu. A captura direta de `/#/nova-consulta` abriu a tela de login após a inicialização e, por isso, não serve como captura visual do cartão; não automatizei autenticação. O servidor temporário foi encerrado.
 - A rota legada `/escolhaPet` agora segue o fluxo compacto no celular: mantém a Agenda ao fundo, apresenta `CHOICE_PET_WIDGET` centralizado em **390 × 408 px** e, após a seleção, segue para Serviços. Em telas largas, preserva a página de seleção existente. `pet_choice_route_test.dart` cobre os dois breakpoints; seleção, rotas e telas de endereço passaram **16/16**; `flutter analyze --no-pub` sem problemas; `flutter build web --no-pub` concluído em **195,5 s**; `git diff --check` limpo.
