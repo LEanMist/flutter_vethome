@@ -370,8 +370,8 @@ class _VacinaCard extends StatelessWidget {
               StatusChip(label, color, dense: true),
               if (onEdit != null)
                 SizedBox(
-                  width: 32,
-                  height: 32,
+                  width: 48,
+                  height: 48,
                   child: PopupMenuButton<String>(
                     enabled: enabled,
                     tooltip: 'Opções da vacina ${vaccine.nome}',

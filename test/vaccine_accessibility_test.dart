@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
+import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/vacinacao_page.dart';
 import 'package:flutter_vethome/widgets.dart';
 
@@ -117,4 +118,35 @@ void main() {
       });
     }
   }
+
+  testWidgets('opções da vacina têm alvo de 48 px sem overflow', (
+    tester,
+  ) async {
+    final pet = VetRepository.pets.first;
+    VetRepository.saveVaccine(
+      pet.id,
+      Vacina(
+        nome: 'Vacina múltipla para cães',
+        aplicada: DateUtils.dateOnly(DateTime.now()),
+      ),
+    );
+
+    for (final viewport in [
+      const Size(320, 640),
+      const Size(390, 844),
+      const Size(1280, 800),
+    ]) {
+      await openVaccination(tester, viewport, 1.0);
+      final options = find.byTooltip(
+        'Opções da vacina Vacina múltipla para cães',
+      );
+      await tester.ensureVisible(options);
+      await tester.pumpAndSettle();
+
+      final target = tester.getRect(options);
+      expect(target.width, greaterThanOrEqualTo(48));
+      expect(target.height, greaterThanOrEqualTo(48));
+      expect(tester.takeException(), isNull);
+    }
+  });
 }
