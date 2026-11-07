@@ -39,38 +39,46 @@ class _SplashScreenState extends State<SplashScreen> {
               key: const ValueKey('splash-figma-frame'),
               width: 390 * scale,
               height: 844 * scale,
-              child: Stack(
-                children: [
-                  Positioned(
-                    key: const ValueKey('splash-logo-group'),
-                    left: 20 * scale,
-                    top: 250 * scale,
-                    width: 350 * scale,
-                    height: 350 * scale,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Positioned(
-                          left: 24.37 * scale,
-                          top: 24.37 * scale,
-                          width: 300.158 * scale,
-                          height: 300.158 * scale,
-                          child: Image.asset(
-                            'assets/imagens/figma/success-logo-ring.png',
-                            key: const ValueKey('splash-logo-ring'),
-                            fit: BoxFit.fill,
-                          ),
+              child: ClipRRect(
+                key: const ValueKey('splash-figma-clip'),
+                borderRadius: BorderRadius.circular(30 * scale),
+                child: ColoredBox(
+                  key: const ValueKey('splash-figma-surface'),
+                  color: VH.background,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        key: const ValueKey('splash-logo-group'),
+                        left: 20 * scale,
+                        top: 250 * scale,
+                        width: 350 * scale,
+                        height: 350 * scale,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Positioned(
+                              left: 24.37 * scale,
+                              top: 24.37 * scale,
+                              width: 300.158 * scale,
+                              height: 300.158 * scale,
+                              child: Image.asset(
+                                'assets/imagens/figma/success-logo-ring.png',
+                                key: const ValueKey('splash-logo-ring'),
+                                fit: BoxFit.fill,
+                              ),
+                            ),
+                            Image.asset(
+                              _logo,
+                              key: const ValueKey('splash-logo'),
+                              fit: BoxFit.contain,
+                              semanticLabel: 'VetHome',
+                            ),
+                          ],
                         ),
-                        Image.asset(
-                          _logo,
-                          key: const ValueKey('splash-logo'),
-                          fit: BoxFit.contain,
-                          semanticLabel: 'VetHome',
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           );

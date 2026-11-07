@@ -34,6 +34,14 @@ void main() {
       final frame = tester.getRect(
         find.byKey(const ValueKey('splash-figma-frame')),
       );
+      final clip = tester.widget<ClipRRect>(
+        find.byKey(const ValueKey('splash-figma-clip')),
+      );
+      expect(clip.borderRadius, BorderRadius.circular(30 * scale));
+      final surface = tester.widget<ColoredBox>(
+        find.byKey(const ValueKey('splash-figma-surface')),
+      );
+      expect(surface.color, VH.background);
       final group = tester.getRect(
         find.byKey(const ValueKey('splash-logo-group')),
       );
