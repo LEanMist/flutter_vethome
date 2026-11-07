@@ -119,6 +119,26 @@ void main() {
       ),
       const Rect.fromLTWH(70, 617, 157, 37),
     );
+    expect(
+      tester.getRect(
+        find.byKey(
+          const ValueKey('landing-service-image-landing-service-vaccines.jpg'),
+        ),
+      ),
+      const Rect.fromLTWH(501, 451, 158, 158),
+    );
+    expect(
+      tester
+          .getTopLeft(
+            find.byKey(
+              const ValueKey(
+                'landing-service-label-landing-service-vaccines.jpg',
+              ),
+            ),
+          )
+          .dy,
+      closeTo(619, .5),
+    );
 
     await tester.tap(find.text('Review'));
     await tester.pumpAndSettle();

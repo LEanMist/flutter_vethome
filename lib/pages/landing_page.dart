@@ -137,6 +137,8 @@ class LandingPage extends StatelessWidget {
                                   'assets/imagens/figma/landing-service-vaccines.jpg',
                               label: 'Vacinas',
                               imageLabel: 'Ícone de vacinação de um cão',
+                              imageSize: 158,
+                              imageOffset: Offset(-1, 0),
                             ),
                           ],
                         ),
@@ -302,6 +304,8 @@ class LandingPage extends StatelessWidget {
                           'assets/imagens/figma/landing-service-vaccines.jpg',
                       label: 'Vacinas',
                       imageLabel: 'Ícone de vacinação de um cão',
+                      imageSize: 158,
+                      imageOffset: Offset(-1, 0),
                     ),
                   ],
                 ),
@@ -621,11 +625,15 @@ class _LandingServiceCard extends StatelessWidget {
     required this.image,
     required this.label,
     required this.imageLabel,
+    this.imageSize = 156,
+    this.imageOffset = Offset.zero,
   });
 
   final String image;
   final String label;
   final String imageLabel;
+  final double imageSize;
+  final Offset imageOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -674,13 +682,28 @@ class _LandingServiceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            key: ValueKey('landing-service-image-${image.split('/').last}'),
-            width: 156,
-            height: 156,
-            child: Image.asset(
-              image,
-              fit: BoxFit.cover,
-              semanticLabel: imageLabel,
+            height: imageSize,
+            child: OverflowBox(
+              alignment: Alignment.topLeft,
+              minWidth: imageSize,
+              maxWidth: imageSize,
+              minHeight: imageSize,
+              maxHeight: imageSize,
+              child: Transform.translate(
+                offset: imageOffset,
+                child: SizedBox(
+                  key: ValueKey(
+                    'landing-service-image-${image.split('/').last}',
+                  ),
+                  width: imageSize,
+                  height: imageSize,
+                  child: Image.asset(
+                    image,
+                    fit: BoxFit.cover,
+                    semanticLabel: imageLabel,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 10),
