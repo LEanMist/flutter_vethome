@@ -6,6 +6,7 @@ import 'package:flutter_vethome/screens/pets.dart'
     show ServicosScreen, ConvenioScreen;
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
+import 'package:flutter_vethome/widgets/vet_choice_pill.dart' show VetChevron;
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
 double _contrastRatio(Color first, Color second) {
@@ -359,6 +360,44 @@ void main() {
       );
     }
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('setas desktop têm alvo de 48 px com o ícone na posição antiga', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    for (final screen in [const ServicosScreen(), const ConvenioScreen()]) {
+      await tester.pumpWidget(MaterialApp(home: screen));
+      await tester.pumpAndSettle();
+
+      final tooltip = screen is ServicosScreen ? 'Exames' : 'PetLove';
+      final target = find.byWidgetPredicate(
+        (widget) => widget is IconButton && widget.tooltip == tooltip,
+      );
+      expect(target, findsOneWidget);
+      final targetRect = tester.getRect(target);
+      expect(targetRect.size, const Size(48, 48));
+
+      final arrow = find.descendant(
+        of: target,
+        matching: screen is ServicosScreen
+            ? find.byType(Icon)
+            : find.byType(VetChevron),
+      );
+      expect(arrow, findsOneWidget);
+      expect(
+        tester.getRect(arrow).center.dx,
+        closeTo(targetRect.center.dx + 3, .01),
+      );
+      expect(tester.takeException(), isNull);
+    }
   });
 
   testWidgets('Serviços e Convênio não mostram abas fora do fluxo principal', (

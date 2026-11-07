@@ -113,15 +113,18 @@ class VetChoicePill extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 42,
+            width: 48,
             height: 48,
             child: IconButton(
               tooltip: label,
               onPressed: onTap,
-              icon: AnimatedRotation(
-                turns: expanded ? .25 : 0,
-                duration: const Duration(milliseconds: 240),
-                child: const VetChevron(),
+              icon: Transform.translate(
+                offset: const Offset(3, 0),
+                child: AnimatedRotation(
+                  turns: expanded ? .25 : 0,
+                  duration: const Duration(milliseconds: 240),
+                  child: const VetChevron(),
+                ),
               ),
             ),
           ),

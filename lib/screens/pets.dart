@@ -661,14 +661,17 @@ class _ServicosScreenState extends State<ServicosScreen> {
         ),
       ),
       SizedBox(
-        width: 42,
+        width: 48,
         height: 48,
         child: IconButton(
           tooltip: name,
           onPressed: () => _toggleCategory(name),
-          icon: _expanded.contains(name)
-              ? const Icon(Icons.keyboard_arrow_down, color: VH.foreground)
-              : const VetChevron(),
+          icon: Transform.translate(
+            offset: const Offset(3, 0),
+            child: _expanded.contains(name)
+                ? const Icon(Icons.keyboard_arrow_down, color: VH.foreground)
+                : const VetChevron(),
+          ),
         ),
       ),
     ],
