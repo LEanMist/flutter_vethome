@@ -71,7 +71,7 @@ void main() {
     for (final entry in const {
       'Nome Completo': 'Cliente Seguro',
       'Data de Nascimento': '05/02/1995',
-      'CPF': '12345678900',
+      'CPF': '52998224725',
       'Telefone/Celular': '11999999999',
       'E-mail': 'cliente@example.test',
       'Senha': password,
@@ -141,7 +141,7 @@ void main() {
     for (final entry in const {
       'Nome Completo': 'Cliente Seguro',
       'Data de Nascimento': '05/02/1995',
-      'CPF': '12345678900',
+      'CPF': '52998224725',
       'Telefone/Celular': '11999999999',
       'E-mail': 'cliente@example.test',
       'Senha': password,

@@ -208,6 +208,29 @@ void main() {
     },
   );
 
+  testWidgets('PROFILE_PAGE: nascimento tem rótulo semântico', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.bySemanticsLabel(
+        RegExp(r'^Data de nascimento: \d{2}/\d{2}/\d{4}$'),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+  });
+
   testWidgets('Perfil desktop mantém composição e ações originais', (
     tester,
   ) async {

@@ -93,7 +93,12 @@ void main() {
     expect(skipStyle.fontFamily, VH.bodyFontFamily);
     expect(skipStyle.fontSize, 15);
     expect(skipStyle.fontWeight, FontWeight.bold);
-    expect(skipStyle.color, VetColors.rose);
+    expect(skipStyle.color, VetColors.brown);
+    // O rótulo de 15 px precisa de 4,5:1 contra o fundo rosa.
+    final textLuminance = skipStyle.color!.computeLuminance();
+    final backgroundLuminance = VetColors.pink.computeLuminance();
+    final contrast = (backgroundLuminance + .05) / (textLuminance + .05);
+    expect(contrast, greaterThanOrEqualTo(4.5));
     expect(tester.takeException(), isNull);
   });
 
@@ -121,6 +126,34 @@ void main() {
 
     expect(find.byType(PetPhotoButton), findsOneWidget);
     expect(find.text('Castração'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cadastro pet compacto permite validar e alcançar Continuar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: const CadastroPetScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('pet-form-mobile-grid')), findsOneWidget);
+    final continueButton = find.widgetWithText(ElevatedButton, 'Continuar');
+    await tester.ensureVisible(continueButton);
+    expect(tester.getRect(continueButton).bottom, lessThanOrEqualTo(640));
+
+    await tester.tap(continueButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Obrigatório'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 

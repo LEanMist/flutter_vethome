@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
 import '../widgets/pet_form.dart';
+import '../widgets/auth/local_profile_conflict_dialog.dart';
 import '../theme.dart';
 
 class CadastroPetScreen extends StatelessWidget {
@@ -13,6 +14,17 @@ class CadastroPetScreen extends StatelessWidget {
     if (!initialData.containsKey('client.E-mail')) return false;
     VetRepository.registerClient(initialData);
     return true;
+  }
+
+  Future<bool> _canContinueRegistration(BuildContext context) async {
+    if (!VetRepository.hasLocalClientIdentityConflict(
+      email: initialData['client.E-mail'],
+      name: initialData['client.Nome Completo'],
+    )) {
+      return true;
+    }
+    await showLocalProfileConflictDialog(context);
+    return false;
   }
 
   Future<void> _waitForSave(BuildContext context) async {
@@ -40,7 +52,7 @@ class CadastroPetScreen extends StatelessWidget {
           child: TextButtonTheme(
             data: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: VH.secondary,
+                foregroundColor: VH.foreground,
                 textStyle: const TextStyle(
                   fontFamily: VH.bodyFontFamily,
                   fontSize: 15,
@@ -51,6 +63,8 @@ class CadastroPetScreen extends StatelessWidget {
             child: PetForm(
               title: 'Cadastro Pet',
               onSaved: (v) async {
+                final canContinue = await _canContinueRegistration(context);
+                if (!canContinue || !context.mounted) return;
                 final pet = VetRepository.addPet(
                   name: v.name,
                   species: v.species,
@@ -72,6 +86,8 @@ class CadastroPetScreen extends StatelessWidget {
                 }
               },
               onSkip: () async {
+                final canContinue = await _canContinueRegistration(context);
+                if (!canContinue || !context.mounted) return;
                 if (_registerClientIfNeeded()) {
                   await _waitForSave(context);
                   if (!context.mounted) return;

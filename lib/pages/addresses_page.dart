@@ -302,13 +302,15 @@ class _AddressesPageState extends State<AddressesPage> {
                     label: 'Editar',
                     background: const Color.fromRGBO(255, 255, 255, .5),
                     foreground: VetColors.brown,
-                    onPressed: () => _edit(address),
+                    semanticsLabel: 'Editar endereço ${_addressIdentity(address)}',
+                     onPressed: () => _edit(address),
                   ),
                   _addressAction(
                     label: 'Deletar',
                     background: const Color(0xFF940000),
                     foreground: Colors.white,
-                    onPressed: () => _delete(address),
+                    semanticsLabel: 'Deletar endereço ${_addressIdentity(address)}',
+                     onPressed: () => _delete(address),
                   ),
                 ],
               ),
@@ -332,8 +334,14 @@ class _AddressesPageState extends State<AddressesPage> {
     ].where((part) => part.trim().isNotEmpty).join('\n');
   }
 
+  String _addressIdentity(SavedAddress address) => [
+    address.name.trim(),
+    address.street.trim(),
+    address.number.trim(),
+  ].where((value) => value.isNotEmpty).join(', ');
   Widget _addressAction({
     required String label,
+    required String semanticsLabel,
     required Color background,
     required Color foreground,
     required VoidCallback onPressed,
@@ -354,7 +362,10 @@ class _AddressesPageState extends State<AddressesPage> {
           fontWeight: FontWeight.bold,
         ),
       ),
-      child: Text(label),
+      child: Semantics(
+        label: semanticsLabel,
+        child: ExcludeSemantics(child: Text(label)),
+      ),
     ),
   );
 }
@@ -403,16 +414,21 @@ class AddressEditorPage extends StatelessWidget {
     );
 
     if (modal && compactEditor) {
-      return Dialog(
-        key: const ValueKey('address-editor-dialog'),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.transparent,
-        elevation: 0,
-        child: SingleChildScrollView(
-          key: const ValueKey('address-editor-viewport'),
-          child: _editorPanel(form),
+      return Semantics(
+        container: true,
+        label: 'Editar endereço',
+        explicitChildNodes: true,
+        child: Dialog(
+          key: const ValueKey('address-editor-dialog'),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          elevation: 0,
+          child: SingleChildScrollView(
+            key: const ValueKey('address-editor-viewport'),
+            child: _editorPanel(form),
+          ),
         ),
       );
     }

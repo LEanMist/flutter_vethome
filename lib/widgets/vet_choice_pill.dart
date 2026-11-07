@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme.dart';
 import '../theme/vet_colors.dart';
@@ -139,15 +140,18 @@ class VetPictogram extends StatelessWidget {
     final asset = switch (kind) {
       'Exames' || 'DogLife' => 'coisademedico-1.png',
       'Atestados' => 'atestado-1.png',
+      'Vacinas' => 'services-vaccine.svg',
+      'Microchipagem' => 'services-microchip.svg',
       'PetLove' => 'convenio-petlove.png',
       'Particular' => 'convenio-particular.png',
       _ => null,
     };
     if (asset != null) {
-      return Image.asset(
-        'assets/imagens/figma/$asset',
-        excludeFromSemantics: true,
-      );
+      final assetPath = 'assets/imagens/figma/$asset';
+      if (asset.endsWith('.svg')) {
+        return SvgPicture.asset(assetPath);
+      }
+      return Image.asset(assetPath, excludeFromSemantics: true);
     }
     return Icon(
       kind == 'Vacinas' ? Icons.vaccines_outlined : Icons.memory_outlined,

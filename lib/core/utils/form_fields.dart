@@ -11,6 +11,31 @@ bool _isRegistrationPasswordKey(String key) {
   return label == 'senha' || label == 'confirmar senha';
 }
 
+bool isValidCpf(String value) {
+  final input = value.trim();
+  if (!RegExp(r'^(?:\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2})$').hasMatch(input)) {
+    return false;
+  }
+
+  final digits = input
+      .replaceAll(RegExp(r'\D'), '')
+      .codeUnits
+      .map((code) => code - 48)
+      .toList(growable: false);
+  if (digits.toSet().length == 1) return false;
+
+  int checkDigit(int length) {
+    var sum = 0;
+    for (var i = 0; i < length; i++) {
+      sum += digits[i] * (length + 1 - i);
+    }
+    final remainder = sum % 11;
+    return remainder < 2 ? 0 : 11 - remainder;
+  }
+
+  return checkDigit(9) == digits[9] && checkDigit(10) == digits[10];
+}
+
 class DigitsMask extends TextInputFormatter {
   const DigitsMask(this.pattern);
   final String pattern;

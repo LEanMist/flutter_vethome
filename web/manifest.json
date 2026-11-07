@@ -1,11 +1,11 @@
 {
-    "name": "flutter_vethome",
-    "short_name": "flutter_vethome",
+    "name": "VetHome | Cuidado veterinário",
+    "short_name": "VetHome",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FAD3D5",
+    "theme_color": "#FAD3D5",
+    "description": "VetHome: cuidado veterinário para cães e gatos. Protótipo demonstrativo.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

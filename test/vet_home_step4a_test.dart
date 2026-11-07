@@ -152,7 +152,7 @@ void main() {
     for (final entry in {
       'Nome Completo': 'Cliente sem gênero',
       'Data de Nascimento': '05/02/1995',
-      'CPF': '12345678900',
+      'CPF': '52998224725',
       'Telefone/Celular': '11999999999',
       'E-mail': 'sem-genero@example.com',
       'Senha': '123456',
@@ -206,7 +206,7 @@ void main() {
     for (final entry in {
       'Nome Completo': 'Cliente Teste',
       'Data de Nascimento': '05/02/1995',
-      'CPF': '12345678900',
+      'CPF': '52998224725',
       'Telefone/Celular': '11999999999',
       'E-mail': 'cliente@example.com',
       'Senha': '123456',

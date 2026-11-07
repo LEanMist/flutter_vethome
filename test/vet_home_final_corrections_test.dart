@@ -75,19 +75,26 @@ void main() {
   testWidgets('telefone curto é bloqueado independentemente do CPF válido', (
     tester,
   ) async {
-    await signup(tester, '12345678901', '119');
+    await signup(tester, '52998224725', '119');
     expect(
       find.text('Informe um telefone com 10 ou 11 dígitos'),
       findsOneWidget,
     );
-    expect(find.text('Informe um CPF com 11 dígitos'), findsNothing);
+    expect(find.text('Informe um CPF válido'), findsNothing);
+    expect(find.text('Etapa endereço'), findsNothing);
+  });
+  testWidgets('CPF com dígitos verificadores inválidos é bloqueado', (
+    tester,
+  ) async {
+    await signup(tester, '52998224724', '11999999999');
+    expect(find.text('Informe um CPF válido'), findsOneWidget);
     expect(find.text('Etapa endereço'), findsNothing);
   });
   for (final phone in ['1133334444', '11999999999']) {
     testWidgets('CPF completo e telefone ${phone.length} dígitos continuam', (
       tester,
     ) async {
-      await signup(tester, '12345678901', phone);
+      await signup(tester, '52998224725', phone);
       expect(find.text('Etapa endereço'), findsOneWidget);
     });
   }

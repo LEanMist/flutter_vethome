@@ -219,6 +219,43 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('MESSAGE_PAGE_2: nome da veterinária anuncia ação de detalhes', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: const ChatScreen(),
+          routes: {
+            '/sobre': (_) =>
+                const Scaffold(body: Text('Detalhes da veterinária')),
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final details = find.bySemanticsLabel(
+        'Ver informações sobre Gabriela Falcão',
+      );
+      expect(details, findsWidgets);
+      final action = tester.getSemantics(details.first);
+      expect(action.getSemanticsData().flagsCollection.isButton, isTrue);
+      expect(action.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+
+      action.owner!.performAction(action.id, SemanticsAction.tap);
+      await tester.pumpAndSettle();
+      expect(find.text('Detalhes da veterinária'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
   testWidgets('Chat móvel segue as dimensões principais do Figma', (
     tester,
   ) async {

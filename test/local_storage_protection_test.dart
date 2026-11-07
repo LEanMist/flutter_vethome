@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -36,6 +37,25 @@ class _CountingLocalStorage extends LocalStorage {
   }
 }
 
+class _SlowClearStorage extends LocalStorage {
+  final clearStarted = Completer<void>();
+  final allowClear = Completer<void>();
+  int saveCalls = 0;
+
+  @override
+  Future<void> save(LocalState state) async {
+    saveCalls++;
+    throw StateError('falha de gravação simulada');
+  }
+
+  @override
+  Future<void> clear() async {
+    clearStarted.complete();
+    await allowClear.future;
+    await super.clear();
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -51,6 +71,14 @@ void main() {
     pets: const [],
     appointments: const {},
   );
+
+  Map<String, dynamic> storedSnapshot(SharedPreferences preferences) =>
+      jsonDecode(preferences.getString(LocalStorage.stateKey)!)
+          as Map<String, dynamic>;
+
+  Map<String, dynamic> storedMetadata(SharedPreferences preferences) =>
+      storedSnapshot(preferences)[LocalStorage.storageMetadataKey]
+          as Map<String, dynamic>;
 
   setUp(() async {
     await VetRepository.flush();
@@ -120,6 +148,62 @@ void main() {
   });
 
   test(
+    'revisão local inválida bloqueia leitura e preserva o snapshot',
+    () async {
+      final snapshot = jsonEncode(validState().toJson());
+      SharedPreferences.setMockInitialValues({
+        LocalStorage.stateKey: snapshot,
+        LocalStorage.generationKey: 'inválida',
+      });
+
+      final result = await LocalStorage().load();
+
+      expect(result.status, LocalLoadStatus.invalid);
+      expect(result.state, isNull);
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.getString(LocalStorage.stateKey), snapshot);
+      expect(preferences.getString(LocalStorage.generationKey), 'inválida');
+    },
+  );
+
+  test('revisão de gravação inválida bloqueia e preserva o snapshot', () async {
+    final snapshot = jsonEncode(validState().toJson());
+    SharedPreferences.setMockInitialValues({
+      LocalStorage.stateKey: snapshot,
+      LocalStorage.revisionKey: 'inválida',
+    });
+
+    final result = await LocalStorage().load();
+
+    expect(result.status, LocalLoadStatus.invalid);
+    expect(result.state, isNull);
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getString(LocalStorage.stateKey), snapshot);
+    expect(preferences.getString(LocalStorage.revisionKey), 'inválida');
+  });
+
+  test(
+    'limpeza explícita recupera revisão corrompida sem recriar snapshot',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        LocalStorage.stateKey: jsonEncode(validState().toJson()),
+        LocalStorage.generationKey: 'inválida',
+      });
+      final storage = LocalStorage();
+
+      expect((await storage.load()).status, LocalLoadStatus.invalid);
+      await storage.clear();
+
+      final preferences = await SharedPreferences.getInstance();
+      expect((await LocalStorage().load()).status, LocalLoadStatus.empty);
+      final tombstone = storedSnapshot(preferences);
+      expect(tombstone.containsKey('client'), isFalse);
+      expect(storedMetadata(preferences)['cleared'], isTrue);
+      expect(storedMetadata(preferences)['generation'], greaterThan(0));
+    },
+  );
+
+  test(
     'load classifica falha de reload como armazenamento indisponível',
     () async {
       final storage = LocalStorage(
@@ -183,10 +267,274 @@ void main() {
     expect(VetRepository.clientName, 'Cliente salvo');
     VetRepository.updateClient(name: 'Cliente atualizado');
     expect(await VetRepository.flush(), isTrue);
+    final preferences = await SharedPreferences.getInstance();
+    expect(storedMetadata(preferences)['revision'], 1);
 
     await VetRepository.initialize();
     expect(VetRepository.clientName, 'Cliente atualizado');
   });
+
+  test('snapshot e revisões são gravados na mesma entrada', () async {
+    SharedPreferences.setMockInitialValues({});
+    final storage = LocalStorage();
+    await storage.load();
+
+    await storage.save(validState(name: 'Registro único'));
+
+    final preferences = await SharedPreferences.getInstance();
+    final snapshot = storedSnapshot(preferences);
+    final metadata = storedMetadata(preferences);
+    expect(snapshot['schemaVersion'], 1);
+    expect(
+      (snapshot['client'] as Map<String, dynamic>)['name'],
+      'Registro único',
+    );
+    expect(metadata['formatVersion'], 1);
+    expect(metadata['generation'], 0);
+    expect(metadata['revision'], 1);
+    expect(metadata['cleared'], isFalse);
+    expect(preferences.getInt(LocalStorage.revisionKey), isNull);
+    expect(preferences.getInt(LocalStorage.generationKey), isNull);
+  });
+
+  test(
+    'falha ao gravar o registro único preserva snapshot e revisões antigos',
+    () async {
+      final original = jsonEncode(validState().toJson());
+      SharedPreferences.setMockInitialValues({
+        LocalStorage.stateKey: original,
+        LocalStorage.revisionKey: 4,
+        LocalStorage.generationKey: 2,
+      });
+      final storage = LocalStorage(
+        snapshotWriter: (preferences, key, value) async {
+          expect(preferences, isNotNull);
+          expect(key, LocalStorage.stateKey);
+          expect(value, isNotEmpty);
+          return false;
+        },
+      );
+      expect((await storage.load()).status, LocalLoadStatus.valid);
+
+      await expectLater(
+        storage.save(validState(name: 'Falha simulada')),
+        throwsA(isA<StateError>()),
+      );
+
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.getString(LocalStorage.stateKey), original);
+      expect(preferences.getInt(LocalStorage.revisionKey), 4);
+      expect(preferences.getInt(LocalStorage.generationKey), 2);
+    },
+  );
+
+  test('falha ao gravar o tombstone preserva o snapshot salvo', () async {
+    final originalStorage = LocalStorage();
+    await originalStorage.load();
+    await originalStorage.save(validState(name: 'Dados preservados'));
+    final preferences = await SharedPreferences.getInstance();
+    final original = preferences.getString(LocalStorage.stateKey);
+    final failingStorage = LocalStorage(
+      snapshotWriter: (preferences, key, value) async {
+        expect(preferences, isNotNull);
+        expect(key, LocalStorage.stateKey);
+        expect(value, isNotEmpty);
+        return false;
+      },
+    );
+    expect((await failingStorage.load()).status, LocalLoadStatus.valid);
+
+    await expectLater(failingStorage.clear(), throwsA(isA<StateError>()));
+
+    expect(preferences.getString(LocalStorage.stateKey), original);
+    final stillSaved = await LocalStorage().load();
+    expect(stillSaved.status, LocalLoadStatus.valid);
+    expect(stillSaved.state?.client.name, 'Dados preservados');
+  });
+
+  test(
+    'instância nova exige leitura antes de poder salvar sobre um tombstone',
+    () async {
+      final tombstone = jsonEncode({
+        LocalStorage.storageMetadataKey: {
+          'formatVersion': 1,
+          'generation': 7,
+          'revision': 9,
+          'cleared': true,
+        },
+      });
+      SharedPreferences.setMockInitialValues({
+        LocalStorage.stateKey: tombstone,
+      });
+      final freshStorage = LocalStorage();
+
+      await expectLater(
+        freshStorage.save(validState(name: 'Snapshot desatualizado')),
+        throwsA(isA<StateError>()),
+      );
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.getString(LocalStorage.stateKey), tombstone);
+    },
+  );
+
+  test(
+    'aba desatualizada não sobrescreve alterações locais mais recentes',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final firstTab = LocalStorage();
+      final staleTab = LocalStorage();
+      expect((await firstTab.load()).status, LocalLoadStatus.empty);
+      expect((await staleTab.load()).status, LocalLoadStatus.empty);
+
+      await firstTab.save(validState(name: 'Primeira aba'));
+      await expectLater(
+        staleTab.save(validState(name: 'Aba desatualizada')),
+        throwsA(
+          isA<LocalStorageConflictException>().having(
+            (error) => error.kind,
+            'kind',
+            LocalStorageConflictKind.modified,
+          ),
+        ),
+      );
+
+      final saved = await LocalStorage().load();
+      expect(saved.status, LocalLoadStatus.valid);
+      expect(saved.state?.client.name, 'Primeira aba');
+
+      expect((await staleTab.load()).status, LocalLoadStatus.valid);
+      await staleTab.save(validState(name: 'Atualizado após recarregar'));
+      final latest = await LocalStorage().load();
+      expect(latest.state?.client.name, 'Atualizado após recarregar');
+    },
+  );
+
+  test(
+    'gravações simultâneas preservam uma revisão e detectam conflito',
+    () async {
+      final firstTab = LocalStorage();
+      final secondTab = LocalStorage();
+      await Future.wait([firstTab.load(), secondTab.load()]);
+
+      Future<Object?> attempt(Future<void> save) async {
+        try {
+          await save;
+          return null;
+        } catch (error) {
+          return error;
+        }
+      }
+
+      final outcomes = await Future.wait([
+        attempt(firstTab.save(validState(name: 'Primeira aba'))),
+        attempt(secondTab.save(validState(name: 'Segunda aba'))),
+      ]);
+
+      expect(outcomes.whereType<LocalStorageConflictException>(), hasLength(1));
+      expect(outcomes.where((outcome) => outcome == null), hasLength(1));
+      final stored = await LocalStorage().load();
+      expect(stored.status, LocalLoadStatus.valid);
+      expect([
+        'Primeira aba',
+        'Segunda aba',
+      ], contains(stored.state?.client.name));
+      final preferences = await SharedPreferences.getInstance();
+      expect(storedMetadata(preferences)['revision'], 1);
+    },
+  );
+
+  test(
+    'limpeza concorrente com gravação não recria snapshot apagado',
+    () async {
+      final staleTab = LocalStorage();
+      final clearingTab = LocalStorage();
+      await Future.wait([staleTab.load(), clearingTab.load()]);
+
+      final clear = clearingTab.clear();
+      final save = staleTab.save(validState(name: 'Não pode reaparecer'));
+      final outcomes = await Future.wait([
+        clear.then<Object?>((_) => null, onError: (Object error) => error),
+        save.then<Object?>((_) => null, onError: (Object error) => error),
+      ]);
+
+      expect(outcomes.first, isNull);
+      expect(
+        outcomes.last,
+        anyOf(isNull, isA<LocalStorageConflictException>()),
+      );
+      expect((await LocalStorage().load()).status, LocalLoadStatus.empty);
+    },
+  );
+
+  test('gravação enfileirada antes da limpeza não recria o snapshot', () async {
+    final storage = LocalStorage();
+    expect((await storage.load()).status, LocalLoadStatus.empty);
+
+    final clear = storage.clear();
+    final staleSave = storage.save(validState(name: 'Não pode reaparecer'));
+    await clear;
+
+    await expectLater(
+      staleSave,
+      throwsA(
+        isA<LocalStorageConflictException>().having(
+          (error) => error.kind,
+          'kind',
+          LocalStorageConflictKind.cleared,
+        ),
+      ),
+    );
+    expect((await LocalStorage().load()).status, LocalLoadStatus.empty);
+  });
+
+  test('mutação local fica bloqueada durante a exclusão do perfil', () async {
+    SharedPreferences.setMockInitialValues({
+      LocalStorage.stateKey: jsonEncode(
+        validState(name: 'Perfil salvo').toJson(),
+      ),
+    });
+    final storage = _SlowClearStorage();
+    await VetRepository.initialize(storage: storage);
+    final clear = VetRepository.clearLocalData();
+    await storage.clearStarted.future;
+
+    expect(
+      () => VetRepository.updateClient(name: 'Alteração concorrente'),
+      throwsA(isA<PersistenceClearingException>()),
+    );
+    expect(VetRepository.clientName, 'Perfil salvo');
+    expect(VetRepository.unsavedChanges.value, isFalse);
+
+    storage.allowClear.complete();
+    expect(await clear, isTrue);
+    expect((await LocalStorage().load()).status, LocalLoadStatus.empty);
+  });
+
+  test(
+    'retrySave não enfileira gravação durante a exclusão do perfil',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        LocalStorage.stateKey: jsonEncode(
+          validState(name: 'Perfil salvo').toJson(),
+        ),
+      });
+      final storage = _SlowClearStorage();
+      await VetRepository.initialize(storage: storage);
+      VetRepository.updateClient(name: 'Alteração não salva');
+      expect(await VetRepository.flush(), isFalse);
+      expect(VetRepository.unsavedChanges.value, isTrue);
+      expect(storage.saveCalls, 1);
+
+      final clear = VetRepository.clearLocalData();
+      await storage.clearStarted.future;
+      expect(await VetRepository.retrySave(), isFalse);
+      expect(storage.saveCalls, 1);
+
+      storage.allowClear.complete();
+      expect(await clear, isTrue);
+      expect((await LocalStorage().load()).status, LocalLoadStatus.empty);
+    },
+  );
 
   for (final blockedStatus in [
     LocalLoadStatus.invalid,
@@ -322,6 +670,39 @@ void main() {
     await tester.pumpWidget(const VetHomeApp());
 
     expect(find.text('Seus dados locais estão protegidos'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+  });
+
+  testWidgets('tela crítica pede confirmação antes de apagar os dados', (
+    tester,
+  ) async {
+    var clearCalls = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CriticalStorageErrorPage(
+          status: LocalLoadStatus.invalid,
+          onClear: () async {
+            clearCalls++;
+            return true;
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('critical-storage-clear')));
+    await tester.pumpAndSettle();
+    expect(find.text('Apagar os dados salvos?'), findsOneWidget);
+    expect(clearCalls, 0);
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(clearCalls, 0);
+
+    await tester.tap(find.byKey(const ValueKey('critical-storage-clear')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apagar dados'));
+    await tester.pumpAndSettle();
+    expect(clearCalls, 1);
+    expect(find.text('Apagar os dados salvos?'), findsNothing);
   });
 }
 

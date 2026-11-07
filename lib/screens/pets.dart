@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
 import '../data/vet_repository.dart';
@@ -326,7 +327,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
         Padding(
           padding: EdgeInsets.fromLTRB(
             desktop ? 20 : 0,
-            desktop ? 20 : 28,
+            desktop ? 20 : 25,
             desktop ? 20 : 0,
             20,
           ),
@@ -346,7 +347,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                         ...categories.entries.map(
                           (entry) => _category(pet, entry),
                         ),
-                        _continueButton(pet.id, topPadding: 9),
+                        _continueButton(pet.id, topPadding: 12),
                       ],
                     ),
                   ),
@@ -495,14 +496,131 @@ class _ServicosScreenState extends State<ServicosScreen> {
 
   // Ajuste exclusivo de Serviços: categoria Montserrat Alternates 20 px,
   // sem alterar VetChoicePill utilizado pelas outras telas.
-  Widget _servicePill(String name) => Row(
+  Widget _servicePill(String name) {
+    if (MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint) {
+      return _desktopServicePill(name);
+    }
+
+    final visual = _ServiceCategoryVisual.forName(name);
+    final borderRadius = visual.borderRadius;
+    final gradient = LinearGradient(
+      begin: Alignment(-1, -visual.gradientAlignmentY),
+      end: Alignment(1, visual.gradientAlignmentY),
+      colors: const [VH.secondary, VH.background],
+      stops: visual.gradientStops,
+    );
+    return SizedBox(
+      key: ValueKey('services-category-row-$name'),
+      width: 320,
+      height: 59,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: visual.left,
+            top: 0,
+            width: visual.width,
+            height: 59,
+            child: Material(
+              color: Colors.transparent,
+              child: Ink(
+                key: ValueKey('services-pill-$name'),
+                decoration: BoxDecoration(
+                  gradient: gradient,
+                  borderRadius: borderRadius,
+                  boxShadow: VH.controlShadow,
+                ),
+                child: InkWell(
+                  onTap: () => _toggleCategory(name),
+                  borderRadius: borderRadius,
+                  overlayColor: WidgetStateProperty.resolveWith(
+                    VH.interactionOverlay,
+                  ),
+                  child: SizedBox(
+                    height: 59,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: visual.iconLeft,
+                          top: visual.iconTop,
+                          width: visual.iconWidth,
+                          height: visual.iconHeight,
+                          child: SizedBox(
+                            key: ValueKey('services-category-icon-$name'),
+                            child: VetPictogram(name),
+                          ),
+                        ),
+                        Positioned(
+                          left: visual.labelLeft,
+                          top: 18,
+                          child: Text(
+                            name,
+                            key: ValueKey('services-category-label-$name'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: VH.bodyFontFamily,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: VetColors.chatMessageText,
+                            ),
+                          ),
+                        ),
+                        if (visual.arrow != _ServiceCategoryArrow.doubleRight)
+                          Positioned(
+                            left: visual.arrowLeft,
+                            top: visual.arrowTop,
+                            width: visual.arrowWidth,
+                            height: visual.arrowHeight,
+                            child: IgnorePointer(
+                              child: SvgPicture.asset(
+                                visual.arrow == _ServiceCategoryArrow.down
+                                    ? 'assets/imagens/figma/services-chevron-down.svg'
+                                    : 'assets/imagens/figma/services-chevron-right.svg',
+                                key: ValueKey('services-category-arrow-$name'),
+                                fit: BoxFit.fill,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (visual.arrow == _ServiceCategoryArrow.doubleRight)
+            Positioned(
+              left: 274,
+              top: 8.5,
+              width: 48,
+              height: 48,
+              child: IconButton(
+                key: ValueKey('services-category-arrow-$name'),
+                tooltip: name,
+                onPressed: () => _toggleCategory(name),
+                padding: EdgeInsets.zero,
+                icon: Image.asset(
+                  'assets/imagens/figma/convenio-chevron.png',
+                  key: ValueKey('services-category-chevron-$name'),
+                  width: 17,
+                  height: 19,
+                  excludeFromSemantics: true,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _desktopServicePill(String name) => Row(
     children: [
       Expanded(
         child: Material(
           color: Colors.transparent,
           child: Ink(
             decoration: BoxDecoration(
-              // SERVICES_PAGE: 78.98° gradient on the 264 × 59 px pill.
               gradient: const LinearGradient(
                 begin: Alignment(-1.005, 0.876),
                 end: Alignment(1.005, -0.876),
@@ -538,6 +656,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                             fontFamily: VH.bodyFontFamily,
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
+                            // O tom escuro mantém contraste acessível no gradiente.
                             color: VetColors.chatMessageText,
                           ),
                         ),
@@ -568,11 +687,15 @@ class _ServicosScreenState extends State<ServicosScreen> {
     dynamic pet,
     MapEntry<String, List<String>> entry,
   ) => SizedBox(
-    width: 306,
+    width: MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint ? 306 : 320,
     child: Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.sizeOf(context).width < VH.compactBreakpoint
-            ? (entry.key == 'Microchipagem' ? 22 : 20)
+            ? switch (entry.key) {
+                'Exames' || 'Vacinas' => 18,
+                'Microchipagem' => 22,
+                _ => 20,
+              }
             : 14,
       ),
       child: Column(
@@ -597,6 +720,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                     child: Material(
                       color: VH.secondary.withValues(alpha: .25),
                       child: SizedBox(
+                        key: ValueKey('services-options-${entry.key}'),
                         width: 228,
                         child: Column(
                           children: [
@@ -614,7 +738,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                                       minHeight:
                                           MediaQuery.sizeOf(context).width <
                                               VH.compactBreakpoint
-                                          ? 33
+                                          ? 101 / 3
                                           : 48,
                                     ),
                                     child: Padding(
@@ -666,6 +790,118 @@ class _ServicosScreenState extends State<ServicosScreen> {
       ),
     ),
   );
+}
+
+enum _ServiceCategoryArrow { down, right, doubleRight }
+
+class _ServiceCategoryVisual {
+  const _ServiceCategoryVisual({
+    required this.left,
+    required this.width,
+    required this.iconLeft,
+    required this.iconTop,
+    required this.iconWidth,
+    required this.iconHeight,
+    required this.labelLeft,
+    required this.gradientAlignmentY,
+    required this.borderRadius,
+    required this.arrow,
+    this.arrowLeft = 0,
+    this.arrowTop = 0,
+    this.arrowWidth = 0,
+    this.arrowHeight = 0,
+    this.gradientStops,
+  });
+
+  final double left;
+  final double width;
+  final double iconLeft;
+  final double iconTop;
+  final double iconWidth;
+  final double iconHeight;
+  final double labelLeft;
+  final double gradientAlignmentY;
+  final BorderRadius borderRadius;
+  final _ServiceCategoryArrow arrow;
+  final double arrowLeft;
+  final double arrowTop;
+  final double arrowWidth;
+  final double arrowHeight;
+  final List<double>? gradientStops;
+
+  static _ServiceCategoryVisual forName(String name) => switch (name) {
+    'Exames' => const _ServiceCategoryVisual(
+      left: 0,
+      width: 263,
+      iconLeft: 15,
+      iconTop: 19,
+      iconWidth: 30,
+      iconHeight: 30,
+      labelLeft: 61,
+      gradientAlignmentY: 1.07212,
+      borderRadius: BorderRadius.only(
+        topRight: Radius.circular(800),
+        bottomRight: Radius.circular(400),
+      ),
+      arrow: _ServiceCategoryArrow.down,
+      arrowLeft: 240.075,
+      arrowTop: 25.996,
+      arrowWidth: 19.698,
+      arrowHeight: 11.124,
+    ),
+    'Vacinas' => const _ServiceCategoryVisual(
+      left: 0,
+      width: 263,
+      iconLeft: 16.669,
+      iconTop: 15,
+      iconWidth: 31.181,
+      iconHeight: 30,
+      labelLeft: 62,
+      gradientAlignmentY: 0.0756,
+      gradientStops: [0.0019273, 0.99814],
+      borderRadius: BorderRadius.only(
+        topRight: Radius.circular(25),
+        bottomRight: Radius.circular(25),
+      ),
+      arrow: _ServiceCategoryArrow.right,
+      arrowLeft: 226.345,
+      arrowTop: 21.735,
+      arrowWidth: 8.008,
+      arrowHeight: 16.63,
+    ),
+    'Microchipagem' => const _ServiceCategoryVisual(
+      left: -1,
+      width: 263,
+      iconLeft: 14,
+      iconTop: 14,
+      iconWidth: 30,
+      iconHeight: 30,
+      labelLeft: 61,
+      gradientAlignmentY: 0.0756,
+      gradientStops: [0.0019273, 0.99814],
+      borderRadius: BorderRadius.only(
+        topRight: Radius.circular(25),
+        bottomRight: Radius.circular(25),
+      ),
+      arrow: _ServiceCategoryArrow.doubleRight,
+    ),
+    'Atestados' => const _ServiceCategoryVisual(
+      left: -5,
+      width: 267,
+      iconLeft: 13,
+      iconTop: 14,
+      iconWidth: 32,
+      iconHeight: 32,
+      labelLeft: 61,
+      gradientAlignmentY: -0.8813,
+      borderRadius: BorderRadius.only(
+        topRight: Radius.circular(400),
+        bottomRight: Radius.circular(800),
+      ),
+      arrow: _ServiceCategoryArrow.doubleRight,
+    ),
+    _ => throw ArgumentError.value(name, 'name', 'Categoria desconhecida'),
+  };
 }
 
 class ConvenioScreen extends StatelessWidget {
@@ -944,20 +1180,24 @@ class ConvenioScreen extends StatelessWidget {
         SizedBox(
           width: 48,
           height: 59,
-          child: IconButton(
-            tooltip: plan,
-            padding: EdgeInsets.zero,
-            onPressed: open,
-            icon: SizedBox(
-              width: 22,
-              height: 29,
-              child: Center(
-                child: Image.asset(
-                  'assets/imagens/figma/convenio-chevron.png',
-                  width: 17,
-                  height: 19,
-                  fit: BoxFit.fill,
-                  excludeFromSemantics: true,
+          child: ExcludeFocus(
+            child: ExcludeSemantics(
+              child: IconButton(
+                tooltip: plan,
+                padding: EdgeInsets.zero,
+                onPressed: open,
+                icon: SizedBox(
+                  width: 22,
+                  height: 29,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/imagens/figma/convenio-chevron.png',
+                      width: 17,
+                      height: 19,
+                      fit: BoxFit.fill,
+                      excludeFromSemantics: true,
+                    ),
+                  ),
                 ),
               ),
             ),

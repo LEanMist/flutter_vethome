@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
+import 'package:flutter_vethome/widgets/auth/demo_mode_notice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 double _contrastRatio(Color first, Color second) {
@@ -167,6 +168,59 @@ void main() {
       tester.widget<Text>(find.text('Esqueceu sua senha?')).style?.color,
       VetColors.brownOnRose,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('aviso do Login fica entre a barra de status e a pata', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24);
+    tester.view.viewPadding = const FakeViewPadding(top: 24);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: const LoginPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final notice = tester.getRect(find.byType(DemoModeNotice));
+    final paw = tester.getRect(
+      find.image(const AssetImage('assets/imagens/figma/frame-35.png')),
+    );
+    expect(notice.top, 32);
+    expect(notice.bottom, lessThanOrEqualTo(paw.top));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('controle de senha anuncia a ação disponível', (tester) async {
+    await showLogin(tester, const Size(390, 844));
+
+    Finder passwordField() => find.byWidgetPredicate(
+      (widget) => widget is TextField && widget.decoration?.hintText == 'Senha',
+    );
+
+    expect(find.byTooltip('Mostrar senha'), findsOneWidget);
+    expect(tester.widget<TextField>(passwordField()).obscureText, isTrue);
+
+    await tester.tap(find.byTooltip('Mostrar senha'));
+    await tester.pump();
+
+    expect(find.byTooltip('Ocultar senha'), findsOneWidget);
+    expect(tester.widget<TextField>(passwordField()).obscureText, isFalse);
+
+    await tester.tap(find.byTooltip('Ocultar senha'));
+    await tester.pump();
+
+    expect(find.byTooltip('Mostrar senha'), findsOneWidget);
+    expect(tester.widget<TextField>(passwordField()).obscureText, isTrue);
     expect(tester.takeException(), isNull);
   });
 

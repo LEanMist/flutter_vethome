@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../data/local_data_manager.dart';
+import '../data/local_storage.dart';
 import '../data/theme_preferences.dart';
 import '../data/vet_repository.dart';
 import '../theme.dart';
@@ -67,7 +69,9 @@ class _ThemeColorWheel extends StatelessWidget {
 }
 
 class ConfigScreen extends StatelessWidget {
-  const ConfigScreen({super.key});
+  const ConfigScreen({super.key, this.clearLocalUserData});
+
+  final Future<bool> Function()? clearLocalUserData;
 
   @override
   Widget build(BuildContext context) {
@@ -267,8 +271,16 @@ class ConfigScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const Text(
-                    'Email:',
+                  const Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Email',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: ':'),
+                      ],
+                    ),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Comfortaa',
@@ -396,29 +408,82 @@ class ConfigScreen extends StatelessWidget {
   }
 
   Future<void> _signOut(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
+    final action = await showDialog<_ExitAction>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: VH.background,
         title: const Text('Sair do VetHome?'),
-        content: const Text('Você poderá entrar novamente quando quiser.'),
+        content: const Text(
+          'Sair volta para a tela de login. Os dados salvos continuam neste dispositivo.',
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(context, _ExitAction.cancel),
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(context, _ExitAction.clearData),
+            child: const Text('Apagar dados locais'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, _ExitAction.signOut),
             child: const Text('Sair'),
           ),
         ],
       ),
     );
-    if (confirmed == true && context.mounted) {
+
+    if (!context.mounted || action == null || action == _ExitAction.cancel) {
+      return;
+    }
+    if (action == _ExitAction.clearData) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: VH.background,
+          title: const Text('Apagar os dados deste dispositivo?'),
+          content: const Text(
+            'Isso remove o perfil salvo, o e-mail lembrado, pets cadastrados, fotos, endereços, consultas e vacinas. Os dados demonstrativos iniciais continuarão disponíveis; a preferência de tema será mantida.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Apagar dados'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+
+      final cleared =
+          await (clearLocalUserData?.call() ??
+              LocalDataManager.clearUserData());
+      if (!context.mounted) return;
+      if (!cleared) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Não foi possível confirmar a remoção dos dados. Tente novamente.',
+              ),
+            ),
+          );
+        return;
+      }
+    }
+
+    if (context.mounted) {
       Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     }
   }
 }
+
+enum _ExitAction { cancel, signOut, clearData }
 
 class _LocalSaveNotice extends StatefulWidget {
   const _LocalSaveNotice();
@@ -443,6 +508,9 @@ class _LocalSaveNoticeState extends State<_LocalSaveNotice> {
           content: Text(
             saved
                 ? 'Alterações salvas no dispositivo.'
+                : VetRepository.lastPersistenceError
+                      is LocalStorageConflictException
+                ? 'Outra janela alterou os dados. Esta versão não será gravada por cima; reabra o VetHome para carregar a versão atual.'
                 : 'A gravação ainda não foi concluída.',
           ),
         ),
@@ -452,27 +520,46 @@ class _LocalSaveNoticeState extends State<_LocalSaveNotice> {
   @override
   Widget build(BuildContext context) => ValueListenableBuilder<bool>(
     valueListenable: VetRepository.unsavedChanges,
-    builder: (context, pending, _) => pending || _saving
-        ? Card(
+    builder: (context, pending, _) {
+      return ValueListenableBuilder<bool>(
+        valueListenable: VetRepository.savingChanges,
+        builder: (context, saving, _) {
+          final isSaving = _saving || saving;
+          final conflict =
+              VetRepository.lastPersistenceError
+                  is LocalStorageConflictException;
+          if (!pending && !isSaving) return const SizedBox.shrink();
+
+          return Card(
             margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Há alterações nesta sessão que ainda não foram salvas no dispositivo.',
+                  Text(
+                    isSaving
+                        ? 'Salvando alterações no dispositivo…'
+                        : conflict
+                        ? 'Outra janela alterou os dados salvos. Esta sessão não vai sobrescrevê-los; as alterações daqui continuam sem salvar.'
+                        : 'Há alterações nesta sessão que ainda não foram salvas no dispositivo.',
                   ),
                   TextButton(
-                    onPressed: _saving ? null : _retry,
+                    onPressed: isSaving || conflict ? null : _retry,
                     child: Text(
-                      _saving ? 'Salvando…' : 'Tentar salvar novamente',
+                      isSaving
+                          ? 'Salvando…'
+                          : conflict
+                          ? 'Reabra o VetHome para carregar a versão atual'
+                          : 'Tentar salvar novamente',
                     ),
                   ),
                 ],
               ),
             ),
-          )
-        : const SizedBox.shrink(),
+          );
+        },
+      );
+    },
   );
 }

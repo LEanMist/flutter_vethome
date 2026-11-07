@@ -386,33 +386,36 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 
-  Widget _buildBirthday(double s) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Transform.translate(
-          offset: Offset(0, -4 * s),
-          child: Image.asset(
-            'assets/imagens/figma/profile-birthday-icon.png',
-            key: const ValueKey('profile-birthday-icon'),
-            width: 18 * s,
-            height: 22 * s,
-            excludeFromSemantics: true,
+  Widget _buildBirthday(double s) => Semantics(
+    label: 'Data de nascimento: ${fmtData(_nascimento)}',
+    child: ExcludeSemantics(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Transform.translate(
+            offset: Offset(0, -4 * s),
+            child: Image.asset(
+              'assets/imagens/figma/profile-birthday-icon.png',
+              key: const ValueKey('profile-birthday-icon'),
+              width: 18 * s,
+              height: 22 * s,
+              excludeFromSemantics: true,
+            ),
           ),
-        ),
-        SizedBox(width: 8 * s),
-        Text(
-          _nascimentoTexto,
-          style: TextStyle(
-            fontSize: 18 * s,
-            fontFamily: PetsTheme.fontComfortaa,
-            fontWeight: FontWeight.bold,
-            color: VetColors.brown,
+          SizedBox(width: 8 * s),
+          Text(
+            _nascimentoTexto,
+            style: TextStyle(
+              fontSize: 18 * s,
+              fontFamily: PetsTheme.fontComfortaa,
+              fontWeight: FontWeight.bold,
+              color: VetColors.brown,
+            ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      ),
+    ),
+  );
 
   Widget _buildOptions(double s) {
     final items = <MapEntry<String, VoidCallback>>[

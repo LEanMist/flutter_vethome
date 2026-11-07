@@ -141,6 +141,10 @@ void main() {
       expect(dayData.hasAction(SemanticsAction.tap), isTrue);
       expect(dayData.flagsCollection.isButton, isTrue);
       expect(dayData.flagsCollection.isSelected, Tristate.isTrue);
+      expect(
+        dayData.label,
+        'terça-feira, 13 de janeiro de 2026, possui agendamento',
+      );
 
       final nextDay = tester.getSemantics(
         find.byKey(const ValueKey('calendar-date-semantics-2026-1-14')),

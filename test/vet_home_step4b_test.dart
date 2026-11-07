@@ -401,6 +401,7 @@ void main() {
         'pets',
         'appointments',
         'vaccinations',
+        LocalStorage.storageMetadataKey,
       });
       expect(json['appointments'], isEmpty);
       expect(json['vaccinations'], isEmpty);
@@ -516,13 +517,21 @@ void main() {
     },
   );
 
-  test('Limpeza remove apenas a chave de estado do VetHome', () async {
+  test('Limpeza grava tombstone e preserva outras preferências', () async {
     VetRepository.updateClient(name: 'Salvo');
     await VetRepository.flush();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('outro.estado', 'preservar');
     await LocalStorage().clear();
-    expect(prefs.containsKey(LocalStorage.stateKey), isFalse);
+    final tombstone =
+        jsonDecode(prefs.getString(LocalStorage.stateKey)!)
+            as Map<String, dynamic>;
+    expect(tombstone.containsKey('client'), isFalse);
+    expect(
+      (tombstone[LocalStorage.storageMetadataKey]
+          as Map<String, dynamic>)['cleared'],
+      isTrue,
+    );
     expect(prefs.getString('outro.estado'), 'preservar');
     await VetRepository.initialize();
     expect(VetRepository.pets, hasLength(4));

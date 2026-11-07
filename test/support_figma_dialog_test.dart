@@ -98,6 +98,11 @@ void main() {
     expect(emailLabel.style?.fontFamily, 'Comfortaa');
     expect(emailLabel.style?.fontSize, 20);
     expect(emailLabel.style?.fontWeight, FontWeight.w500);
+    // Figma 2783:637: somente a palavra Email usa Comfortaa Bold.
+    expect(
+      (emailLabel.textSpan as TextSpan?)?.children?.first.style?.fontWeight,
+      FontWeight.bold,
+    );
     final email = tester.widget<SelectableText>(
       find.ancestor(
         of: find.text('Kelvinpro@gmail.com'),

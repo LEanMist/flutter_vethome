@@ -31,7 +31,7 @@ class HomePage extends StatelessWidget {
           builder: (context, constraints) {
             final scale = math
                 .min(constraints.maxWidth / 390, constraints.maxHeight / 844)
-                .clamp(.5, 1.0)
+                .clamp(0.0, 1.0)
                 .toDouble();
 
             return Center(
@@ -127,8 +127,8 @@ class HomePage extends StatelessWidget {
                       Positioned(
                         left: 106 * scale,
                         top: 580 * scale,
-                        width: 178 * scale,
-                        height: 178 * scale,
+                        width: 177 * scale,
+                        height: 177 * scale,
                         child: ExcludeSemantics(
                           child: CustomPaint(
                             key: const ValueKey('home-dashed-ring'),
@@ -205,16 +205,20 @@ class HomePage extends StatelessWidget {
                                         padding: EdgeInsets.only(
                                           right: 8 * scale,
                                         ),
-                                        child: Text(
-                                          name,
-                                          key: const ValueKey('home-user-name'),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: VetColors.brown,
-                                            fontFamily: VH.bodyFontFamily,
-                                            fontSize: 14 * scale,
-                                            fontWeight: FontWeight.w500,
+                                        child: ExcludeSemantics(
+                                          child: Text(
+                                            name,
+                                            key: const ValueKey(
+                                              'home-user-name',
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: VetColors.brown,
+                                              fontFamily: VH.bodyFontFamily,
+                                              fontSize: 14 * scale,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
                                         ),
                                       ),

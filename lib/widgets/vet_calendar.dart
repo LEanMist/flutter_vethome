@@ -541,6 +541,7 @@ class VetCalendar extends StatelessWidget {
       inMonth: inMonth,
       enabled: _enabled(date),
       indicator: false,
+      hasAppointmentForSemantics: hasIndicator?.call(date) ?? false,
       todayForSemantics: _sameDay(date, today),
       scale: scale,
       fontSizeFactor: fontSizeFactor,
@@ -563,6 +564,7 @@ class _CalendarDay extends StatefulWidget {
     this.scale = 1,
     this.fontSizeFactor = 1,
     this.todayForSemantics = false,
+    this.hasAppointmentForSemantics = false,
     this.onPreviousMonth,
     this.onNextMonth,
   });
@@ -572,6 +574,7 @@ class _CalendarDay extends StatefulWidget {
   final double scale;
   final double fontSizeFactor;
   final bool todayForSemantics;
+  final bool hasAppointmentForSemantics;
   final VoidCallback? onPreviousMonth, onNextMonth;
   final VoidCallback onTap;
 
@@ -637,7 +640,8 @@ class _CalendarDayState extends State<_CalendarDay> {
           '${VetCalendar.monthNames[widget.date.month - 1].toLowerCase()} '
           'de ${widget.date.year}',
       if (widget.today || widget.todayForSemantics) 'hoje',
-      if (widget.indicator) 'possui agendamento',
+      if (widget.indicator || widget.hasAppointmentForSemantics)
+        'possui agendamento',
     ].join(', ');
 
     return Semantics(

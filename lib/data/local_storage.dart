@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,8 +9,27 @@ import '../models/json_fields.dart';
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../models/saved_address.dart';
+import 'local_storage_write_lock.dart';
 
 enum LocalLoadStatus { empty, valid, invalid, unavailable }
+
+enum LocalStorageConflictKind { cleared, modified }
+
+class LocalStorageConflictException extends StateError {
+  LocalStorageConflictException.cleared()
+    : kind = LocalStorageConflictKind.cleared,
+      super(
+        'Os dados foram apagados em outra janela. Reabra o VetHome antes de salvar.',
+      );
+
+  LocalStorageConflictException.modified()
+    : kind = LocalStorageConflictKind.modified,
+      super(
+        'Os dados foram alterados em outra janela. Reabra o VetHome antes de salvar.',
+      );
+
+  final LocalStorageConflictKind kind;
+}
 
 class LocalLoadResult {
   const LocalLoadResult._(this.status, {this.state, this.error});
@@ -208,58 +228,262 @@ class LocalStorage {
   LocalStorage({
     Future<SharedPreferences> Function()? preferencesLoader,
     Future<void> Function(SharedPreferences)? reloadPreferences,
+    Future<bool> Function(SharedPreferences, String, String)? snapshotWriter,
   }) : _preferencesLoader = preferencesLoader ?? SharedPreferences.getInstance,
        _reloadPreferences =
-           reloadPreferences ?? ((preferences) => preferences.reload());
+           reloadPreferences ?? ((preferences) => preferences.reload()),
+       _snapshotWriter =
+           snapshotWriter ??
+           ((preferences, key, value) => preferences.setString(key, value));
 
   static const stateKey = 'vethome.state.v1';
+  static const revisionKey = 'vethome.state.revision.v1';
+  static const generationKey = 'vethome.state.generation.v1';
+  static const storageMetadataKey = '_vethomeStorage';
 
   final Future<SharedPreferences> Function() _preferencesLoader;
   final Future<void> Function(SharedPreferences) _reloadPreferences;
+  final Future<bool> Function(SharedPreferences, String, String)
+  _snapshotWriter;
+  static Future<void> _mutationQueue = Future<void>.value();
+  int? _knownGeneration;
+  int? _knownRevision;
+  LocalLoadStatus? _lastLoadStatus;
+
+  static Future<T> _serializeMutation<T>(
+    Future<T> Function() action, {
+    bool requireCrossContextLock = true,
+  }) async {
+    final previousMutation = _mutationQueue;
+    final release = Completer<void>();
+    _mutationQueue = release.future;
+    await previousMutation;
+    try {
+      return await withLocalStorageWriteLock(
+        action,
+        requireCrossContextLock: requireCrossContextLock,
+      );
+    } finally {
+      release.complete();
+    }
+  }
+
+  int _readGeneration(SharedPreferences preferences) {
+    final value = preferences.get(generationKey);
+    if (value == null) return 0;
+    if (value is! int || value < 0) {
+      throw const FormatException('Revisão dos dados locais inválida');
+    }
+    return value;
+  }
+
+  int _readRevision(SharedPreferences preferences) {
+    final value = preferences.get(revisionKey);
+    if (value == null) return 0;
+    if (value is! int || value < 0) {
+      throw const FormatException('Revisão dos dados locais inválida');
+    }
+    return value;
+  }
+
+  _LocalStorageMetadata _readLegacyMetadata(SharedPreferences preferences) =>
+      _LocalStorageMetadata(
+        generation: _readGeneration(preferences),
+        revision: _readRevision(preferences),
+      );
+
+  _LocalStorageMetadata _readStoredMetadata(SharedPreferences preferences) {
+    if (!preferences.containsKey(stateKey)) {
+      return _readLegacyMetadata(preferences);
+    }
+    final storedValue = preferences.get(stateKey);
+    if (storedValue is! String) {
+      throw const FormatException('Snapshot local não é texto JSON');
+    }
+    final decoded = jsonDecode(storedValue);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Snapshot não é um objeto');
+    }
+    if (decoded.containsKey(storageMetadataKey)) {
+      final metadata = _LocalStorageMetadata.fromJson(
+        decoded[storageMetadataKey],
+      );
+      if (!metadata.cleared) LocalState.fromJson(decoded);
+      return metadata;
+    }
+    LocalState.fromJson(decoded);
+    return _readLegacyMetadata(preferences);
+  }
 
   // API com mock oficial; reload evita ler um cache antigo na inicialização.
   Future<LocalLoadResult> load() async {
-    late final Object? storedValue;
     try {
-      final preferences = await _preferencesLoader();
-      await _reloadPreferences(preferences);
-      if (!preferences.containsKey(stateKey)) {
-        return const LocalLoadResult.empty();
-      }
-      storedValue = preferences.get(stateKey);
-    } catch (error) {
-      debugPrint('VetHome: armazenamento local indisponível.');
-      return LocalLoadResult.unavailable(error);
-    }
+      return await _serializeMutation(() async {
+        late final Object? storedValue;
+        late final bool hasStoredValue;
+        late final SharedPreferences preferences;
+        try {
+          preferences = await _preferencesLoader();
+          await _reloadPreferences(preferences);
+          hasStoredValue = preferences.containsKey(stateKey);
+          storedValue = hasStoredValue ? preferences.get(stateKey) : null;
+        } catch (error) {
+          _lastLoadStatus = LocalLoadStatus.unavailable;
+          debugPrint('VetHome: armazenamento local indisponível.');
+          return LocalLoadResult.unavailable(error);
+        }
 
-    try {
-      if (storedValue is! String) {
-        throw const FormatException('Snapshot local não é texto JSON');
-      }
-      final decoded = jsonDecode(storedValue);
-      if (decoded is! Map<String, dynamic>) {
-        throw const FormatException('Snapshot não é um objeto');
-      }
-      return LocalLoadResult.valid(LocalState.fromJson(decoded));
+        try {
+          if (!hasStoredValue) {
+            final metadata = _readLegacyMetadata(preferences);
+            _knownGeneration = metadata.generation;
+            _knownRevision = metadata.revision;
+            _lastLoadStatus = LocalLoadStatus.empty;
+            return const LocalLoadResult.empty();
+          }
+          if (storedValue is! String) {
+            throw const FormatException('Snapshot local não é texto JSON');
+          }
+          final decoded = jsonDecode(storedValue);
+          if (decoded is! Map<String, dynamic>) {
+            throw const FormatException('Snapshot não é um objeto');
+          }
+          final metadata = decoded.containsKey(storageMetadataKey)
+              ? _LocalStorageMetadata.fromJson(decoded[storageMetadataKey])
+              : _readLegacyMetadata(preferences);
+          _knownGeneration = metadata.generation;
+          _knownRevision = metadata.revision;
+          if (metadata.cleared) {
+            _lastLoadStatus = LocalLoadStatus.empty;
+            return const LocalLoadResult.empty();
+          }
+          final state = LocalState.fromJson(decoded);
+          _lastLoadStatus = LocalLoadStatus.valid;
+          return LocalLoadResult.valid(state);
+        } catch (error) {
+          _lastLoadStatus = LocalLoadStatus.invalid;
+          // O valor original permanece intocado para recuperação explícita futura.
+          debugPrint('VetHome: snapshot local inválido.');
+          return LocalLoadResult.invalid(error);
+        }
+      }, requireCrossContextLock: false);
     } catch (error) {
-      // O valor original permanece intocado para recuperação explícita futura.
-      debugPrint('VetHome: snapshot local inválido.');
-      return LocalLoadResult.invalid(error);
+      _lastLoadStatus = LocalLoadStatus.unavailable;
+      debugPrint('VetHome: bloqueio do armazenamento local indisponível.');
+      return LocalLoadResult.unavailable(error);
     }
   }
 
   Future<void> save(LocalState state) async {
-    final value = state.toValidatedJson();
-    final preferences = await _preferencesLoader();
-    if (!await preferences.setString(stateKey, value)) {
-      throw StateError('Não foi possível salvar o estado local do VetHome.');
+    final validated = state.toValidatedJson();
+    if (_lastLoadStatus != LocalLoadStatus.empty &&
+        _lastLoadStatus != LocalLoadStatus.valid) {
+      throw StateError(
+        'Carregue e valide os dados locais antes de salvar alterações.',
+      );
     }
+    final knownGeneration = _knownGeneration;
+    final knownRevision = _knownRevision;
+    if (knownGeneration == null || knownRevision == null) {
+      throw StateError(
+        'Carregue e valide os dados locais antes de salvar alterações.',
+      );
+    }
+    final value = jsonDecode(validated) as Map<String, dynamic>;
+    await _serializeMutation(() async {
+      final preferences = await _preferencesLoader();
+      await _reloadPreferences(preferences);
+      final currentMetadata = _readStoredMetadata(preferences);
+      if (knownGeneration != currentMetadata.generation) {
+        throw LocalStorageConflictException.cleared();
+      }
+      if (knownRevision != currentMetadata.revision) {
+        throw LocalStorageConflictException.modified();
+      }
+      final nextRevision = currentMetadata.revision + 1;
+      final metadata = _LocalStorageMetadata(
+        generation: currentMetadata.generation,
+        revision: nextRevision,
+      );
+      final encoded = jsonEncode({
+        ...value,
+        storageMetadataKey: metadata.toJson(),
+      });
+      if (!await _snapshotWriter(preferences, stateKey, encoded)) {
+        throw StateError('Não foi possível salvar o estado local do VetHome.');
+      }
+      _knownGeneration = currentMetadata.generation;
+      _knownRevision = nextRevision;
+    });
   }
 
-  Future<void> clear() async {
+  Future<void> clear() => _serializeMutation(() async {
     final preferences = await _preferencesLoader();
-    if (!await preferences.remove(stateKey)) {
+    await _reloadPreferences(preferences);
+    late final _LocalStorageMetadata currentMetadata;
+    try {
+      currentMetadata = _readStoredMetadata(preferences);
+    } on FormatException {
+      // Revisão corrompida ainda permite uma exclusão explícita. O valor alto
+      // impede sessões antigas com revisão válida de recriarem o snapshot.
+      final invalidation = DateTime.now().microsecondsSinceEpoch;
+      currentMetadata = _LocalStorageMetadata(
+        generation: invalidation,
+        revision: invalidation,
+      );
+    }
+    final nextGeneration = currentMetadata.generation + 1;
+    final nextRevision = currentMetadata.revision + 1;
+    final tombstone = jsonEncode({
+      storageMetadataKey: _LocalStorageMetadata(
+        generation: nextGeneration,
+        revision: nextRevision,
+        cleared: true,
+      ).toJson(),
+    });
+    if (!await _snapshotWriter(preferences, stateKey, tombstone)) {
       throw StateError('Não foi possível limpar o estado local do VetHome.');
     }
+    _knownGeneration = nextGeneration;
+    _knownRevision = nextRevision;
+    _lastLoadStatus = LocalLoadStatus.empty;
+  });
+}
+
+class _LocalStorageMetadata {
+  const _LocalStorageMetadata({
+    required this.generation,
+    required this.revision,
+    this.cleared = false,
+  });
+
+  static const _formatVersion = 1;
+
+  final int generation;
+  final int revision;
+  final bool cleared;
+
+  factory _LocalStorageMetadata.fromJson(Object? value) {
+    if (value is! Map<String, dynamic> ||
+        value['formatVersion'] != _formatVersion ||
+        value['generation'] is! int ||
+        value['revision'] is! int ||
+        (value['generation'] as int) < 0 ||
+        (value['revision'] as int) < 0 ||
+        value['cleared'] is! bool) {
+      throw const FormatException('Metadados dos dados locais inválidos');
+    }
+    return _LocalStorageMetadata(
+      generation: value['generation'] as int,
+      revision: value['revision'] as int,
+      cleared: value['cleared'] as bool,
+    );
   }
+
+  Map<String, dynamic> toJson() => {
+    'formatVersion': _formatVersion,
+    'generation': generation,
+    'revision': revision,
+    'cleared': cleared,
+  };
 }

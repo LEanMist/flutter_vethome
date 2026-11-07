@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/home_page.dart';
@@ -140,6 +141,115 @@ void main() {
     });
   }
 
+  testWidgets('HOME_PAGE_2: anel alinhado e conteudo visivel em 320x400', (
+    tester,
+  ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    tester.view.devicePixelRatio = 1;
+
+    for (final viewport in [const Size(390, 844), const Size(320, 400)]) {
+      tester.view.physicalSize = viewport;
+      await tester.pumpWidget(const MaterialApp(home: HomePage()));
+      await tester.pumpAndSettle();
+
+      final scale = viewport.height / 844;
+      final frame = tester.getRect(
+        find.byKey(const ValueKey('home-figma-frame')),
+      );
+      expect(frame.width, closeTo(390 * scale, .01));
+      expect(frame.height, closeTo(viewport.height, .01));
+      expect(frame.left, greaterThanOrEqualTo(0));
+      expect(frame.right, lessThanOrEqualTo(viewport.width));
+
+      final ring = tester.getRect(
+        find.byKey(const ValueKey('home-dashed-ring')),
+      );
+      final play = tester.getRect(find.byKey(const ValueKey('home-open-pets')));
+      expect(ring.width, closeTo(177 * scale, .01));
+      expect(ring.height, closeTo(177 * scale, .01));
+      expect(ring.center.dx, closeTo(play.center.dx, .01));
+      expect(ring.center.dy, closeTo(play.center.dy, .01));
+
+      for (final key in const [
+        'home-title',
+        'home-subtitle',
+        'home-profile-chip',
+        'home-dashed-ring',
+        'home-open-pets',
+      ]) {
+        final rect = tester.getRect(find.byKey(ValueKey(key)));
+        // O título e o subtítulo começam 1 px fora do frame no Figma.
+        final allowedLeft = key == 'home-title' || key == 'home-subtitle'
+            ? -scale
+            : 0.0;
+        expect(rect.left, greaterThanOrEqualTo(allowedLeft - .01), reason: key);
+        expect(rect.top, greaterThanOrEqualTo(0), reason: key);
+        expect(rect.right, lessThanOrEqualTo(viewport.width), reason: key);
+        expect(rect.bottom, lessThanOrEqualTo(viewport.height), reason: key);
+      }
+      expect(tester.takeException(), isNull);
+    }
+  });
+  testWidgets('HOME_PAGE_2: ações acessíveis em três viewports', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    try {
+      for (final viewport in [
+        const Size(320, 640),
+        const Size(390, 844),
+        const Size(1280, 800),
+      ]) {
+        tester.view.physicalSize = viewport;
+        tester.view.devicePixelRatio = 1;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: const HomePage(),
+            routes: {
+              '/perfil': (_) => const Scaffold(body: Text('Destino Perfil')),
+              '/pets': (_) => const Scaffold(body: Text('Destino Pets')),
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final name = tester
+            .widget<Text>(find.byKey(const ValueKey('home-user-name')))
+            .data!;
+        final profile = find.bySemanticsLabel('Perfil de $name');
+        final pets = find.bySemanticsLabel('Abrir área dos pets');
+        expect(profile, findsOneWidget, reason: 'perfil $viewport');
+        expect(pets, findsOneWidget, reason: 'pets $viewport');
+        for (final action in [profile, pets]) {
+          final data = tester.getSemantics(action).getSemanticsData();
+          expect(data.flagsCollection.isButton, isTrue);
+          expect(data.hasAction(SemanticsAction.tap), isTrue);
+        }
+
+        final profileNode = tester.getSemantics(profile);
+        profileNode.owner!.performAction(profileNode.id, SemanticsAction.tap);
+        await tester.pumpAndSettle();
+        expect(find.text('Destino Perfil'), findsOneWidget);
+        Navigator.of(tester.element(find.text('Destino Perfil'))).pop();
+        await tester.pumpAndSettle();
+
+        final petsNode = tester.getSemantics(
+          find.bySemanticsLabel('Abrir área dos pets'),
+        );
+        petsNode.owner!.performAction(petsNode.id, SemanticsAction.tap);
+        await tester.pumpAndSettle();
+        expect(find.text('Destino Pets'), findsOneWidget);
+        Navigator.of(tester.element(find.text('Destino Pets'))).pop();
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      }
+    } finally {
+      semantics.dispose();
+    }
+  });
   testWidgets('HOME_PAGE_2 leva o chip ao Perfil e o play a Pets', (
     tester,
   ) async {

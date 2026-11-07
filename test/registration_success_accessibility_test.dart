@@ -28,11 +28,20 @@ void main() {
     );
     expect(
       tester.widget<Semantics>(announcement).properties.label,
-      'Usuário cadastrado!',
+      'Cadastro demonstrativo concluído. Os dados foram salvos neste dispositivo; nenhuma conta on-line foi criada.',
     );
     final data = tester.getSemantics(announcement).getSemanticsData();
-    expect(data.label, 'Usuário cadastrado!');
+    expect(
+      data.label,
+      'Cadastro demonstrativo concluído. Os dados foram salvos neste dispositivo; nenhuma conta on-line foi criada.',
+    );
     expect(data.flagsCollection.isLiveRegion, isTrue);
+    expect(
+      find.text(
+        'Perfil salvo neste dispositivo. Esta demonstração não cria contas on-line.',
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());

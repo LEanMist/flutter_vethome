@@ -184,6 +184,37 @@ void main() {
     expect(find.byType(AddressEditorPage), findsOneWidget);
   });
 
+  testWidgets('EDIT_ADRESS_WIDGET: cartão compacto expõe o nome do diálogo', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AddressEditorPage(address: address, modal: true),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final dialog = find.byKey(const ValueKey('address-editor-dialog'));
+      expect(dialog, findsOneWidget);
+      expect(find.bySemanticsLabel('Editar endereço'), findsOneWidget);
+      expect(find.text('Editar endereço'), findsNothing);
+      expect(
+        tester.getSize(find.byKey(const ValueKey('address-editor-panel'))),
+        const Size(290, 633),
+      );
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
   testWidgets('novo endereço mantém contraste acessível no botão rosa', (
     tester,
   ) async {
@@ -374,7 +405,11 @@ void main() {
     expect(skipStyle.fontFamily, VH.bodyFontFamily);
     expect(skipStyle.fontSize, 15);
     expect(skipStyle.fontWeight, FontWeight.bold);
-    expect(skipStyle.color, VH.secondary);
+    expect(skipStyle.color, VH.foreground);
+    expect(
+      _contrastRatio(skipStyle.color!, VH.background),
+      greaterThanOrEqualTo(4.5),
+    );
     expect(tester.takeException(), isNull);
   });
 }

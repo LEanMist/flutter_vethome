@@ -105,7 +105,7 @@ void main() {
     final fields = find.byType(TextField);
     await tester.enterText(fields.at(0), 'cliente@vethome.com');
     await tester.enterText(fields.at(1), 'segredo');
-    await tester.tap(find.byTooltip('Mostrar/ocultar senha'));
+    await tester.tap(find.byTooltip('Mostrar senha'));
     await tester.pump();
 
     expect(find.text('cliente@vethome.com'), findsOneWidget);

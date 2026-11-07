@@ -4,6 +4,7 @@ import '../data/vet_repository.dart';
 import '../data/cep_service.dart';
 import '../core/utils/form_fields.dart';
 import '../widgets/address_form.dart';
+import '../widgets/auth/local_profile_conflict_dialog.dart';
 import '../theme.dart';
 
 class EnderecoScreen extends StatelessWidget {
@@ -16,6 +17,13 @@ class EnderecoScreen extends StatelessWidget {
   final CepService cepService;
 
   Future<void> _continue(BuildContext context, Map<String, String> data) async {
+    if (VetRepository.hasLocalClientIdentityConflict(
+      email: data['client.E-mail'],
+      name: data['client.Nome Completo'],
+    )) {
+      await showLocalProfileConflictDialog(context);
+      return;
+    }
     VetRepository.registerClient(data);
     final saved = await VetRepository.flush();
     if (!context.mounted) return;
@@ -51,7 +59,7 @@ class EnderecoScreen extends StatelessWidget {
         cepService: cepService,
         title: 'Endereço',
         skipButtonStyle: TextButton.styleFrom(
-          foregroundColor: VH.secondary,
+          foregroundColor: VH.foreground,
           textStyle: const TextStyle(
             fontFamily: VH.bodyFontFamily,
             fontSize: 15,

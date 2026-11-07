@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/screens/pets.dart'
@@ -73,10 +74,10 @@ void main() {
     final gradientBegin = examsGradient.begin as Alignment;
     final gradientEnd = examsGradient.end as Alignment;
     expect(examsGradient.colors, [VetColors.rose, VetColors.pink]);
-    expect(gradientBegin.x, closeTo(-1.005, 0.01));
-    expect(gradientBegin.y, closeTo(0.876, 0.01));
-    expect(gradientEnd.x, closeTo(1.005, 0.01));
-    expect(gradientEnd.y, closeTo(-0.876, 0.01));
+    expect(gradientBegin.x, closeTo(-1, 0.01));
+    expect(gradientBegin.y, closeTo(-1.07212, 0.01));
+    expect(gradientEnd.x, closeTo(1, 0.01));
+    expect(gradientEnd.y, closeTo(1.07212, 0.01));
     for (final label in ['Exames', 'Vacinas', 'Microchipagem', 'Atestados']) {
       final category = tester.widget<Text>(find.text(label));
       expect(category.style?.fontFamily, 'MontserratAlternates');
@@ -220,6 +221,99 @@ void main() {
     expect(find.text('Consulta de teste'), findsOneWidget);
     expect(received?['petId'], pet.id);
     expect(received?['plan'], 'DogLife');
+    expect(received?['service'], isNotEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Convênio móvel oferece só uma ação acessível por plano', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
+    await tester.pumpAndSettle();
+
+    final root = tester
+        .binding
+        .renderViews
+        .first
+        .owner!
+        .semanticsOwner!
+        .rootSemanticsNode!;
+    final counts = <String, int>{
+      for (final name in ['PetLove', 'Doglife', 'Particular']) name: 0,
+    };
+
+    void inspect(SemanticsNode node) {
+      final data = node.getSemanticsData();
+      if (data.hasAction(SemanticsAction.tap)) {
+        for (final name in counts.keys) {
+          if (data.label.toLowerCase() == name.toLowerCase() ||
+              data.tooltip.toLowerCase() == name.toLowerCase()) {
+            counts[name] = counts[name]! + 1;
+          }
+        }
+      }
+      node.visitChildren((child) {
+        inspect(child);
+        return true;
+      });
+    }
+
+    inspect(root);
+    handle.dispose();
+    for (final name in counts.keys) {
+      expect(
+        counts[name],
+        1,
+        reason: '$name não deve aparecer como dois controles de navegação',
+      );
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Seta de Convênio mantém a navegação por toque', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    final pet = VetRepository.pets.first;
+    VetRepository.selectedPetId = pet.id;
+    Map<dynamic, dynamic>? received;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const ConvenioScreen(),
+        routes: {
+          '/nova-consulta': (context) {
+            received = ModalRoute.of(context)!.settings.arguments as Map;
+            return const Scaffold(body: Text('Consulta aberta'));
+          },
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final arrow = find.byWidgetPredicate(
+      (widget) => widget is IconButton && widget.tooltip == 'PetLove',
+    );
+    expect(arrow, findsOneWidget);
+    expect(tester.widget<IconButton>(arrow).onPressed, isNotNull);
+
+    await tester.tap(arrow);
+    await tester.pumpAndSettle();
+    expect(find.text('Consulta aberta'), findsOneWidget);
+    expect(received?['plan'], 'PetLove');
+    expect(received?['petId'], pet.id);
     expect(received?['service'], isNotEmpty);
     expect(tester.takeException(), isNull);
   });

@@ -175,6 +175,7 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
       selected: widget.selected,
       label: widget.label,
       child: Tooltip(
+        excludeFromSemantics: true,
         message: widget.label,
         child: SizedBox.square(
           dimension: dimension,

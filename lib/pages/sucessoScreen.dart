@@ -121,7 +121,9 @@ class _SucessoScreenState extends State<SucessoScreen>
                     duration: const Duration(milliseconds: 250),
                     child: Semantics(
                       key: const ValueKey('registration-success-announcement'),
-                      label: _arrived ? 'Usuário cadastrado!' : null,
+                      label: _arrived
+                          ? 'Cadastro demonstrativo concluído. Os dados foram salvos neste dispositivo; nenhuma conta on-line foi criada.'
+                          : null,
                       liveRegion: _arrived,
                       child: ExcludeSemantics(
                         child: Text(
@@ -134,6 +136,22 @@ class _SucessoScreenState extends State<SucessoScreen>
                             color: VH.foreground,
                           ),
                         ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 735 * scale,
+                  width: 326 * scale,
+                  child: const ExcludeSemantics(
+                    child: Text(
+                      'Perfil salvo neste dispositivo. Esta demonstração não cria contas on-line.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: VH.bodyFontFamily,
+                        fontSize: 12,
+                        height: 1.35,
+                        color: VH.foreground,
                       ),
                     ),
                   ),

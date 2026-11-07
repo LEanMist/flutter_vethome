@@ -12,6 +12,18 @@ import '../core/utils/form_fields.dart';
 import '../core/utils/formatters.dart';
 import 'local_storage.dart';
 
+class LocalProfileConflictException implements Exception {
+  const LocalProfileConflictException();
+}
+
+class PersistenceClearingException implements Exception {
+  const PersistenceClearingException();
+
+  @override
+  String toString() =>
+      'Aguarde a exclusão dos dados locais terminar antes de alterar o perfil.';
+}
+
 /// Interface de dados das telas, com snapshot local após cada mutação suportada.
 class VetRepository {
   VetRepository._();
@@ -22,12 +34,16 @@ class VetRepository {
   static LocalState? _lastValid;
   static Future<bool> _pendingSave = Future.value(true);
   static Future<bool>? _pendingRetry;
+  static int _saveSequence = 0;
+  static bool _clearInProgress = false;
   static final _unsavedChanges = ValueNotifier(false);
+  static final _savingChanges = ValueNotifier(false);
   static Object? lastPersistenceError;
   static LocalLoadStatus _persistenceStatus = LocalLoadStatus.empty;
 
   static LocalLoadStatus get persistenceStatus => _persistenceStatus;
   static ValueListenable<bool> get unsavedChanges => _unsavedChanges;
+  static ValueListenable<bool> get savingChanges => _savingChanges;
 
   static bool get persistenceBlocked =>
       _persistenceStatus == LocalLoadStatus.invalid ||
@@ -71,6 +87,7 @@ class VetRepository {
     _storage = persistenceBlocked ? null : local;
     _lastValid = _storage == null ? null : _buildState();
     _unsavedChanges.value = false;
+    _savingChanges.value = false;
   }
 
   /// Nova leitura pelo fluxo de [initialize], só quando o armazenamento estava
@@ -83,10 +100,60 @@ class VetRepository {
   /// Aguarda a fila; false indica falha, sem lançar erro assíncrono nas telas.
   static Future<bool> flush() => _pendingSave;
 
+  /// Remove o snapshot local e retorna à demonstração padrão em memória.
+  /// Dados demonstrativos não são gravados novamente até a próxima alteração.
+  static Future<bool> clearLocalData() async {
+    final storage = _lastLocal;
+    if (storage == null || _clearInProgress) return false;
+    _clearInProgress = true;
+    try {
+      // Bloqueia novas mutações antes de esperar a fila, para que nenhuma
+      // gravação posterior possa recriar o snapshot depois do tombstone.
+      await flush();
+      try {
+        await storage.clear();
+      } catch (error) {
+        lastPersistenceError = error;
+        return false;
+      }
+
+      clientName = 'Liminha';
+      clientBirthDate = DateTime(2007, 2, 5);
+      clientAddress = '';
+      clientPhone = '';
+      clientEmail = '';
+      clientGender = '';
+      clientGenderCustom = '';
+      clientPhotoBase64 = null;
+      clientPhotoPath = null;
+      clientPhotoBytes = null;
+      addresses.clear();
+      selectedPetId = null;
+      pets
+        ..clear()
+        ..addAll(_demoPets());
+      _novosAgendamentos.clear();
+      _vaccines.clear();
+
+      _storage = storage;
+      _lastValid = null;
+      _pendingSave = Future.value(true);
+      _pendingRetry = null;
+      _persistenceStatus = LocalLoadStatus.empty;
+      lastPersistenceError = null;
+      _unsavedChanges.value = false;
+      _savingChanges.value = false;
+      return true;
+    } finally {
+      _clearInProgress = false;
+    }
+  }
+
   /// Tenta gravar o último estado válido sem reaplicar a ação que o gerou.
   static Future<bool> retrySave() {
     final retry = _pendingRetry;
     if (retry != null) return retry;
+    if (_clearInProgress) return Future<bool>.value(false);
     final storage = _storage;
     final state = _lastValid;
     if (storage == null || state == null || !_unsavedChanges.value) {
@@ -97,6 +164,9 @@ class VetRepository {
   }
 
   static void _ensurePersistenceWritable() {
+    if (_clearInProgress) {
+      throw const PersistenceClearingException();
+    }
     if (persistenceBlocked) {
       throw const PersistenceBlockedException();
     }
@@ -179,16 +249,31 @@ class VetRepository {
     bool onlyAfterFailure = false,
   }) {
     // Captura cada estado e serializa as gravações para evitar inversão de ordem.
+    final sequence = ++_saveSequence;
+    _unsavedChanges.value = true;
+    _savingChanges.value = true;
     _pendingSave = _pendingSave.then((previousSaved) async {
-      if (onlyAfterFailure && previousSaved) return true;
+      if (onlyAfterFailure && previousSaved) {
+        if (sequence == _saveSequence) {
+          _savingChanges.value = false;
+          _unsavedChanges.value = false;
+        }
+        return true;
+      }
       try {
         await storage.save(state);
         lastPersistenceError = null;
-        _unsavedChanges.value = false;
+        if (sequence == _saveSequence) {
+          _savingChanges.value = false;
+          _unsavedChanges.value = false;
+        }
         return true;
       } catch (error) {
         lastPersistenceError = error;
-        _unsavedChanges.value = true;
+        if (sequence == _saveSequence) {
+          _savingChanges.value = false;
+          _unsavedChanges.value = true;
+        }
         debugPrint('VetHome: falha ao salvar estado local.');
         return false;
       }
@@ -323,11 +408,39 @@ class VetRepository {
 
   static bool authenticate(String email, String password) =>
       RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email.trim()) &&
-      password.trim().length >= 6;
+      password.trim().length >= 6 &&
+      !hasDifferentLocalClientEmail(email);
+
+  /// Esta demonstração mantém um único perfil local por instalação.
+  static bool hasDifferentLocalClientEmail(String? email) {
+    final current = clientEmail.trim().toLowerCase();
+    final incoming = email?.trim().toLowerCase() ?? '';
+    return current.isNotEmpty && incoming.isNotEmpty && current != incoming;
+  }
+
+  /// Detecta uma tentativa de trocar o perfil sem fornecer o e-mail salvo.
+  /// Atualizações parciais sem nome continuam permitidas para o perfil atual.
+  static bool hasLocalClientIdentityConflict({String? email, String? name}) {
+    if (hasDifferentLocalClientEmail(email)) return true;
+
+    final currentEmail = clientEmail.trim();
+    final incomingEmail = email?.trim() ?? '';
+    final incomingName = name?.trim() ?? '';
+    return currentEmail.isNotEmpty &&
+        incomingEmail.isEmpty &&
+        incomingName.isNotEmpty &&
+        incomingName.toLowerCase() != clientName.trim().toLowerCase();
+  }
 
   static void registerClient(Map<String, String> values) {
     _ensurePersistenceWritable();
     if (!values.keys.any((key) => key.startsWith('client.'))) return;
+    if (hasLocalClientIdentityConflict(
+      email: values['client.E-mail'],
+      name: values['client.Nome Completo'],
+    )) {
+      throw const LocalProfileConflictException();
+    }
     clientName = values['client.Nome Completo']?.trim().isNotEmpty == true
         ? values['client.Nome Completo']!.trim()
         : clientName;
@@ -367,6 +480,8 @@ class VetRepository {
     _save();
   }
 
+  /// Atualiza o perfil local selecionado; a edição do e-mail faz parte dessa
+  /// edição, enquanto [registerClient] protege o fluxo de um novo cadastro.
   static void updateClient({
     String? name,
     DateTime? birthDate,

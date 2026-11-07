@@ -79,5 +79,6 @@ void main() {
       storage.saved!.pets.where((item) => item.id == pet.id),
       hasLength(1),
     );
+    expect(await VetRepository.flush(), isTrue);
   });
 }

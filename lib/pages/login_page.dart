@@ -4,9 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/local_data_manager.dart';
 import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
+import '../widgets/auth/demo_mode_notice.dart';
 import 'teste_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -17,8 +19,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  static const _rememberedEmailKey = 'vethome.login.rememberedEmail.v1';
-
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _rememberFocusNode = FocusNode(debugLabel: 'Lembre-se de mim');
@@ -36,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _restoreRememberedEmail() async {
     try {
       final preferences = await SharedPreferences.getInstance();
-      final email = preferences.getString(_rememberedEmailKey);
+      final email = preferences.getString(LocalDataManager.rememberedEmailKey);
       if (!mounted ||
           email == null ||
           email.trim().isEmpty ||
@@ -55,9 +55,11 @@ class _LoginPageState extends State<LoginPage> {
   Future<bool> _saveRememberedEmail() async {
     try {
       final preferences = await SharedPreferences.getInstance();
-      if (!lembrarDeMim) return await preferences.remove(_rememberedEmailKey);
+      if (!lembrarDeMim) {
+        return await preferences.remove(LocalDataManager.rememberedEmailKey);
+      }
       return await preferences.setString(
-        _rememberedEmailKey,
+        LocalDataManager.rememberedEmailKey,
         _emailController.text.trim(),
       );
     } catch (_) {
@@ -77,7 +79,11 @@ class _LoginPageState extends State<LoginPage> {
       _emailController.text,
       _passwordController.text,
     )) {
-      mostrarMensagem('Informe um e-mail válido e uma senha com 6 caracteres.');
+      final message =
+          VetRepository.hasDifferentLocalClientEmail(_emailController.text)
+          ? 'Este protótipo mantém um perfil local. Use o e-mail salvo neste dispositivo.'
+          : 'Informe um e-mail válido e uma senha com 6 caracteres.';
+      mostrarMensagem(message);
       return;
     }
     _signingIn = true;
@@ -133,7 +139,7 @@ class _LoginPageState extends State<LoginPage> {
                   padding: const EdgeInsets.only(left: 8),
                 ),
                 onPressed: () => mostrarMensagem(
-                  'Procure o suporte para recuperar o acesso.',
+                  'A recuperação de senha ainda não está disponível nesta demonstração.',
                 ),
                 child: const Text(
                   'Esqueceu sua senha?',
@@ -189,6 +195,17 @@ class _LoginPageState extends State<LoginPage> {
                           excludeFromSemantics: true,
                         ),
                       ),
+                    Positioned(
+                      left: 43.5 * s,
+                      top: MediaQuery.viewPaddingOf(context).top + 8 * s,
+                      width: 303 * s,
+                      child: const DemoModeNotice(
+                        compact: true,
+                        message: 'Demonstração · use dados fictícios',
+                        semanticLabel:
+                            'Modo demonstração. Não há contas individuais. As informações ficam neste dispositivo; use apenas dados fictícios.',
+                      ),
+                    ),
                     Column(
                       children: [
                         SizedBox(height: 180 * s),
@@ -332,7 +349,7 @@ class _LoginPageState extends State<LoginPage> {
                                       height: 56,
                                       child: OutlinedButton(
                                         onPressed: () => mostrarMensagem(
-                                          'Login social em breve.',
+                                          'A autenticação com ${social.$1} não está disponível nesta demonstração.',
                                         ),
                                         style: OutlinedButton.styleFrom(
                                           backgroundColor: VH.background,
@@ -490,7 +507,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           suffixIcon: password
               ? IconButton(
-                  tooltip: 'Mostrar/ocultar senha',
+                  tooltip: esconderSenha ? 'Mostrar senha' : 'Ocultar senha',
                   onPressed: () =>
                       setState(() => esconderSenha = !esconderSenha),
                   icon: Icon(

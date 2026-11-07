@@ -143,6 +143,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 _selecionado = date;
                 _mes = DateTime(date.year, date.month);
               }),
+              hasIndicator: (date) =>
+                  _isDemoDate(date) || _hasAppointment(date),
             ),
           ),
           Positioned(

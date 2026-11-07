@@ -20,7 +20,7 @@ class CadastroScreen extends StatelessWidget {
         VHField(
           'CPF',
           Icons.account_balance_wallet_outlined,
-          value: '534.356.874-94',
+          value: '529.982.247-25',
         ),
         VHField('Telefone/Celular', Icons.phone, value: '11 94345-3266'),
         VHField('E-mail', Icons.mail, value: 'Kelvin231@gmail.com'),

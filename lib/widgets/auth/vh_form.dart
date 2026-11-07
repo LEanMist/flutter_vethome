@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../core/utils/form_fields.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
+import 'demo_mode_notice.dart';
 
 class VHForm extends StatefulWidget {
   const VHForm({
@@ -75,8 +76,9 @@ class _VHFormState extends State<VHForm> {
       return 'Informe um e-mail válido';
     }
     final digits = value.replaceAll(RegExp(r'\D'), '');
-    if (field.label == 'CPF' && digits.length != 11) {
-      return 'Informe um CPF com 11 dígitos';
+    if (field.label == 'CPF') {
+      if (digits.length != 11) return 'Informe um CPF com 11 dígitos';
+      if (!isValidCpf(value)) return 'Informe um CPF válido';
     }
     if (field.label == 'Telefone/Celular' &&
         digits.length != 10 &&
@@ -157,7 +159,7 @@ class _VHFormState extends State<VHForm> {
                             .8,
                             1.0,
                           ),
-                38,
+                widget.dataPrefix == 'client.' ? 8 : 38,
                 desktop
                     ? 32
                     : 39 *
@@ -170,6 +172,17 @@ class _VHFormState extends State<VHForm> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (widget.dataPrefix == 'client.') ...[
+                    const Center(
+                      child: DemoModeNotice(
+                        compact: true,
+                        message: 'Demonstração · dados fictícios',
+                        semanticLabel:
+                            'Protótipo demonstrativo. Não há contas individuais. As informações ficam neste dispositivo; use apenas dados fictícios.',
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                  ],
                   Text(
                     widget.title,
                     textAlign: TextAlign.center,
@@ -180,7 +193,7 @@ class _VHFormState extends State<VHForm> {
                       color: VH.foreground,
                     ),
                   ),
-                  SizedBox(height: mobileRegistration ? 15 : 25),
+                  SizedBox(height: mobileRegistration ? 14 : 25),
                   Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: mobileRegistration ? 7 : 10,

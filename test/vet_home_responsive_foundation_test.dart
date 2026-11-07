@@ -105,6 +105,11 @@ void main() {
         ]) {
           final destination = find.bySemanticsLabel(label);
           expect(destination, findsOneWidget);
+          expect(
+            tester.getSemantics(destination).getSemanticsData().tooltip,
+            isEmpty,
+            reason: '$label não deve repetir o mesmo nome em label e tooltip',
+          );
           final size = tester.getSize(destination);
           expect(size.width, greaterThanOrEqualTo(48));
           expect(size.height, greaterThanOrEqualTo(48));

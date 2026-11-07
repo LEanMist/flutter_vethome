@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
@@ -70,10 +72,19 @@ void main() {
           addresses: const [SavedAddress(id: 'a1', street: 'Rua A')],
         );
 
+        expect((await storage.load()).status, LocalLoadStatus.empty);
         await storage.save(state);
 
         final prefs = await SharedPreferences.getInstance();
-        expect(prefs.getString(LocalStorage.stateKey), state.toValidatedJson());
+        final stored =
+            jsonDecode(prefs.getString(LocalStorage.stateKey)!)
+                as Map<String, dynamic>;
+        final metadata =
+            stored.remove(LocalStorage.storageMetadataKey)
+                as Map<String, dynamic>;
+        expect(stored, jsonDecode(state.toValidatedJson()));
+        expect(metadata['formatVersion'], 1);
+        expect(metadata['revision'], 1);
         final loaded = await storage.load();
         expect(loaded.status, LocalLoadStatus.valid);
         expect(loaded.state?.client.name, 'Cliente salvo');

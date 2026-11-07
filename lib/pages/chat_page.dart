@@ -346,29 +346,48 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ? CrossAxisAlignment.end
                                 : CrossAxisAlignment.start,
                             children: [
-                              GestureDetector(
+                              Semantics(
+                                container: true,
+                                explicitChildNodes: true,
+                                button: !message.fromClient,
+                                label: message.fromClient
+                                    ? VetRepository.clientName
+                                    : 'Ver informações sobre $_chatVeterinarianName',
                                 onTap: message.fromClient
                                     ? null
                                     : () => Navigator.pushNamed(
                                         context,
                                         '/sobre',
                                       ),
-                                child: SizedBox(
-                                  width: bubbleWidth,
-                                  child: Text(
-                                    message.fromClient
-                                        ? VetRepository.clientName
-                                        : _chatVeterinarianName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: message.fromClient
-                                        ? TextAlign.right
-                                        : TextAlign.left,
-                                    style: const TextStyle(
-                                      fontFamily: VH.headingFontFamily,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: VetColors.brownSecondary,
+                                child: ExcludeSemantics(
+                                  child: Material(
+                                    type: MaterialType.transparency,
+                                    child: InkWell(
+                                      onTap: message.fromClient
+                                          ? null
+                                          : () => Navigator.pushNamed(
+                                              context,
+                                              '/sobre',
+                                            ),
+                                      child: SizedBox(
+                                        width: bubbleWidth,
+                                        child: Text(
+                                          message.fromClient
+                                              ? VetRepository.clientName
+                                              : _chatVeterinarianName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: message.fromClient
+                                              ? TextAlign.right
+                                              : TextAlign.left,
+                                          style: const TextStyle(
+                                            fontFamily: VH.headingFontFamily,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: VetColors.brownSecondary,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),

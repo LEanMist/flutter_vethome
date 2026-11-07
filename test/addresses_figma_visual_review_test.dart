@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
@@ -182,6 +183,40 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('ADRESS_PAGE: ações de endereços distintos têm nomes acessíveis únicos', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      VetRepository.addresses.add(
+        const SavedAddress(
+          id: 'address-second-semantic',
+          name: 'Trabalho',
+          street: 'Rua do Trabalho',
+          number: '22',
+          city: 'São Paulo',
+          cep: '01234-567',
+        ),
+      );
+      await showAddresses(tester, const Size(390, 844));
+
+      for (final (action, description) in [
+        ('Editar', 'Casa da Irmã, Rua das Flores, 123'),
+        ('Deletar', 'Casa da Irmã, Rua das Flores, 123'),
+        ('Editar', 'Trabalho, Rua do Trabalho, 22'),
+        ('Deletar', 'Trabalho, Rua do Trabalho, 22'),
+      ]) {
+        final target = find.bySemanticsLabel('$action endereço $description');
+        expect(target, findsOneWidget);
+        final data = tester.getSemantics(target).getSemanticsData();
+        expect(data.flagsCollection.isButton, isTrue);
+        expect(data.hasAction(SemanticsAction.tap), isTrue);
+      }
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
   testWidgets('ADRESS_PAGE: barra de status não desloca o frame do Figma', (
     tester,
   ) async {

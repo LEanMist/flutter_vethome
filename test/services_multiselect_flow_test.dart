@@ -130,6 +130,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('setas e faixas alternam categorias após o ajuste do Figma', (
+    tester,
+  ) async {
+    await openServices(tester);
+
+    expect(find.text('Hemograma'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('services-pill-Exames')));
+    await tester.pumpAndSettle();
+    expect(find.text('Hemograma'), findsNothing);
+
+    final examsArrow = find.byKey(
+      const ValueKey('services-category-arrow-Exames'),
+    );
+    await tester.tapAt(tester.getCenter(examsArrow));
+    await tester.pumpAndSettle();
+    expect(find.text('Hemograma'), findsOneWidget);
+
+    expect(find.text('Atestado'), findsNothing);
+    final atestadosArrow = find.byKey(
+      const ValueKey('services-category-arrow-Atestados'),
+    );
+    await tester.tapAt(tester.getCenter(atestadosArrow));
+    await tester.pumpAndSettle();
+    expect(find.text('Atestado'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('dois serviços chegam ao agendamento e geram um registro', (
     tester,
   ) async {

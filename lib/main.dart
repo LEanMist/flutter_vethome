@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'data/local_data_manager.dart';
 import 'data/theme_preferences.dart';
 import 'data/vet_repository.dart';
 import 'pages/critical_storage_error_page.dart';
@@ -28,6 +29,12 @@ class _VetHomeAppState extends State<VetHomeApp> {
     if (mounted) setState(() {});
   }
 
+  Future<bool> _clearLocalData() async {
+    final cleared = await LocalDataManager.clearUserData();
+    if (cleared && mounted) setState(() {});
+    return cleared;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<Color>(
@@ -46,6 +53,7 @@ class _VetHomeAppState extends State<VetHomeApp> {
             home: CriticalStorageErrorPage(
               status: VetRepository.persistenceStatus,
               onRetry: _retryStorage,
+              onClear: _clearLocalData,
             ),
           );
         }

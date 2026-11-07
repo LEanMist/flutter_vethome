@@ -7,14 +7,18 @@ class CriticalStorageErrorPage extends StatefulWidget {
   const CriticalStorageErrorPage({
     required this.status,
     this.onRetry,
+    this.onClear,
     super.key,
   });
 
   final LocalLoadStatus status;
 
   /// Nova leitura segura; só é oferecida quando o armazenamento está
-  /// indisponível. Snapshot inválido nunca tem ação de recuperação aqui.
+  /// indisponível.
   final Future<void> Function()? onRetry;
+
+  /// Exclusão explícita disponível apenas para snapshot inválido.
+  final Future<bool> Function()? onClear;
 
   @override
   State<CriticalStorageErrorPage> createState() =>
@@ -23,6 +27,7 @@ class CriticalStorageErrorPage extends StatefulWidget {
 
 class _CriticalStorageErrorPageState extends State<CriticalStorageErrorPage> {
   bool _retrying = false;
+  bool _clearing = false;
 
   Future<void> _retry() async {
     setState(() => _retrying = true);
@@ -32,6 +37,57 @@ class _CriticalStorageErrorPageState extends State<CriticalStorageErrorPage> {
       debugPrint('VetHome: falha ao tentar acessar o armazenamento novamente.');
     } finally {
       if (mounted) setState(() => _retrying = false);
+    }
+  }
+
+  Future<void> _clear() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Apagar os dados salvos?'),
+        content: const Text(
+          'Isso remove o perfil, o e-mail lembrado, pets cadastrados, fotos, endereços, consultas e vacinas deste dispositivo. Os dados demonstrativos iniciais continuarão disponíveis; a preferência de tema será mantida. Essa ação não pode ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Apagar dados'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _clearing = true);
+    try {
+      final cleared = await widget.onClear!();
+      if (!mounted || cleared) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Não foi possível confirmar a remoção dos dados. Tente novamente.',
+            ),
+          ),
+        );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Não foi possível confirmar a remoção dos dados. Tente novamente.',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _clearing = false);
     }
   }
 
@@ -67,7 +123,9 @@ class _CriticalStorageErrorPageState extends State<CriticalStorageErrorPage> {
                   Text(
                     unavailable
                         ? 'O armazenamento não está disponível. Feche e abra o aplicativo novamente. Seus dados não foram alterados.'
-                        : 'Não foi possível ler os dados salvos. Eles não foram alterados. Feche o aplicativo e procure suporte antes de continuar.',
+                        : widget.onClear == null
+                        ? 'Não foi possível ler os dados salvos. Eles não foram alterados. Feche o aplicativo e procure suporte antes de continuar.'
+                        : 'Não foi possível ler os dados salvos. Eles continuam preservados. Você pode tentar recuperar o acesso ou apagar os dados salvos e iniciar a demonstração novamente.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: VetColors.brown,
@@ -80,6 +138,16 @@ class _CriticalStorageErrorPageState extends State<CriticalStorageErrorPage> {
                       key: const ValueKey('critical-storage-retry'),
                       onPressed: _retrying ? null : _retry,
                       child: const Text('Tentar novamente'),
+                    ),
+                  ],
+                  if (!unavailable && widget.onClear != null) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      key: const ValueKey('critical-storage-clear'),
+                      onPressed: _clearing ? null : _clear,
+                      child: Text(
+                        _clearing ? 'Apagando…' : 'Apagar dados salvos',
+                      ),
                     ),
                   ],
                 ],
