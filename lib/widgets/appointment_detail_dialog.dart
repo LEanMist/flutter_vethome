@@ -6,6 +6,7 @@ import '../core/utils/formatters.dart';
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../theme/vet_colors.dart';
+import 'figma_action_target.dart';
 import 'pets/pet_avatar.dart';
 
 class AppointmentDetailDialog extends StatelessWidget {
@@ -173,19 +174,22 @@ class AppointmentDetailDialog extends StatelessWidget {
                 ),
                 Positioned(
                   left: 140 * scale,
-                  top: 283 * scale,
+                  top: 324 * scale - 48,
                   width: 109 * scale,
-                  height: 41 * scale,
-                  child: Semantics(
-                    button: true,
+                  height: 48,
+                  child: FigmaActionTarget(
+                    key: const ValueKey('appointment-detail-delete-target'),
+                    width: 109 * scale,
+                    height: 48,
                     label: 'Deletar consulta',
-                    child: Material(
-                      color: const Color(0xFF940000),
-                      borderRadius: BorderRadius.circular(100 * scale),
-                      child: InkWell(
-                        key: const ValueKey('appointment-detail-delete'),
+                    onPressed: onDelete,
+                    child: SizedBox(
+                      key: const ValueKey('appointment-detail-delete'),
+                      width: 109 * scale,
+                      height: 41 * scale,
+                      child: Material(
+                        color: const Color(0xFF940000),
                         borderRadius: BorderRadius.circular(100 * scale),
-                        onTap: onDelete,
                         child: Center(
                           child: Text(
                             'Deletar',
