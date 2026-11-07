@@ -9,6 +9,11 @@ import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 
+double _homeScaleFor(Size viewport) {
+  final widthScale = (viewport.width / 390).clamp(0.0, 1.0).toDouble();
+  return math.min(widthScale, math.max(0.8, viewport.height / 844));
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -30,12 +35,7 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: HomePage()));
       await tester.pumpAndSettle();
 
-      final scale =
-          (viewport.width / 390 < viewport.height / 844
-                  ? viewport.width / 390
-                  : viewport.height / 844)
-              .clamp(.5, 1.0)
-              .toDouble();
+      final scale = _homeScaleFor(viewport);
       final frame = tester.getRect(
         find.byKey(const ValueKey('home-figma-frame')),
       );
@@ -150,7 +150,7 @@ void main() {
     });
   }
 
-  testWidgets('HOME_PAGE_2: anel alinhado e conteudo visivel em 320x400', (
+  testWidgets('HOME_PAGE_2: preserva o frame e rola em telas baixas', (
     tester,
   ) async {
     addTearDown(tester.view.resetPhysicalSize);
@@ -162,14 +162,21 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: HomePage()));
       await tester.pumpAndSettle();
 
-      final scale = viewport.height / 844;
+      final scale = _homeScaleFor(viewport);
       final frame = tester.getRect(
         find.byKey(const ValueKey('home-figma-frame')),
       );
       expect(frame.width, closeTo(390 * scale, .01));
-      expect(frame.height, closeTo(viewport.height, .01));
+      expect(frame.height, closeTo(844 * scale, .01));
       expect(frame.left, greaterThanOrEqualTo(0));
       expect(frame.right, lessThanOrEqualTo(viewport.width));
+
+      final scrollView = find.byKey(const ValueKey('home-scroll-view'));
+      if (viewport.height < frame.height) {
+        expect(scrollView, findsOneWidget);
+      } else {
+        expect(scrollView, findsNothing);
+      }
 
       final ring = tester.getRect(
         find.byKey(const ValueKey('home-dashed-ring')),
@@ -192,10 +199,21 @@ void main() {
         final allowedLeft = key == 'home-title' || key == 'home-subtitle'
             ? -scale
             : 0.0;
-        expect(rect.left, greaterThanOrEqualTo(allowedLeft - .01), reason: key);
-        expect(rect.top, greaterThanOrEqualTo(0), reason: key);
-        expect(rect.right, lessThanOrEqualTo(viewport.width), reason: key);
-        expect(rect.bottom, lessThanOrEqualTo(viewport.height), reason: key);
+        expect(
+          rect.left - frame.left,
+          greaterThanOrEqualTo(allowedLeft - .01),
+          reason: key,
+        );
+        expect(rect.top, greaterThanOrEqualTo(frame.top), reason: key);
+        expect(rect.right, lessThanOrEqualTo(frame.right), reason: key);
+        expect(rect.bottom, lessThanOrEqualTo(frame.bottom), reason: key);
+      }
+      if (viewport.height < frame.height) {
+        final play = find.byKey(const ValueKey('home-open-pets'));
+        expect(tester.getRect(play).bottom, greaterThan(viewport.height));
+        await tester.drag(scrollView, const Offset(0, -1000));
+        await tester.pumpAndSettle();
+        expect(tester.getRect(play).bottom, lessThanOrEqualTo(viewport.height));
       }
       expect(tester.takeException(), isNull);
     }
@@ -230,13 +248,7 @@ void main() {
             .widget<Text>(find.byKey(const ValueKey('home-user-name')))
             .data!;
         final profile = find.bySemanticsLabel('Perfil de $name');
-        final pets = find.bySemanticsLabel('Abrir área dos pets');
-        final scale =
-            (viewport.width / 390 < viewport.height / 844
-                    ? viewport.width / 390
-                    : viewport.height / 844)
-                .clamp(0.0, 1.0)
-                .toDouble();
+        final scale = _homeScaleFor(viewport);
         final profileTarget = tester.getRect(
           find.byKey(const ValueKey('home-profile-target')),
         );
@@ -249,12 +261,9 @@ void main() {
         expect(profileVisual.height, closeTo(56 * scale, .01));
         expect(profileVisual.top, closeTo(profileTarget.top, .01));
         expect(profile, findsOneWidget, reason: 'perfil $viewport');
-        expect(pets, findsOneWidget, reason: 'pets $viewport');
-        for (final action in [profile, pets]) {
-          final data = tester.getSemantics(action).getSemanticsData();
-          expect(data.flagsCollection.isButton, isTrue);
-          expect(data.hasAction(SemanticsAction.tap), isTrue);
-        }
+        final profileData = tester.getSemantics(profile).getSemanticsData();
+        expect(profileData.flagsCollection.isButton, isTrue);
+        expect(profileData.hasAction(SemanticsAction.tap), isTrue);
 
         final profileNode = tester.getSemantics(profile);
         profileNode.owner!.performAction(profileNode.id, SemanticsAction.tap);
@@ -263,9 +272,16 @@ void main() {
         Navigator.of(tester.element(find.text('Destino Perfil'))).pop();
         await tester.pumpAndSettle();
 
-        final petsNode = tester.getSemantics(
-          find.bySemanticsLabel('Abrir área dos pets'),
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('home-open-pets')),
         );
+        await tester.pumpAndSettle();
+        final pets = find.bySemanticsLabel('Abrir área dos pets');
+        expect(pets, findsOneWidget, reason: 'pets visível $viewport');
+        final petsData = tester.getSemantics(pets).getSemanticsData();
+        expect(petsData.flagsCollection.isButton, isTrue);
+        expect(petsData.hasAction(SemanticsAction.tap), isTrue);
+        final petsNode = tester.getSemantics(pets);
         petsNode.owner!.performAction(petsNode.id, SemanticsAction.tap);
         await tester.pumpAndSettle();
         expect(find.text('Destino Pets'), findsOneWidget);
@@ -301,8 +317,15 @@ void main() {
       final visual = tester.getRect(
         find.byKey(const ValueKey('home-profile-chip')),
       );
+      expect(
+        tester.getRect(find.byKey(const ValueKey('home-figma-frame'))).height,
+        closeTo(844 * _homeScaleFor(const Size(320, 400)), .01),
+      );
       expect(target.height, 48);
-      expect(visual.height, closeTo(56 * (400 / 844), .01));
+      expect(
+        visual.height,
+        closeTo(56 * _homeScaleFor(const Size(320, 400)), .01),
+      );
       expect(visual.top, target.top);
 
       await tester.tapAt(Offset(target.center.dx, target.bottom - 1));

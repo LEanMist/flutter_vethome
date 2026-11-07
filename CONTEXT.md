@@ -452,3 +452,10 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - A tela mobile Escolha de Pet agora usa o painel compacto do Figma (`2783:916`), mantendo seleção e navegação existentes. Quando há mais de quatro pets, controles de rolagem permitem alcançar os demais; desktop mantém a composição anterior. O texto escuro das opções foi mantido para preservar contraste acessível.
 - A edição mobile de endereço agora usa o cartão sem cabeçalho do Figma (`2783:638`), com os seis campos e ações nas posições do desenho. Validação, consulta de CEP, exclusão com confirmação e persistência local continuam integradas; telas baixas permitem rolagem para alcançar Salvar.
 - Validação: suíte Flutter nativa completa — **398 testes aprovados e 1 ignorado**; `flutter analyze --no-pub` sem problemas; formatação e `git diff --check` aprovados.
+
+## Home em telas de pouca altura — 07/11/2026
+
+- A Home mantém a composição e a escala exatas do frame Figma `HOME_PAGE_2` (`2783:302`) em 390×844. Em viewports mais baixos, a escala deixa de encolher conforme a altura até o piso relativo de 80% (limitado pela largura disponível) e o frame ganha rolagem vertical, preservando botões e texto legíveis. Em largura menor que 312 px, a escala continua limitada pela largura.
+- O Figma consultado não apresenta frame curto equivalente; essa rolagem é uma adaptação responsiva inferida, sem alterar a composição do frame de referência. Na tela 320×400, o botão de Pets fica acessível após rolar.
+- `test/home_figma_layout_test.dart` passou **8/8** no runner nativo e **8/8** no Chrome, cobrindo frame, anel, alvos semânticos e rolagem. `flutter analyze --no-pub` terminou sem problemas; os dois arquivos Dart foram formatados.
+- O plugin Meu PC respondeu online e confirmou o checkout `kelvin`; não houve resposta nova da revisão independente no chat.

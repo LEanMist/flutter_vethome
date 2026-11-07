@@ -30,13 +30,16 @@ class HomePage extends StatelessWidget {
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final scale = math
-                .min(constraints.maxWidth / 390, constraints.maxHeight / 844)
+            final widthScale = (constraints.maxWidth / 390)
                 .clamp(0.0, 1.0)
                 .toDouble();
+            final scale = math.min(
+              widthScale,
+              math.max(0.8, constraints.maxHeight / 844),
+            );
             final profileTargetHeight = math.max(48.0, 56 * scale);
 
-            return Center(
+            final frame = Center(
               child: SizedBox(
                 key: const ValueKey('home-figma-frame'),
                 width: 390 * scale,
@@ -240,6 +243,13 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             );
+            if (844 * scale > constraints.maxHeight) {
+              return SingleChildScrollView(
+                key: const ValueKey('home-scroll-view'),
+                child: frame,
+              );
+            }
+            return frame;
           },
         ),
       ),
