@@ -107,4 +107,19 @@ void main() {
     );
     expect(VetRepository.agendamentos(pet.id).length, before + 1);
   });
+
+  test('data futura após o antigo limite móvel continua aceita', () {
+    final before = VetRepository.agendamentos(pet.id).length;
+    final dateAfterFormerMobileLimit = DateTime(now.year + 2, 1, 2, 10);
+
+    expect(
+      tryScheduleAppointment(
+        petId: pet.id,
+        appointment: appointment(dateAfterFormerMobileLimit),
+        now: now,
+      ),
+      isTrue,
+    );
+    expect(VetRepository.agendamentos(pet.id).length, before + 1);
+  });
 }

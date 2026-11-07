@@ -380,6 +380,15 @@ void main() {
       tester.getRect(newAppointmentButton),
       const Rect.fromLTWH(145, 676, 99, 41),
     );
+    final newAppointmentTarget = tester.getRect(
+      find.byKey(const ValueKey('agenda-new-appointment-target')),
+    );
+    expect(newAppointmentTarget.width, greaterThanOrEqualTo(48));
+    expect(newAppointmentTarget.height, greaterThanOrEqualTo(48));
+    expect(
+      newAppointmentTarget.center,
+      tester.getRect(newAppointmentButton).center,
+    );
     expect(find.byTooltip('Pets'), findsNothing);
 
     for (final finder in [
@@ -421,6 +430,29 @@ void main() {
     expect(buttonRect.bottom, lessThanOrEqualTo(navigationRectAfter.top));
     expect(navigationRectAfter, navigationRectBefore);
     expect(tester.getRect(find.text('Sáb')).right, lessThanOrEqualTo(360));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Nova Consulta mantém alvo de 48 px em 320×640', (tester) async {
+    await pumpAgenda(tester, const Size(320, 640));
+    await tester.ensureVisible(find.text('Nova Consulta'));
+    await tester.pumpAndSettle();
+
+    final target = tester.getRect(
+      find.byKey(const ValueKey('agenda-new-appointment-target')),
+    );
+    final button = tester.getRect(
+      find
+          .ancestor(
+            of: find.text('Nova Consulta'),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(target.height, greaterThanOrEqualTo(48));
+    expect(target.width, greaterThanOrEqualTo(48));
+    expect(button.height, closeTo(41 * (320 / 390), .01));
+    expect(target.center, button.center);
     expect(tester.takeException(), isNull);
   });
 }

@@ -117,7 +117,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
       676.0,
       appointments.length > 3 ? 424.0 + 84.0 * appointments.length : 676.0,
     );
-    final contentHeight = math.max(717.0, actionTop + 41) * scale;
+    final buttonVisualHeight = 41 * scale;
+    final buttonTouchHeight = math.max(48.0, buttonVisualHeight);
+    final contentHeight = math.max(
+      717 * scale,
+      actionTop * scale + (buttonTouchHeight + buttonVisualHeight) / 2,
+    );
     final weekdays = const [
       'Domingo',
       'Segunda Feira',
@@ -251,10 +256,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
           Positioned(
             left: 145 * scale,
-            top: actionTop * scale,
+            top:
+                actionTop * scale -
+                (buttonTouchHeight - buttonVisualHeight) / 2,
             width: 99 * scale,
-            height: 41 * scale,
+            height: buttonTouchHeight,
             child: Semantics(
+              key: const ValueKey('agenda-new-appointment-target'),
               button: true,
               label: 'Nova Consulta',
               child: Material(
@@ -262,27 +270,31 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(100 * scale),
                   onTap: () => openPetChoiceDialog(context),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: VH.primary,
-                      borderRadius: BorderRadius.circular(100 * scale),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: VetColors.shadowDark,
-                          offset: Offset(2, 2),
-                          blurRadius: 5,
+                  child: Center(
+                    child: Container(
+                      width: 99 * scale,
+                      height: buttonVisualHeight,
+                      decoration: BoxDecoration(
+                        color: VH.primary,
+                        borderRadius: BorderRadius.circular(100 * scale),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: VetColors.shadowDark,
+                            offset: Offset(2, 2),
+                            blurRadius: 5,
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Nova Consulta',
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontFamily: VH.bodyFontFamily,
+                          fontSize: 10 * scale,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Nova Consulta',
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontFamily: VH.bodyFontFamily,
-                        fontSize: 10 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
                     ),
                   ),

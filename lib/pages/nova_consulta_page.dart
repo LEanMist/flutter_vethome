@@ -72,7 +72,6 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     final today = DateTime(now.year, now.month, now.day);
     var selected = _date.isBefore(today) ? today : _date;
     var month = DateTime(selected.year, selected.month);
-    final lastDate = DateTime(now.year + 2);
     final date = await showDialog<DateTime>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -101,16 +100,13 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
                   month: month,
                   selected: selected,
                   firstDate: today,
-                  lastDate: lastDate,
                   onPreviousMonth: () => setDialogState(() {
                     final previous = DateTime(month.year, month.month - 1);
                     final firstMonth = DateTime(today.year, today.month);
                     if (!previous.isBefore(firstMonth)) month = previous;
                   }),
                   onNextMonth: () => setDialogState(() {
-                    final next = DateTime(month.year, month.month + 1);
-                    final lastMonth = DateTime(lastDate.year, lastDate.month);
-                    if (!next.isAfter(lastMonth)) month = next;
+                    month = DateTime(month.year, month.month + 1);
                   }),
                   onSelected: (value) => setDialogState(() {
                     selected = value;

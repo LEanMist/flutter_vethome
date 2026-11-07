@@ -76,25 +76,35 @@ void main() {
     });
   }
 
-  testWidgets('calendário segue acessível em mobile e desktop', (tester) async {
+  testWidgets('calendário permite datas futuras em mobile e desktop', (
+    tester,
+  ) async {
     await pumpAt(tester, 390);
     final mobileDateTile = tester.widget<InkWell>(
       find.byKey(const ValueKey('appointment-booking-date')),
     );
     expect(mobileDateTile.onTap, isNotNull);
-
-    await pumpAt(tester, 1280);
-    expect(
-      find.byKey(const ValueKey('new-appointment-desktop-layout')),
-      findsOneWidget,
-    );
-    expect(
+    await tester.tap(find.byKey(const ValueKey('appointment-booking-date')));
+    await tester.pumpAndSettle();
+    final mobileCalendar = tester.widget<VetCalendar>(
       find.descendant(
-        of: find.byKey(const ValueKey('new-appointment-desktop-layout')),
+        of: find.byKey(const ValueKey('mobile-calendar-dialog')),
         matching: find.byType(VetCalendar),
       ),
-      findsOneWidget,
     );
+    expect(mobileCalendar.firstDate, isNotNull);
+    expect(mobileCalendar.lastDate, isNull);
+
+    await pumpAt(tester, 1280);
+    final desktopLayout = find.byKey(
+      const ValueKey('new-appointment-desktop-layout'),
+    );
+    expect(desktopLayout, findsOneWidget);
+    final desktopCalendar = tester.widget<VetCalendar>(
+      find.descendant(of: desktopLayout, matching: find.byType(VetCalendar)),
+    );
+    expect(desktopCalendar.firstDate, isNotNull);
+    expect(desktopCalendar.lastDate, isNull);
   });
 
   testWidgets('campos da consulta mantêm contraste AA sobre o rosa', (
