@@ -11,6 +11,7 @@ void main() {
     const Size(390, 844),
     const Size(390, 640),
     const Size(320, 640),
+    const Size(640, 320),
     const Size(1280, 800),
   ]) {
     testWidgets('SPLASH_REGISTER_CONFIRM cabe em $viewport', (tester) async {
@@ -25,9 +26,11 @@ void main() {
       final frame = tester.getRect(
         find.byKey(const ValueKey('registration-success-figma-frame')),
       );
+      expect(frame.top, greaterThanOrEqualTo(-.01));
+      expect(frame.bottom, lessThanOrEqualTo(viewport.height + .01));
       final scale = math
           .min(viewport.width / 390, viewport.height / 844)
-          .clamp(.5, 1.0)
+          .clamp(0.0, 1.0)
           .toDouble();
       expect(frame.width, closeTo(390 * scale, .01));
       expect(frame.height, closeTo(844 * scale, .01));

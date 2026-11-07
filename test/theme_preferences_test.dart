@@ -51,6 +51,12 @@ void main() {
       tester.getRect(selection).topLeft - frameRect.topLeft,
       const Offset(119, 118),
     );
+    // O centro do COLORS_WIDGET (2783:766) não tem contorno no Figma.
+    final selectionDecoration =
+        tester.widget<Container>(selection).decoration! as BoxDecoration;
+    expect(selectionDecoration.shape, BoxShape.circle);
+    expect(selectionDecoration.border, isNull);
+    expect(selectionDecoration.color, VH.themeSeed.value);
     final rose = find.byWidgetPredicate(
       (widget) =>
           widget is CircleAvatar &&

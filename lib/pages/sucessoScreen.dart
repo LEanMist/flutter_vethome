@@ -46,7 +46,7 @@ class _SucessoScreenState extends State<SucessoScreen>
       builder: (context, constraints) {
         final scale = math
             .min(constraints.maxWidth / 390, constraints.maxHeight / 844)
-            .clamp(.5, 1.0)
+            .clamp(0.0, 1.0)
             .toDouble();
         final name = VetRepository.clientName.trim().isEmpty
             ? 'usuário'
