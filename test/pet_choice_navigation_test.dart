@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
+import 'package:flutter_vethome/models/pet_model.dart';
 import 'package:flutter_vethome/pages/agenda_page.dart';
 import 'package:flutter_vethome/screens/pets.dart' show EscolhaPetScreen;
 import 'package:flutter_vethome/theme/vet_colors.dart';
@@ -148,5 +149,71 @@ void main() {
 
     final name = tester.widget<Text>(find.text(pet.name));
     expect(name.style?.color, Colors.white);
+  });
+
+  testWidgets('setas da escolha compacta respeitam os limites da lista', (
+    tester,
+  ) async {
+    final originalPets = List<PetModel>.of(VetRepository.pets);
+    addTearDown(() {
+      VetRepository.pets
+        ..clear()
+        ..addAll(originalPets);
+    });
+    VetRepository.pets
+      ..clear()
+      ..addAll([
+        for (var index = 0; index < 5; index++)
+          PetModel(
+            id: 'scroll-test-$index',
+            name: 'Pet $index',
+            imagePath: originalPets.first.imagePath,
+            description: '',
+          ),
+      ]);
+
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: Center(child: EscolhaPetScreen(compact: true))),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final up = find.byWidgetPredicate(
+      (widget) =>
+          widget is IconButton && widget.tooltip == 'Rolar pets para cima',
+    );
+    final down = find.byWidgetPredicate(
+      (widget) =>
+          widget is IconButton && widget.tooltip == 'Rolar pets para baixo',
+    );
+    final list = tester.widget<ListView>(
+      find.byKey(const ValueKey('pet-choice-mobile-list')),
+    );
+    final controller = list.controller!;
+    expect(controller.position.maxScrollExtent, greaterThan(0));
+    expect(controller.offset, 0);
+    expect(tester.widget<IconButton>(up).onPressed, isNull);
+    expect(tester.widget<IconButton>(down).onPressed, isNotNull);
+
+    await tester.tap(down);
+    await tester.pumpAndSettle();
+    expect(
+      controller.offset,
+      closeTo(controller.position.maxScrollExtent, 0.1),
+    );
+    expect(tester.widget<IconButton>(down).onPressed, isNull);
+    expect(tester.widget<IconButton>(up).onPressed, isNotNull);
+
+    await tester.tap(up);
+    await tester.pumpAndSettle();
+    expect(controller.offset, closeTo(0, 0.1));
+    expect(tester.widget<IconButton>(up).onPressed, isNull);
+    expect(tester.takeException(), isNull);
   });
 }

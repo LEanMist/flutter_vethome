@@ -68,6 +68,16 @@ class _EscolhaPetScreenState extends State<EscolhaPetScreen> {
     );
   }
 
+  bool _canScrollPets({required bool up}) {
+    if (VetRepository.pets.length <= 4) return false;
+    if (!_petsController.hasClients ||
+        !_petsController.position.hasContentDimensions) {
+      return !up;
+    }
+    final position = _petsController.position;
+    return up ? position.extentBefore > 0.5 : position.extentAfter > 0.5;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (VetRepository.pets.isEmpty) return const PetsPage();
@@ -208,20 +218,23 @@ class _EscolhaPetScreenState extends State<EscolhaPetScreen> {
               top: 130 * scale,
               width: 48 * scale,
               height: 48 * scale,
-              child: IconButton(
-                tooltip: 'Rolar pets para cima',
-                onPressed: VetRepository.pets.length > 4
-                    ? () => _scrollPets(-70 * scale)
-                    : null,
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints.tightFor(
-                  width: 48 * scale,
-                  height: 48 * scale,
+              child: AnimatedBuilder(
+                animation: _petsController,
+                builder: (context, _) => IconButton(
+                  tooltip: 'Rolar pets para cima',
+                  onPressed: _canScrollPets(up: true)
+                      ? () => _scrollPets(-70 * scale)
+                      : null,
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints.tightFor(
+                    width: 48 * scale,
+                    height: 48 * scale,
+                  ),
+                  color: VetColors.brown,
+                  disabledColor: VetColors.brown,
+                  iconSize: 30 * scale,
+                  icon: const Icon(Icons.keyboard_arrow_up),
                 ),
-                color: VetColors.brown,
-                disabledColor: VetColors.brown,
-                iconSize: 30 * scale,
-                icon: const Icon(Icons.keyboard_arrow_up),
               ),
             ),
             Positioned(
@@ -229,20 +242,23 @@ class _EscolhaPetScreenState extends State<EscolhaPetScreen> {
               top: 300 * scale,
               width: 48 * scale,
               height: 48 * scale,
-              child: IconButton(
-                tooltip: 'Rolar pets para baixo',
-                onPressed: VetRepository.pets.length > 4
-                    ? () => _scrollPets(70 * scale)
-                    : null,
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints.tightFor(
-                  width: 48 * scale,
-                  height: 48 * scale,
+              child: AnimatedBuilder(
+                animation: _petsController,
+                builder: (context, _) => IconButton(
+                  tooltip: 'Rolar pets para baixo',
+                  onPressed: _canScrollPets(up: false)
+                      ? () => _scrollPets(70 * scale)
+                      : null,
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints.tightFor(
+                    width: 48 * scale,
+                    height: 48 * scale,
+                  ),
+                  color: VetColors.brown,
+                  disabledColor: VetColors.brown,
+                  iconSize: 30 * scale,
+                  icon: const Icon(Icons.keyboard_arrow_down),
                 ),
-                color: VetColors.brown,
-                disabledColor: VetColors.brown,
-                iconSize: 30 * scale,
-                icon: const Icon(Icons.keyboard_arrow_down),
               ),
             ),
           ],
