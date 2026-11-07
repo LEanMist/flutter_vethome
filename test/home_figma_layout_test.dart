@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -111,6 +113,13 @@ void main() {
       expect(profile.top - frame.top, closeTo(14 * scale, .01));
       expect(profile.width, closeTo(136 * scale, .01));
       expect(profile.height, closeTo(56 * scale, .01));
+      final profileTarget = tester.getRect(
+        find.byKey(const ValueKey('home-profile-target')),
+      );
+      expect(profileTarget.left, closeTo(profile.left, .01));
+      expect(profileTarget.top, closeTo(profile.top, .01));
+      expect(profileTarget.width, closeTo(136 * scale, .01));
+      expect(profileTarget.height, closeTo(math.max(48, 56 * scale), .01));
       final profilePill = tester.widget<Container>(
         find.byKey(const ValueKey('home-profile-pill')),
       );
@@ -191,7 +200,7 @@ void main() {
       expect(tester.takeException(), isNull);
     }
   });
-  testWidgets('HOME_PAGE_2: ações acessíveis em três viewports', (
+  testWidgets('HOME_PAGE_2: ações acessíveis em quatro viewports', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
@@ -200,6 +209,7 @@ void main() {
     try {
       for (final viewport in [
         const Size(320, 640),
+        const Size(320, 400),
         const Size(390, 844),
         const Size(1280, 800),
       ]) {
@@ -221,6 +231,23 @@ void main() {
             .data!;
         final profile = find.bySemanticsLabel('Perfil de $name');
         final pets = find.bySemanticsLabel('Abrir área dos pets');
+        final scale =
+            (viewport.width / 390 < viewport.height / 844
+                    ? viewport.width / 390
+                    : viewport.height / 844)
+                .clamp(0.0, 1.0)
+                .toDouble();
+        final profileTarget = tester.getRect(
+          find.byKey(const ValueKey('home-profile-target')),
+        );
+        final profileVisual = tester.getRect(
+          find.byKey(const ValueKey('home-profile-chip')),
+        );
+        expect(profileTarget.width, closeTo(136 * scale, .01));
+        expect(profileTarget.height, closeTo(math.max(48, 56 * scale), .01));
+        expect(profileVisual.width, closeTo(136 * scale, .01));
+        expect(profileVisual.height, closeTo(56 * scale, .01));
+        expect(profileVisual.top, closeTo(profileTarget.top, .01));
         expect(profile, findsOneWidget, reason: 'perfil $viewport');
         expect(pets, findsOneWidget, reason: 'pets $viewport');
         for (final action in [profile, pets]) {
@@ -250,6 +277,40 @@ void main() {
       semantics.dispose();
     }
   });
+  testWidgets(
+    'HOME_PAGE_2 mantém o chip visual e toca a área expandida em 320x400',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: const HomePage(),
+          routes: {
+            '/perfil': (_) => const Scaffold(body: Text('Destino Perfil')),
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final target = tester.getRect(
+        find.byKey(const ValueKey('home-profile-target')),
+      );
+      final visual = tester.getRect(
+        find.byKey(const ValueKey('home-profile-chip')),
+      );
+      expect(target.height, 48);
+      expect(visual.height, closeTo(56 * (400 / 844), .01));
+      expect(visual.top, target.top);
+
+      await tester.tapAt(Offset(target.center.dx, target.bottom - 1));
+      await tester.pumpAndSettle();
+      expect(find.text('Destino Perfil'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('HOME_PAGE_2 leva o chip ao Perfil e o play a Pets', (
     tester,
   ) async {
@@ -270,7 +331,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Abrir área dos pets'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('home-profile-chip')));
+    await tester.tap(find.byKey(const ValueKey('home-profile-target')));
     await tester.pumpAndSettle();
     expect(find.text('Destino Perfil'), findsOneWidget);
 

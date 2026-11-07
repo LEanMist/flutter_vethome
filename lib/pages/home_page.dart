@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
+import '../widgets/figma_action_target.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -33,6 +34,7 @@ class HomePage extends StatelessWidget {
                 .min(constraints.maxWidth / 390, constraints.maxHeight / 844)
                 .clamp(0.0, 1.0)
                 .toDouble();
+            final profileTargetHeight = math.max(48.0, 56 * scale);
 
             return Center(
               child: SizedBox(
@@ -163,17 +165,20 @@ class HomePage extends StatelessWidget {
                         left: 242 * scale,
                         top: 14 * scale,
                         width: 136 * scale,
-                        height: 56 * scale,
-                        child: Semantics(
-                          button: true,
+                        height: profileTargetHeight,
+                        child: FigmaActionTarget(
+                          key: const ValueKey('home-profile-target'),
+                          width: 136 * scale,
+                          height: profileTargetHeight,
                           label: 'Perfil de $name',
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/perfil'),
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: SizedBox(
                               key: const ValueKey('home-profile-chip'),
-                              borderRadius: BorderRadius.circular(100 * scale),
-                              onTap: () =>
-                                  Navigator.pushNamed(context, '/perfil'),
+                              width: 136 * scale,
+                              height: 56 * scale,
                               child: Container(
                                 key: const ValueKey('home-profile-pill'),
                                 decoration: BoxDecoration(
