@@ -39,16 +39,36 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
           ),
         );
       }
-    } catch (e) {
+    } on PersistenceBlockedException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
-              e is FormatException
-                  ? e.message
-                  : 'Não foi possível abrir a imagem.',
+              'Armazenamento local bloqueado. A foto não foi alterada.',
             ),
           ),
+        );
+      }
+    } on PersistenceClearingException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Armazenamento local está sendo apagado. A foto não foi alterada.',
+            ),
+          ),
+        );
+      }
+    } on FormatException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível abrir a imagem.')),
         );
       }
     }
