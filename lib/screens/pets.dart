@@ -279,6 +279,11 @@ class _ServicosScreenState extends State<ServicosScreen> {
   final Set<String> _expanded = {'Exames', 'Vacinas'};
   final Set<String> _selected = <String>{};
 
+  static const _selectedServiceMarker =
+      'assets/imagens/figma/services-checkbox-selected.svg';
+  static const _unselectedServiceMarker =
+      'assets/imagens/figma/services-checkbox-unselected.svg';
+
   void _toggleCategory(String name) => setState(() {
     if (!_expanded.remove(name)) _expanded.add(name);
   });
@@ -768,26 +773,12 @@ class _ServicosScreenState extends State<ServicosScreen> {
                                                           VH.desktopBreakpoint
                                                       ? const Offset(-18, 0)
                                                       : Offset.zero,
-                                                  child: Container(
-                                                    width: 15,
-                                                    height: 15,
-                                                    decoration: BoxDecoration(
-                                                      color:
-                                                          _selected.contains(
-                                                            option,
-                                                          )
-                                                          ? VH.primary
-                                                                .withValues(
-                                                                  alpha: .65,
-                                                                )
-                                                          : Colors.transparent,
-                                                      border: Border.all(
-                                                        color: VH.primary,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            3,
-                                                          ),
+                                                  child: SvgPicture.asset(
+                                                    _selected.contains(option)
+                                                        ? _selectedServiceMarker
+                                                        : _unselectedServiceMarker,
+                                                    key: ValueKey(
+                                                      'services-checkbox-$option',
                                                     ),
                                                   ),
                                                 ),

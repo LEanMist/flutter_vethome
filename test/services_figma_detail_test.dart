@@ -20,7 +20,7 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
-    expect(find.byType(SvgPicture), findsNWidgets(6));
+    expect(find.byType(SvgPicture), findsNWidgets(12));
 
     final optionFinder = find.text('Hemograma');
     expect(optionFinder, findsOneWidget);
@@ -31,23 +31,18 @@ void main() {
     expect(optionText.style?.fontWeight, FontWeight.w500);
     expect(optionText.style?.color, VH.foreground);
 
-    final optionRow = find
-        .ancestor(of: optionFinder, matching: find.byType(Row))
-        .first;
-    final marker = tester
-        .widgetList<Container>(
-          find.descendant(of: optionRow, matching: find.byType(Container)),
-        )
-        .singleWhere((container) {
-          final decoration = container.decoration;
-          return decoration is BoxDecoration &&
-              decoration.border != null &&
-              decoration.borderRadius == BorderRadius.circular(3);
-        });
-    // SERVICES_PAGE 2791:3127-3129: marcadores de 15 x 15.
-    expect(tester.getSize(find.byWidget(marker)), const Size(15, 15));
+    final markerFinder = find.byKey(
+      const ValueKey('services-checkbox-Hemograma'),
+    );
+    final marker = tester.widget<SvgPicture>(markerFinder);
+    // SERVICES_PAGE 2791:3127-3129: SVGs de estado com raio e cor exatos.
     expect(
-      tester.getRect(find.byWidget(marker)).left,
+      (marker.bytesLoader as SvgAssetLoader).assetName,
+      'assets/imagens/figma/services-checkbox-unselected.svg',
+    );
+    expect(tester.getSize(markerFinder), const Size(15, 15));
+    expect(
+      tester.getRect(markerFinder).left,
       closeTo(181, .02),
       reason:
           'SERVICES_PAGE 2791:3127: marcador alinhado à margem direita do Figma',

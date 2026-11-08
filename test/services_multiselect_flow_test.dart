@@ -3,6 +3,7 @@ import 'dart:ui' show CheckedState;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
@@ -72,23 +73,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Finder selectionMarker(String name) {
-    final row = find
-        .ancestor(of: find.text(name), matching: find.byType(Row))
-        .first;
-    return find
-        .descendant(
-          of: row,
-          matching: find.byWidgetPredicate(
-            (widget) =>
-                widget is Container &&
-                widget.constraints?.minWidth == 15 &&
-                widget.constraints?.minHeight == 15 &&
-                widget.decoration is BoxDecoration,
-          ),
-        )
-        .first;
-  }
+  Finder selectionMarker(String name) =>
+      find.byKey(ValueKey('services-checkbox-$name'));
+
+  String markerAsset(WidgetTester tester, String name) =>
+      (tester.widget<SvgPicture>(selectionMarker(name)).bytesLoader
+              as SvgAssetLoader)
+          .assetName;
 
   Future<void> selectService(WidgetTester tester, String service) async {
     await tester.ensureVisible(find.text(service));
@@ -110,16 +101,17 @@ void main() {
     await selectService(tester, 'Hemograma');
     expect(find.byType(ConvenioScreen), findsNothing);
     expect(tester.widget<ElevatedButton>(continueButton).onPressed, isNotNull);
-    final selected = tester.widget<Container>(selectionMarker('Hemograma'));
     expect(
-      (selected.decoration! as BoxDecoration).color,
-      isNot(Colors.transparent),
+      markerAsset(tester, 'Hemograma'),
+      'assets/imagens/figma/services-checkbox-selected.svg',
     );
 
     await selectService(tester, 'Hemograma');
     expect(tester.widget<ElevatedButton>(continueButton).onPressed, isNull);
-    final unselected = tester.widget<Container>(selectionMarker('Hemograma'));
-    expect((unselected.decoration! as BoxDecoration).color, Colors.transparent);
+    expect(
+      markerAsset(tester, 'Hemograma'),
+      'assets/imagens/figma/services-checkbox-unselected.svg',
+    );
 
     await selectService(tester, 'Hemograma');
     await tester.ensureVisible(continueButton);
@@ -238,8 +230,10 @@ void main() {
     await selectService(tester, 'Hemograma');
     await selectService(tester, 'V10');
     expect(find.byType(ConvenioScreen), findsNothing);
-    final v10 = tester.widget<Container>(selectionMarker('V10'));
-    expect((v10.decoration! as BoxDecoration).color, isNot(Colors.transparent));
+    expect(
+      markerAsset(tester, 'V10'),
+      'assets/imagens/figma/services-checkbox-selected.svg',
+    );
 
     final button = find.byKey(const ValueKey('services-continue'));
     await tester.ensureVisible(button);
