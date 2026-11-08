@@ -37,6 +37,73 @@ class AppointmentDetailDialog extends StatelessWidget {
       if (appointment.descricao?.trim().isNotEmpty ?? false)
         'Observação: ${appointment.descricao!.trim()}',
     ].join('\n');
+    final detailsStyle = TextStyle(
+      color: VetColors.calendarTextOnRose,
+      fontFamily: 'Comfortaa',
+      fontSize: 10 * scale,
+      fontWeight: FontWeight.bold,
+      height: 1.35,
+    );
+    final detailsPainter = TextPainter(
+      text: TextSpan(text: details, style: detailsStyle),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 7,
+      ellipsis: '…',
+    )..layout(maxWidth: 140 * scale);
+    final detailsOverflowed =
+        detailsPainter.didExceedMaxLines || detailsPainter.height > 111 * scale;
+    detailsPainter.dispose();
+    final hasObservation = appointment.descricao?.trim().isNotEmpty ?? false;
+    final readFullDetailsLabel = hasObservation
+        ? 'Ler observação completa'
+        : 'Ler detalhes completos';
+
+    void openFullDetails() {
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          final dialogSize = MediaQuery.sizeOf(dialogContext);
+          final dialogHeight = math.min(420.0, dialogSize.height * .75);
+          final dialogWidth = math.min(390.0, dialogSize.width - 32);
+          return Dialog(
+            key: const ValueKey('appointment-full-details-dialog'),
+            insetPadding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: dialogWidth,
+              height: dialogHeight,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Detalhes do agendamento',
+                      style: Theme.of(dialogContext).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        key: const ValueKey('appointment-full-details-scroll'),
+                        child: SelectableText(details),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text('Fechar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
 
     return Dialog(
       key: const ValueKey('appointment-detail-dialog'),
@@ -153,24 +220,51 @@ class AppointmentDetailDialog extends StatelessWidget {
                             ),
                           ),
                           Positioned(
+                            key: const ValueKey(
+                              'appointment-detail-text-region',
+                            ),
                             left: 13 * scale,
-                            top: 48 * scale,
-                            width: 141 * scale,
+                            top: 54 * scale,
+                            width: 140 * scale,
                             height: 111 * scale,
-                            child: Semantics(
-                              label: details,
-                              child: Text(
-                                details,
-                                maxLines: 7,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: VetColors.calendarTextOnRose,
-                                  fontFamily: 'Comfortaa',
-                                  fontSize: 10 * scale,
-                                  fontWeight: FontWeight.bold,
-                                  height: 1.35,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: Semantics(
+                                    label: details,
+                                    child: Text(
+                                      details,
+                                      maxLines: detailsOverflowed ? 4 : 7,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: detailsStyle,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if (detailsOverflowed)
+                                  FigmaActionTarget(
+                                    key: const ValueKey(
+                                      'appointment-detail-read-more-target',
+                                    ),
+                                    width: 140 * scale,
+                                    height: 48,
+                                    label: readFullDetailsLabel,
+                                    onPressed: openFullDetails,
+                                    child: Text(
+                                      hasObservation
+                                          ? 'Ler observação'
+                                          : 'Ver detalhes',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: VetColors.calendarTextOnRose,
+                                        fontFamily: 'Comfortaa',
+                                        fontSize: 9 * scale,
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],

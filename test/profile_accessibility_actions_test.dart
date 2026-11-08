@@ -160,4 +160,36 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('ações do Perfil permitem quebra com texto ampliado', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const PerfilPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final birthActionLabel = find.text('Mudar Data de Nascimento');
+    expect(birthActionLabel, findsOneWidget);
+    expect(
+      find.ancestor(of: birthActionLabel, matching: find.byType(FittedBox)),
+      findsNothing,
+      reason: 'o texto ampliado não deve ser reduzido para caber em uma linha',
+    );
+    expect(tester.getRect(birthActionLabel).height, greaterThan(30));
+    expect(tester.takeException(), isNull);
+  });
 }

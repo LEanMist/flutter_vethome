@@ -404,13 +404,15 @@ class _PerfilPageState extends State<PerfilPage> {
             ),
           ),
           SizedBox(width: 8 * s),
-          Text(
-            _nascimentoTexto,
-            style: TextStyle(
-              fontSize: 18 * s,
-              fontFamily: PetsTheme.fontComfortaa,
-              fontWeight: FontWeight.bold,
-              color: VetColors.brown,
+          Flexible(
+            child: Text(
+              _nascimentoTexto,
+              style: TextStyle(
+                fontSize: 18 * s,
+                fontFamily: PetsTheme.fontComfortaa,
+                fontWeight: FontWeight.bold,
+                color: VetColors.brown,
+              ),
             ),
           ),
         ],
@@ -419,6 +421,8 @@ class _PerfilPageState extends State<PerfilPage> {
   );
 
   Widget _buildOptions(double s) {
+    final textScale = MediaQuery.textScalerOf(context).scale(18 * s);
+    final allowsWrappedActions = textScale > 18 * s;
     final items = <MapEntry<String, VoidCallback>>[
       MapEntry('Mudar Foto de Perfil', _mudarFoto),
       MapEntry('Mudar Nome de Perfil', _mudarNome),
@@ -433,32 +437,38 @@ class _PerfilPageState extends State<PerfilPage> {
             if (i > 0)
               Divider(height: s, thickness: s, color: VetColors.profileOutline),
             SizedBox(
-              height:
-                  (i == 0
-                      ? 53
-                      : i == 1
-                      ? 56
-                      : 57) *
-                  s,
-              child: InkWell(
-                onTap: items[i].value,
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: 16 * s,
-                    right: 16 * s,
-                    top: (i == 0 ? 16 : 19) * s,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
+              height: allowsWrappedActions
+                  ? null
+                  : (i == 0
+                            ? 53
+                            : i == 1
+                            ? 56
+                            : 57) *
+                        s,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight:
+                      (i == 0
+                          ? 53
+                          : i == 1
+                          ? 56
+                          : 57) *
+                      s,
+                ),
+                child: InkWell(
+                  onTap: items[i].value,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: 16 * s,
+                      right: 16 * s,
+                      top: (i == 0 ? 16 : 19) * s,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
                           child: Text(
                             items[i].key,
-                            maxLines: 1,
-                            softWrap: false,
                             style: TextStyle(
                               fontSize: 18 * s,
                               fontFamily: PetsTheme.fontComfortaa,
@@ -467,23 +477,23 @@ class _PerfilPageState extends State<PerfilPage> {
                             ),
                           ),
                         ),
-                      ),
-                      SizedBox(
-                        width: 12 * s,
-                        height: 20.6299 * s,
-                        child: Center(
-                          child: SizedBox(
-                            width: 11 * s,
-                            height: 19.6299 * s,
-                            child: SvgPicture.asset(
-                              'assets/imagens/figma/services-chevron-right.svg',
-                              key: ValueKey('profile-option-chevron-$i'),
-                              fit: BoxFit.fill,
+                        SizedBox(
+                          width: 12 * s,
+                          height: 20.6299 * s,
+                          child: Center(
+                            child: SizedBox(
+                              width: 11 * s,
+                              height: 19.6299 * s,
+                              child: SvgPicture.asset(
+                                'assets/imagens/figma/services-chevron-right.svg',
+                                key: ValueKey('profile-option-chevron-$i'),
+                                fit: BoxFit.fill,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -9,6 +9,7 @@ class FigmaActionTarget extends StatelessWidget {
     required this.onPressed,
     required this.child,
     this.height = 48,
+    this.expanded,
   });
 
   final double width;
@@ -16,6 +17,7 @@ class FigmaActionTarget extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final Widget child;
+  final bool? expanded;
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -25,6 +27,7 @@ class FigmaActionTarget extends StatelessWidget {
       container: true,
       button: true,
       enabled: onPressed != null,
+      expanded: expanded,
       label: label,
       onTap: onPressed,
       child: ExcludeSemantics(

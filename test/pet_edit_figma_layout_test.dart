@@ -11,143 +11,183 @@ void main() {
   testWidgets('modal de edição segue o EDIT_PROFILE_PET_WIDGET do Figma', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    final semantics = tester.ensureSemantics();
+    try {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    final pet = PetModel(
-      name: 'Fernando',
-      imagePath: '',
-      description: '',
-      species: 'Cachorro',
-      sex: 'Macho',
-      weightKg: 24,
-      birthDate: DateTime(2012, 3, 23),
-      breed: 'Lulu-da-Pomerania',
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: VetTheme.light(VH.primary),
-        home: Scaffold(body: EditarPetPage(pet: pet, modal: true)),
-      ),
-    );
-    await tester.pumpAndSettle();
+      final pet = PetModel(
+        name: 'Fernando',
+        imagePath: '',
+        description: '',
+        species: 'Cachorro',
+        sex: 'Macho',
+        weightKg: 24,
+        birthDate: DateTime(2012, 3, 23),
+        breed: 'Lulu-da-Pomerania',
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: VetTheme.light(VH.primary),
+          home: Scaffold(body: EditarPetPage(pet: pet, modal: true)),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    final surface = find.byKey(const ValueKey('edit-pet-modal-surface'));
-    final surfaceOrigin = tester.getTopLeft(surface);
-    expect(tester.getSize(surface), const Size(310, 480));
-    expect(find.text('Editar pet'), findsNothing);
-    expect(find.bySemanticsLabel('Editar pet'), findsOneWidget);
+      final surface = find.byKey(const ValueKey('edit-pet-modal-surface'));
+      final surfaceOrigin = tester.getTopLeft(surface);
+      expect(tester.getSize(surface), const Size(310, 480));
+      expect(find.text('Editar pet'), findsNothing);
+      expect(find.bySemanticsLabel('Editar pet'), findsOneWidget);
 
-    void expectField(
-      String label,
-      Offset offset,
-      Size size, {
-      required Offset labelOffset,
-      TextAlign textAlign = TextAlign.start,
-    }) {
-      final field = find.ancestor(
-        of: find.text(label),
-        matching: find.byType(VHField),
+      void expectField(
+        String label,
+        Offset offset,
+        Size size, {
+        required Offset labelOffset,
+        TextAlign textAlign = TextAlign.start,
+      }) {
+        final field = find.ancestor(
+          of: find.text(label),
+          matching: find.byType(VHField),
+        );
+        final input = find.descendant(
+          of: field.first,
+          matching: find.byType(TextFormField),
+        );
+        expect(tester.getTopLeft(input) - surfaceOrigin, offset, reason: label);
+        expect(tester.getSize(input), size, reason: label);
+        expect(
+          tester.getTopLeft(find.text(label)) - surfaceOrigin,
+          labelOffset,
+          reason: '$label label',
+        );
+        expect(
+          tester
+              .widget<EditableText>(
+                find.descendant(of: input, matching: find.byType(EditableText)),
+              )
+              .textAlign,
+          textAlign,
+          reason: '$label value alignment',
+        );
+      }
+
+      expectField(
+        'Nome do Cachorro(a)',
+        const Offset(25, 51),
+        const Size(259, 56),
+        labelOffset: const Offset(30, 31),
+        textAlign: TextAlign.center,
       );
-      final input = find.descendant(
-        of: field.first,
-        matching: find.byType(TextFormField),
+      expectField(
+        'Gênero/Sexo',
+        const Offset(25, 143),
+        const Size(122, 56),
+        labelOffset: const Offset(30, 123),
       );
-      expect(tester.getTopLeft(input) - surfaceOrigin, offset, reason: label);
-      expect(tester.getSize(input), size, reason: label);
-      expect(
-        tester.getTopLeft(find.text(label)) - surfaceOrigin,
-        labelOffset,
-        reason: '$label label',
+      expectField(
+        'Peso',
+        const Offset(160, 143),
+        const Size(124, 56),
+        labelOffset: const Offset(167, 123),
       );
+      expectField(
+        'Data de Nascimento',
+        const Offset(25, 237),
+        const Size(259, 56),
+        labelOffset: const Offset(30, 216),
+        textAlign: TextAlign.center,
+      );
+      expectField(
+        'Raça',
+        const Offset(25, 330),
+        const Size(259, 56),
+        labelOffset: const Offset(30, 309),
+      );
+
+      final cancel = find.ancestor(
+        of: find.text('Cancelar'),
+        matching: find.byType(OutlinedButton),
+      );
+      final save = find.widgetWithText(ElevatedButton, 'Salvar');
+      final cancelTarget = find.byKey(const ValueKey('pet-edit-cancel-target'));
+      final saveTarget = find.byKey(const ValueKey('pet-edit-save-target'));
+      final extraOptionsTarget = find.byKey(
+        const ValueKey('edit-pet-extra-fields-toggle'),
+      );
+      expect(tester.getTopLeft(cancel) - surfaceOrigin, const Offset(27, 422));
+      expect(tester.getSize(cancel), const Size(98, 34));
+      expect(tester.getTopLeft(save) - surfaceOrigin, const Offset(194, 422));
+      expect(tester.getSize(save), const Size(90, 34));
+      for (final (target, visual, size) in [
+        (cancelTarget, cancel, const Size(98, 34)),
+        (saveTarget, save, const Size(90, 34)),
+      ]) {
+        final targetRect = tester.getRect(target);
+        final visualRect = tester.getRect(visual);
+        expect(targetRect.size, Size(size.width, 48));
+        expect(visualRect.size, size);
+        expect(visualRect.bottom, targetRect.bottom);
+        expect(visualRect.top, targetRect.top + 14);
+      }
       expect(
         tester
-            .widget<EditableText>(
-              find.descendant(of: input, matching: find.byType(EditableText)),
-            )
-            .textAlign,
-        textAlign,
-        reason: '$label value alignment',
+            .widget<ElevatedButton>(save)
+            .style
+            ?.backgroundColor
+            ?.resolve(<WidgetState>{}),
+        VetColors.brown,
       );
+      expect(find.text('Castração'), findsNothing);
+      expect(find.byType(PetPhotoButton), findsNothing);
+      final extraOptionsRect = tester.getRect(extraOptionsTarget);
+      expect(extraOptionsRect.size, const Size(69, 48));
+      expect(
+        extraOptionsRect.left,
+        greaterThanOrEqualTo(tester.getRect(cancelTarget).right),
+      );
+      expect(
+        extraOptionsRect.right,
+        lessThanOrEqualTo(tester.getRect(saveTarget).left),
+      );
+      final collapsedSemantics = find.descendant(
+        of: extraOptionsTarget,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && widget.properties.label == 'Mais opções',
+        ),
+      );
+      expect(collapsedSemantics, findsOneWidget);
+      expect(
+        tester.widget<Semantics>(collapsedSemantics).properties.expanded,
+        isFalse,
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(extraOptionsTarget);
+      await tester.pumpAndSettle();
+      expect(find.text('Espécie'), findsOneWidget);
+      expect(find.text('Castração'), findsOneWidget);
+      expect(find.byType(PetPhotoButton), findsOneWidget);
+      final expandedSemantics = find.descendant(
+        of: extraOptionsTarget,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && widget.properties.label == 'Menos opções',
+        ),
+      );
+      expect(expandedSemantics, findsOneWidget);
+      expect(
+        tester.widget<Semantics>(expandedSemantics).properties.expanded,
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
     }
-
-    expectField(
-      'Nome do Cachorro(a)',
-      const Offset(25, 51),
-      const Size(259, 56),
-      labelOffset: const Offset(30, 31),
-      textAlign: TextAlign.center,
-    );
-    expectField(
-      'Gênero/Sexo',
-      const Offset(25, 143),
-      const Size(122, 56),
-      labelOffset: const Offset(30, 123),
-    );
-    expectField(
-      'Peso',
-      const Offset(160, 143),
-      const Size(124, 56),
-      labelOffset: const Offset(167, 123),
-    );
-    expectField(
-      'Data de Nascimento',
-      const Offset(25, 237),
-      const Size(259, 56),
-      labelOffset: const Offset(30, 216),
-      textAlign: TextAlign.center,
-    );
-    expectField(
-      'Raça',
-      const Offset(25, 330),
-      const Size(259, 56),
-      labelOffset: const Offset(30, 309),
-    );
-
-    final cancel = find.ancestor(
-      of: find.text('Cancelar'),
-      matching: find.byType(OutlinedButton),
-    );
-    final save = find.widgetWithText(ElevatedButton, 'Salvar');
-    final cancelTarget = find.byKey(const ValueKey('pet-edit-cancel-target'));
-    final saveTarget = find.byKey(const ValueKey('pet-edit-save-target'));
-    expect(tester.getTopLeft(cancel) - surfaceOrigin, const Offset(27, 422));
-    expect(tester.getSize(cancel), const Size(98, 34));
-    expect(tester.getTopLeft(save) - surfaceOrigin, const Offset(194, 422));
-    expect(tester.getSize(save), const Size(90, 34));
-    for (final (target, visual, size) in [
-      (cancelTarget, cancel, const Size(98, 34)),
-      (saveTarget, save, const Size(90, 34)),
-    ]) {
-      final targetRect = tester.getRect(target);
-      final visualRect = tester.getRect(visual);
-      expect(targetRect.size, Size(size.width, 48));
-      expect(visualRect.size, size);
-      expect(visualRect.bottom, targetRect.bottom);
-      expect(visualRect.top, targetRect.top + 14);
-    }
-    expect(
-      tester
-          .widget<ElevatedButton>(save)
-          .style
-          ?.backgroundColor
-          ?.resolve(<WidgetState>{}),
-      VetColors.brown,
-    );
-    expect(find.text('Castração'), findsNothing);
-    expect(find.byType(PetPhotoButton), findsNothing);
-    expect(tester.takeException(), isNull);
-
-    await tester.tap(
-      find.byKey(const ValueKey('edit-pet-extra-fields-toggle')),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Espécie'), findsOneWidget);
-    expect(find.text('Castração'), findsOneWidget);
-    expect(find.byType(PetPhotoButton), findsOneWidget);
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets('edição exige espécie e abre Mais opções quando ela falta', (

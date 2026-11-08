@@ -630,61 +630,109 @@ class _PetFormState extends State<PetForm> {
             const SizedBox(height: 16),
             fields[6],
             const SizedBox(height: 22),
-            Padding(
-              padding: const EdgeInsets.only(left: 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            SizedBox(
+              height: 70,
+              child: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  FigmaActionTarget(
-                    key: const ValueKey('pet-edit-cancel-target'),
-                    width: 98,
-                    label: 'Cancelar',
-                    onPressed: busy ? null : widget.onCancel,
-                    child: cancelButton,
+                  Positioned(
+                    left: 2,
+                    right: 0,
+                    top: 0,
+                    height: 48,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        FigmaActionTarget(
+                          key: const ValueKey('pet-edit-cancel-target'),
+                          width: 98,
+                          label: 'Cancelar',
+                          onPressed: busy ? null : widget.onCancel,
+                          child: cancelButton,
+                        ),
+                        FigmaActionTarget(
+                          key: const ValueKey('pet-edit-save-target'),
+                          width: 90,
+                          label: 'Salvar',
+                          onPressed: busy ? null : save,
+                          child: SizedBox(
+                            width: 90,
+                            height: 34,
+                            child: saveButton,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  FigmaActionTarget(
-                    key: const ValueKey('pet-edit-save-target'),
-                    width: 90,
-                    label: 'Salvar',
-                    onPressed: busy ? null : save,
-                    child: SizedBox(width: 90, height: 34, child: saveButton),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 22,
+                    height: 48,
+                    child: Center(
+                      child: Transform.translate(
+                        offset: const Offset(5, 0),
+                        child: FigmaActionTarget(
+                          key: const ValueKey('edit-pet-extra-fields-toggle'),
+                          width: 69,
+                          height: 48,
+                          label: editExtrasExpanded
+                              ? 'Menos opções'
+                              : 'Mais opções',
+                          expanded: editExtrasExpanded,
+                          onPressed: busy
+                              ? null
+                              : () => setState(
+                                  () =>
+                                      editExtrasExpanded = !editExtrasExpanded,
+                                ),
+                          child: Transform.translate(
+                            offset: const Offset(-5, 0),
+                            child: OverflowBox(
+                              maxWidth: 160,
+                              maxHeight: 22,
+                              alignment: Alignment.bottomCenter,
+                              child: SizedBox(
+                                height: 22,
+                                child: TextButton(
+                                  onPressed: () {},
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: const Color(0xFF68442E),
+                                    minimumSize: Size.zero,
+                                    padding: EdgeInsets.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    visualDensity: VisualDensity.compact,
+                                    textStyle: const TextStyle(
+                                      fontFamily: 'Montserrat Alternates',
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        editExtrasExpanded
+                                            ? 'Menos opções'
+                                            : 'Mais opções',
+                                      ),
+                                      Icon(
+                                        editExtrasExpanded
+                                            ? Icons.expand_less
+                                            : Icons.expand_more,
+                                        size: 15,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
-              ),
-            ),
-            SizedBox(
-              height: 22,
-              child: TextButton(
-                key: const ValueKey('edit-pet-extra-fields-toggle'),
-                onPressed: busy
-                    ? null
-                    : () => setState(
-                        () => editExtrasExpanded = !editExtrasExpanded,
-                      ),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF68442E),
-                  minimumSize: Size.zero,
-                  padding: EdgeInsets.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                  textStyle: const TextStyle(
-                    fontFamily: 'Montserrat Alternates',
-                    fontSize: 11,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(editExtrasExpanded ? 'Menos opções' : 'Mais opções'),
-                    Icon(
-                      editExtrasExpanded
-                          ? Icons.expand_less
-                          : Icons.expand_more,
-                      size: 15,
-                    ),
-                  ],
-                ),
               ),
             ),
             if (editExtrasExpanded) ...[
