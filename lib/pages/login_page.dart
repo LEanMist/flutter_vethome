@@ -21,6 +21,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordFocusNode = FocusNode(debugLabel: 'Senha');
   final _rememberFocusNode = FocusNode(debugLabel: 'Lembre-se de mim');
 
   bool esconderSenha = true;
@@ -107,6 +108,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     _rememberFocusNode.dispose();
     super.dispose();
   }
@@ -464,11 +466,19 @@ class _LoginPageState extends State<LoginPage> {
       ),
       child: TextField(
         controller: controller,
+        focusNode: password ? _passwordFocusNode : null,
         obscureText: password && esconderSenha,
         keyboardType: password
             ? TextInputType.text
             : TextInputType.emailAddress,
-        onSubmitted: (_) => entrar(),
+        textInputAction: password ? TextInputAction.done : TextInputAction.next,
+        onSubmitted: (_) {
+          if (password) {
+            entrar();
+          } else {
+            FocusScope.of(context).requestFocus(_passwordFocusNode);
+          }
+        },
         style: const TextStyle(
           fontFamily: VH.bodyFontFamily,
           fontSize: 15,

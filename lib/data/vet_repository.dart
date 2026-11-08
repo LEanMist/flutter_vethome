@@ -35,6 +35,9 @@ class VetRepository {
   static Future<bool> _pendingSave = Future.value(true);
   static Future<bool>? _pendingRetry;
   static int _saveSequence = 0;
+  static int _repositoryVersion = 0;
+  static int _reloadRequestSequence = 0;
+  static int _initializeRequestSequence = 0;
   static bool _clearInProgress = false;
   static final _unsavedChanges = ValueNotifier(false);
   static final _savingChanges = ValueNotifier(false);
@@ -51,9 +54,29 @@ class VetRepository {
 
   /// Deve terminar antes de runApp. Também permite simular reinício nos testes.
   static Future<void> initialize({LocalStorage? storage}) async {
+    final requestSequence = ++_initializeRequestSequence;
+    final repositoryVersion = _repositoryVersion;
+    if (_clearInProgress) return;
+
     await flush();
+    if (requestSequence != _initializeRequestSequence ||
+        repositoryVersion != _repositoryVersion ||
+        _clearInProgress ||
+        _savingChanges.value ||
+        _unsavedChanges.value) {
+      return;
+    }
+
     final local = storage ?? LocalStorage();
     final result = await local.load();
+    if (requestSequence != _initializeRequestSequence ||
+        repositoryVersion != _repositoryVersion ||
+        _clearInProgress ||
+        _savingChanges.value ||
+        _unsavedChanges.value) {
+      return;
+    }
+
     _applyLoadResult(local, result);
   }
 
@@ -68,10 +91,22 @@ class VetRepository {
 
     final previousLocal = _lastLocal;
     if (previousLocal == null) return false;
+    final repositoryVersion = _repositoryVersion;
+    final requestSequence = ++_reloadRequestSequence;
     final local = previousLocal.createReloadInstance();
     final result = await local.load();
     if (result.status == LocalLoadStatus.invalid ||
         result.status == LocalLoadStatus.unavailable) {
+      return false;
+    }
+    // A sessão pode mudar enquanto a leitura aguarda o armazenamento. Não deixe
+    // um snapshot antigo sobrescrever mutações, exclusões ou outra recarga.
+    if (requestSequence != _reloadRequestSequence ||
+        repositoryVersion != _repositoryVersion ||
+        _savingChanges.value ||
+        _clearInProgress ||
+        !identical(_lastLocal, previousLocal) ||
+        lastPersistenceError is! LocalStorageConflictException) {
       return false;
     }
     _applyLoadResult(local, result);
@@ -79,6 +114,7 @@ class VetRepository {
   }
 
   static void _applyLoadResult(LocalStorage local, LocalLoadResult result) {
+    _repositoryVersion++;
     _storage = null;
     _lastLocal = local;
     _lastValid = null;
@@ -131,6 +167,8 @@ class VetRepository {
     final storage = _lastLocal;
     if (storage == null || _clearInProgress) return false;
     _clearInProgress = true;
+    // Invalida qualquer recarga assíncrona iniciada antes da exclusão.
+    _repositoryVersion++;
     try {
       // Bloqueia novas mutações antes de esperar a fila, para que nenhuma
       // gravação posterior possa recriar o snapshot depois do tombstone.
@@ -275,6 +313,7 @@ class VetRepository {
   }) {
     // Captura cada estado e serializa as gravações para evitar inversão de ordem.
     final sequence = ++_saveSequence;
+    _repositoryVersion++;
     _unsavedChanges.value = true;
     _savingChanges.value = true;
     _pendingSave = _pendingSave.then((previousSaved) async {

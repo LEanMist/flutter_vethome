@@ -105,14 +105,25 @@ class _AddressFormState extends State<AddressForm> {
     setState(() => _saving = true);
     try {
       final result = _result;
-      if (result != null &&
+      final currentCep = _cep.text.replaceAll(RegExp(r'\D'), '');
+      final initialCep = widget.initial?.cep.replaceAll(RegExp(r'\D'), '');
+      final changedCepWithoutResult =
+          widget.initial != null && initialCep != currentCep && result == null;
+      final addressDoesNotMatchResult =
+          result != null &&
           (normalizedText(_street.text) != normalizedText(result.street) ||
-              normalizedText(_city.text) != normalizedText(result.city))) {
+              normalizedText(_city.text) != normalizedText(result.city));
+      if (changedCepWithoutResult || addressDoesNotMatchResult) {
         final proceed = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            content: const Text(
-              'O endereço informado não corresponde ao CEP consultado. Deseja continuar mesmo assim?',
+            content: Text(
+              changedCepWithoutResult
+                  ? 'O CEP mudou e não foi possível confirmar o novo endereço. '
+                        'O logradouro e a cidade podem ser os do CEP anterior. '
+                        'Deseja salvar mesmo assim?'
+                  : 'O endereço informado não corresponde ao CEP consultado. '
+                        'Deseja continuar mesmo assim?',
             ),
             actions: [
               TextButton(

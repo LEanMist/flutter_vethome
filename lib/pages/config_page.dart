@@ -534,6 +534,38 @@ class ConfigScreen extends StatelessWidget {
       }
     }
 
+    if (action == _ExitAction.signOut &&
+        (VetRepository.unsavedChanges.value ||
+            VetRepository.savingChanges.value)) {
+      // Espere a gravação pendente antes de concluir a saída.
+      await VetRepository.flush();
+      if (!context.mounted) return;
+      if (VetRepository.unsavedChanges.value) {
+        final leaveAnyway = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            backgroundColor: VH.background,
+            title: const Text('Sair com alterações não salvas?'),
+            content: const Text(
+              'Há alterações que ainda não foram salvas neste dispositivo. '
+              'Elas podem ser perdidas ao sair. Volte para tentar salvar novamente.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Continuar editando'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('Sair mesmo assim'),
+              ),
+            ],
+          ),
+        );
+        if (!context.mounted || leaveAnyway != true) return;
+      }
+    }
+
     if (context.mounted) {
       Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     }

@@ -40,6 +40,8 @@ class SobreScreen extends StatelessWidget {
       children: [
         Image.asset(
           'assets/imagens/figma/vethomepng-2.png',
+          key: const ValueKey('about-vethome-logo'),
+          semanticLabel: 'Logotipo VetHome, Serviços Veterinários',
           width: 140,
           height: 140,
         ),

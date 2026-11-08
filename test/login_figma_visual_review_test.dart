@@ -184,10 +184,7 @@ void main() {
     addTearDown(tester.view.resetViewPadding);
 
     await tester.pumpWidget(
-      MaterialApp(
-        theme: VetTheme.light(VH.primary),
-        home: const LoginPage(),
-      ),
+      MaterialApp(theme: VetTheme.light(VH.primary), home: const LoginPage()),
     );
     await tester.pumpAndSettle();
 
@@ -221,6 +218,47 @@ void main() {
 
     expect(find.byTooltip('Mostrar senha'), findsOneWidget);
     expect(tester.widget<TextField>(passwordField()).obscureText, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Next no usuário foca Senha e Done preserva validação', (
+    tester,
+  ) async {
+    await showLogin(tester, const Size(390, 844));
+
+    Finder field(String hint) => find.byWidgetPredicate(
+      (widget) => widget is TextField && widget.decoration?.hintText == hint,
+    );
+    final userField = field('Usuário');
+    final passwordField = field('Senha');
+
+    expect(
+      tester.widget<TextField>(userField).textInputAction,
+      TextInputAction.next,
+    );
+    expect(
+      tester.widget<TextField>(passwordField).textInputAction,
+      TextInputAction.done,
+    );
+
+    await tester.tap(userField);
+    await tester.pump();
+    await tester.testTextInput.receiveAction(TextInputAction.next);
+    await tester.pump();
+
+    expect(tester.widget<TextField>(passwordField).focusNode!.hasFocus, isTrue);
+    expect(
+      find.text('Informe um e-mail válido e uma senha com 6 caracteres.'),
+      findsNothing,
+    );
+
+    await tester.enterText(passwordField, '123');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(
+      find.text('Informe um e-mail válido e uma senha com 6 caracteres.'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
