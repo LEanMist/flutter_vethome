@@ -5,6 +5,7 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/vet_colors.dart';
+import 'figma_action_target.dart';
 
 /// Cartão móvel do fluxo de agendamento, baseado no CALENDAR_WIDGET do Figma.
 class AppointmentBookingCard extends StatelessWidget {
@@ -12,6 +13,7 @@ class AppointmentBookingCard extends StatelessWidget {
     super.key,
     required this.service,
     required this.plan,
+    required this.petName,
     required this.date,
     required this.start,
     required this.end,
@@ -24,11 +26,12 @@ class AppointmentBookingCard extends StatelessWidget {
   });
 
   static const double designWidth = 390;
-  static const double designHeight = 453;
+  static const double designHeight = 461;
   static const double minimumTouchTarget = 48;
 
   static const _calendarIcon = 'assets/imagens/figma/appointment-calendar.svg';
   static const _clockIcon = 'assets/imagens/figma/appointment-clock.svg';
+  static const _petIcon = 'assets/imagens/figma/appointment-pet-icon.svg';
   static const _descriptionIcon =
       'assets/imagens/figma/appointment-text-long.svg';
   static const _timeDivider =
@@ -36,6 +39,7 @@ class AppointmentBookingCard extends StatelessWidget {
 
   final String service;
   final String plan;
+  final String petName;
   final DateTime date;
   final TimeOfDay? start;
   final TimeOfDay? end;
@@ -80,8 +84,10 @@ class AppointmentBookingCard extends StatelessWidget {
     final textScale = 1 / scale;
     final timeTargetHeight = minimumTouchTarget / scale;
     final narrowLayoutOffset = math.max(0.0, timeTargetHeight - 56.0);
-    final saveHeight = math.max(51.0, timeTargetHeight);
-    final saveTop = 376 - (saveHeight - 51) / 2;
+    final descriptionOffset = math.max(0.0, (timeTargetHeight - 53.0) / 2 + 1);
+    final saveTargetHeight = math.max(minimumTouchTarget, timeTargetHeight);
+    const saveVisualHeight = 37.0;
+    final saveTargetTop = 408 - (saveTargetHeight - saveVisualHeight);
 
     return Container(
       key: const ValueKey('appointment-booking-card'),
@@ -154,10 +160,14 @@ class AppointmentBookingCard extends StatelessWidget {
               ],
             ),
           ),
-          _icon(_descriptionIcon, left: 33, top: 252 + narrowLayoutOffset),
+          _icon(
+            _descriptionIcon,
+            left: 33,
+            top: 252 + narrowLayoutOffset + descriptionOffset,
+          ),
           Positioned(
             left: 85,
-            top: 231 + narrowLayoutOffset,
+            top: 231 + narrowLayoutOffset + descriptionOffset,
             width: 270,
             height: 20,
             child: ExcludeSemantics(
@@ -175,7 +185,7 @@ class AppointmentBookingCard extends StatelessWidget {
           ),
           Positioned(
             left: 80,
-            top: 252 + narrowLayoutOffset,
+            top: 252 + narrowLayoutOffset + descriptionOffset,
             width: 285,
             height: 103,
             child: Semantics(
@@ -239,29 +249,80 @@ class AppointmentBookingCard extends StatelessWidget {
             ),
           ),
           Positioned(
-            left: 137,
-            top: saveTop,
-            width: 117,
-            height: saveHeight,
-            child: ElevatedButton(
-              key: const ValueKey('appointment-booking-save'),
-              onPressed: saving ? null : onSave,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VetColors.pink,
-                foregroundColor: VetColors.brown,
-                elevation: 2,
-                shadowColor: const Color(0x40000000),
-                padding: EdgeInsets.zero,
-                minimumSize: Size(117, saveHeight),
-                maximumSize: Size(117, saveHeight),
-                shape: const StadiumBorder(),
+            left: 33,
+            top: 364.4,
+            width: 28,
+            height: 27.879,
+            child: ExcludeSemantics(
+              child: SvgPicture.asset(
+                _petIcon,
+                key: const ValueKey('appointment-booking-pet-icon'),
+                fit: BoxFit.fill,
               ),
-              child: Text(
-                saving ? 'Salvando…' : 'Salvar',
-                style: TextStyle(
-                  fontFamily: 'MontserratAlternates',
-                  fontSize: 18 * textScale,
-                  fontWeight: FontWeight.bold,
+            ),
+          ),
+          Positioned(
+            left: 80,
+            top: 370,
+            width: 150,
+            height: 19,
+            child: Semantics(
+              label: 'Pet: $petName',
+              child: ExcludeSemantics(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    key: const ValueKey('appointment-booking-pet-name'),
+                    petName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: VetColors.brown,
+                      fontFamily: 'MontserratAlternates',
+                      fontSize: 12 * textScale,
+                      fontWeight: FontWeight.bold,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 265,
+            top: saveTargetTop,
+            width: 105,
+            height: saveTargetHeight,
+            child: FigmaActionTarget(
+              key: const ValueKey('appointment-booking-save'),
+              width: 105,
+              height: saveTargetHeight,
+              label: saving ? 'Salvando consulta' : 'Salvar consulta',
+              onPressed: saving ? null : onSave,
+              child: Container(
+                key: const ValueKey('appointment-booking-save-visual'),
+                width: 105,
+                height: saveVisualHeight,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(255, 255, 255, 0.01),
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x40000000),
+                      offset: Offset(2, 2),
+                      blurRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  saving ? 'Salvando…' : 'Salvar',
+                  style: TextStyle(
+                    color: VetColors.brown,
+                    fontFamily: 'MontserratAlternates',
+                    fontSize: 14 * textScale,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

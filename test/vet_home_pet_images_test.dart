@@ -216,7 +216,7 @@ void main() {
     expect(find.byType(Icon), findsNothing);
   });
 
-  testWidgets('renomear mantém ID e imagem sem exibir o pet no cartão Figma', (
+  testWidgets('renomear mantém ID e imagem e atualiza o nome no cartão Figma', (
     tester,
   ) async {
     late PetModel pet;
@@ -237,9 +237,13 @@ void main() {
         home: NovaConsultaPage(pet: pet, service: 'Urina', plan: 'Particular'),
       ),
     );
-    expect(find.text('Gato Renomeado'), findsNothing);
+    expect(find.text('Gato Renomeado'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('appointment-booking-card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('appointment-booking-pet-icon')),
       findsOneWidget,
     );
     expect(avatarImages(), findsNothing);

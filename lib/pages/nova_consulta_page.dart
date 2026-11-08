@@ -300,6 +300,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
               AppointmentBookingCard(
                 service: widget.service,
                 plan: widget.plan,
+                petName: pet.name,
                 date: _date,
                 start: _time,
                 end: _end,

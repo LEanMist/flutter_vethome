@@ -41,18 +41,27 @@ void main() {
       tester.getSize(
         find.byKey(const ValueKey('appointment-booking-scaled-size')),
       ),
-      const Size(390, 453),
+      const Size(390, 461),
     );
     expect(find.text('Hemograma'), findsOneWidget);
     expect(find.text('Particular'), findsOneWidget);
     final card = find.byKey(const ValueKey('appointment-booking-card'));
+    expect(find.text(VetRepository.pets.first.name), findsOneWidget);
+    final petName = find.byKey(const ValueKey('appointment-booking-pet-name'));
     expect(
-      find.descendant(
-        of: card,
-        matching: find.text(VetRepository.pets.first.name),
-      ),
-      findsNothing,
+      tester.getTopLeft(petName) - tester.getTopLeft(card),
+      const Offset(80, 373.5),
     );
+    expect(
+      tester.getRect(petName).center.dy - tester.getTopLeft(card).dy,
+      379.5,
+    );
+    final petIcon = find.byKey(const ValueKey('appointment-booking-pet-icon'));
+    expect(
+      tester.getTopLeft(petIcon) - tester.getTopLeft(card),
+      const Offset(33, 364.4),
+    );
+    expect(tester.getSize(petIcon), const Size(28, 27.879));
     expect(
       find.byKey(const ValueKey('appointment-booking-description')),
       findsOneWidget,
@@ -81,10 +90,18 @@ void main() {
     );
     final save = find.byKey(const ValueKey('appointment-booking-save'));
     expect(save, findsOneWidget);
-    expect(tester.getSize(save), const Size(117, 51));
+    expect(tester.getSize(save), const Size(105, 48));
     expect(
       tester.getTopLeft(save) - tester.getTopLeft(card),
-      const Offset(137, 376),
+      const Offset(265, 397),
+    );
+    final saveVisual = find.byKey(
+      const ValueKey('appointment-booking-save-visual'),
+    );
+    expect(tester.getSize(saveVisual), const Size(105, 37));
+    expect(
+      tester.getTopLeft(saveVisual) - tester.getTopLeft(card),
+      const Offset(265, 408),
     );
     expect(tester.takeException(), isNull);
   });
@@ -96,7 +113,7 @@ void main() {
       find.byKey(const ValueKey('appointment-booking-scaled-size')),
     );
     expect(size.width, 320);
-    expect(size.height, closeTo(453 * 320 / 390, .01));
+    expect(size.height, closeTo(461 * 320 / 390, .01));
     final scale = size.width / 390;
     for (final key in [
       const ValueKey('appointment-booking-date'),
@@ -112,10 +129,14 @@ void main() {
     final startTarget = tester.getRect(
       find.byKey(const ValueKey('appointment-booking-start-time')),
     );
+    final descriptionLabel = tester.getRect(
+      find.text('Adicionar uma descrição'),
+    );
     final descriptionRect = tester.getRect(
       find.byKey(const ValueKey('appointment-booking-description')),
     );
     expect(dateTarget.bottom, lessThanOrEqualTo(startTarget.top + .01));
+    expect(startTarget.overlaps(descriptionLabel), isFalse);
     expect(startTarget.bottom, lessThan(descriptionRect.top));
     final description = tester.widget<TextField>(
       find.byKey(const ValueKey('appointment-booking-description')),

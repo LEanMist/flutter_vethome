@@ -6,6 +6,7 @@ import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/screens/outros.dart';
+import 'package:flutter_vethome/widgets/figma_action_target.dart';
 
 class _BlockedAppointmentStorage extends LocalStorage {
   _BlockedAppointmentStorage(this.result);
@@ -190,8 +191,11 @@ void main() {
 
     expect(find.byType(AgendaScreen), findsNothing);
     expect(storage.saveCalls, 1);
-    final saving = find.widgetWithText(ElevatedButton, 'Salvando…');
-    expect(tester.widget<ElevatedButton>(saving).onPressed, isNull);
+    final saving = tester.widget<FigmaActionTarget>(
+      find.byKey(const ValueKey('appointment-booking-save')),
+    );
+    expect(saving.onPressed, isNull);
+    expect(find.text('Salvando…'), findsOneWidget);
     final appointments = VetRepository.agendamentos(pet.id);
     expect(appointments, hasLength(before + 1));
     final appointment = appointments.singleWhere(
