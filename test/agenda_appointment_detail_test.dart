@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
@@ -140,6 +141,16 @@ void main() {
     expect(detail, findsOneWidget);
     final surface = find.byKey(const ValueKey('appointment-detail-surface'));
     expect(tester.getSize(surface), const Size(390, 346));
+    final surfaceRect = tester.getRect(surface);
+    final ring = find.byKey(const ValueKey('appointment-detail-ring'));
+    expect(ring, findsOneWidget);
+    expect(
+      tester.getRect(ring),
+      Rect.fromLTWH(surfaceRect.left + 29.5, surfaceRect.top + 106.5, 141, 141),
+    );
+    final ringWidget = tester.widget<SvgPicture>(ring);
+    expect(ringWidget.width, 141);
+    expect(ringWidget.height, 141);
     final deleteTarget = find.byKey(
       const ValueKey('appointment-detail-delete-target'),
     );
@@ -147,7 +158,6 @@ void main() {
       const ValueKey('appointment-detail-delete'),
     );
     expect(tester.getSize(deleteTarget), const Size(109, 48));
-    final surfaceRect = tester.getRect(surface);
     final deleteVisualRect = tester.getRect(deleteVisual);
     expect(deleteVisualRect.left, closeTo(surfaceRect.left + 140, .01));
     expect(deleteVisualRect.top, closeTo(surfaceRect.top + 283, .01));
@@ -219,6 +229,15 @@ void main() {
       const ValueKey('appointment-detail-delete'),
     );
     final narrowScale = 320 / 390;
+    expect(
+      tester.getRect(ring),
+      Rect.fromLTWH(
+        narrowSurface.left + 29.5 * narrowScale,
+        narrowSurface.top + 106.5 * narrowScale,
+        141 * narrowScale,
+        141 * narrowScale,
+      ),
+    );
     final narrowTargetRect = tester.getRect(narrowTarget);
     final narrowVisualRect = tester.getRect(narrowVisual);
     expect(narrowTargetRect.height, 48);

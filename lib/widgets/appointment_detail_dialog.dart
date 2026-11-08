@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/utils/formatters.dart';
 import '../models/pet_model.dart';
@@ -83,13 +84,18 @@ class AppointmentDetailDialog extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  left: 31 * scale,
-                  top: 107 * scale,
-                  width: 138 * scale,
-                  height: 138 * scale,
-                  child: IgnorePointer(
-                    child: CustomPaint(
-                      painter: _DottedAppointmentRing(scale: scale),
+                  left: 29.5 * scale,
+                  top: 106.5 * scale,
+                  width: 141 * scale,
+                  height: 141 * scale,
+                  child: ExcludeSemantics(
+                    child: IgnorePointer(
+                      child: SvgPicture.asset(
+                        'assets/imagens/figma/appointment-detail-ring.svg',
+                        key: const ValueKey('appointment-detail-ring'),
+                        width: 141 * scale,
+                        height: 141 * scale,
+                      ),
                     ),
                   ),
                 ),
@@ -212,29 +218,4 @@ class AppointmentDetailDialog extends StatelessWidget {
       ),
     );
   }
-}
-
-class _DottedAppointmentRing extends CustomPainter {
-  const _DottedAppointmentRing({required this.scale});
-
-  final double scale;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = VetColors.profileOutline
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2 * scale;
-    final path = Path()..addOval(Offset.zero & size);
-    for (final metric in path.computeMetrics()) {
-      for (var offset = 0.0; offset < metric.length; offset += 12 * scale) {
-        final end = math.min(offset + 6 * scale, metric.length);
-        canvas.drawPath(metric.extractPath(offset, end), paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DottedAppointmentRing oldDelegate) =>
-      oldDelegate.scale != scale;
 }
