@@ -82,7 +82,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final isMobile = MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
     final page = VHPage(
       tab: '/agenda',
-      showPetsTab: !isMobile,
+      showPetsTab: true,
       children: [
         if (isMobile)
           _mobileAgenda(consultasDoDia)
@@ -114,8 +114,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final scale = (width / 390).clamp(0.8, 1.0).toDouble();
     final actionTop = math.max(
-      676.0,
-      appointments.length > 3 ? 424.0 + 84.0 * appointments.length : 676.0,
+      651.0,
+      appointments.length > 3 ? 399.0 + 84.0 * appointments.length : 651.0,
     );
     final buttonVisualHeight = 41 * scale;
     final buttonTouchHeight = math.max(48.0, buttonVisualHeight);
@@ -158,8 +158,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           Positioned(
-            left: 66 * scale,
-            top: 362 * scale,
+            left: 67 * scale,
+            top: 323 * scale,
             width: 258 * scale,
             height: 41 * scale,
             child: Container(
@@ -204,8 +204,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
             _mobileAppointment(appointments[index], index, scale),
             if (index < appointments.length - 1)
               Positioned(
-                left: 82 * scale,
-                top: (516 + 85 * index) * scale,
+                left: 88 * scale,
+                top: (466 + 85 * index) * scale,
                 child: _FigmaDottedLine(
                   key: ValueKey('agenda-divider-$index'),
                   width: 221 * scale,
@@ -213,8 +213,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
               ),
           ],
           Positioned(
-            left: 340 * scale,
-            top: 486 * scale,
+            left: 345 * scale,
+            top: 435 * scale,
             width: 20 * scale,
             height: 20 * scale,
             child: SizedBox.expand(
@@ -234,8 +234,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           Positioned(
-            left: 340 * scale,
-            top: 612 * scale,
+            left: 345 * scale,
+            top: 561 * scale,
             width: 20 * scale,
             height: 20 * scale,
             child: SizedBox.expand(
@@ -308,7 +308,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
   }
 
   Widget _mobileAppointment(_AgendaItem item, int index, double scale) {
-    final top = (450 + 84 * index) * scale;
+    final top = (399 + 84 * index) * scale;
     final end = item.agendamento.endDate;
     final label = [
       item.agendamento.tipo,
@@ -356,7 +356,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
         ),
         Positioned(
-          left: 96 * scale,
+          left: 102 * scale,
           top: top,
           width: 195 * scale,
           height: 50 * scale,

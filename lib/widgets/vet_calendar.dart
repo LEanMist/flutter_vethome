@@ -337,7 +337,9 @@ class VetCalendar extends StatelessWidget {
     final compactWeekLabels = const ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     final cellDimension = 35 * scale;
     final columnGap = 10 * scale;
-    final rowGap = 10 * scale;
+    final rowGap = 5 * scale;
+    final gridWidth = 327 * scale;
+    final columnWidth = (gridWidth - columnGap * 6) / 7;
 
     return Semantics(
       key: const ValueKey('agenda-calendar-month-navigation'),
@@ -362,7 +364,7 @@ class VetCalendar extends StatelessWidget {
         child: Container(
           key: const ValueKey('vet-calendar'),
           width: 390 * scale,
-          height: 383 * scale,
+          height: 344 * scale,
           clipBehavior: Clip.none,
           decoration: BoxDecoration(
             color: VH.secondary,
@@ -373,23 +375,6 @@ class VetCalendar extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Positioned(
-                left: 22 * scale,
-                top: 22 * scale,
-                width: 347 * scale,
-                height: 327 * scale,
-                child: ExcludeSemantics(
-                  child: Container(
-                    key: const ValueKey('agenda-calendar-inner-panel'),
-                    decoration: BoxDecoration(
-                      color: VH.background.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(
-                        VH.radiusXLarge * scale,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
               if (compactText)
                 Positioned(
                   left: 0,
@@ -422,8 +407,8 @@ class VetCalendar extends StatelessWidget {
                 )
               else ...[
                 Positioned(
-                  left: 133 * scale,
-                  top: 28 * scale,
+                  left: 126 * scale,
+                  top: 17 * scale,
                   width: 71 * scale,
                   height: 35 * scale,
                   child: SizedBox.expand(
@@ -448,8 +433,8 @@ class VetCalendar extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  left: 214 * scale,
-                  top: 28 * scale,
+                  left: 207 * scale,
+                  top: 17 * scale,
                   width: 35 * scale,
                   height: 35 * scale,
                   child: SizedBox.expand(
@@ -475,9 +460,9 @@ class VetCalendar extends StatelessWidget {
                 ),
               ],
               Positioned(
-                left: 42 * scale,
-                top: 75 * scale,
-                width: 305 * scale,
+                left: 31 * scale,
+                top: 65 * scale,
+                width: gridWidth,
                 child: Column(
                   key: const ValueKey('agenda-calendar-month-grid'),
                   mainAxisSize: MainAxisSize.min,
@@ -485,6 +470,7 @@ class VetCalendar extends StatelessWidget {
                     _agendaCalendarRow(
                       gap: columnGap,
                       cellDimension: cellDimension,
+                      columnWidth: columnWidth,
                       children: [
                         for (var index = 0; index < weekLabels.length; index++)
                           Semantics(
@@ -516,6 +502,7 @@ class VetCalendar extends StatelessWidget {
                       _agendaCalendarRow(
                         gap: columnGap,
                         cellDimension: cellDimension,
+                        columnWidth: columnWidth,
                         children: [
                           for (var column = 0; column < 7; column++)
                             _agendaCalendarDate(
@@ -541,11 +528,22 @@ class VetCalendar extends StatelessWidget {
   Widget _agendaCalendarRow({
     required double gap,
     required double cellDimension,
+    required double columnWidth,
     required List<Widget> children,
   }) => Row(
     children: [
       for (var index = 0; index < children.length; index++) ...[
-        SizedBox.square(dimension: cellDimension, child: children[index]),
+        SizedBox(
+          width: columnWidth,
+          height: cellDimension,
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox.square(
+              dimension: cellDimension,
+              child: children[index],
+            ),
+          ),
+        ),
         if (index < children.length - 1) SizedBox(width: gap),
       ],
     ],
