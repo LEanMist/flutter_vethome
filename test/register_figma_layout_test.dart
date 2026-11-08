@@ -129,6 +129,19 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('indicador acompanha o cadastro centralizado em 414 px', (
+    tester,
+  ) async {
+    await showRegistration(tester, const Size(414, 1035));
+
+    final indicator = find.byKey(const ValueKey('register-scroll-indicator'));
+    expect(
+      tester.getRect(indicator),
+      const Rect.fromLTWH(383.5, 369, 3, 328.001),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'REGISTER_PAGE mantém coordenadas Figma com barra de status Android',
     (tester) async {

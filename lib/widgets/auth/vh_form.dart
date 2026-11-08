@@ -151,6 +151,9 @@ class _VHFormState extends State<VHForm> {
     final mobileRegistration = widget.dataPrefix == 'client.' && !desktop;
     final showRegisterScrollIndicator =
         mobileRegistration && viewport.width <= 430 && viewport.height >= 700;
+    final centeredFormOffset = ((viewport.width - 390) / 2)
+        .clamp(0.0, double.infinity)
+        .toDouble();
     return Scaffold(
       backgroundColor: VH.background,
       body: SafeArea(
@@ -271,7 +274,7 @@ class _VHFormState extends State<VHForm> {
             ),
             if (showRegisterScrollIndicator)
               Positioned(
-                right: 15.5,
+                right: centeredFormOffset + 15.5,
                 top: 369,
                 child: IgnorePointer(
                   child: ExcludeSemantics(
