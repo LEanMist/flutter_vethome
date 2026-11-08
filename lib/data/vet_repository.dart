@@ -142,6 +142,9 @@ class VetRepository {
     _vaccines
       ..clear()
       ..addAll(state?.vaccinations ?? {});
+    _vaccinationDemoDismissedPetIds
+      ..clear()
+      ..addAll(state?.vaccinationDemoDismissedPetIds ?? const {});
     _persistenceStatus = result.status;
     lastPersistenceError = persistenceBlocked ? result.error : null;
     _pendingSave = Future.value(!persistenceBlocked);
@@ -197,6 +200,7 @@ class VetRepository {
         ..addAll(_demoPets());
       _novosAgendamentos.clear();
       _vaccines.clear();
+      _vaccinationDemoDismissedPetIds.clear();
 
       _storage = storage;
       _lastValid = null;
@@ -255,6 +259,7 @@ class VetRepository {
     vaccinations: {
       for (final entry in _vaccines.entries) entry.key: List.of(entry.value),
     },
+    vaccinationDemoDismissedPetIds: Set.of(_vaccinationDemoDismissedPetIds),
   );
 
   static void _restore(LocalState state) {
@@ -284,6 +289,9 @@ class VetRepository {
         for (final entry in state.vaccinations.entries)
           entry.key: List.of(entry.value),
       });
+    _vaccinationDemoDismissedPetIds
+      ..clear()
+      ..addAll(state.vaccinationDemoDismissedPetIds);
   }
 
   static void _save() {
@@ -710,6 +718,7 @@ class VetRepository {
     pets.removeWhere((item) => item.id == pet.id);
     _novosAgendamentos.remove(pet.id);
     _vaccines.remove(pet.id);
+    _vaccinationDemoDismissedPetIds.remove(pet.id);
     selectedPetId = selectedId == pet.id ? pets.firstOrNull?.id : selectedId;
     try {
       _save();
@@ -795,6 +804,7 @@ class VetRepository {
   ];
 
   static final Map<String, List<Vacina>> _vaccines = {};
+  static final Set<String> _vaccinationDemoDismissedPetIds = {};
   static int _vaccineCounter = 0;
 
   static List<Vacina> realVaccines(String petId) =>
@@ -844,15 +854,24 @@ class VetRepository {
 
   static void removeVaccine(String petId, String vaccineId) {
     _ensurePersistenceWritable();
-    _vaccines[petId]?.removeWhere((v) => v.id == vaccineId);
+    final vaccines = _vaccines[petId];
+    final previousLength = vaccines?.length ?? 0;
+    vaccines?.removeWhere((v) => v.id == vaccineId);
+    if (vaccines != null &&
+        vaccines.isEmpty &&
+        vaccines.length < previousLength) {
+      _vaccinationDemoDismissedPetIds.add(petId);
+    }
     _save();
   }
 
-  static List<Vacina> vacinas(String petId) {
-    if (petById(petId) == null) return [];
-    final real = realVaccines(petId);
-    return real.isNotEmpty ? real : _demoVaccines();
-  }
+  static bool usesDemoVaccines(String petId) =>
+      petById(petId) != null &&
+      realVaccines(petId).isEmpty &&
+      !_vaccinationDemoDismissedPetIds.contains(petId);
+
+  static List<Vacina> vacinas(String petId) =>
+      usesDemoVaccines(petId) ? _demoVaccines() : realVaccines(petId);
 
   static List<Vacina> _demoVaccines() => [
     Vacina(

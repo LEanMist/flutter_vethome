@@ -36,6 +36,21 @@ bool isValidCpf(String value) {
   return checkDigit(9) == digits[9] && checkDigit(10) == digits[10];
 }
 
+bool hasCompleteTutorRegistrationData(Map<String, String> values) {
+  final name = values['client.Nome Completo']?.trim() ?? '';
+  final birthDate = values['client.Data de Nascimento'] ?? '';
+  final cpf = values['client.CPF'] ?? '';
+  final phone = values['client.Telefone/Celular'] ?? '';
+  final email = values['client.E-mail']?.trim() ?? '';
+  final phoneDigits = phone.replaceAll(RegExp(r'\D'), '');
+
+  return name.isNotEmpty &&
+      parseBirthDate(birthDate) != null &&
+      isValidCpf(cpf) &&
+      (phoneDigits.length == 10 || phoneDigits.length == 11) &&
+      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+}
+
 class DigitsMask extends TextInputFormatter {
   const DigitsMask(this.pattern);
   final String pattern;

@@ -189,14 +189,27 @@ void main() {
         1,
       );
       VetRepository.removeVaccine(pet.id, real.id!);
+      await VetRepository.flush();
+      final savedAfterDeletion = jsonDecode(
+        (await SharedPreferences.getInstance()).getString(
+          LocalStorage.stateKey,
+        )!,
+      );
+      expect(savedAfterDeletion['vaccinationDemoDismissedPetIds'], [pet.id]);
       await VetRepository.initialize();
       expect(VetRepository.realVaccines(pet.id), isEmpty);
-      expect(VetRepository.vacinas(pet.id).length, 3);
+      expect(VetRepository.vacinas(pet.id), isEmpty);
+      expect(VetRepository.usesDemoVaccines(pet.id), isFalse);
       VetRepository.saveVaccine(pet.id, vaccine('Outra dose'));
       VetRepository.removePet(VetRepository.petById(pet.id)!);
       await VetRepository.initialize();
       expect(VetRepository.petById(pet.id), isNull);
       expect(VetRepository.realVaccines(pet.id), isEmpty);
+      expect(await VetRepository.clearLocalData(), isTrue);
+      expect(
+        VetRepository.usesDemoVaccines(VetRepository.pets.first.id),
+        isTrue,
+      );
     },
   );
   test(
@@ -288,6 +301,8 @@ void main() {
         throwsFormatException,
       );
       expect(VetRepository.realVaccines(id), isEmpty);
+      expect(vacinasEmDia(const []), isFalse);
+      expect(contagemVacinas(const []), 'Nenhuma vacina cadastrada');
       expect(vaccine('Sem dose').status, VacinaStatus.semPrevisao);
       expect(
         contagemVacinas([vaccine('Sem dose')]),
@@ -381,10 +396,12 @@ void main() {
           },
         ),
       );
-      final addPetAction = find.descendant(
-        of: find.byKey(const ValueKey('pets-add-target')),
-        matching: find.byType(InkWell),
-      ).first;
+      final addPetAction = find
+          .descendant(
+            of: find.byKey(const ValueKey('pets-add-target')),
+            matching: find.byType(InkWell),
+          )
+          .first;
       await t.tap(addPetAction);
       await t.pumpAndSettle();
       await fill(t, 'Nome do Pet', 'Novo do app');
@@ -482,7 +499,14 @@ void main() {
       await t.pumpAndSettle();
       await t.pumpAndSettle();
       expect(find.text('Dose editada'), findsNothing);
-      expect(find.text('Dados demonstrativos'), findsOneWidget);
+      expect(find.text('Dados demonstrativos'), findsNothing);
+      expect(find.text('Nenhuma vacina cadastrada'), findsOneWidget);
+      await t.pumpWidget(
+        MaterialApp(home: SaudePage(pet: VetRepository.pets.first)),
+      );
+      await t.pumpAndSettle();
+      expect(find.text('Nenhuma cadastrada'), findsOneWidget);
+      expect(find.textContaining('0/3 em dia'), findsNothing);
     },
   );
   for (final size in [const Size(390, 844), const Size(320, 640)]) {

@@ -401,6 +401,7 @@ void main() {
         'pets',
         'appointments',
         'vaccinations',
+        'vaccinationDemoDismissedPetIds',
         LocalStorage.storageMetadataKey,
       });
       expect(json['appointments'], isEmpty);

@@ -20,7 +20,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const MaterialApp(home: SucessoScreen()));
+      await tester.pumpWidget(
+        const MaterialApp(home: SucessoScreen(saved: true)),
+      );
       await tester.pump();
 
       final frame = tester.getRect(

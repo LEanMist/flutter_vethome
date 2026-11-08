@@ -204,7 +204,9 @@ void main() {
     expect(VetRepository.clientGender, genderBefore);
     expect(VetRepository.clientGenderCustom, genderCustomBefore);
   });
-  testWidgets('pular endereço não cria registro vazio', (tester) async {
+  testWidgets('pular endereço sem identidade do tutor permanece bloqueado', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: const EnderecoScreen(),
@@ -215,11 +217,13 @@ void main() {
     );
     await tester.ensureVisible(find.text('Pular'));
     await tester.tap(find.text('Pular'));
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    await tester.pump();
+    expect(find.text('Etapa pet'), findsNothing);
+    expect(
+      find.text('Conclua os dados obrigatórios do tutor antes de avançar.'),
+      findsOneWidget,
     );
-    await tester.pumpAndSettle();
-    expect(find.text('Etapa pet'), findsOneWidget);
+    expect(VetRepository.clientEmail, isEmpty);
     expect(VetRepository.addresses, isEmpty);
   });
   testWidgets('pular pet funciona com zero pets', (tester) async {
@@ -229,6 +233,8 @@ void main() {
       }
       await VetRepository.flush();
     });
+    VetRepository.clientName = 'Tutor Teste';
+    VetRepository.clientEmail = 'tutor@example.test';
     await tester.pumpWidget(
       MaterialApp(
         home: const CadastroPetScreen(),
@@ -577,7 +583,7 @@ void main() {
       });
       await tester.pumpWidget(
         MaterialApp(
-          home: const SucessoScreen(),
+          home: const SucessoScreen(saved: true),
           routes: {'/home': (_) => const HomePage()},
         ),
       );

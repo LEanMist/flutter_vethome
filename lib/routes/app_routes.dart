@@ -70,7 +70,9 @@ class AppRoutes {
         EnderecoScreen(initialData: _formDataFromRoute(context)),
     '/cadastroPet': (context) =>
         CadastroPetScreen(initialData: _formDataFromRoute(context)),
-    '/sucesso': (_) => const SucessoScreen(),
+    '/sucesso': (context) => SucessoScreen(
+      saved: ModalRoute.of(context)?.settings.arguments == true,
+    ),
     '/pets': (_) => const PetsPage(),
     '/pet': (context) => _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
     '/editPet': (context) =>

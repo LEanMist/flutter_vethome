@@ -128,12 +128,14 @@ class LocalState {
     required this.pets,
     required this.appointments,
     this.vaccinations = const {},
+    this.vaccinationDemoDismissedPetIds = const {},
   });
 
   final ClientData client;
   final List<PetModel> pets;
   final Map<String, List<Agendamento>> appointments;
   final Map<String, List<Vacina>> vaccinations;
+  final Set<String> vaccinationDemoDismissedPetIds;
 
   Map<String, dynamic> toJson() => {
     'schemaVersion': 1,
@@ -147,6 +149,8 @@ class LocalState {
       for (final entry in vaccinations.entries)
         for (final vaccine in entry.value) vaccine.toJson(petId: entry.key),
     ],
+    'vaccinationDemoDismissedPetIds': vaccinationDemoDismissedPetIds.toList()
+      ..sort(),
   };
 
   /// Serializa e confirma que [LocalState.fromJson] aceita o resultado.
@@ -207,11 +211,27 @@ class LocalState {
       }
       vaccinations.putIfAbsent(petId, () => []).add(vaccine);
     }
+    final rawDismissedPetIds =
+        json['vaccinationDemoDismissedPetIds'] ?? const [];
+    if (rawDismissedPetIds is! List ||
+        rawDismissedPetIds.any((value) => value is! String)) {
+      throw const FormatException(
+        'Lista de carteiras de vacinação vazias inválida',
+      );
+    }
+    final dismissedPetIds = rawDismissedPetIds.cast<String>().toSet();
+    if (dismissedPetIds.length != rawDismissedPetIds.length ||
+        dismissedPetIds.any((petId) => !ids.contains(petId))) {
+      throw const FormatException(
+        'Carteira de vacinação vazia sem pet correspondente',
+      );
+    }
     return LocalState(
       client: ClientData.fromJson(json['client'] as Map<String, dynamic>),
       pets: pets,
       appointments: appointments,
       vaccinations: vaccinations,
+      vaccinationDemoDismissedPetIds: dismissedPetIds,
     );
   }
 

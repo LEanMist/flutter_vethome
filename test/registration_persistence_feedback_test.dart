@@ -32,10 +32,7 @@ void main() {
     await VetRepository.initialize(storage: storage);
   });
 
-  Future<void> skip(
-    WidgetTester tester, {
-    String label = 'Pular',
-  }) async {
+  Future<void> skip(WidgetTester tester, {String label = 'Pular'}) async {
     final button = find.widgetWithText(TextButton, label);
     await tester.ensureVisible(button);
     await tester.tap(button);
@@ -49,6 +46,9 @@ void main() {
         home: const EnderecoScreen(
           initialData: {
             'client.Nome Completo': 'Tutor Teste',
+            'client.Data de Nascimento': '05/02/1995',
+            'client.CPF': '52998224725',
+            'client.Telefone/Celular': '11999999999',
             'client.E-mail': 'tutor@example.test',
           },
         ),
@@ -58,7 +58,12 @@ void main() {
                 ModalRoute.of(context)!.settings.arguments!
                     as Map<String, String>,
           ),
-          '/sucesso': (_) => const Scaffold(body: Text('Cadastro concluído')),
+          '/sucesso': (context) => Scaffold(
+            body: Text(
+              'Cadastro concluído: '
+              '${ModalRoute.of(context)!.settings.arguments}',
+            ),
+          ),
         },
       ),
     );
@@ -73,7 +78,7 @@ void main() {
       final petCount = VetRepository.pets.length;
       await openRegistration(tester);
       await skip(tester);
-      expect(find.text('Cadastro concluído'), findsOneWidget);
+      expect(find.text('Cadastro concluído: true'), findsOneWidget);
       expect(VetRepository.clientName, 'Tutor Teste');
       expect(VetRepository.pets, hasLength(petCount));
       expect(storage.saveCalls, 1);
@@ -84,7 +89,7 @@ void main() {
       await initialized;
       await openRegistration(tester);
       await skip(tester);
-      expect(find.text('Cadastro concluído'), findsNothing);
+      expect(find.textContaining('Cadastro concluído:'), findsNothing);
       expect(storage.saveCalls, 2);
       final button = find.widgetWithText(TextButton, 'Pular');
       expect(tester.widget<TextButton>(button).onPressed, isNull);
@@ -96,7 +101,7 @@ void main() {
         expect(await VetRepository.flush(), isFalse);
       });
       await tester.pumpAndSettle();
-      expect(find.text('Cadastro concluído'), findsOneWidget);
+      expect(find.text('Cadastro concluído: false'), findsOneWidget);
       expect(VetRepository.clientName, 'Tutor Teste');
       expect(
         find.text(
@@ -106,5 +111,4 @@ void main() {
       );
     },
   );
-
 }

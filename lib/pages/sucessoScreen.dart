@@ -8,7 +8,8 @@ import '../data/vet_repository.dart';
 import '../theme.dart';
 
 class SucessoScreen extends StatefulWidget {
-  const SucessoScreen({super.key});
+  const SucessoScreen({super.key, this.saved = false});
+  final bool saved;
   @override
   State<SucessoScreen> createState() => _SucessoScreenState();
 }
@@ -26,12 +27,14 @@ class _SucessoScreenState extends State<SucessoScreen>
     _controller.forward().then((_) async {
       if (!mounted) return;
       setState(() => _arrived = true);
+      if (MediaQuery.of(context).accessibleNavigation) return;
       await Future<void>.delayed(const Duration(milliseconds: 1400));
-      if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
-      }
+      if (mounted) _goHome();
     });
   }
+
+  void _goHome() =>
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
 
   @override
   void dispose() {
@@ -129,12 +132,16 @@ class _SucessoScreenState extends State<SucessoScreen>
                     child: Semantics(
                       key: const ValueKey('registration-success-announcement'),
                       label: _arrived
-                          ? 'Cadastro demonstrativo concluído. Os dados foram salvos neste dispositivo; nenhuma conta on-line foi criada.'
+                          ? widget.saved
+                                ? 'Cadastro demonstrativo concluído. Os dados foram salvos neste dispositivo; nenhuma conta on-line foi criada.'
+                                : 'Cadastro demonstrativo concluído nesta sessão. Os dados não foram salvos neste dispositivo; nenhuma conta on-line foi criada.'
                           : null,
                       liveRegion: _arrived,
                       child: ExcludeSemantics(
                         child: Text(
-                          'Usuário\nCadastrado!',
+                          widget.saved
+                              ? 'Usuário\nCadastrado!'
+                              : 'Cadastro\nconcluído!',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: VH.headingFontFamily,
@@ -148,11 +155,17 @@ class _SucessoScreenState extends State<SucessoScreen>
                   ),
                 ),
                 Positioned(
-                  top: 735 * scale,
+                  top:
+                      (MediaQuery.of(context).accessibleNavigation
+                          ? 782
+                          : 735) *
+                      scale,
                   width: 326 * scale,
-                  child: const ExcludeSemantics(
+                  child: ExcludeSemantics(
                     child: Text(
-                      'Perfil salvo neste dispositivo. Esta demonstração não cria contas on-line.',
+                      widget.saved
+                          ? 'Perfil salvo neste dispositivo. Esta demonstração não cria contas on-line.'
+                          : 'Dados disponíveis somente nesta sessão. Não foi possível salvar no dispositivo.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: VH.bodyFontFamily,
@@ -163,6 +176,29 @@ class _SucessoScreenState extends State<SucessoScreen>
                     ),
                   ),
                 ),
+                if (_arrived && MediaQuery.of(context).accessibleNavigation)
+                  Positioned(
+                    top: 721 * scale,
+                    child: SizedBox(
+                      width: 181 * scale,
+                      height: 48 * scale,
+                      child: ElevatedButton(
+                        key: const ValueKey('registration-success-continue'),
+                        onPressed: _goHome,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VH.primary,
+                          foregroundColor: Colors.white,
+                          shape: const StadiumBorder(),
+                          textStyle: TextStyle(
+                            fontFamily: VH.headingFontFamily,
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        child: const Text('Ir para o início'),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

@@ -146,7 +146,7 @@ void main() {
     VetRepository.updateClient(name: 'Cliente Teste');
     await tester.pumpWidget(
       MaterialApp(
-        home: const SucessoScreen(),
+        home: const SucessoScreen(saved: true),
         routes: {'/home': (_) => const HomePage()},
       ),
     );

@@ -92,6 +92,8 @@ void main() {
     tester,
   ) async {
     useLargeViewport(tester);
+    VetRepository.clientName = 'Tutor Teste';
+    VetRepository.clientEmail = 'tutor@example.test';
     late Map<String, String> received;
     await tester.pumpWidget(
       MaterialApp(

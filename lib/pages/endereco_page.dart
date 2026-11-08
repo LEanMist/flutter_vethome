@@ -24,6 +24,23 @@ class EnderecoScreen extends StatelessWidget {
       await showLocalProfileConflictDialog(context);
       return;
     }
+    final hasSavedTutor =
+        VetRepository.clientName.trim().isNotEmpty &&
+        RegExp(
+          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+        ).hasMatch(VetRepository.clientEmail.trim());
+    if (!hasSavedTutor && !hasCompleteTutorRegistrationData(data)) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Conclua os dados obrigatórios do tutor antes de avançar.',
+            ),
+          ),
+        );
+      return;
+    }
     VetRepository.registerClient(data);
     final saved = await VetRepository.flush();
     if (!context.mounted) return;
@@ -38,16 +55,14 @@ class EnderecoScreen extends StatelessWidget {
           ),
         );
     }
-    Navigator.pushNamed(
-      context,
-      '/cadastroPet',
-      arguments: saved
-          ? {
-              for (final entry in data.entries)
-                if (!entry.key.startsWith('client.')) entry.key: entry.value,
-            }
-          : data,
-    );
+    final nextData = <String, String>{
+      if (saved)
+        for (final entry in data.entries)
+          if (!entry.key.startsWith('client.')) entry.key: entry.value,
+      if (!saved) ...data,
+      '_registrationSaved': saved.toString(),
+    };
+    Navigator.pushNamed(context, '/cadastroPet', arguments: nextData);
   }
 
   @override

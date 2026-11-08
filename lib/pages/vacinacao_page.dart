@@ -99,7 +99,7 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
   Widget build(BuildContext context) {
     final pet = VetRepository.petById(widget.pet.id) ?? widget.pet;
     final vaccines = VetRepository.vacinas(pet.id);
-    final demo = VetRepository.realVaccines(pet.id).isEmpty;
+    final demo = VetRepository.usesDemoVaccines(pet.id);
     return VetPageScaffold(
       title: 'Carteira de vacinação',
       titleSize: 23,

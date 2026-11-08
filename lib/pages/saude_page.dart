@@ -104,8 +104,9 @@ class SaudePage extends StatelessWidget {
           child: _MiniStatus(
             icon: upToDate ? Icons.check_circle : Icons.warning_amber,
             title: 'Vacinação',
-            value:
-                '${vaccines.where((v) => v.status == VacinaStatus.emDia).length}/${vaccines.length} em dia',
+            value: vaccines.isEmpty
+                ? 'Nenhuma cadastrada'
+                : '${vaccines.where((v) => v.status == VacinaStatus.emDia).length}/${vaccines.length} em dia',
             color: upToDate ? VetTones.success : VetTones.warning,
           ),
         ),
