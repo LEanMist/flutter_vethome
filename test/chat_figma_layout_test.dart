@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
+import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/chat_page.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/routes/app_routes.dart';
@@ -518,6 +519,60 @@ void main() {
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller?.text,
       '',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Chat rola para a mensagem recém-enviada em conversa longa', (
+    tester,
+  ) async {
+    final previous = List.of(VetRepository.chatMessages);
+    addTearDown(() {
+      VetRepository.chatMessages
+        ..clear()
+        ..addAll(previous);
+    });
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    VetRepository.chatMessages
+      ..clear()
+      ..addAll(
+        List.generate(
+          28,
+          (index) => ChatMessage(
+            fromClient: index.isOdd,
+            text: 'Mensagem anterior $index com conteúdo para ocupar espaço.',
+          ),
+        ),
+      );
+
+    await tester.pumpWidget(const MaterialApp(home: ChatScreen()));
+    await tester.pumpAndSettle();
+
+    final list = find.descendant(
+      of: find.byKey(const ValueKey('chat-conversation-card')),
+      matching: find.byType(ListView),
+    );
+    expect(list, findsOneWidget);
+    final scrollable = find.descendant(
+      of: list,
+      matching: find.byType(Scrollable),
+    );
+    expect(tester.state<ScrollableState>(scrollable).position.pixels, 0);
+
+    const sentMessage = 'Minha nova mensagem';
+    await tester.enterText(find.byType(TextField), sentMessage);
+    await tester.tap(find.byTooltip('Enviar mensagem'));
+    await tester.pumpAndSettle();
+
+    final position = tester.state<ScrollableState>(scrollable).position;
+    expect(position.pixels, closeTo(position.maxScrollExtent, 0.1));
+    expect(find.text(sentMessage), findsOneWidget);
+    expect(
+      tester.getRect(find.text(sentMessage)).bottom,
+      lessThanOrEqualTo(tester.getRect(list).bottom),
     );
     expect(tester.takeException(), isNull);
   });

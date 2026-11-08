@@ -228,10 +228,12 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final ctrl = TextEditingController();
+  final _messagesScrollController = ScrollController();
 
   @override
   void dispose() {
     ctrl.dispose();
+    _messagesScrollController.dispose();
     super.dispose();
   }
 
@@ -240,6 +242,26 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty) return;
     setState(() => VetRepository.sendChatMessage(text));
     ctrl.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollUntilAtEnd();
+    });
+  }
+
+  Future<void> _scrollUntilAtEnd() async {
+    for (var attempt = 0; attempt < 5; attempt++) {
+      if (!mounted || !_messagesScrollController.hasClients) return;
+      final position = _messagesScrollController.position;
+      await _messagesScrollController.animateTo(
+        position.maxScrollExtent,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+      if (!mounted || !_messagesScrollController.hasClients) return;
+      final updatedPosition = _messagesScrollController.position;
+      if (updatedPosition.pixels >= updatedPosition.maxScrollExtent - 1) {
+        return;
+      }
+    }
   }
 
   @override
@@ -329,6 +351,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: ListView(
+                controller: _messagesScrollController,
                 padding: const EdgeInsets.only(top: 25),
                 children: [
                   for (final (index, message)
