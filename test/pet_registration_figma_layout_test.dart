@@ -157,6 +157,74 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Continuar foca o primeiro campo inválido do cadastro', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: const CadastroPetScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Continuar'));
+    await tester.pumpAndSettle();
+
+    final species = find.byWidgetPredicate(
+      (widget) => widget is VHField && widget.label == 'Tipo de Animal',
+    );
+    final speciesInput = find.descendant(
+      of: species,
+      matching: find.byType(EditableText),
+    );
+    expect(
+      tester.widget<EditableText>(speciesInput).focusNode.hasFocus,
+      isTrue,
+    );
+    expect(find.text('Obrigatório'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('o rótulo Figma identifica semanticamente o campo', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: VetTheme.light(VH.primary),
+          home: const CadastroPetScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final species = find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Tipo de Animal',
+      );
+      final speciesInput = find.descendant(
+        of: species,
+        matching: find.byType(EditableText),
+      );
+      final data = tester.getSemantics(speciesInput).getSemanticsData();
+
+      expect(data.label, contains('Tipo de Animal'));
+      expect(data.flagsCollection.isTextField, isTrue);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
   testWidgets('cadastro mostra rótulo e ícones conforme Figma e espécie', (
     tester,
   ) async {

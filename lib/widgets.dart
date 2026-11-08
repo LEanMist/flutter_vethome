@@ -36,6 +36,7 @@ class VHField extends StatefulWidget {
     this.value,
     this.password = false,
     this.controller,
+    this.focusNode,
     this.validator,
     this.keyboardType,
     this.choices,
@@ -67,6 +68,7 @@ class VHField extends StatefulWidget {
   final String? value;
   final bool password;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
   final List<String>? choices;
@@ -82,12 +84,30 @@ class VHField extends StatefulWidget {
 
 class _VHFieldState extends State<VHField> {
   late final _owned = TextEditingController(text: widget.value ?? '');
-  final _focus = FocusNode();
+  late FocusNode _focus;
+  bool _ownsFocus = false;
   final _link = LayerLink();
   OverlayEntry? _options;
   bool _openAbove = false;
   static _VHFieldState? _opened;
   bool get isOpen => _options != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus = widget.focusNode ?? FocusNode();
+    _ownsFocus = widget.focusNode == null;
+  }
+
+  @override
+  void didUpdateWidget(covariant VHField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusNode == widget.focusNode) return;
+    if (_ownsFocus) _focus.dispose();
+    _focus = widget.focusNode ?? FocusNode();
+    _ownsFocus = widget.focusNode == null;
+  }
+
   void _closeChoices({bool rebuild = true}) {
     _options?.remove();
     _options?.dispose();
@@ -190,7 +210,7 @@ class _VHFieldState extends State<VHField> {
   void dispose() {
     _closeChoices(rebuild: false);
     _owned.dispose();
-    _focus.dispose();
+    if (_ownsFocus) _focus.dispose();
     super.dispose();
   }
 
@@ -426,141 +446,149 @@ class _VHFieldState extends State<VHField> {
     ),
   );
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      if (!widget.compact || widget.labelAbove)
-        Padding(
-          padding: EdgeInsets.only(
-            left:
-                widget.labelHorizontalPadding ??
-                (widget.compact
-                    ? 12
-                    : widget.figmaForm
-                    ? 14
-                    : 58),
-            bottom: widget.labelBottomPadding ?? 5,
-          ),
-          child: widget.labelFitSingleLine
-              ? SizedBox(
-                  height: 20,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.topLeft,
-                    child: Text(
-                      widget.label,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: VH.figmaFieldLabelStyle,
-                    ),
-                  ),
-                )
-              : Text(
-                  widget.label,
-                  style: widget.figmaForm
-                      ? VH.figmaFieldLabelStyle
-                      : const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: VH.foreground,
-                        ),
-                ),
-        ),
-      TapRegion(
-        groupId: this,
-        onTapOutside: (_) => _closeChoices(),
-        child: CompositedTransformTarget(
-          link: _link,
-          child: DecoratedBox(
-            decoration: widget.figmaForm
-                ? inset_shadow.BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        VH.secondary.withValues(alpha: .25),
-                        VH.background,
-                      ],
-                    ),
-                    borderRadius: fieldRadius,
-                    boxShadow: const [
-                      inset_shadow.BoxShadow(
-                        color: VH.shadowSubtle,
-                        offset: Offset(2, 2),
-                        blurRadius: 2,
-                        inset: true,
-                      ),
-                    ],
-                  )
-                : widget.compact
-                ? inset_shadow.BoxDecoration(
-                    color: VH.secondary.withValues(alpha: .25),
-                    borderRadius: fieldRadius,
-                    boxShadow: const [
-                      inset_shadow.BoxShadow(
-                        color: VH.shadowSubtle,
-                        offset: Offset(2, 2),
-                        blurRadius: 2,
-                        inset: true,
-                      ),
-                    ],
-                  )
-                : BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        VH.secondary.withValues(alpha: .25),
-                        VH.background,
-                      ],
-                    ),
-                    borderRadius: fieldRadius,
-                  ),
-            child: widget.fitSingleLine
-                ? LayoutBuilder(
-                    builder: (context, constraints) =>
-                        input(controller, _focus, width: constraints.maxWidth),
-                  )
-                : widget.suggestions.isEmpty
-                ? input(controller, _focus)
-                : RawAutocomplete<String>(
-                    textEditingController: controller,
-                    focusNode: _focus,
-                    optionsBuilder: (value) => value.text.isEmpty
-                        ? const Iterable<String>.empty()
-                        : widget.suggestions.where(
-                            (s) => normalizedText(
-                              s,
-                            ).contains(normalizedText(value.text)),
-                          ),
-                    onSelected: (value) => widget.onChanged?.call(value),
-                    fieldViewBuilder: (context, c, f, submit) => input(c, f),
-                    optionsViewBuilder: (context, choose, options) => Align(
+  Widget build(BuildContext context) {
+    final fieldContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!widget.compact || widget.labelAbove)
+          Padding(
+            padding: EdgeInsets.only(
+              left:
+                  widget.labelHorizontalPadding ??
+                  (widget.compact
+                      ? 12
+                      : widget.figmaForm
+                      ? 14
+                      : 58),
+              bottom: widget.labelBottomPadding ?? 5,
+            ),
+            child: widget.labelFitSingleLine
+                ? SizedBox(
+                    height: 20,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
                       alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 3,
-                        color: VH.background,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: 280,
-                            maxHeight: 180,
+                      child: Text(
+                        widget.label,
+                        maxLines: 1,
+                        softWrap: false,
+                        style: VH.figmaFieldLabelStyle,
+                      ),
+                    ),
+                  )
+                : Text(
+                    widget.label,
+                    style: widget.figmaForm
+                        ? VH.figmaFieldLabelStyle
+                        : const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: VH.foreground,
                           ),
-                          child: ListView(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            children: [
-                              for (final option in options)
-                                ListTile(
-                                  title: Text(option),
-                                  onTap: () => choose(option),
-                                ),
-                            ],
+                  ),
+          ),
+        TapRegion(
+          groupId: this,
+          onTapOutside: (_) => _closeChoices(),
+          child: CompositedTransformTarget(
+            link: _link,
+            child: DecoratedBox(
+              decoration: widget.figmaForm
+                  ? inset_shadow.BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          VH.secondary.withValues(alpha: .25),
+                          VH.background,
+                        ],
+                      ),
+                      borderRadius: fieldRadius,
+                      boxShadow: const [
+                        inset_shadow.BoxShadow(
+                          color: VH.shadowSubtle,
+                          offset: Offset(2, 2),
+                          blurRadius: 2,
+                          inset: true,
+                        ),
+                      ],
+                    )
+                  : widget.compact
+                  ? inset_shadow.BoxDecoration(
+                      color: VH.secondary.withValues(alpha: .25),
+                      borderRadius: fieldRadius,
+                      boxShadow: const [
+                        inset_shadow.BoxShadow(
+                          color: VH.shadowSubtle,
+                          offset: Offset(2, 2),
+                          blurRadius: 2,
+                          inset: true,
+                        ),
+                      ],
+                    )
+                  : BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          VH.secondary.withValues(alpha: .25),
+                          VH.background,
+                        ],
+                      ),
+                      borderRadius: fieldRadius,
+                    ),
+              child: widget.fitSingleLine
+                  ? LayoutBuilder(
+                      builder: (context, constraints) => input(
+                        controller,
+                        _focus,
+                        width: constraints.maxWidth,
+                      ),
+                    )
+                  : widget.suggestions.isEmpty
+                  ? input(controller, _focus)
+                  : RawAutocomplete<String>(
+                      textEditingController: controller,
+                      focusNode: _focus,
+                      optionsBuilder: (value) => value.text.isEmpty
+                          ? const Iterable<String>.empty()
+                          : widget.suggestions.where(
+                              (s) => normalizedText(
+                                s,
+                              ).contains(normalizedText(value.text)),
+                            ),
+                      onSelected: (value) => widget.onChanged?.call(value),
+                      fieldViewBuilder: (context, c, f, submit) => input(c, f),
+                      optionsViewBuilder: (context, choose, options) => Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          elevation: 3,
+                          color: VH.background,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: 280,
+                              maxHeight: 180,
+                            ),
+                            child: ListView(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              children: [
+                                for (final option in options)
+                                  ListTile(
+                                    title: Text(option),
+                                    onTap: () => choose(option),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+            ),
           ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+    return widget.labelAbove
+        ? MergeSemantics(child: fieldContent)
+        : fieldContent;
+  }
 }
 
 class PillButton extends StatelessWidget {

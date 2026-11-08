@@ -53,6 +53,12 @@ class PetForm extends StatefulWidget {
 
 class _PetFormState extends State<PetForm> {
   final key = GlobalKey<FormState>();
+  final _nameFocusNode = FocusNode(debugLabel: 'Nome do pet');
+  final _speciesFocusNode = FocusNode(debugLabel: 'Espécie');
+  final _sexFocusNode = FocusNode(debugLabel: 'Sexo');
+  final _weightFocusNode = FocusNode(debugLabel: 'Peso');
+  final _birthFocusNode = FocusNode(debugLabel: 'Data de nascimento');
+  final _breedFocusNode = FocusNode(debugLabel: 'Raça');
   late final name = TextEditingController(text: widget.pet?.name ?? '');
   late final species = TextEditingController(text: widget.pet?.species ?? '');
   late final sex = TextEditingController(text: widget.pet?.sex ?? '');
@@ -80,6 +86,16 @@ class _PetFormState extends State<PetForm> {
   void dispose() {
     for (final c in [name, species, sex, weight, birth, breed, neutered]) {
       c.dispose();
+    }
+    for (final focusNode in [
+      _nameFocusNode,
+      _speciesFocusNode,
+      _sexFocusNode,
+      _weightFocusNode,
+      _birthFocusNode,
+      _breedFocusNode,
+    ]) {
+      focusNode.dispose();
     }
     super.dispose();
   }
@@ -109,10 +125,78 @@ class _PetFormState extends State<PetForm> {
 
   String? requiredValue(String? v) =>
       v == null || v.trim().isEmpty ? 'Obrigatório' : null;
+
+  String? _validatePetName(String? value) {
+    final error = requiredValue(value);
+    if (error != null) return error;
+    return VetRepository.petNameExists(value!, except: widget.pet?.name)
+        ? 'Já existe um pet com esse nome'
+        : null;
+  }
+
+  String? _validateWeight(String? value) =>
+      parsePetWeight(value ?? '') == null ? 'Peso inválido (kg)' : null;
+
+  String? _validateBirth(String? value) =>
+      parseBirthDate(value ?? '') == null ? 'Data inválida' : null;
+
+  bool get _isFigmaEditModal {
+    if (widget.pet == null || !widget.modal) return false;
+    final size = MediaQuery.sizeOf(context);
+    return size.width >= 310 &&
+        size.height >= 470 &&
+        MediaQuery.textScalerOf(context).scale(14) <= 15.4;
+  }
+
+  FocusNode? _firstInvalidFocusNode() {
+    final editing = widget.pet != null;
+    final registration = widget.onSkip != null && !editing;
+    final figmaEditModal = _isFigmaEditModal;
+    final candidates = [
+      if (registration) _speciesFocusNode,
+      _nameFocusNode,
+      if (!registration && !figmaEditModal) _speciesFocusNode,
+      _sexFocusNode,
+      _weightFocusNode,
+      _birthFocusNode,
+      _breedFocusNode,
+      if (figmaEditModal && editExtrasExpanded) _speciesFocusNode,
+    ];
+
+    for (final focusNode in candidates) {
+      final String? error;
+      if (identical(focusNode, _nameFocusNode)) {
+        error = _validatePetName(name.text);
+      } else if (identical(focusNode, _speciesFocusNode)) {
+        error = requiredValue(species.text);
+      } else if (identical(focusNode, _sexFocusNode)) {
+        error = requiredValue(sex.text);
+      } else if (identical(focusNode, _weightFocusNode)) {
+        error = _validateWeight(weight.text);
+      } else if (identical(focusNode, _birthFocusNode)) {
+        error = _validateBirth(birth.text);
+      } else if (identical(focusNode, _breedFocusNode)) {
+        error = requiredValue(breed.text);
+      } else {
+        error = null;
+      }
+      if (error != null) return focusNode;
+    }
+    return null;
+  }
+
+  void _focusFirstInvalidField() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _firstInvalidFocusNode()?.requestFocus();
+    });
+  }
+
   Widget field(
     String label,
     IconData icon,
     TextEditingController c, {
+    FocusNode? focusNode,
     List<String>? choices,
     List<String> suggestions = const [],
     String? Function(String?)? validator,
@@ -155,6 +239,7 @@ class _PetFormState extends State<PetForm> {
       labelFitSingleLine: useFigmaStyle,
       fitSingleLine: figmaStyle && label == 'Raça',
       controller: c,
+      focusNode: focusNode,
       value: label == 'Castração' ? 'Não informado' : null,
       choices: choices,
       suggestions: suggestions,
@@ -171,12 +256,15 @@ class _PetFormState extends State<PetForm> {
         validationFailed = true;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) key.currentState?.validate();
+        if (!mounted) return;
+        key.currentState?.validate();
+        _firstInvalidFocusNode()?.requestFocus();
       });
       return;
     }
     if (!key.currentState!.validate()) {
       setState(() => validationFailed = true);
+      _focusFirstInvalidField();
       return;
     }
     await _runAction(() async {
@@ -354,13 +442,15 @@ class _PetFormState extends State<PetForm> {
               key: figmaRegistration
                   ? const ValueKey('pet-registration-slot')
                   : null,
-              height: registration && !small ? 480 : null,
+              height: registration && !small && !validationFailed ? 480 : null,
               child: Center(
                 child: Transform.translate(
                   offset: figmaRegistration ? const Offset(-1, 0) : Offset.zero,
                   child: SizedBox(
                     width: registration ? 290 : double.infinity,
-                    height: registration && !small ? 480 : null,
+                    height: registration && !small && !validationFailed
+                        ? 480
+                        : null,
                     child: Container(
                       key: registration
                           ? const ValueKey('pet-registration-panel')
@@ -662,22 +752,18 @@ class _PetFormState extends State<PetForm> {
           : 'Nome do Pet',
       Icons.person_outline,
       name,
+      focusNode: _nameFocusNode,
       figmaStyle: figmaEdit,
       figmaContentPaddingRight: figmaEdit ? 30 : null,
       figmaTextAlign: figmaEdit ? TextAlign.center : TextAlign.start,
       figmaLabelBottomPadding: 0,
-      validator: (v) {
-        final error = requiredValue(v);
-        if (error != null) return error;
-        return VetRepository.petNameExists(v!, except: widget.pet?.name)
-            ? 'Já existe um pet com esse nome'
-            : null;
-      },
+      validator: _validatePetName,
     );
     final speciesField = field(
       editing ? 'Espécie' : 'Tipo de Animal',
       Icons.pets_outlined,
       species,
+      focusNode: _speciesFocusNode,
       choices: const ['Cachorro', 'Gato'],
       onChanged: (_) => setState(() => breed.clear()),
     );
@@ -685,6 +771,7 @@ class _PetFormState extends State<PetForm> {
       editing && !figmaEdit ? 'Sexo' : 'Gênero/Sexo',
       Icons.wc,
       sex,
+      focusNode: _sexFocusNode,
       choices: const ['Macho', 'Fêmea'],
       figmaStyle: figmaEdit,
       figmaContentPaddingLeft: figmaEdit ? 18 : null,
@@ -694,12 +781,12 @@ class _PetFormState extends State<PetForm> {
       editing && !figmaEdit ? 'Peso (kg)' : 'Peso',
       Icons.scale_outlined,
       weight,
+      focusNode: _weightFocusNode,
       figmaStyle: figmaEdit,
       figmaLabelHorizontalPadding: 7,
       figmaContentPaddingLeft: figmaEdit ? 15 : null,
       figmaLabelBottomPadding: 0,
-      validator: (v) =>
-          parsePetWeight(v ?? '') == null ? 'Peso inválido (kg)' : null,
+      validator: _validateWeight,
     );
     final neuteredField = field(
       'Castração',
@@ -712,16 +799,17 @@ class _PetFormState extends State<PetForm> {
       editing && !figmaEdit ? 'Nascimento (DD/MM/AAAA)' : 'Data de Nascimento',
       Icons.cake_outlined,
       birth,
+      focusNode: _birthFocusNode,
       figmaStyle: figmaEdit,
       figmaContentPaddingRight: figmaEdit ? 30 : null,
       figmaTextAlign: figmaEdit ? TextAlign.center : TextAlign.start,
-      validator: (v) =>
-          parseBirthDate(v ?? '') == null ? 'Data inválida' : null,
+      validator: _validateBirth,
     );
     final breedField = field(
       'Raça',
       Icons.pets,
       breed,
+      focusNode: _breedFocusNode,
       suggestions: breedsFor(species.text),
       figmaStyle: figmaEdit,
       figmaContentPaddingLeft: figmaEdit ? 18 : null,

@@ -195,8 +195,14 @@ void main() {
         findsOneWidget,
       );
       expect(find.bySemanticsLabel('Editar pet'), findsOneWidget);
-      await tester.ensureVisible(find.text('Cancelar'));
-      await tester.tap(find.text('Cancelar'));
+      final figmaCancelTarget = find.byKey(
+        const ValueKey('pet-edit-cancel-target'),
+      );
+      final cancelTarget = figmaCancelTarget.evaluate().isNotEmpty
+          ? figmaCancelTarget
+          : find.widgetWithText(OutlinedButton, 'Cancelar');
+      await tester.ensureVisible(cancelTarget);
+      await tester.tap(cancelTarget);
       await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey('edit-pet-modal-surface')),
