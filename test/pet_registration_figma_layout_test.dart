@@ -391,34 +391,57 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: VetTheme.light(VH.primary),
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: 390,
-              height: 844,
-              child: PetForm(
-                title: 'Cadastro Pet',
-                onSaved: _noop,
-                onSkip: () async {},
-              ),
+    Widget responsiveForm() => MaterialApp(
+      theme: VetTheme.light(VH.primary),
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 390,
+            height: 844,
+            child: PetForm(
+              title: 'Cadastro Pet',
+              onSaved: _noop,
+              onSkip: () async {},
             ),
           ),
         ),
       ),
     );
-    await tester.pumpAndSettle();
 
-    for (final label in const [
+    const fieldLabels = [
       'Tipo de Animal',
       'Nome do Pet',
       'Gênero/Sexo',
       'Peso',
       'Data de Nascimento',
       'Raça',
-    ]) {
+    ];
+
+    Map<String, Rect> inputRectsRelativeToPanel() {
+      final panelRect = tester.getRect(
+        find.byKey(const ValueKey('pet-registration-panel')),
+      );
+      return {
+        for (final label in fieldLabels)
+          label: tester
+              .getRect(
+                find
+                    .descendant(
+                      of: find.byWidgetPredicate(
+                        (widget) => widget is VHField && widget.label == label,
+                      ),
+                      matching: find.byType(TextFormField),
+                    )
+                    .first,
+              )
+              .shift(Offset(-panelRect.left, -panelRect.top)),
+      };
+    }
+
+    await tester.pumpWidget(responsiveForm());
+    await tester.pumpAndSettle();
+
+    for (final label in fieldLabels) {
       final field = tester.widget<VHField>(
         find.byWidgetPredicate(
           (widget) => widget is VHField && widget.label == label,
@@ -431,6 +454,21 @@ void main() {
       tester.getSize(find.byKey(const ValueKey('pet-registration-panel'))),
       const Size(290, 480),
     );
+    final tabletWindowRects = inputRectsRelativeToPanel();
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpWidget(responsiveForm());
+    await tester.pumpAndSettle();
+    final mobileWindowRects = inputRectsRelativeToPanel();
+
+    for (final label in fieldLabels) {
+      final tabletRect = tabletWindowRects[label]!;
+      final mobileRect = mobileWindowRects[label]!;
+      expect(mobileRect.left, closeTo(tabletRect.left, .01), reason: label);
+      expect(mobileRect.top, closeTo(tabletRect.top, .01), reason: label);
+      expect(mobileRect.width, closeTo(tabletRect.width, .01), reason: label);
+      expect(mobileRect.height, closeTo(tabletRect.height, .01), reason: label);
+    }
     expect(tester.takeException(), isNull);
   });
 
