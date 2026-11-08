@@ -1145,9 +1145,18 @@ class ConvenioScreen extends StatelessWidget {
       '/nova-consulta',
       arguments: {'petId': petId, 'service': service, 'plan': plan},
     );
-    final radius = BorderRadius.horizontal(
-      right: Radius.circular(plan == 'DogLife' ? 25 : 29.5),
-    );
+    final radius = switch (plan) {
+      'PetLove' => const BorderRadius.only(
+        topRight: Radius.circular(800),
+        bottomRight: Radius.circular(400),
+      ),
+      'Particular' => const BorderRadius.only(
+        topRight: Radius.circular(400),
+        bottomRight: Radius.circular(800),
+      ),
+      'DogLife' => const BorderRadius.horizontal(right: Radius.circular(25)),
+      _ => const BorderRadius.horizontal(right: Radius.circular(29.5)),
+    };
     final (begin, end) = switch (plan) {
       'PetLove' => (const Alignment(-1, -.995), const Alignment(1, .995)),
       'Particular' => (const Alignment(-1, .995), const Alignment(1, -.995)),

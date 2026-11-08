@@ -220,6 +220,57 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('MESSAGE_PAGE atualiza a prévia ao voltar da conversa', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = FakeViewPadding.zero;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+    final previousMessages = List.of(VetRepository.chatMessages);
+    addTearDown(() {
+      VetRepository.chatMessages
+        ..clear()
+        ..addAll(previousMessages);
+    });
+    VetRepository.chatMessages
+      ..clear()
+      ..add(const ChatMessage(fromClient: false, text: 'Mensagem antiga'));
+
+    final semantics = tester.ensureSemantics();
+    try {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: const ChatListScreen(),
+          routes: {'/chat/conversa': (_) => const ChatScreen()},
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Mensagem antiga'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('chat-conversation-entry')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Nova mensagem');
+      await tester.tap(find.byTooltip('Enviar mensagem'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Voltar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nova mensagem'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          'Conversa com Gabriela Falcão. Última mensagem: Nova mensagem',
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
   testWidgets('MESSAGE_PAGE_2: nome da veterinária anuncia ação de detalhes', (
     tester,
   ) async {

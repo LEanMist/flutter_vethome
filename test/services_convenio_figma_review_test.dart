@@ -195,6 +195,45 @@ void main() {
     }
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('CONVENIO_PAGE mantém os raios distintos do Figma', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
+    await tester.pumpAndSettle();
+
+    BoxDecoration decorationFor(String label) {
+      final ink = find.ancestor(
+        of: find.text(label),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Ink && widget.decoration is BoxDecoration,
+        ),
+      );
+      expect(ink, findsOneWidget);
+      return tester.widget<Ink>(ink).decoration! as BoxDecoration;
+    }
+
+    expect(
+      decorationFor('PetLove').borderRadius,
+      const BorderRadius.only(
+        topRight: Radius.circular(800),
+        bottomRight: Radius.circular(400),
+      ),
+    );
+    expect(
+      decorationFor('Particular').borderRadius,
+      const BorderRadius.only(
+        topRight: Radius.circular(400),
+        bottomRight: Radius.circular(800),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Convênio preserva plano, serviço e pet ao continuar', (
     tester,
   ) async {

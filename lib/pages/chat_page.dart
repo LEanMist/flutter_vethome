@@ -10,8 +10,18 @@ const String _chatLocalityNotice =
     'nesta sessão e não são enviadas à veterinária.';
 const String _chatVeterinarianName = 'Gabriela Falcão';
 
-class ChatListScreen extends StatelessWidget {
+class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
+
+  @override
+  State<ChatListScreen> createState() => _ChatListScreenState();
+}
+
+class _ChatListScreenState extends State<ChatListScreen> {
+  Future<void> _openConversation() async {
+    await Navigator.pushNamed<void>(context, '/chat/conversa');
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,10 +73,7 @@ class ChatListScreen extends StatelessWidget {
                                   child: _ChatConversationTile(
                                     name: _chatVeterinarianName,
                                     preview: preview,
-                                    onTap: () => Navigator.pushNamed(
-                                      context,
-                                      '/chat/conversa',
-                                    ),
+                                    onTap: _openConversation,
                                   ),
                                 ),
                               ),
