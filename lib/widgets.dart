@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -86,6 +88,10 @@ class _VHFieldState extends State<VHField> {
   late final _owned = TextEditingController(text: widget.value ?? '');
   late FocusNode _focus;
   bool _ownsFocus = false;
+  int _activeChoiceIndex = 0;
+  bool _keyboardChoiceInteraction = false;
+  final ScrollController _choiceScrollController = ScrollController();
+  final ValueNotifier<String?> _validationError = ValueNotifier(null);
   final _link = LayerLink();
   OverlayEntry? _options;
   bool _openAbove = false;
@@ -97,15 +103,33 @@ class _VHFieldState extends State<VHField> {
     super.initState();
     _focus = widget.focusNode ?? FocusNode();
     _ownsFocus = widget.focusNode == null;
+    _focus.addListener(_handleChoiceFocusChange);
   }
 
   @override
   void didUpdateWidget(covariant VHField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.focusNode == widget.focusNode) return;
+    _focus.removeListener(_handleChoiceFocusChange);
     if (_ownsFocus) _focus.dispose();
     _focus = widget.focusNode ?? FocusNode();
     _ownsFocus = widget.focusNode == null;
+    _focus.addListener(_handleChoiceFocusChange);
+  }
+
+  void _handleChoiceFocusChange() {
+    if (!mounted) return;
+    if (!_focus.hasFocus && isOpen) {
+      _closeChoices();
+      return;
+    }
+    setState(() {});
+  }
+
+  String? _validateChoice(String? value) {
+    final error = widget.validator?.call(value);
+    if (_validationError.value != error) _validationError.value = error;
+    return error;
   }
 
   void _closeChoices({bool rebuild = true}) {
@@ -113,17 +137,20 @@ class _VHFieldState extends State<VHField> {
     _options?.dispose();
     _options = null;
     if (_opened == this) _opened = null;
+    _keyboardChoiceInteraction = false;
     if (mounted && rebuild) setState(() {});
   }
 
-  void _toggleChoices() {
+  void _toggleChoices({bool keyboard = false}) {
     if (isOpen) {
       _closeChoices();
       return;
     }
     _opened?._closeChoices();
     _opened = this;
-    _focus.unfocus();
+    final selectedIndex = widget.choices!.indexOf(controller.text);
+    _activeChoiceIndex = selectedIndex < 0 ? 0 : selectedIndex;
+    _keyboardChoiceInteraction = keyboard;
     final box = context.findRenderObject() as RenderBox;
     final width = box.size.width;
     final top = box.localToGlobal(Offset.zero).dy;
@@ -135,11 +162,15 @@ class _VHFieldState extends State<VHField> {
         media.viewInsets.bottom -
         bottom;
     final availableAbove = top - media.padding.top;
-    final desiredHeight = (widget.choices!.length * 48.0).clamp(48.0, 192.0);
+    final desiredHeight =
+        (widget.choices!.length * 48.0 + widget.choices!.length - 1)
+            .clamp(48.0, 192.0)
+            .toDouble();
     _openAbove =
         availableBelow < desiredHeight && availableAbove > availableBelow;
     final availableHeight = (_openAbove ? availableAbove : availableBelow)
-        .clamp(0.0, desiredHeight);
+        .clamp(0.0, desiredHeight)
+        .toDouble();
     _options = OverlayEntry(
       builder: (ctx) => Positioned(
         width: width,
@@ -168,10 +199,10 @@ class _VHFieldState extends State<VHField> {
                   side: BorderSide(color: VH.secondary.withValues(alpha: .65)),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: availableHeight),
+                child: SizedBox(
+                  height: availableHeight,
                   child: ListView.separated(
-                    shrinkWrap: true,
+                    controller: _choiceScrollController,
                     padding: EdgeInsets.zero,
                     itemCount: widget.choices!.length,
                     separatorBuilder: (_, _) => Divider(
@@ -186,11 +217,12 @@ class _VHFieldState extends State<VHField> {
                         dense: true,
                         title: Text(value),
                         selected: controller.text == value,
-                        onTap: () {
-                          controller.text = value;
-                          _closeChoices();
-                          widget.onChanged?.call(value);
-                        },
+                        tileColor:
+                            _keyboardChoiceInteraction &&
+                                _activeChoiceIndex == index
+                            ? Theme.of(ctx).focusColor
+                            : null,
+                        onTap: () => _selectChoice(index),
                       );
                     },
                   ),
@@ -205,11 +237,103 @@ class _VHFieldState extends State<VHField> {
     setState(() {});
   }
 
+  void _selectChoice(int index) {
+    final choices = widget.choices;
+    if (choices == null || index < 0 || index >= choices.length) return;
+    controller.text = choices[index];
+    _validateChoice(controller.text);
+    _closeChoices();
+    _focus.requestFocus();
+    widget.onChanged?.call(controller.text);
+  }
+
+  void _moveActiveChoice(int delta) {
+    final choices = widget.choices;
+    if (choices == null || choices.isEmpty) return;
+    setState(() {
+      _activeChoiceIndex =
+          (_activeChoiceIndex + delta + choices.length) % choices.length;
+      _keyboardChoiceInteraction = true;
+    });
+    _options?.markNeedsBuild();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !isOpen || !_choiceScrollController.hasClients) return;
+      final position = _choiceScrollController.position;
+      const itemHeight = 48.0;
+      const separatorHeight = 1.0;
+      final itemTop = _activeChoiceIndex * (itemHeight + separatorHeight);
+      final itemBottom = itemTop + itemHeight;
+      var targetOffset = position.pixels;
+      if (itemTop < position.pixels) {
+        targetOffset = itemTop;
+      } else if (itemBottom > position.pixels + position.viewportDimension) {
+        targetOffset = itemBottom - position.viewportDimension;
+      }
+      targetOffset = targetOffset
+          .clamp(position.minScrollExtent, position.maxScrollExtent)
+          .toDouble();
+      if ((targetOffset - position.pixels).abs() > 0.5) {
+        _choiceScrollController.animateTo(
+          targetOffset,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  KeyEventResult _handleChoiceKeyEvent(FocusNode node, KeyEvent event) {
+    final choices = widget.choices;
+    if (choices == null || event is! KeyDownEvent || choices.isEmpty) {
+      return KeyEventResult.ignored;
+    }
+
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter ||
+        key == LogicalKeyboardKey.space) {
+      if (isOpen) {
+        _selectChoice(_activeChoiceIndex);
+      } else {
+        _toggleChoices(keyboard: true);
+      }
+      return KeyEventResult.handled;
+    }
+
+    if (key == LogicalKeyboardKey.arrowDown ||
+        key == LogicalKeyboardKey.arrowUp) {
+      final delta = key == LogicalKeyboardKey.arrowDown ? 1 : -1;
+      if (!isOpen) {
+        _toggleChoices(keyboard: true);
+        if (delta < 0) _moveActiveChoice(delta);
+      } else {
+        _moveActiveChoice(delta);
+      }
+      return KeyEventResult.handled;
+    }
+
+    if (key == LogicalKeyboardKey.escape && isOpen) {
+      _closeChoices();
+      _focus.requestFocus();
+      return KeyEventResult.handled;
+    }
+
+    if (key == LogicalKeyboardKey.tab && isOpen) {
+      _closeChoices();
+      return KeyEventResult.ignored;
+    }
+
+    return KeyEventResult.ignored;
+  }
+
   TextEditingController get controller => widget.controller ?? _owned;
   @override
   void dispose() {
+    _focus.removeListener(_handleChoiceFocusChange);
     _closeChoices(rebuild: false);
+    _validationError.dispose();
     _owned.dispose();
+    _choiceScrollController.dispose();
     if (_ownsFocus) _focus.dispose();
     super.dispose();
   }
@@ -340,6 +464,9 @@ class _VHFieldState extends State<VHField> {
   }) => TextFormField(
     controller: c,
     focusNode: focus,
+    autovalidateMode: widget.choices == null
+        ? null
+        : AutovalidateMode.onUserInteraction,
     textAlign: widget.textAlign,
     obscureText: widget.password,
     readOnly: widget.choices != null,
@@ -359,7 +486,7 @@ class _VHFieldState extends State<VHField> {
             : formatters != null
             ? TextInputType.number
             : TextInputType.text),
-    validator: widget.validator,
+    validator: widget.choices == null ? widget.validator : _validateChoice,
     style: widget.figmaForm
         ? VH.figmaFieldValueStyle.copyWith(fontSize: _fontSize(width))
         : TextStyle(fontSize: _fontSize(width), color: VH.foreground),
@@ -447,7 +574,92 @@ class _VHFieldState extends State<VHField> {
   );
   @override
   Widget build(BuildContext context) {
+    final choices = widget.choices;
+    final hasChoices = choices?.isNotEmpty ?? false;
+    final activeChoice = hasChoices
+        ? choices![_activeChoiceIndex % choices.length]
+        : '';
+    final fieldInput = Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: _handleChoiceKeyEvent,
+      child: widget.fitSingleLine
+          ? LayoutBuilder(
+              builder: (context, constraints) =>
+                  input(controller, _focus, width: constraints.maxWidth),
+            )
+          : widget.suggestions.isEmpty
+          ? input(controller, _focus)
+          : RawAutocomplete<String>(
+              textEditingController: controller,
+              focusNode: _focus,
+              optionsBuilder: (value) => value.text.isEmpty
+                  ? const Iterable<String>.empty()
+                  : widget.suggestions.where(
+                      (s) => normalizedText(
+                        s,
+                      ).contains(normalizedText(value.text)),
+                    ),
+              onSelected: (value) => widget.onChanged?.call(value),
+              fieldViewBuilder: (context, c, f, submit) => input(c, f),
+              optionsViewBuilder: (context, choose, options) => Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 3,
+                  color: VH.background,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 280,
+                      maxHeight: 180,
+                    ),
+                    child: ListView(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      children: [
+                        for (final option in options)
+                          ListTile(
+                            title: Text(option),
+                            onTap: () => choose(option),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+    );
+    final accessibleField = hasChoices
+        ? ValueListenableBuilder<String?>(
+            valueListenable: _validationError,
+            builder: (context, error, child) => Semantics(
+              label: widget.label,
+              button: true,
+              value: error == null
+                  ? controller.text.isEmpty
+                        ? 'Nenhuma opção selecionada'
+                        : controller.text
+                  : '${controller.text.isEmpty ? 'Nenhuma opção selecionada' : controller.text}. Erro: $error',
+              hint: error != null
+                  ? 'Erro: $error. Selecione uma opção para corrigir. ${isOpen ? 'Opção destacada: $activeChoice.' : ''}'
+                  : isOpen
+                  ? 'Lista aberta. Opção destacada: $activeChoice. Use as setas para navegar, Enter ou Espaço para selecionar, ou Escape para fechar.'
+                  : 'Pressione Enter ou Espaço para abrir a lista e use as setas para escolher.',
+              onTap: () => _toggleChoices(),
+              onTapHint: isOpen ? 'Fechar opções' : 'Abrir opções',
+              focusable: true,
+              focused: _focus.hasFocus,
+              expanded: isOpen,
+              liveRegion: isOpen || error != null,
+              validationResult: error == null
+                  ? ui.SemanticsValidationResult.none
+                  : ui.SemanticsValidationResult.invalid,
+              child: ExcludeSemantics(child: child!),
+            ),
+            child: fieldInput,
+          )
+        : fieldInput;
     final fieldContent = Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (!widget.compact || widget.labelAbove)
@@ -462,30 +674,33 @@ class _VHFieldState extends State<VHField> {
                       : 58),
               bottom: widget.labelBottomPadding ?? 5,
             ),
-            child: widget.labelFitSingleLine
-                ? SizedBox(
-                    height: 20,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.topLeft,
-                      child: Text(
-                        widget.label,
-                        maxLines: 1,
-                        softWrap: false,
-                        style: VH.figmaFieldLabelStyle,
+            child: ExcludeSemantics(
+              excluding: hasChoices,
+              child: widget.labelFitSingleLine
+                  ? SizedBox(
+                      height: 20,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.topLeft,
+                        child: Text(
+                          widget.label,
+                          maxLines: 1,
+                          softWrap: false,
+                          style: VH.figmaFieldLabelStyle,
+                        ),
                       ),
+                    )
+                  : Text(
+                      widget.label,
+                      style: widget.figmaForm
+                          ? VH.figmaFieldLabelStyle
+                          : const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: VH.foreground,
+                            ),
                     ),
-                  )
-                : Text(
-                    widget.label,
-                    style: widget.figmaForm
-                        ? VH.figmaFieldLabelStyle
-                        : const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            color: VH.foreground,
-                          ),
-                  ),
+            ),
           ),
         TapRegion(
           groupId: this,
@@ -533,53 +748,7 @@ class _VHFieldState extends State<VHField> {
                       ),
                       borderRadius: fieldRadius,
                     ),
-              child: widget.fitSingleLine
-                  ? LayoutBuilder(
-                      builder: (context, constraints) => input(
-                        controller,
-                        _focus,
-                        width: constraints.maxWidth,
-                      ),
-                    )
-                  : widget.suggestions.isEmpty
-                  ? input(controller, _focus)
-                  : RawAutocomplete<String>(
-                      textEditingController: controller,
-                      focusNode: _focus,
-                      optionsBuilder: (value) => value.text.isEmpty
-                          ? const Iterable<String>.empty()
-                          : widget.suggestions.where(
-                              (s) => normalizedText(
-                                s,
-                              ).contains(normalizedText(value.text)),
-                            ),
-                      onSelected: (value) => widget.onChanged?.call(value),
-                      fieldViewBuilder: (context, c, f, submit) => input(c, f),
-                      optionsViewBuilder: (context, choose, options) => Align(
-                        alignment: Alignment.topLeft,
-                        child: Material(
-                          elevation: 3,
-                          color: VH.background,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: 280,
-                              maxHeight: 180,
-                            ),
-                            child: ListView(
-                              shrinkWrap: true,
-                              padding: EdgeInsets.zero,
-                              children: [
-                                for (final option in options)
-                                  ListTile(
-                                    title: Text(option),
-                                    onTap: () => choose(option),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+              child: accessibleField,
             ),
           ),
         ),

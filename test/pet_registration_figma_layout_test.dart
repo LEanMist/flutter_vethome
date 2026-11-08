@@ -1,5 +1,8 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/models/pet_model.dart';
 import 'package:flutter_vethome/pages/cadastroPet_page.dart';
@@ -160,35 +163,70 @@ void main() {
   testWidgets('Continuar foca o primeiro campo inválido do cadastro', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    final semantics = tester.ensureSemantics();
+    try {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: VetTheme.light(VH.primary),
-        home: const CadastroPetScreen(),
-      ),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: VetTheme.light(VH.primary),
+          home: const CadastroPetScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Continuar'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Continuar'));
+      await tester.pumpAndSettle();
 
-    final species = find.byWidgetPredicate(
-      (widget) => widget is VHField && widget.label == 'Tipo de Animal',
-    );
-    final speciesInput = find.descendant(
-      of: species,
-      matching: find.byType(EditableText),
-    );
-    expect(
-      tester.widget<EditableText>(speciesInput).focusNode.hasFocus,
-      isTrue,
-    );
-    expect(find.text('Obrigatório'), findsWidgets);
-    expect(tester.takeException(), isNull);
+      final species = find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Tipo de Animal',
+      );
+      final speciesInput = find.descendant(
+        of: species,
+        matching: find.byType(EditableText),
+      );
+      expect(
+        tester.widget<EditableText>(speciesInput).focusNode.hasFocus,
+        isTrue,
+      );
+      expect(find.text('Obrigatório'), findsWidgets);
+      final selectorSemantics = tester
+          .getSemantics(find.bySemanticsLabel('Tipo de Animal'))
+          .getSemanticsData();
+      expect(selectorSemantics.value, contains('Erro: Obrigatório'));
+      expect(selectorSemantics.hint, contains('Erro: Obrigatório'));
+      expect(
+        selectorSemantics.validationResult,
+        ui.SemanticsValidationResult.invalid,
+      );
+
+      final speciesError = find.descendant(
+        of: species,
+        matching: find.text('Obrigatório'),
+      );
+      expect(speciesError, findsOneWidget);
+      await tester.tap(speciesInput);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cachorro'));
+      await tester.pumpAndSettle();
+
+      final correctedSemantics = tester
+          .getSemantics(find.bySemanticsLabel('Tipo de Animal'))
+          .getSemanticsData();
+      expect(correctedSemantics.value, 'Cachorro');
+      expect(correctedSemantics.hint, isNot(contains('Erro:')));
+      expect(
+        correctedSemantics.validationResult,
+        ui.SemanticsValidationResult.none,
+      );
+      expect(speciesError, findsNothing);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('o rótulo Figma identifica semanticamente o campo', (
@@ -209,20 +247,191 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final species = find.byWidgetPredicate(
-        (widget) => widget is VHField && widget.label == 'Tipo de Animal',
-      );
-      final speciesInput = find.descendant(
-        of: species,
-        matching: find.byType(EditableText),
-      );
-      final data = tester.getSemantics(speciesInput).getSemanticsData();
+      final selector = find.bySemanticsLabel('Tipo de Animal');
+      final data = tester.getSemantics(selector).getSemanticsData();
 
-      expect(data.label, contains('Tipo de Animal'));
-      expect(data.flagsCollection.isTextField, isTrue);
+      expect(data.label, 'Tipo de Animal');
+      expect(data.flagsCollection.isButton, isTrue);
+      expect(data.value, 'Nenhuma opção selecionada');
+      expect(data.flagsCollection.isExpanded, ui.Tristate.isFalse);
+      expect(data.hint, contains('Enter ou Espaço'));
+
+      await tester.tap(selector);
+      await tester.pumpAndSettle();
+      final expandedData = tester.getSemantics(selector).getSemanticsData();
+      expect(expandedData.flagsCollection.isExpanded, ui.Tristate.isTrue);
+      expect(expandedData.hint, contains('Lista aberta'));
     } finally {
       semantics.dispose();
     }
+  });
+
+  testWidgets('seletor de espécie abre e seleciona com o teclado', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: const CadastroPetScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final species = find.byWidgetPredicate(
+      (widget) => widget is VHField && widget.label == 'Tipo de Animal',
+    );
+    final speciesInput = find.descendant(
+      of: species,
+      matching: find.byType(EditableText),
+    );
+    tester.widget<EditableText>(speciesInput).focusNode.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cachorro'), findsOneWidget);
+    expect(find.text('Gato'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    final cachorroTile = find.ancestor(
+      of: find.text('Cachorro'),
+      matching: find.byType(ListTile),
+    );
+    final gatoTile = find.ancestor(
+      of: find.text('Gato'),
+      matching: find.byType(ListTile),
+    );
+    expect(tester.widget<ListTile>(cachorroTile).tileColor, isNull);
+    expect(tester.widget<ListTile>(gatoTile).tileColor, isNotNull);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pumpAndSettle();
+    expect(tester.widget<EditableText>(speciesInput).controller.text, 'Gato');
+    expect(find.text('Gato'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.text('Cachorro'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+    expect(find.text('Cachorro'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('opção ativa permanece visível ao navegar uma lista longa', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: 300,
+              child: VHField(
+                'Opção',
+                Icons.list,
+                controller: controller,
+                choices: List.generate(12, (index) => 'Opção $index'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final input = find.descendant(
+      of: find.byType(VHField),
+      matching: find.byType(EditableText),
+    );
+    tester.widget<EditableText>(input).focusNode.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    for (var index = 0; index < 8; index++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+    }
+
+    final activeOption = find.ancestor(
+      of: find.text('Opção 8'),
+      matching: find.byType(ListTile),
+    );
+    expect(activeOption, findsOneWidget);
+    final menuRect = tester.getRect(find.byType(ListView));
+    expect(menuRect.contains(tester.getRect(activeOption).center), isTrue);
+    expect(tester.widget<ListTile>(activeOption).tileColor, isNotNull);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(controller.text, 'Opção 8');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cadastro em coluna estreita usa a largura disponível', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(768, 1024);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 390,
+              height: 844,
+              child: PetForm(
+                title: 'Cadastro Pet',
+                onSaved: _noop,
+                onSkip: () async {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (final label in const [
+      'Tipo de Animal',
+      'Nome do Pet',
+      'Gênero/Sexo',
+      'Peso',
+      'Data de Nascimento',
+      'Raça',
+    ]) {
+      final field = tester.widget<VHField>(
+        find.byWidgetPredicate(
+          (widget) => widget is VHField && widget.label == label,
+        ),
+      );
+      expect(field.figmaForm, isTrue, reason: label);
+      expect(field.labelAbove, isTrue, reason: label);
+    }
+    expect(
+      tester.getSize(find.byKey(const ValueKey('pet-registration-panel'))),
+      const Size(290, 480),
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('cadastro mostra rótulo e ícones conforme Figma e espécie', (

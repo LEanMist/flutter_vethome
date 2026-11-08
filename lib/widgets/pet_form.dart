@@ -202,6 +202,7 @@ class _PetFormState extends State<PetForm> {
     String? Function(String?)? validator,
     ValueChanged<String>? onChanged,
     bool figmaStyle = false,
+    bool figmaRegistrationStyle = false,
     double figmaLabelBottomPadding = 1,
     double figmaLabelHorizontalPadding = 5,
     double? figmaContentPaddingLeft,
@@ -209,13 +210,7 @@ class _PetFormState extends State<PetForm> {
     TextAlign figmaTextAlign = TextAlign.start,
   }) {
     final size = MediaQuery.sizeOf(context);
-    final figmaRegistration =
-        widget.onSkip != null &&
-        widget.pet == null &&
-        size.height >= 720 &&
-        size.width < 600 &&
-        MediaQuery.textScalerOf(context).scale(14) <= 15.4;
-    final useFigmaStyle = figmaRegistration || figmaStyle;
+    final useFigmaStyle = figmaRegistrationStyle || figmaStyle;
     return VHField(
       label,
       icon,
@@ -231,7 +226,7 @@ class _PetFormState extends State<PetForm> {
                 ? figmaLabelHorizontalPadding
                 : 5
           : null,
-      labelBottomPadding: figmaRegistration
+      labelBottomPadding: figmaRegistrationStyle
           ? 0
           : figmaStyle
           ? figmaLabelBottomPadding
@@ -735,6 +730,7 @@ class _PetFormState extends State<PetForm> {
   List<Widget> _formFields(
     bool editing, {
     bool registration = false,
+    bool figmaRegistration = false,
     bool figmaEdit = false,
   }) {
     final registrationNameLabel = switch (species.text) {
@@ -754,6 +750,7 @@ class _PetFormState extends State<PetForm> {
       name,
       focusNode: _nameFocusNode,
       figmaStyle: figmaEdit,
+      figmaRegistrationStyle: figmaRegistration,
       figmaContentPaddingRight: figmaEdit ? 30 : null,
       figmaTextAlign: figmaEdit ? TextAlign.center : TextAlign.start,
       figmaLabelBottomPadding: 0,
@@ -764,6 +761,7 @@ class _PetFormState extends State<PetForm> {
       Icons.pets_outlined,
       species,
       focusNode: _speciesFocusNode,
+      figmaRegistrationStyle: figmaRegistration,
       choices: const ['Cachorro', 'Gato'],
       onChanged: (_) => setState(() => breed.clear()),
     );
@@ -774,6 +772,7 @@ class _PetFormState extends State<PetForm> {
       focusNode: _sexFocusNode,
       choices: const ['Macho', 'Fêmea'],
       figmaStyle: figmaEdit,
+      figmaRegistrationStyle: figmaRegistration,
       figmaContentPaddingLeft: figmaEdit ? 18 : null,
       figmaLabelBottomPadding: 0,
     );
@@ -783,6 +782,7 @@ class _PetFormState extends State<PetForm> {
       weight,
       focusNode: _weightFocusNode,
       figmaStyle: figmaEdit,
+      figmaRegistrationStyle: figmaRegistration,
       figmaLabelHorizontalPadding: 7,
       figmaContentPaddingLeft: figmaEdit ? 15 : null,
       figmaLabelBottomPadding: 0,
@@ -801,6 +801,7 @@ class _PetFormState extends State<PetForm> {
       birth,
       focusNode: _birthFocusNode,
       figmaStyle: figmaEdit,
+      figmaRegistrationStyle: figmaRegistration,
       figmaContentPaddingRight: figmaEdit ? 30 : null,
       figmaTextAlign: figmaEdit ? TextAlign.center : TextAlign.start,
       validator: _validateBirth,
@@ -812,6 +813,7 @@ class _PetFormState extends State<PetForm> {
       focusNode: _breedFocusNode,
       suggestions: breedsFor(species.text),
       figmaStyle: figmaEdit,
+      figmaRegistrationStyle: figmaRegistration,
       figmaContentPaddingLeft: figmaEdit ? 18 : null,
     );
     return [
@@ -831,7 +833,11 @@ class _PetFormState extends State<PetForm> {
     required bool registration,
     required bool figmaRegistration,
   }) {
-    final fields = _formFields(editing, registration: registration);
+    final fields = _formFields(
+      editing,
+      registration: registration,
+      figmaRegistration: figmaRegistration,
+    );
     final children = <Widget>[];
     for (var i = 0; i < fields.length; i++) {
       if (i == 2) {
