@@ -20,7 +20,7 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
-    expect(find.byType(SvgPicture), findsNWidgets(4));
+    expect(find.byType(SvgPicture), findsNWidgets(6));
 
     final optionFinder = find.text('Hemograma');
     expect(optionFinder, findsOneWidget);
@@ -46,6 +46,12 @@ void main() {
         });
     // SERVICES_PAGE 2791:3127-3129: marcadores de 15 x 15.
     expect(tester.getSize(find.byWidget(marker)), const Size(15, 15));
+    expect(
+      tester.getRect(find.byWidget(marker)).left,
+      closeTo(181, .02),
+      reason:
+          'SERVICES_PAGE 2791:3127: marcador alinhado à margem direita do Figma',
+    );
 
     expect(find.text('Vacinas'), findsOneWidget);
     expect(find.text('Microchipagem'), findsOneWidget);
@@ -129,6 +135,18 @@ void main() {
         find.byKey(ValueKey('services-options-$name')),
       );
       expect(options, Rect.fromLTWH(0, top, 228, 101));
+
+      final indicator = tester.getRect(
+        find.byKey(ValueKey('services-options-indicator-$name')),
+      );
+      expect(
+        indicator.left,
+        closeTo(213.7, .02),
+        reason: 'SERVICES_PAGE 2791:${name == 'Exames' ? '3126' : '3134'}',
+      );
+      expect(indicator.top, closeTo(top + 25.5, .02), reason: name);
+      expect(indicator.width, closeTo(3, .02), reason: name);
+      expect(indicator.height, closeTo(28, .02), reason: name);
     }
 
     final examsDecoration =

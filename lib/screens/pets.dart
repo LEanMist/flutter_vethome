@@ -713,74 +713,118 @@ class _ServicosScreenState extends State<ServicosScreen> {
                     ),
                     child: Material(
                       color: VH.secondary.withValues(alpha: .25),
-                      child: SizedBox(
+                      child: Stack(
                         key: ValueKey('services-options-${entry.key}'),
-                        width: 228,
-                        child: Column(
-                          children: [
-                            for (final option in entry.value)
-                              Semantics(
-                                label: option,
-                                checked: _selected.contains(option),
-                                onTap: () => _toggleService(option),
-                                child: InkWell(
-                                  excludeFromSemantics: true,
-                                  onTap: () => _toggleService(option),
-                                  overlayColor: WidgetStateProperty.resolveWith(
-                                    VH.interactionOverlay,
-                                  ),
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minHeight:
-                                          MediaQuery.sizeOf(context).width <
-                                              VH.compactBreakpoint
-                                          ? 101 / 3
-                                          : 48,
-                                    ),
-                                    child: ExcludeSemantics(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 14,
+                        children: [
+                          SizedBox(
+                            width: 228,
+                            child: Column(
+                              children: [
+                                for (final option in entry.value)
+                                  Semantics(
+                                    label: option,
+                                    checked: _selected.contains(option),
+                                    onTap: () => _toggleService(option),
+                                    child: InkWell(
+                                      excludeFromSemantics: true,
+                                      onTap: () => _toggleService(option),
+                                      overlayColor:
+                                          WidgetStateProperty.resolveWith(
+                                            VH.interactionOverlay,
+                                          ),
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          minHeight:
+                                              MediaQuery.sizeOf(context).width <
+                                                  VH.compactBreakpoint
+                                              ? 101 / 3
+                                              : 48,
                                         ),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                option,
-                                                style: const TextStyle(
-                                                  color: VH.foreground,
-                                                  fontFamily: VH.bodyFontFamily,
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
+                                        child: ExcludeSemantics(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
                                             ),
-                                            Container(
-                                              width: 15,
-                                              height: 15,
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    _selected.contains(option)
-                                                    ? VH.primary.withValues(
-                                                        alpha: .65,
-                                                      )
-                                                    : Colors.transparent,
-                                                border: Border.all(
-                                                  color: VH.primary,
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    option,
+                                                    style: const TextStyle(
+                                                      color: VH.foreground,
+                                                      fontFamily:
+                                                          VH.bodyFontFamily,
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
                                                 ),
-                                                borderRadius:
-                                                    BorderRadius.circular(3),
-                                              ),
+                                                Transform.translate(
+                                                  offset:
+                                                      MediaQuery.sizeOf(
+                                                            context,
+                                                          ).width <
+                                                          VH.desktopBreakpoint
+                                                      ? const Offset(-18, 0)
+                                                      : Offset.zero,
+                                                  child: Container(
+                                                    width: 15,
+                                                    height: 15,
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          _selected.contains(
+                                                            option,
+                                                          )
+                                                          ? VH.primary
+                                                                .withValues(
+                                                                  alpha: .65,
+                                                                )
+                                                          : Colors.transparent,
+                                                      border: Border.all(
+                                                        color: VH.primary,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            3,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                          ],
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
+                              ],
+                            ),
+                          ),
+                          if (MediaQuery.sizeOf(context).width <
+                              VH.desktopBreakpoint)
+                            Positioned(
+                              key: ValueKey(
+                                'services-options-indicator-${entry.key}',
+                              ),
+                              right: 11.3,
+                              top: 25.5,
+                              width: 3,
+                              height: 28,
+                              child: ExcludeSemantics(
+                                child: IgnorePointer(
+                                  child: RotatedBox(
+                                    quarterTurns: 1,
+                                    child: SvgPicture.asset(
+                                      'assets/imagens/figma/services-options-indicator.svg',
+                                      width: 28,
+                                      height: 3,
+                                    ),
+                                  ),
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
