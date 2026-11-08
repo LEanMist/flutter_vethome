@@ -42,80 +42,120 @@ class VetPageScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final width = MediaQuery.sizeOf(context).width;
+    final media = MediaQuery.of(context);
+    final width = media.size.width;
     final contentPadding = VH.pagePaddingFor(width) * s;
     final horizontalContentPadding =
         edgeToEdgeContentOnMobile && width < VH.desktopBreakpoint
         ? 0.0
         : contentPadding;
+    final headerTopPadding = media.padding.top > 14 * s
+        ? media.padding.top
+        : 14 * s;
+    final headerHeight =
+        (headerTopPadding +
+                48 * s +
+                22 * s +
+                (headerBottom == null ? 0 : 52 * s))
+            .clamp(125.0, double.infinity);
+    final navigationHeight = 88 * s + media.viewPadding.bottom;
+    final reservedFooterHeight = footer == null ? 0.0 : 140 * s;
+    // In short viewports, scroll the whole page so fixed chrome cannot overflow.
+    final shortViewportThreshold =
+        headerHeight + navigationHeight + reservedFooterHeight;
+
+    final header = VetHeader(
+      title: title,
+      titleSize: titleSize,
+      showBack: showBack,
+      bottom: headerBottom,
+    );
+    final pageContent = Center(
+      child: ConstrainedBox(
+        key: const ValueKey('vet-page-content'),
+        constraints: BoxConstraints(
+          maxWidth: contentMaxWidth.clamp(0, VH.desktopContentMaxWidth),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (int i = 0; i < children.length; i++) ...[
+              if (i > 0) SizedBox(height: 12 * s),
+              children[i],
+            ],
+          ],
+        ),
+      ),
+    );
+    final footerContent = footer == null
+        ? null
+        : Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16 * s, vertical: 8),
+            child: footer!,
+          );
+    final navigation = SafeArea(
+      top: false,
+      child: VetBottomNav(
+        selectedIndex: selectedIndex,
+        onSelected: (i) => vetNavigate(
+          context,
+          i,
+          selected: selectedIndex,
+          isTabRoot: isTabRoot,
+        ),
+      ),
+    );
 
     return Scaffold(
       backgroundColor: VetColors.pink,
-      body: Center(
-        child: ConstrainedBox(
-          key: const ValueKey('vet-page-shell'),
-          constraints: const BoxConstraints(maxWidth: VH.desktopShellMaxWidth),
-          child: Column(
-            children: [
-              VetHeader(
-                title: title,
-                titleSize: titleSize,
-                showBack: showBack,
-                bottom: headerBottom,
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalContentPadding,
-                    contentPadding,
-                    horizontalContentPadding,
-                    contentPadding,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      key: const ValueKey('vet-page-content'),
-                      constraints: BoxConstraints(
-                        maxWidth: contentMaxWidth.clamp(
-                          0,
-                          VH.desktopContentMaxWidth,
-                        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final useWholePageScroll =
+              constraints.maxHeight < shortViewportThreshold;
+          final shell = ConstrainedBox(
+            key: const ValueKey('vet-page-shell'),
+            constraints: const BoxConstraints(
+              maxWidth: VH.desktopShellMaxWidth,
+            ),
+            child: Column(
+              mainAxisSize: useWholePageScroll
+                  ? MainAxisSize.min
+                  : MainAxisSize.max,
+              children: [
+                header,
+                if (useWholePageScroll)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalContentPadding,
+                      contentPadding,
+                      horizontalContentPadding,
+                      contentPadding,
+                    ),
+                    child: pageContent,
+                  )
+                else
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalContentPadding,
+                        contentPadding,
+                        horizontalContentPadding,
+                        contentPadding,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (int i = 0; i < children.length; i++) ...[
-                            if (i > 0) SizedBox(height: 12 * s),
-                            children[i],
-                          ],
-                        ],
-                      ),
+                      child: pageContent,
                     ),
                   ),
-                ),
-              ),
-              if (footer != null)
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16 * s,
-                    vertical: 8,
-                  ),
-                  child: footer!,
-                ),
-              SafeArea(
-                top: false,
-                child: VetBottomNav(
-                  selectedIndex: selectedIndex,
-                  onSelected: (i) => vetNavigate(
-                    context,
-                    i,
-                    selected: selectedIndex,
-                    isTabRoot: isTabRoot,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+                ?footerContent,
+                navigation,
+              ],
+            ),
+          );
+
+          if (useWholePageScroll) {
+            return SingleChildScrollView(child: Center(child: shell));
+          }
+          return Center(child: shell);
+        },
       ),
     );
   }

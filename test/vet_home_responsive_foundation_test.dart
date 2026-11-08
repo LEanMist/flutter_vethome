@@ -75,6 +75,35 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('scaffold permite rolar quando o viewport vertical é curto', (
+    tester,
+  ) async {
+    useViewport(tester, const Size(390, 200));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: VetPageScaffold(
+          title: 'Viewport curto',
+          children: [SizedBox(height: 240, child: Text('Conteúdo'))],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.text('Conteúdo'));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.text('Conteúdo')).top, greaterThanOrEqualTo(0));
+    expect(tester.takeException(), isNull);
+
+    await tester.ensureVisible(find.byType(VetBottomNav));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(find.byType(VetBottomNav)).bottom,
+      lessThanOrEqualTo(200),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   for (final size in [
     const Size(320, 640),
     const Size(390, 844),
