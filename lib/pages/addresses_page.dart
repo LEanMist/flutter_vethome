@@ -37,6 +37,12 @@ class _AddressesPageState extends State<AddressesPage> {
     color: VetColors.brownOnRoseCard,
   );
 
+  static const _figmaAddressScrollbarTheme = ScrollbarThemeData(
+    thumbColor: WidgetStatePropertyAll<Color?>(VetColors.brown),
+    thickness: WidgetStatePropertyAll(3),
+    radius: Radius.circular(1.5),
+  );
+
   Future<void> _edit([SavedAddress? address]) async {
     final compactEditor =
         address != null && MediaQuery.sizeOf(context).width < 900;
@@ -138,38 +144,45 @@ class _AddressesPageState extends State<AddressesPage> {
                           ),
                       ],
                     );
+                    final showFigmaScrollbar =
+                        !desktop && addresses.length >= 3;
 
                     return Padding(
                       padding: EdgeInsets.only(right: desktop ? 0 : 20),
-                      child: Scrollbar(
-                        thumbVisibility: !desktop && addresses.length >= 3,
-                        child: SingleChildScrollView(
-                          key: const ValueKey('addresses-list-viewport'),
-                          padding: EdgeInsets.fromLTRB(
-                            desktop ? 24 : 30,
-                            28,
-                            desktop ? 24 : 20,
-                            16,
-                          ),
-                          child: Center(
-                            key: desktop
-                                ? const ValueKey('addresses-desktop-grid')
-                                : null,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: desktop ? 800 : double.infinity,
+                      child: ScrollbarTheme(
+                        data: showFigmaScrollbar
+                            ? _figmaAddressScrollbarTheme
+                            : Theme.of(context).scrollbarTheme,
+                        child: Scrollbar(
+                          thumbVisibility: showFigmaScrollbar,
+                          child: SingleChildScrollView(
+                            key: const ValueKey('addresses-list-viewport'),
+                            padding: EdgeInsets.fromLTRB(
+                              desktop ? 24 : 30,
+                              28,
+                              desktop ? 24 : 20,
+                              16,
+                            ),
+                            child: Center(
+                              key: desktop
+                                  ? const ValueKey('addresses-desktop-grid')
+                                  : null,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: desktop ? 800 : double.infinity,
+                                ),
+                                child: addresses.isEmpty
+                                    ? const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 24,
+                                        ),
+                                        child: Text(
+                                          'Nenhum endereço cadastrado',
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      )
+                                    : cards,
                               ),
-                              child: addresses.isEmpty
-                                  ? const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 24,
-                                      ),
-                                      child: Text(
-                                        'Nenhum endereço cadastrado',
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    )
-                                  : cards,
                             ),
                           ),
                         ),

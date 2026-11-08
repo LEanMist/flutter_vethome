@@ -333,6 +333,15 @@ void main() {
       tester.widget<Scrollbar>(find.byType(Scrollbar)).thumbVisibility,
       isTrue,
     );
+    final scrollbarTheme = ScrollbarTheme.of(
+      tester.element(find.byType(Scrollbar)),
+    );
+    expect(
+      scrollbarTheme.thumbColor?.resolve(const <WidgetState>{}),
+      VetColors.brown,
+    );
+    expect(scrollbarTheme.thickness?.resolve(const <WidgetState>{}), 3);
+    expect(scrollbarTheme.radius, const Radius.circular(1.5));
     expect(tester.takeException(), isNull);
   });
 
