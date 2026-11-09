@@ -441,6 +441,18 @@ class AddressEditorPage extends StatelessWidget {
       figmaEditLayout: compactEditor,
       title: address == null ? 'Novo endereço' : 'Editar endereço',
       initial: address,
+      saveErrorMessage: (error) {
+        if (error is PersistenceClearingException) {
+          return 'O endereço não foi salvo porque os dados locais estão sendo '
+              'limpos. Os dados digitados continuam no formulário.';
+        }
+        if (error is PersistenceBlockedException) {
+          return 'O endereço não foi salvo porque o armazenamento local está '
+              'bloqueado. Os dados digitados continuam no formulário.';
+        }
+        return 'Não foi possível confirmar o salvamento. Os dados digitados '
+            'continuam no formulário; confira a lista antes de tentar novamente.';
+      },
       onSaved: (value) async {
         VetRepository.saveAddress(value);
         final saved = await VetRepository.flush();

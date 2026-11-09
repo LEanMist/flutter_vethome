@@ -21,6 +21,7 @@ class AddressForm extends StatefulWidget {
     this.initial,
     this.cepService = const CepService(),
     this.figmaEditLayout = false,
+    this.saveErrorMessage,
   });
   final String title;
   final FutureOr<void> Function(SavedAddress) onSaved;
@@ -30,6 +31,7 @@ class AddressForm extends StatefulWidget {
   final SavedAddress? initial;
   final CepService cepService;
   final bool figmaEditLayout;
+  final String Function(Object error)? saveErrorMessage;
   @override
   State<AddressForm> createState() => _AddressFormState();
 }
@@ -150,6 +152,39 @@ class _AddressFormState extends State<AddressForm> {
           number: _number.text.trim(),
           complement: _complement.text.trim(),
           cep: _cep.text.trim(),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      final message =
+          widget.saveErrorMessage?.call(error) ??
+          (widget.onSkip != null
+              ? 'Não foi possível continuar. Os dados digitados continuam no '
+                    'formulário; confira e tente novamente.'
+              : 'Não foi possível confirmar o salvamento. Os dados digitados '
+                    'continuam no formulário; confira a lista antes de tentar '
+                    'novamente.');
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(
+            widget.onSkip != null
+                ? 'Não foi possível continuar'
+                : 'Endereço não salvo',
+          ),
+          content: Semantics(
+            liveRegion: true,
+            child: Text(
+              message,
+              key: const ValueKey('address-save-error-message'),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Entendi'),
+            ),
+          ],
         ),
       );
     } finally {

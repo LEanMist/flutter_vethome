@@ -15,6 +15,9 @@ import '../widgets/vet/vet_page_scaffold.dart';
 
 const _blockedVaccineMessage =
     'Armazenamento local bloqueado. Nenhuma alteração na vacina foi realizada.';
+const _clearingVaccineMessage =
+    'A alteração na carteira foi bloqueada enquanto os dados locais estavam '
+    'sendo limpos. Nenhuma alteração foi realizada.';
 
 class VacinacaoPage extends StatefulWidget {
   const VacinacaoPage({required this.pet, super.key});
@@ -68,12 +71,21 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
       await _persist(
         () => VetRepository.removeVaccine(widget.pet.id, vaccine.id!),
       );
+    } on PersistenceClearingException {
+      if (!mounted) return;
+      _showPersistenceMessage(_clearingVaccineMessage);
     } on PersistenceBlockedException {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text(_blockedVaccineMessage)));
+      _showPersistenceMessage(_blockedVaccineMessage);
     }
+  }
+
+  void _showPersistenceMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Semantics(liveRegion: true, child: Text(message))),
+      );
   }
 
   Future<void> _persist(VoidCallback update) async {
@@ -192,6 +204,7 @@ class _VaccineEditorState extends State<_VaccineEditor> {
   );
   bool _saving = false;
   bool _blocked = false;
+  bool _clearing = false;
   @override
   void dispose() {
     _name.dispose();
@@ -205,6 +218,7 @@ class _VaccineEditorState extends State<_VaccineEditor> {
     setState(() {
       _saving = true;
       _blocked = false;
+      _clearing = false;
     });
     try {
       await widget.onSave(
@@ -220,6 +234,8 @@ class _VaccineEditorState extends State<_VaccineEditor> {
       }
     } on PersistenceBlockedException {
       if (mounted) setState(() => _blocked = true);
+    } on PersistenceClearingException {
+      if (mounted) setState(() => _clearing = true);
     } on FormatException catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -294,13 +310,19 @@ class _VaccineEditorState extends State<_VaccineEditor> {
                       : null;
                 },
               ),
-              if (_blocked) ...[
+              if (_blocked || _clearing) ...[
                 const SizedBox(height: 12),
                 Semantics(
                   liveRegion: true,
-                  child: const Text(
-                    _blockedVaccineMessage,
-                    key: ValueKey('vaccine-storage-blocked-message'),
+                  child: Text(
+                    _clearing
+                        ? _clearingVaccineMessage
+                        : _blockedVaccineMessage,
+                    key: ValueKey(
+                      _clearing
+                          ? 'vaccine-storage-clearing-message'
+                          : 'vaccine-storage-blocked-message',
+                    ),
                     style: TextStyle(
                       color: VetColors.brown,
                       fontWeight: FontWeight.w600,

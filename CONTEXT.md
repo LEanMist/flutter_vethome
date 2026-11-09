@@ -542,3 +542,11 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - `local_profile_conflict_test.dart` cobre a senha `1234  ` e rejeita seis espaços. `agenda_appointment_detail_test.dart` compara a altura normal com texto a 200%. A revisão independente no chat “Revisão visual da Agenda” confirmou que não encontrou problema residual; a comparação visual em dispositivo não foi executada.
 - Validação após as duas correções: `flutter test --no-pub` — **562 aprovados e 3 ignorados**; `flutter analyze --no-pub` sem problemas; testes focados de Agenda — **4/4** e autenticação/perfil local — **7/7**; build Web release aprovado em **117,6 s**, dry run Wasm aprovado, formatação sem mudanças e `git diff --check` aprovado (avisos Git LF/CRLF).
 - `.wrangler/` e `CONTINUACAO_OUTRA_CONTA.md` permanecem preservados fora do stage.
+
+## Persistência bloqueada durante limpeza — 09/11/2026
+
+- Salvar endereço agora captura bloqueio durante limpeza, armazenamento indisponível e erros inesperados. O formulário permanece aberto com os campos preenchidos e apresenta uma mensagem acessível; os dois bloqueios conhecidos explicam por que a gravação não ocorreu.
+- Carteira de vacinação agora captura `PersistenceClearingException` separadamente ao salvar ou excluir. O editor mantém os dados digitados; a exclusão preserva o cartão. Ambos mostram um aviso acessível e claro durante a limpeza.
+- Regressões adicionadas: `address_save_blocked_test.dart`, `address_save_during_clear_test.dart`, `vaccine_save_during_clear_test.dart` e `vaccine_delete_during_clear_test.dart`.
+- Validação após estas correções: suíte completa `flutter test --no-pub` — **566 aprovados e 3 ignorados**; `flutter analyze --no-pub` sem problemas; testes de formatação e `git diff --check` aprovados; `flutter build web --release --no-pub` concluído em **112,9 s**, com dry run Wasm aprovado. O Git avisou somente sobre conversão LF/CRLF em `addresses_page.dart`.
+- `.wrangler/` e `CONTINUACAO_OUTRA_CONTA.md` foram preservados fora das alterações rastreadas.
