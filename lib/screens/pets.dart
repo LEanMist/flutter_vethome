@@ -956,7 +956,7 @@ class ConvenioScreen extends StatelessWidget {
         // Figma 4010:387: cabeçalho de 157 px com aba da espécie (somente mobile).
         VetResponsiveLayout(
           breakpoint: VH.compactBreakpoint,
-          mobile: _figmaHeader(context, pet),
+          mobile: _figmaHeader(pet),
           desktop: const VHHeader('Convênio'),
         ),
         VetResponsiveLayout(
@@ -1011,7 +1011,7 @@ class ConvenioScreen extends StatelessWidget {
     );
   }
 
-  Widget _figmaHeader(BuildContext context, dynamic pet) {
+  Widget _figmaHeader(dynamic pet) {
     final species = switch (pet.species?.trim().toLowerCase()) {
       'cachorro' || 'cão' => 'CÃO',
       'gato' => 'GATO',
@@ -1048,16 +1048,6 @@ class ConvenioScreen extends StatelessWidget {
                 ),
               ),
             ),
-            if (Navigator.of(context).canPop())
-              Positioned(
-                top: 8,
-                left: 10,
-                child: IconButton(
-                  tooltip: 'Voltar',
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  icon: const Icon(Icons.arrow_back, color: VH.onSecondary),
-                ),
-              ),
             Positioned(
               left: 0,
               right: 0,

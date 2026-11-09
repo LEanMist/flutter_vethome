@@ -137,7 +137,8 @@ void main() {
 
     expect(find.byType(ConvenioScreen), findsOneWidget);
     expect(find.byType(VetBottomNav), findsNothing);
-    await tester.state<NavigatorState>(find.byType(Navigator)).maybePop();
+    expect(find.byTooltip('Voltar'), findsNothing);
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('Abrir Convênio'), findsOneWidget);
     expect(find.byType(ConvenioScreen), findsNothing);
