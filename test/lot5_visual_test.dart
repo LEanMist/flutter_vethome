@@ -110,7 +110,7 @@ void main() {
     final chevron = tester.widget<VetChevron>(
       find.descendant(of: card, matching: find.byType(VetChevron)),
     );
-    expect(chevron.color, VetColors.brown.withValues(alpha: .5));
+    expect(chevron.color, VetColors.brownOnRose);
     expect(chevron.strokeWidth, 3);
     expect(tester.takeException(), isNull);
   });

@@ -137,9 +137,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('PetCardWidget mantém o texto branco fora da escolha de Pet', (
-    tester,
-  ) async {
+  testWidgets('PetCardWidget mantém o texto escuro e legível', (tester) async {
     final pet = VetRepository.pets.first;
     await tester.pumpWidget(
       MaterialApp(
@@ -148,7 +146,7 @@ void main() {
     );
 
     final name = tester.widget<Text>(find.text(pet.name));
-    expect(name.style?.color, Colors.white);
+    expect(name.style?.color, VetColors.brownOnRose);
   });
 
   testWidgets('setas da escolha compacta respeitam os limites da lista', (

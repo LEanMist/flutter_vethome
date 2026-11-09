@@ -34,10 +34,7 @@ class _PetSummaryState extends State<PetSummary> {
       PetSummarySize.medium => 64.0,
       PetSummarySize.detailed => 116.0,
     };
-    final secondary = TextStyle(
-      color: VetColors.brown.withValues(alpha: .75),
-      fontSize: 12,
-    );
+    final secondary = TextStyle(color: VetColors.brown, fontSize: 12);
     final profile = VetRepository.perfil(pet.id);
     Widget datum(String label, String value) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),

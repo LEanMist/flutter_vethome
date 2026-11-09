@@ -19,7 +19,7 @@ class PetCardWidget extends StatelessWidget {
     super.key,
     required this.pet,
     this.onTap,
-    this.nameColor = Colors.white,
+    this.nameColor = VetColors.brownOnRose,
   });
 
   @override
@@ -75,10 +75,7 @@ class PetCardWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  VetChevron(
-                    color: VetColors.brown.withValues(alpha: .5),
-                    strokeWidth: 3,
-                  ),
+                  VetChevron(color: VetColors.brownOnRose, strokeWidth: 3),
                 ],
               ),
             ),
