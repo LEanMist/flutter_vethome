@@ -65,6 +65,43 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   final _description = TextEditingController();
   DateTime _at(TimeOfDay t) =>
       DateTime(_date.year, _date.month, _date.day, t.hour, t.minute);
+
+  void _selectDate(DateTime date) {
+    var clearedByConflict = false;
+    setState(() {
+      _date = date;
+      _calendarMonth = DateTime(date.year, date.month);
+      if (_time == null) return;
+
+      final start = _at(_time!);
+      if (!isFutureAppointmentTime(start, DateTime.now())) {
+        _time = null;
+        _end = null;
+        return;
+      }
+
+      final end = _end == null ? null : _at(_end!);
+      if (end != null &&
+          end.isAfter(start) &&
+          VetRepository.hasAppointmentConflict(
+            petId: widget.pet.id,
+            veterinarian: _appointmentVeterinarian,
+            start: start,
+            end: end,
+          )) {
+        _time = null;
+        _end = null;
+        clearedByConflict = true;
+      }
+    });
+    if (clearedByConflict) {
+      _message(
+        'O horário selecionado conflita com outro agendamento nesta data. '
+        'Escolha outro horário.',
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -142,17 +179,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
         ),
       ),
     );
-    if (date != null && mounted) {
-      setState(() {
-        _date = date;
-        _calendarMonth = DateTime(date.year, date.month);
-        if (_time != null &&
-            !isFutureAppointmentTime(_at(_time!), DateTime.now())) {
-          _time = null;
-          _end = null;
-        }
-      });
-    }
+    if (date != null && mounted) _selectDate(date);
   }
 
   Future<void> _chooseTime({bool end = false}) async {
@@ -404,15 +431,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
           _calendarMonth.month + 1,
         ),
       ),
-      onSelected: (date) => setState(() {
-        _date = date;
-        _calendarMonth = DateTime(date.year, date.month);
-        if (_time != null &&
-            !isFutureAppointmentTime(_at(_time!), DateTime.now())) {
-          _time = null;
-          _end = null;
-        }
-      }),
+      onSelected: _selectDate,
     );
   }
 

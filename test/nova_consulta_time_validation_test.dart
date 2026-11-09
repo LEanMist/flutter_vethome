@@ -41,6 +41,71 @@ void main() {
     expect(firstDate, DateTime(actualNow.year, actualNow.month, actualNow.day));
   });
 
+  testWidgets('trocar para uma data conflitante limpa o horário selecionado', (
+    tester,
+  ) async {
+    final today = DateTime.now();
+    final tomorrow = DateTime(today.year, today.month, today.day + 1);
+    final targetDate = tomorrow.add(const Duration(days: 2));
+    final conflict = Agendamento(
+      data: DateTime(targetDate.year, targetDate.month, targetDate.day, 12, 30),
+      endDate: DateTime(
+        targetDate.year,
+        targetDate.month,
+        targetDate.day,
+        13,
+        30,
+      ),
+      tipo: 'Conflito para teste',
+      veterinario: 'Dra. Ana Silva',
+      local: 'Teste',
+      status: StatusAgendamento.pendente,
+    );
+    VetRepository.addAgendamento(pet.id, conflict);
+    addTearDown(() => VetRepository.removeAgendamento(pet.id, conflict));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NovaConsultaPage(
+          pet: pet,
+          service: 'Consulta',
+          plan: 'Particular',
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('appointment-booking-date')));
+    await tester.pumpAndSettle();
+
+    if (targetDate.month != tomorrow.month ||
+        targetDate.year != tomorrow.year) {
+      await tester.drag(
+        find.byKey(const ValueKey('vet-calendar')),
+        const Offset(-120, 0),
+      );
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(
+      find.byKey(
+        ValueKey(
+          'calendar-${targetDate.year}-${targetDate.month}-${targetDate.day}-surface',
+        ),
+      ),
+    );
+    await tester.tap(find.text('Confirmar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('--:--'), findsNWidgets(2));
+    expect(find.text('12:00'), findsNothing);
+    expect(
+      find.text(
+        'O horário selecionado conflita com outro agendamento nesta data. '
+        'Escolha outro horário.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   test('ontem é rejeitado sem criar agendamento', () {
     final before = VetRepository.agendamentos(pet.id).length;
     expect(
