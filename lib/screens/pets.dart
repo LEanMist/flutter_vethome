@@ -322,6 +322,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
         : VetRepository.selectedPet;
     if (pet == null) return const PetsPage();
     final desktop = MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint;
+    final shortMobile = !desktop && MediaQuery.sizeOf(context).height < 760;
     final species = switch (pet.species?.trim().toLowerCase()) {
       'cachorro' || 'cão' => 'CÃO',
       'gato' => 'GATO',
@@ -331,6 +332,9 @@ class _ServicosScreenState extends State<ServicosScreen> {
     return VHPage(
       tab: '/servicos',
       showBottomNav: false,
+      footer: shortMobile
+          ? SafeArea(top: false, child: _continueButton(pet.id, topPadding: 8))
+          : null,
       children: [
         desktop ? const VHHeader('Serviços') : _servicesHeader(pet, species),
         Padding(
@@ -356,7 +360,8 @@ class _ServicosScreenState extends State<ServicosScreen> {
                         ...categories.entries.map(
                           (entry) => _category(pet, entry),
                         ),
-                        _continueButton(pet.id, topPadding: 12),
+                        if (!shortMobile)
+                          _continueButton(pet.id, topPadding: 12),
                       ],
                     ),
                   ),
@@ -375,7 +380,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                       ...categories.entries.map(
                         (entry) => _category(pet, entry),
                       ),
-                      _continueButton(pet.id),
+                      if (!shortMobile) _continueButton(pet.id),
                     ],
                   ),
                 ),

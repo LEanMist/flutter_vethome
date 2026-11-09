@@ -38,7 +38,7 @@ void main() {
     expect(surface.width, lessThanOrEqualTo(520));
   });
 
-  testWidgets('login usa o botão Entrar rosa aprovado no Figma', (
+  testWidgets('login usa o botão Entrar marrom aprovado no Figma', (
     tester,
   ) async {
     await pumpAt(tester, const LoginPage(), const Size(390, 844));
@@ -48,7 +48,7 @@ void main() {
     );
     expect(
       button.style?.backgroundColor?.resolve(const <WidgetState>{}),
-      VetColors.rose,
+      VetColors.brown,
     );
   });
 

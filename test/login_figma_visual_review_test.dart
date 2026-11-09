@@ -100,14 +100,14 @@ void main() {
     expect(loginText.fontFamily, VH.bodyFontFamily);
     expect(loginText.fontSize, 14);
     expect(loginText.fontWeight, FontWeight.bold);
-    expect(loginText.color, VetColors.calendarTextOnRose);
+    expect(loginText.color, Colors.white);
     expect(
       tester
           .widget<ElevatedButton>(loginButton)
           .style
           ?.foregroundColor
           ?.resolve(const <WidgetState>{}),
-      VetColors.calendarTextOnRose,
+      Colors.white,
     );
     expect(tester.widget<Icon>(find.byIcon(Icons.login)).color, Colors.white);
     expect(
@@ -116,7 +116,12 @@ void main() {
           .style
           ?.backgroundColor
           ?.resolve(const <WidgetState>{}),
-      VetColors.rose,
+      VetColors.brown,
+    );
+    // LOGIN_PAGE 2564:1193 uses #68442E with white text.
+    expect(
+      _contrastRatio(Colors.white, VetColors.brown),
+      greaterThanOrEqualTo(4.5),
     );
 
     final separator = find.text('Ou continue com');

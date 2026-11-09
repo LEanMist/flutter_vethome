@@ -264,8 +264,8 @@ class _LoginPageState extends State<LoginPage> {
                           child: ElevatedButton.icon(
                             onPressed: _signingIn ? null : entrar,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: VetColors.rose,
-                              foregroundColor: VetColors.calendarTextOnRose,
+                              backgroundColor: VetColors.brown,
+                              foregroundColor: Colors.white,
                               elevation: 2,
                               shadowColor: Colors.black.withValues(alpha: .25),
                               shape: const StadiumBorder(),

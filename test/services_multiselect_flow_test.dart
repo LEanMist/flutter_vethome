@@ -107,6 +107,19 @@ void main() {
       .quarterTurns;
 
   Future<void> selectService(WidgetTester tester, String service) async {
+    const serviceCategories = {
+      'Hemograma': 'Exames',
+      'Creatinina': 'Exames',
+      'Urina': 'Exames',
+      'V8': 'Vacinas',
+      'V10': 'Vacinas',
+      'Antirrábica': 'Vacinas',
+    };
+    final category = serviceCategories[service]!;
+    if (find.text(service).evaluate().isEmpty) {
+      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.pumpAndSettle();
+    }
     await tester.ensureVisible(find.text(service));
     await tester.pumpAndSettle();
     await tester.tap(find.text(service));
@@ -241,6 +254,19 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'Serviços inicia como no Figma e deixa Continuar visível em 320x640',
+    (tester) async {
+      await openServices(tester, size: const Size(320, 640));
+
+      expect(find.text('Hemograma'), findsOneWidget);
+      expect(find.text('V8'), findsOneWidget);
+      final continueButton = find.byKey(const ValueKey('services-continue'));
+      expect(tester.getRect(continueButton).bottom, lessThanOrEqualTo(640));
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('serviços mobile não adiciona seta e ainda pode voltar', (
     tester,
