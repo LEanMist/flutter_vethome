@@ -427,7 +427,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                 margin: const EdgeInsets.only(top: 2),
                                 padding: const EdgeInsets.all(13),
                                 decoration: BoxDecoration(
-                                  color: VetColors.roseOverlay50,
+                                  color: message.fromClient
+                                      ? VetColors.chatSentBubble
+                                      : VetColors.roseOverlay50,
                                   borderRadius: BorderRadius.circular(25),
                                 ),
                                 child: Text(
@@ -435,12 +437,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                   textAlign: message.fromClient
                                       ? TextAlign.right
                                       : TextAlign.left,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: VH.headingFontFamily,
                                     fontSize: 10,
                                     height: 1.2,
                                     fontWeight: FontWeight.bold,
-                                    color: VetColors.chatMessageText,
+                                    color: message.fromClient
+                                        ? Colors.white
+                                        : VetColors.chatMessageText,
                                   ),
                                 ),
                               ),

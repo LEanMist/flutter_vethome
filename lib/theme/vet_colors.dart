@@ -20,6 +20,8 @@ class VetColors {
   // Cores e transparências dos nós do Figma Education.
   static const Color roseOverlay25 = Color.fromRGBO(192, 128, 129, .25);
   static const Color roseOverlay50 = Color.fromRGBO(192, 128, 129, .5);
+  // O Figma usa 50%; .68 mantém o marrom e dá contraste 4.68:1 com texto branco.
+  static const Color chatSentBubble = Color.fromRGBO(104, 68, 46, .68);
   static const Color pinkOverlay50 = Color.fromRGBO(250, 211, 213, .5);
   static const Color brownSecondary = Color.fromRGBO(104, 68, 46, .75);
   static const Color profileOutline = Color(0xFFB18B81);

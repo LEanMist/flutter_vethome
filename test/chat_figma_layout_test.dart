@@ -400,9 +400,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('MESSAGE_PAGE_2: balões dos dois remetentes usam rosa Figma', (
-    tester,
-  ) async {
+  testWidgets('MENSSAGE_PAGE: cores e contraste dos balões', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -426,25 +424,34 @@ void main() {
 
     final receivedBubble = bubbleFor(incoming.text);
     final sentBubble = bubbleFor(outgoing.text);
-    for (final bubble in [receivedBubble, sentBubble]) {
-      final decoration = tester.widget<Container>(bubble).decoration;
-      expect(decoration, isA<BoxDecoration>());
-      expect((decoration! as BoxDecoration).color, VetColors.roseOverlay50);
-      expect(tester.getSize(bubble).width, closeTo(273, 0.1));
-    }
-    for (final text in [incoming.text, outgoing.text]) {
-      expect(
-        tester.widget<Text>(find.text(text)).style?.color,
-        VetColors.chatMessageText,
-      );
-    }
+    final receivedDecoration =
+        tester.widget<Container>(receivedBubble).decoration! as BoxDecoration;
+    final sentDecoration =
+        tester.widget<Container>(sentBubble).decoration! as BoxDecoration;
+    expect(receivedDecoration.color, VetColors.roseOverlay50);
+    expect(sentDecoration.color, VetColors.chatSentBubble);
+    expect(tester.getSize(receivedBubble).width, closeTo(273, 0.1));
+    expect(tester.getSize(sentBubble).width, closeTo(273, 0.1));
+
+    final receivedText = tester.widget<Text>(find.text(incoming.text));
+    final sentText = tester.widget<Text>(find.text(outgoing.text));
+    expect(receivedText.style?.color, VetColors.chatMessageText);
+    expect(sentText.style?.color, Colors.white);
     final cardBackground = Color.alphaBlend(VH.muted, VH.background);
-    final bubbleBackground = Color.alphaBlend(
+    final receivedBackground = Color.alphaBlend(
       VetColors.roseOverlay50,
       cardBackground,
     );
+    final sentBackground = Color.alphaBlend(
+      VetColors.chatSentBubble,
+      cardBackground,
+    );
     expect(
-      _contrastRatio(VetColors.chatMessageText, bubbleBackground),
+      _contrastRatio(VetColors.chatMessageText, receivedBackground),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      _contrastRatio(Colors.white, sentBackground),
       greaterThanOrEqualTo(4.5),
     );
     expect(
