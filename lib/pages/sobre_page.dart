@@ -59,27 +59,30 @@ class SobreScreen extends StatelessWidget {
   );
 
   Widget _details() => _card(
-    const Column(
+    Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Sobre mim',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        Semantics(
+          header: true,
+          child: const Text(
+            'Sobre mim',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
         ),
-        SizedBox(height: 12),
-        Text(
+        const SizedBox(height: 12),
+        const Text(
           'Sou veterinária há mais de 8 anos, apaixonada por cães e gatos. Atendo em domicílio para que seu pet fique tranquilo no lar.',
         ),
-        SizedBox(height: 18),
+        const SizedBox(height: 18),
         ListTile(
-          leading: Icon(Icons.phone_outlined),
+          leading: const Icon(Icons.phone_outlined),
           title: SelectableText(
             '11 9793-8918',
             semanticsLabel: 'Telefone fictício para demonstração: 11 9793-8918',
           ),
         ),
         ListTile(
-          leading: Icon(Icons.email_outlined),
+          leading: const Icon(Icons.email_outlined),
           title: SelectableText(
             'Kelvinpro@gmail.com',
             semanticsLabel:

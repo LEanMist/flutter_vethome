@@ -856,36 +856,71 @@ class VHHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final adaptTitle =
+        sub == null &&
+        bottom == null &&
+        MediaQuery.textScalerOf(context).scale(30) > 30;
+    final titleInsets = settingsStyle ? 24.0 : 50.0;
+    final titleTop = settingsStyle || (sub == null && bottom == null)
+        ? 46.0
+        : 18.0;
+    const titleStyle = TextStyle(
+      color: VH.onSecondary,
+      fontSize: 30,
+      fontWeight: FontWeight.bold,
+      fontFamily: VH.headingFontFamily,
+    );
     return Container(
       width: double.infinity,
       padding: EdgeInsets.zero,
-      height: VH.headerHeight,
+      height: adaptTitle ? null : VH.headerHeight,
+      constraints: adaptTitle
+          ? const BoxConstraints(minHeight: VH.headerHeight)
+          : null,
       decoration: BoxDecoration(
         color: VH.secondary,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: Stack(
         children: [
-          Positioned(
-            top: settingsStyle || (sub == null && bottom == null) ? 46 : 18,
-            left: settingsStyle ? 24 : 50,
-            right: settingsStyle ? 24 : 50,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: VH.onSecondary,
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: VH.headingFontFamily,
+          if (adaptTitle)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                titleInsets,
+                titleTop,
+                titleInsets,
+                16,
+              ),
+              child: Center(
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: titleStyle,
+                  ),
+                ),
+              ),
+            )
+          else
+            Positioned(
+              top: titleTop,
+              left: titleInsets,
+              right: titleInsets,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: titleStyle,
+                  ),
                 ),
               ),
             ),
-          ),
           if (showBack && Navigator.of(context).canPop())
             Positioned(
               top: 8,

@@ -550,3 +550,12 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - Regressões adicionadas: `address_save_blocked_test.dart`, `address_save_during_clear_test.dart`, `vaccine_save_during_clear_test.dart` e `vaccine_delete_during_clear_test.dart`.
 - Validação após estas correções: suíte completa `flutter test --no-pub` — **566 aprovados e 3 ignorados**; `flutter analyze --no-pub` sem problemas; testes de formatação e `git diff --check` aprovados; `flutter build web --release --no-pub` concluído em **112,9 s**, com dry run Wasm aprovado. O Git avisou somente sobre conversão LF/CRLF em `addresses_page.dart`.
 - `.wrangler/` e `CONTINUACAO_OUTRA_CONTA.md` foram preservados fora das alterações rastreadas.
+
+## Cadastro Pet e cabeçalhos acessíveis — 09/11/2026
+
+- A raça não é mais apagada ao selecionar novamente a espécie atual; só é limpa quando o usuário realmente muda de espécie. Um teste cobre cadastro, edição e a limpeza ao alternar Cachorro para Gato.
+- No cadastro compacto, o campo Sexo apresenta `M/F` como no estado observado de `REGISTER_PET_PAGE` (`2783:1283`, valor `M` na camada `2783:1301`). Leitores de tela anunciam `Macho/Fêmea`, e o formulário mantém esses valores completos para salvar.
+- `VHHeader` agora permite quebra e crescimento vertical quando o texto do sistema está ampliado, sem reduzi-lo para caber. Na escala normal, a altura e o posicionamento do Figma permanecem no fluxo existente. O título do cabeçalho e “Sobre mim” são anunciados como cabeçalhos semânticos.
+- Revisões independentes em chats normais confirmaram a correção de espécie/raça e os ajustes de cabeçalho. A revisão de Serviços não encontrou desvio funcional concreto. Uma análise adicional do título “Suporte” em Configurações está em andamento e ainda não foi incorporada.
+- Validação desta rodada: suíte completa `flutter test --no-pub` — **571 aprovados e 3 ignorados**; Cadastro Pet Figma **10/10**; regressões de raça/sexo **3/3**; cabeçalho acessível **2/2**; geometria Figma de cabeçalho **3/3**. `flutter analyze --no-pub` sem problemas; formatação sem mudanças; `git diff --check` aprovado, com aviso apenas de conversão LF/CRLF em `CONTEXT.md`; `flutter build web --release --no-pub` aprovado em **96,6 s**, dry run Wasm aprovado.
+- `.wrangler/` e `CONTINUACAO_OUTRA_CONTA.md` continuam preservados fora das alterações rastreadas.

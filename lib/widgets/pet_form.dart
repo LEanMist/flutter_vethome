@@ -89,6 +89,13 @@ class _PetFormState extends State<PetForm> {
   bool busy = false;
   bool validationFailed = false;
   bool editExtrasExpanded = false;
+  String _previousSpecies = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _previousSpecies = species.text;
+  }
 
   String _weightInputValue(double? value) {
     if (value == null) return '';
@@ -857,17 +864,22 @@ class _PetFormState extends State<PetForm> {
       focusNode: _speciesFocusNode,
       figmaRegistrationStyle: figmaRegistration,
       choices: const ['Cachorro', 'Gato'],
-      onChanged: (_) => setState(() => breed.clear()),
+      onChanged: (value) {
+        if (value == _previousSpecies) return;
+        _previousSpecies = value;
+        setState(breed.clear);
+      },
     );
+    final figmaSexField = figmaEdit || figmaRegistration;
     final sexField = field(
       editing && !figmaEdit ? 'Sexo' : 'Gênero/Sexo',
       Icons.wc,
-      figmaEdit ? _figmaSex : sex,
+      figmaSexField ? _figmaSex : sex,
       focusNode: _sexFocusNode,
-      choices: figmaEdit ? const ['M', 'F'] : const ['Macho', 'Fêmea'],
-      choiceDisplayLabel: figmaEdit ? _sexLabel : null,
-      semanticsValue: figmaEdit ? _sexLabel : null,
-      onChanged: figmaEdit ? (value) => sex.text = _sexLabel(value) : null,
+      choices: figmaSexField ? const ['M', 'F'] : const ['Macho', 'Fêmea'],
+      choiceDisplayLabel: figmaSexField ? _sexLabel : null,
+      semanticsValue: figmaSexField ? _sexLabel : null,
+      onChanged: figmaSexField ? (value) => sex.text = _sexLabel(value) : null,
       figmaStyle: figmaEdit,
       figmaRegistrationStyle: figmaRegistration,
       figmaContentPaddingLeft: figmaEdit ? 18 : null,

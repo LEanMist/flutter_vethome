@@ -209,12 +209,15 @@ void main() {
           expect(cat, findsNothing);
           await tester.tap(find.widgetWithText(ListTile, 'Fêmea'));
           await tester.pumpAndSettle();
+          final expectedSexValue = !editing && size.height >= 720
+              ? 'F'
+              : 'Fêmea';
           expect(
             tester
                 .widget<TextFormField>(field(editing ? 'Sexo' : 'Gênero/Sexo'))
                 .controller!
                 .text,
-            'Fêmea',
+            expectedSexValue,
           );
           expect(find.widgetWithText(ListTile, 'Fêmea'), findsNothing);
           expect(tester.takeException(), isNull);
