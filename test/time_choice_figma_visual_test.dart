@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -105,7 +107,7 @@ void main() {
     );
     expect(
       normalStyle.foregroundColor!.resolve(const <WidgetState>{}),
-      Colors.white,
+      VetColors.calendarTextOnRose,
     );
     expect(
       normalStyle.shape!.resolve(const <WidgetState>{}),
@@ -131,6 +133,18 @@ void main() {
     expect(
       selectedButton.style!.backgroundColor!.resolve(const <WidgetState>{}),
       VetColors.brown,
+    );
+    expect(
+      selectedButton.style!.foregroundColor!.resolve(const <WidgetState>{}),
+      Colors.white,
+    );
+    expect(
+      _contrastRatio(VetColors.calendarTextOnRose, VetColors.rose),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      _contrastRatio(Colors.white, VetColors.brown),
+      greaterThanOrEqualTo(4.5),
     );
 
     await tester.tapAt(const Offset(195, 100));
@@ -174,10 +188,60 @@ void main() {
       expect(route.flagsCollection.namesRoute, isTrue);
 
       final timeButton = tester.getSemantics(
-        find.byKey(const ValueKey('time-choice-12')),
+        find.byKey(const ValueKey('time-choice-semantics-12')),
       );
       expect(timeButton.label, contains('12:00'));
       expect(timeButton.flagsCollection.isButton, isTrue);
+      expect(timeButton.flagsCollection.isSelected, Tristate.isTrue);
+      expect(
+        tester
+            .getSemantics(
+              find.byKey(const ValueKey('time-choice-semantics-13')),
+            )
+            .flagsCollection
+            .isSelected,
+        Tristate.isFalse,
+      );
+
+      final alternativeHour = [13, 14, 15, 16].firstWhere(
+        (hour) =>
+            tester
+                .widget<ElevatedButton>(
+                  find.byKey(ValueKey('time-choice-$hour')),
+                )
+                .onPressed !=
+            null,
+        orElse: () => 0,
+      );
+      if (alternativeHour != 0) {
+        await tester.tap(find.byKey(ValueKey('time-choice-$alternativeHour')));
+        await tester.pumpAndSettle();
+        final startControl = find.byKey(
+          const ValueKey('appointment-booking-start-time'),
+        );
+        await tester.ensureVisible(startControl);
+        await tester.tap(startControl);
+        await tester.pumpAndSettle();
+
+        expect(
+          tester
+              .getSemantics(
+                find.byKey(ValueKey('time-choice-semantics-$alternativeHour')),
+              )
+              .flagsCollection
+              .isSelected,
+          Tristate.isTrue,
+        );
+        expect(
+          tester
+              .getSemantics(
+                find.byKey(const ValueKey('time-choice-semantics-12')),
+              )
+              .flagsCollection
+              .isSelected,
+          Tristate.isFalse,
+        );
+      }
 
       await tester.tapAt(const Offset(195, 100));
       await tester.pumpAndSettle();
@@ -186,4 +250,16 @@ void main() {
       semanticsHandle.dispose();
     }
   });
+}
+
+double _contrastRatio(Color foreground, Color background) {
+  final foregroundLuminance = foreground.computeLuminance();
+  final backgroundLuminance = background.computeLuminance();
+  final lighter = foregroundLuminance > backgroundLuminance
+      ? foregroundLuminance
+      : backgroundLuminance;
+  final darker = foregroundLuminance > backgroundLuminance
+      ? backgroundLuminance
+      : foregroundLuminance;
+  return (lighter + .05) / (darker + .05);
 }

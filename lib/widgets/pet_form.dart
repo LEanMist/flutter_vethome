@@ -62,8 +62,15 @@ class _PetFormState extends State<PetForm> {
   late final name = TextEditingController(text: widget.pet?.name ?? '');
   late final species = TextEditingController(text: widget.pet?.species ?? '');
   late final sex = TextEditingController(text: widget.pet?.sex ?? '');
+  late final _figmaSex = TextEditingController(
+    text: switch (sex.text) {
+      'Macho' => 'M',
+      'Fêmea' => 'F',
+      final value => value,
+    },
+  );
   late final weight = TextEditingController(
-    text: widget.pet?.weightKg?.toString() ?? '',
+    text: _weightInputValue(widget.pet?.weightKg),
   );
   late final birth = TextEditingController(
     text: widget.pet?.birthDate == null
@@ -82,9 +89,31 @@ class _PetFormState extends State<PetForm> {
   bool busy = false;
   bool validationFailed = false;
   bool editExtrasExpanded = false;
+
+  String _weightInputValue(double? value) {
+    if (value == null) return '';
+    return value == value.truncateToDouble()
+        ? value.toInt().toString()
+        : value.toString();
+  }
+
+  String _sexLabel(String value) => switch (value) {
+    'M' => 'Macho',
+    'F' => 'Fêmea',
+    _ => value,
+  };
   @override
   void dispose() {
-    for (final c in [name, species, sex, weight, birth, breed, neutered]) {
+    for (final c in [
+      name,
+      species,
+      sex,
+      _figmaSex,
+      weight,
+      birth,
+      breed,
+      neutered,
+    ]) {
       c.dispose();
     }
     for (final focusNode in [
@@ -198,6 +227,9 @@ class _PetFormState extends State<PetForm> {
     TextEditingController c, {
     FocusNode? focusNode,
     List<String>? choices,
+    String Function(String)? choiceDisplayLabel,
+    String? Function(String)? semanticsValue,
+    String? suffixText,
     List<String> suggestions = const [],
     String? Function(String?)? validator,
     ValueChanged<String>? onChanged,
@@ -237,6 +269,9 @@ class _PetFormState extends State<PetForm> {
       focusNode: focusNode,
       value: label == 'Castração' ? 'Não informado' : null,
       choices: choices,
+      choiceDisplayLabel: choiceDisplayLabel,
+      semanticsValue: semanticsValue,
+      suffixText: suffixText,
       suggestions: suggestions,
       onChanged: onChanged,
       validator: validator ?? requiredValue,
@@ -816,9 +851,12 @@ class _PetFormState extends State<PetForm> {
     final sexField = field(
       editing && !figmaEdit ? 'Sexo' : 'Gênero/Sexo',
       Icons.wc,
-      sex,
+      figmaEdit ? _figmaSex : sex,
       focusNode: _sexFocusNode,
-      choices: const ['Macho', 'Fêmea'],
+      choices: figmaEdit ? const ['M', 'F'] : const ['Macho', 'Fêmea'],
+      choiceDisplayLabel: figmaEdit ? _sexLabel : null,
+      semanticsValue: figmaEdit ? _sexLabel : null,
+      onChanged: figmaEdit ? (value) => sex.text = _sexLabel(value) : null,
       figmaStyle: figmaEdit,
       figmaRegistrationStyle: figmaRegistration,
       figmaContentPaddingLeft: figmaEdit ? 18 : null,
@@ -834,6 +872,7 @@ class _PetFormState extends State<PetForm> {
       figmaLabelHorizontalPadding: 7,
       figmaContentPaddingLeft: figmaEdit ? 15 : null,
       figmaLabelBottomPadding: 0,
+      suffixText: figmaEdit ? 'kg' : null,
       validator: _validateWeight,
     );
     final neuteredField = field(

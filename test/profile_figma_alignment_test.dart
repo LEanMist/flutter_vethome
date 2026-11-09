@@ -233,40 +233,97 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('Perfil evita sobrepor o avatar com nome longo em texto 200%', (
+  testWidgets(
+    'Perfil mostra nome longo inteiro antes do avatar em texto 200%',
+    (tester) async {
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final previousName = VetRepository.clientName;
+      const longName = 'Gabriela Fernandes Souza de Oliveira Pereira da Costa';
+      VetRepository.clientName = longName;
+      addTearDown(() => VetRepository.clientName = previousName);
+
+      for (final viewport in [const Size(390, 844), const Size(320, 640)]) {
+        tester.view.physicalSize = viewport;
+        tester.view.devicePixelRatio = 1;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MediaQuery(
+              data: MediaQueryData(
+                size: viewport,
+                devicePixelRatio: 1,
+                textScaler: TextScaler.linear(2),
+              ),
+              child: const PerfilPage(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final nameFinder = find.text(longName);
+        final nameText = tester.widget<Text>(nameFinder);
+        final nameRect = tester.getRect(
+          find.byKey(const ValueKey('profile-change-name-action')),
+        );
+        final photoRect = tester.getRect(
+          find.byKey(const ValueKey('profile-change-photo-action')),
+        );
+        expect(nameText.maxLines, isNull, reason: '$viewport');
+        expect(nameRect.height, greaterThan(100), reason: '$viewport');
+        expect(
+          nameRect.bottom,
+          lessThanOrEqualTo(photoRect.top),
+          reason: '$viewport',
+        );
+        expect(tester.takeException(), isNull, reason: '$viewport');
+      }
+    },
+  );
+
+  testWidgets('Perfil desktop acomoda nome longo com texto a 200%', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final previousName = VetRepository.clientName;
-    const longName = 'Gabriela Fernandes Souza';
+    const longName = 'Gabriela Fernandes Souza de Oliveira Pereira da Costa';
     VetRepository.clientName = longName;
     addTearDown(() => VetRepository.clientName = previousName);
 
     await tester.pumpWidget(
       MaterialApp(
-        home: MediaQuery(
-          data: const MediaQueryData(
-            size: Size(390, 844),
-            devicePixelRatio: 1,
-            textScaler: TextScaler.linear(2),
-          ),
-          child: const PerfilPage(),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
         ),
+        home: const PerfilPage(),
       ),
     );
     await tester.pumpAndSettle();
 
+    final avatar = tester
+        .widgetList<Container>(find.byType(Container))
+        .singleWhere(
+          (widget) =>
+              widget.decoration is BoxDecoration &&
+              (widget.decoration! as BoxDecoration).color ==
+                  VetColors.pinkOverlay50,
+        );
+    final avatarRect = tester.getRect(find.byWidget(avatar));
     final nameRect = tester.getRect(
       find.byKey(const ValueKey('profile-change-name-action')),
     );
     final photoRect = tester.getRect(
       find.byKey(const ValueKey('profile-change-photo-action')),
     );
-    expect(find.text(longName), findsOneWidget);
+
+    expect(avatarRect.height, greaterThan(280));
+    expect(nameRect.height, greaterThan(80));
     expect(nameRect.bottom, lessThanOrEqualTo(photoRect.top));
     expect(tester.takeException(), isNull);
   });
@@ -281,6 +338,15 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
     await tester.pumpAndSettle();
 
+    final avatar = tester
+        .widgetList<Container>(find.byType(Container))
+        .singleWhere(
+          (widget) =>
+              widget.decoration is BoxDecoration &&
+              (widget.decoration! as BoxDecoration).color ==
+                  VetColors.pinkOverlay50,
+        );
+    expect(tester.getSize(find.byWidget(avatar)), const Size(220, 280));
     expect(
       find.byKey(const ValueKey('profile-desktop-layout')),
       findsOneWidget,

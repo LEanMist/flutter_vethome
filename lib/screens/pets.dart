@@ -16,8 +16,6 @@ import '../widgets/pets/pets_theme.dart';
 import '../widgets.dart';
 import '../widgets/vet/vet_page_scaffold.dart';
 
-String servicoAtual = 'Consulta Geral';
-
 Future<void> openPetChoiceDialog(BuildContext context) async {
   if (VetRepository.pets.isEmpty) {
     await Navigator.pushNamed(context, '/pets');
@@ -300,7 +298,6 @@ class _ServicosScreenState extends State<ServicosScreen> {
           if (_selected.contains(service)) service,
     ];
     final combined = ordered.join(' + ');
-    servicoAtual = combined;
     Navigator.pushNamed(
       context,
       '/convenio',
@@ -316,7 +313,11 @@ class _ServicosScreenState extends State<ServicosScreen> {
   };
   @override
   Widget build(BuildContext context) {
-    final pet = VetRepository.selectedPet;
+    final routeArguments = ModalRoute.of(context)?.settings.arguments;
+    final routePetId = routeArguments is Map ? routeArguments['petId'] : null;
+    final pet = routePetId is String
+        ? VetRepository.petById(routePetId)
+        : VetRepository.selectedPet;
     if (pet == null) return const PetsPage();
     final desktop = MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint;
     final species = switch (pet.species?.trim().toLowerCase()) {
@@ -939,7 +940,11 @@ class _ServiceCategoryVisual {
 }
 
 class ConvenioScreen extends StatelessWidget {
-  const ConvenioScreen({super.key});
+  const ConvenioScreen({super.key, this.service});
+
+  /// Service received from the completed selection flow or an explicit caller.
+  final String? service;
+
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -948,7 +953,8 @@ class ConvenioScreen extends StatelessWidget {
         ? VetRepository.petById(values['petId'] as String)
         : VetRepository.selectedPet;
     if (pet == null) return const PetsPage();
-    final service = values['service'] as String? ?? servicoAtual;
+    final routeService = service ?? values['service'];
+    final selectedService = routeService is String ? routeService.trim() : '';
     return VHPage(
       tab: '/convenio',
       showBottomNav: false,
@@ -975,7 +981,7 @@ class ConvenioScreen extends StatelessWidget {
                   for (final plan in const ['PetLove', 'DogLife', 'Particular'])
                     Padding(
                       padding: const EdgeInsets.only(bottom: 60),
-                      child: _figmaPlan(context, pet.id, service, plan),
+                      child: _figmaPlan(context, pet.id, selectedService, plan),
                     ),
                 ],
               ),
@@ -993,7 +999,9 @@ class ConvenioScreen extends StatelessWidget {
                       PetSummary(pet: pet),
                       const SizedBox(height: 12),
                       Text(
-                        'Serviço: $service',
+                        selectedService.isEmpty
+                            ? 'Nenhum serviço selecionado'
+                            : 'Serviço: $selectedService',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -1001,7 +1009,9 @@ class ConvenioScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 32),
                 Expanded(
-                  child: Column(children: _plans(context, pet.id, service)),
+                  child: Column(
+                    children: _plans(context, pet.id, selectedService),
+                  ),
                 ),
               ],
             ),
@@ -1130,11 +1140,7 @@ class ConvenioScreen extends StatelessWidget {
     String service,
     String plan,
   ) {
-    void open() => Navigator.pushNamed(
-      context,
-      '/nova-consulta',
-      arguments: {'petId': petId, 'service': service, 'plan': plan},
-    );
+    void open() => _openPlan(context, petId, service, plan);
     final radius = switch (plan) {
       'PetLove' => const BorderRadius.only(
         topRight: Radius.circular(800),
@@ -1241,6 +1247,39 @@ class ConvenioScreen extends StatelessWidget {
     );
   }
 
+  void _openPlan(
+    BuildContext context,
+    String petId,
+    String service,
+    String plan,
+  ) {
+    if (service.isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Selecione pelo menos um serviço antes de continuar.',
+            ),
+            action: SnackBarAction(
+              label: 'Selecionar serviços',
+              onPressed: () => Navigator.pushReplacementNamed(
+                context,
+                '/servicos',
+                arguments: {'petId': petId},
+              ),
+            ),
+          ),
+        );
+      return;
+    }
+    Navigator.pushNamed(
+      context,
+      '/nova-consulta',
+      arguments: {'petId': petId, 'service': service, 'plan': plan},
+    );
+  }
+
   List<Widget> _plans(BuildContext context, String petId, String service) => [
     for (final plan in ['PetLove', 'DogLife', 'Particular'])
       Padding(
@@ -1248,11 +1287,7 @@ class ConvenioScreen extends StatelessWidget {
         child: VetChoicePill(
           label: plan,
           icon: VetPictogram(plan),
-          onTap: () => Navigator.pushNamed(
-            context,
-            '/nova-consulta',
-            arguments: {'petId': petId, 'service': service, 'plan': plan},
-          ),
+          onTap: () => _openPlan(context, petId, service, plan),
         ),
       ),
   ];

@@ -234,7 +234,7 @@ void main() {
   testWidgets('convênio avança imediatamente ao tocar no card', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: const ConvenioScreen(),
+        home: const ConvenioScreen(service: 'Consulta Geral'),
         routes: {
           '/nova-consulta': (context) {
             final args =

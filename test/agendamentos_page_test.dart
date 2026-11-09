@@ -53,59 +53,110 @@ void main() {
   testWidgets('separa próximos agendamentos do histórico e evita duplicidade', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    final semantics = tester.ensureSemantics();
+    try {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    final pet = VetRepository.pets.first;
-    final now = DateTime.now();
-    final nearest = appointment(
-      'Consulta real mais próxima',
-      now.add(const Duration(days: 2)),
-    );
-    final later = appointment(
-      'Consulta real posterior',
-      now.add(const Duration(days: 12)),
-    );
-    final past = appointment(
-      'Consulta real anterior',
-      now.subtract(const Duration(days: 3)),
-    );
-    for (final event in [nearest, later, past]) {
-      await saveAppointment(tester, pet.id, event);
+      final pet = VetRepository.pets.first;
+      final now = DateTime.now();
+      final nearest = appointment(
+        'Consulta real mais próxima',
+        now.add(const Duration(days: 2)),
+      );
+      final later = appointment(
+        'Consulta real posterior',
+        now.add(const Duration(days: 12)),
+      );
+      final past = appointment(
+        'Consulta real anterior',
+        now.subtract(const Duration(days: 3)),
+      );
+      for (final event in [nearest, later, past]) {
+        await saveAppointment(tester, pet.id, event);
+      }
+
+      await tester.pumpWidget(MaterialApp(home: AgendamentosPage(pet: pet)));
+      await tester.pumpAndSettle();
+
+      final upcoming = find.byKey(const ValueKey('appointments-upcoming-list'));
+      final history = find.byKey(const ValueKey('appointments-history-list'));
+      expect(find.text('Outros agendamentos futuros'), findsOneWidget);
+      expect(find.text('Histórico de agendamentos'), findsOneWidget);
+      expect(
+        tester
+            .widget<Semantics>(
+              find.byKey(
+                const ValueKey('appointments-upcoming-section-heading'),
+              ),
+            )
+            .properties
+            .header,
+        isTrue,
+      );
+      expect(
+        tester
+            .getSemantics(
+              find.byKey(
+                const ValueKey('appointments-upcoming-section-heading'),
+              ),
+            )
+            .getSemanticsData()
+            .flagsCollection
+            .isHeader,
+        isTrue,
+      );
+      expect(
+        tester
+            .widget<Semantics>(
+              find.byKey(
+                const ValueKey('appointments-history-section-heading'),
+              ),
+            )
+            .properties
+            .header,
+        isTrue,
+      );
+      expect(
+        tester
+            .getSemantics(
+              find.byKey(
+                const ValueKey('appointments-history-section-heading'),
+              ),
+            )
+            .getSemanticsData()
+            .flagsCollection
+            .isHeader,
+        isTrue,
+      );
+      expect(upcoming, findsOneWidget);
+      expect(history, findsOneWidget);
+      expect(
+        find.descendant(of: upcoming, matching: find.text(later.tipo)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: upcoming, matching: find.text(nearest.tipo)),
+        findsNothing,
+        reason:
+            'o próximo agendamento deve aparecer apenas no cartão em destaque',
+      );
+      expect(find.text(nearest.tipo), findsOneWidget);
+      expect(
+        find.descendant(of: history, matching: find.text(past.tipo)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: history, matching: find.text(nearest.tipo)),
+        findsNothing,
+      );
+      expect(find.byKey(ValueKey(cardKey(nearest))), findsNothing);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
     }
-
-    await tester.pumpWidget(MaterialApp(home: AgendamentosPage(pet: pet)));
-    await tester.pumpAndSettle();
-
-    final upcoming = find.byKey(const ValueKey('appointments-upcoming-list'));
-    final history = find.byKey(const ValueKey('appointments-history-list'));
-    expect(find.text('Outros agendamentos futuros'), findsOneWidget);
-    expect(find.text('Histórico de agendamentos'), findsOneWidget);
-    expect(upcoming, findsOneWidget);
-    expect(history, findsOneWidget);
-    expect(
-      find.descendant(of: upcoming, matching: find.text(later.tipo)),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: upcoming, matching: find.text(nearest.tipo)),
-      findsNothing,
-      reason:
-          'o próximo agendamento deve aparecer apenas no cartão em destaque',
-    );
-    expect(find.text(nearest.tipo), findsOneWidget);
-    expect(
-      find.descendant(of: history, matching: find.text(past.tipo)),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: history, matching: find.text(nearest.tipo)),
-      findsNothing,
-    );
-    expect(find.byKey(ValueKey(cardKey(nearest))), findsNothing);
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets('cartões reais abrem detalhes e oferecem exclusão confirmável', (

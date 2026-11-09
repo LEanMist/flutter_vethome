@@ -254,7 +254,8 @@ class _PerfilPageState extends State<PerfilPage> {
   Widget _buildAvatarTab(double s, {bool mobileFigma = false}) {
     return Container(
       width: 220 * s,
-      height: mobileFigma ? _mobileAvatarHeight(s) : 280 * s,
+      height: mobileFigma ? _mobileAvatarHeight(s) : null,
+      constraints: mobileFigma ? null : BoxConstraints(minHeight: 280 * s),
       decoration: BoxDecoration(
         color: VetColors.pinkOverlay50,
         border: Border.all(color: VetColors.rose, width: 5 * s),
@@ -300,7 +301,7 @@ class _PerfilPageState extends State<PerfilPage> {
   double _mobileAvatarNameTop(double s) => 15 * s;
 
   double _mobileAvatarPhotoTop(double s) {
-    // Include the paragraph's leading when reserving room for two scaled lines.
+    // Reserve the full wrapped name height, including paragraph leading.
     final nameStyle = DefaultTextStyle.of(context).style.merge(
       TextStyle(
         fontSize: 22 * s,
@@ -313,12 +314,29 @@ class _PerfilPageState extends State<PerfilPage> {
       text: TextSpan(text: _nome, style: nameStyle),
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 2,
     )..layout(maxWidth: 210 * s);
     return math.max(
       83 * s,
       _mobileAvatarNameTop(s) + namePainter.height + 8 * s,
     );
+  }
+
+  int? _nameActionMaxLines(double s) {
+    final nameStyle = DefaultTextStyle.of(context).style.merge(
+      TextStyle(
+        fontSize: 22 * s,
+        fontFamily: PetsTheme.fontComfortaa,
+        fontWeight: FontWeight.bold,
+        color: VetColors.brown,
+      ),
+    );
+    final painter = TextPainter(
+      text: TextSpan(text: _nome, style: nameStyle),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 2,
+    )..layout(maxWidth: 210 * s);
+    return painter.didExceedMaxLines ? null : 2;
   }
 
   double _mobileAvatarHeight(double s) {
@@ -332,6 +350,7 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   Widget _buildLegacyAvatarContent(double s) => Column(
+    mainAxisSize: MainAxisSize.min,
     children: [
       SizedBox(height: 15 * s),
       _buildNameAction(s),
@@ -364,7 +383,7 @@ class _PerfilPageState extends State<PerfilPage> {
           child: Text(
             _nome,
             textAlign: TextAlign.center,
-            maxLines: 2,
+            maxLines: _nameActionMaxLines(s),
             style: TextStyle(
               fontSize: 22 * s,
               fontFamily: PetsTheme.fontComfortaa,
@@ -562,6 +581,16 @@ class _NomeDialogState extends State<_NomeDialog> {
   late final TextEditingController _controller = TextEditingController(
     text: widget.inicial,
   );
+  String? _validationError;
+
+  void _save() {
+    final name = _controller.text.trim();
+    if (name.isEmpty) {
+      setState(() => _validationError = 'O nome não pode ficar vazio.');
+      return;
+    }
+    Navigator.pop(context, name);
+  }
 
   @override
   void dispose() {
@@ -574,20 +603,41 @@ class _NomeDialogState extends State<_NomeDialog> {
     return AlertDialog(
       backgroundColor: VetColors.pink,
       title: const Text('Mudar nome de perfil'),
-      content: VHField(
-        'Novo nome',
-        Icons.person_outline,
-        controller: _controller,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          VHField(
+            'Novo nome',
+            Icons.person_outline,
+            controller: _controller,
+            onChanged: (value) {
+              if (_validationError != null && value.trim().isNotEmpty) {
+                setState(() => _validationError = null);
+              }
+            },
+          ),
+          if (_validationError case final error?)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Semantics(
+                key: const ValueKey('profile-name-validation-error'),
+                liveRegion: true,
+                label: error,
+                child: Text(
+                  error,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            ),
+        ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancelar'),
         ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, _controller.text.trim()),
-          child: const Text('Salvar'),
-        ),
+        TextButton(onPressed: _save, child: const Text('Salvar')),
       ],
     );
   }

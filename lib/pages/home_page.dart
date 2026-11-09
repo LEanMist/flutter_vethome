@@ -8,6 +8,23 @@ import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/figma_action_target.dart';
 
+double _measureTextHeight({
+  required InlineSpan text,
+  required double maxWidth,
+  required TextScaler textScaler,
+  required TextDirection textDirection,
+}) {
+  final painter = TextPainter(
+    text: text,
+    textAlign: TextAlign.center,
+    textDirection: textDirection,
+    textScaler: textScaler,
+  )..layout(maxWidth: maxWidth);
+  final height = painter.height;
+  painter.dispose();
+  return height;
+}
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -38,12 +55,72 @@ class HomePage extends StatelessWidget {
               math.max(0.8, constraints.maxHeight / 844),
             );
             final profileTargetHeight = math.max(48.0, 56 * scale);
+            final textScaler = MediaQuery.textScalerOf(context);
+            final textDirection = Directionality.of(context);
+            final titleFontSize = 30 * scale;
+            final titleTextSpan = TextSpan(
+              children: [
+                const TextSpan(
+                  text: 'Seja ',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const TextSpan(
+                  text: 'Bem Vindo!',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            );
+            final titleStyle = TextStyle(
+              color: VetColors.brown,
+              fontFamily: VH.headingFontFamily,
+              fontSize: titleFontSize,
+              fontWeight: FontWeight.bold,
+            );
+            final subtitleStyle = TextStyle(
+              color: VetColors.brown,
+              fontFamily: VH.headingFontFamily,
+              fontSize: 15 * scale,
+              fontWeight: FontWeight.bold,
+            );
+            final inheritedTextStyle = DefaultTextStyle.of(context).style;
+            final scaledText = textScaler.scale(titleFontSize) > titleFontSize;
+            final titleTop = 458 * scale;
+            final titleHeight = _measureTextHeight(
+              text: TextSpan(
+                style: inheritedTextStyle.merge(titleStyle),
+                children: titleTextSpan.children,
+              ),
+              maxWidth: 390 * scale,
+              textScaler: textScaler,
+              textDirection: textDirection,
+            );
+            final subtitleHeight = _measureTextHeight(
+              text: TextSpan(
+                text: 'Cuidando de quem\nte faz sorrir',
+                style: inheritedTextStyle.merge(subtitleStyle),
+              ),
+              maxWidth: 390 * scale,
+              textScaler: textScaler,
+              textDirection: textDirection,
+            );
+            final subtitleTop = scaledText
+                ? math.max(508 * scale, titleTop + titleHeight + 14 * scale)
+                : 508 * scale;
+            final ringTop = scaledText
+                ? math.max(
+                    580 * scale,
+                    subtitleTop + subtitleHeight + 36 * scale,
+                  )
+                : 580 * scale;
+            final frameHeight = scaledText
+                ? math.max(844 * scale, ringTop + 197 * scale)
+                : 844 * scale;
 
             final frame = Center(
               child: SizedBox(
                 key: const ValueKey('home-figma-frame'),
                 width: 390 * scale,
-                height: 844 * scale,
+                height: frameHeight,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(30 * scale),
                   child: Stack(
@@ -67,7 +144,7 @@ class HomePage extends StatelessWidget {
                         left: 0,
                         top: 415 * scale,
                         width: 390 * scale,
-                        height: 429 * scale,
+                        height: frameHeight - 415 * scale,
                         child: Container(
                           key: const ValueKey('home-welcome-panel'),
                           decoration: BoxDecoration(
@@ -83,55 +160,30 @@ class HomePage extends StatelessWidget {
                       ),
                       Positioned(
                         left: -1 * scale,
-                        top: 458 * scale,
+                        top: titleTop,
                         width: 390 * scale,
                         child: Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Seja ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              TextSpan(
-                                text: 'Bem Vindo!',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                          titleTextSpan,
                           key: const ValueKey('home-title'),
                           textAlign: TextAlign.center,
-                          maxLines: 1,
-                          style: TextStyle(
-                            color: VetColors.brown,
-                            fontFamily: VH.headingFontFamily,
-                            fontSize: 30 * scale,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          maxLines: scaledText ? null : 1,
+                          style: titleStyle,
                         ),
                       ),
                       Positioned(
                         left: -1 * scale,
-                        top: 508 * scale,
+                        top: subtitleTop,
                         width: 390 * scale,
                         child: Text(
                           'Cuidando de quem\nte faz sorrir',
                           key: const ValueKey('home-subtitle'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: VetColors.brown,
-                            fontFamily: VH.headingFontFamily,
-                            fontSize: 15 * scale,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: subtitleStyle,
                         ),
                       ),
                       Positioned(
                         left: 106 * scale,
-                        top: 580 * scale,
+                        top: ringTop,
                         width: 177 * scale,
                         height: 177 * scale,
                         child: ExcludeSemantics(
@@ -143,7 +195,7 @@ class HomePage extends StatelessWidget {
                       ),
                       Positioned(
                         left: 117 * scale,
-                        top: 591 * scale,
+                        top: ringTop + 11 * scale,
                         width: 155 * scale,
                         height: 155 * scale,
                         child: Semantics(
@@ -243,7 +295,7 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             );
-            if (844 * scale > constraints.maxHeight) {
+            if (frameHeight > constraints.maxHeight) {
               return SingleChildScrollView(
                 key: const ValueKey('home-scroll-view'),
                 child: frame,

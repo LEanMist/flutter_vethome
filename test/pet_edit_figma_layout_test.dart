@@ -5,6 +5,7 @@ import 'package:flutter_vethome/pages/editar_pet_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
+import 'package:flutter_vethome/widgets/pet_form.dart';
 import 'package:flutter_vethome/widgets/pet_photo_button.dart';
 
 void main() {
@@ -108,6 +109,51 @@ void main() {
         labelOffset: const Offset(30, 309),
       );
 
+      final sexField = find.ancestor(
+        of: find.text('Gênero/Sexo'),
+        matching: find.byType(VHField),
+      );
+      final sexInput = find.descendant(
+        of: sexField,
+        matching: find.byType(TextFormField),
+      );
+      expect(tester.widget<TextFormField>(sexInput).controller!.text, 'M');
+      final sexSemantics = find.descendant(
+        of: sexField,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && widget.properties.label == 'Gênero/Sexo',
+        ),
+      );
+      expect(tester.widget<Semantics>(sexSemantics).properties.value, 'Macho');
+
+      final weightField = find.ancestor(
+        of: find.text('Peso'),
+        matching: find.byType(VHField),
+      );
+      final weightInput = find.descendant(
+        of: weightField,
+        matching: find.byType(TextFormField),
+      );
+      final weightWidget = tester.widget<TextFormField>(weightInput);
+      expect(weightWidget.controller!.text, '24');
+      expect(
+        tester
+            .widget<InputDecorator>(
+              find.descendant(
+                of: weightField,
+                matching: find.byType(InputDecorator),
+              ),
+            )
+            .decoration
+            .suffix,
+        isA<Text>(),
+      );
+      expect(
+        find.descendant(of: weightField, matching: find.text('kg')),
+        findsOneWidget,
+      );
+
       final cancel = find.ancestor(
         of: find.text('Cancelar'),
         matching: find.byType(OutlinedButton),
@@ -188,6 +234,83 @@ void main() {
     } finally {
       semantics.dispose();
     }
+  });
+
+  testWidgets('editor compacto salva sexo completo e peso numérico', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final pet = PetModel(
+      name: 'Fernando',
+      imagePath: '',
+      description: '',
+      species: 'Cachorro',
+      sex: 'Macho',
+      weightKg: 24.75,
+      birthDate: DateTime(2012, 3, 23),
+      breed: 'Lulu-da-Pomerania',
+    );
+    final savedValues = <PetFormValue>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 310,
+              height: 480,
+              child: PetForm(
+                title: 'Editar pet',
+                pet: pet,
+                modal: true,
+                onSaved: savedValues.add,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final sexField = find.ancestor(
+      of: find.text('Gênero/Sexo'),
+      matching: find.byType(VHField),
+    );
+    final sexInput = find.descendant(
+      of: sexField,
+      matching: find.byType(TextFormField),
+    );
+    final sexFieldWidget = tester.widget<VHField>(sexField);
+    expect(sexFieldWidget.choices, ['M', 'F']);
+    expect(sexFieldWidget.choiceDisplayLabel?.call('F'), 'Fêmea');
+    expect(sexFieldWidget.semanticsValue?.call('F'), 'Fêmea');
+    expect(tester.widget<TextFormField>(sexInput).controller!.text, 'M');
+    final weightField = find.ancestor(
+      of: find.text('Peso'),
+      matching: find.byType(VHField),
+    );
+    final weightInput = find.descendant(
+      of: weightField,
+      matching: find.byType(TextFormField),
+    );
+    expect(tester.widget<TextFormField>(weightInput).controller!.text, '24.75');
+
+    await tester.tap(sexInput);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Fêmea').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('pet-edit-save-target')));
+    await tester.pumpAndSettle();
+
+    expect(savedValues, hasLength(1));
+    expect(savedValues.single.sex, 'Fêmea');
+    expect(savedValues.single.weight, 24.75);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('edição exige espécie e abre Mais opções quando ela falta', (

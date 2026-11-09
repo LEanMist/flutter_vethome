@@ -113,19 +113,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
   Widget _mobileAgenda(List<_AgendaItem> appointments) {
     final width = MediaQuery.sizeOf(context).width;
     final scale = (width / 390).clamp(0.8, 1.0).toDouble();
+    final textScaler = MediaQuery.textScalerOf(context);
     final calendarWeekCount = VetCalendar.monthDays(_mes).length ~/ 7;
     // O Figma usa y=323 em meses de cinco semanas; seis semanas exigem espaço.
     final selectedDateTop = calendarWeekCount > 5 ? 348.0 : 323.0;
-    final actionTop = math.max(
-      651.0,
-      appointments.length > 3 ? 399.0 + 84.0 * appointments.length : 651.0,
-    );
-    final buttonVisualHeight = 41 * scale;
-    final buttonTouchHeight = math.max(48.0, buttonVisualHeight);
-    final contentHeight = math.max(
-      717 * scale,
-      actionTop * scale + (buttonTouchHeight + buttonVisualHeight) / 2,
-    );
     final weekdays = const [
       'Domingo',
       'Segunda Feira',
@@ -135,7 +126,46 @@ class _AgendaScreenState extends State<AgendaScreen> {
       'Sexta Feira',
       'Sábado',
     ];
-
+    final selectedDateLabel =
+        '${_selecionado.day} - ${weekdays[_selecionado.weekday % 7]}';
+    final selectedDateTextStyle = TextStyle(
+      fontFamily: VH.headingFontFamily,
+      fontSize: 22 * scale,
+      fontWeight: FontWeight.bold,
+      color: VH.foreground,
+    );
+    final selectedDateTextPainter = TextPainter(
+      text: TextSpan(text: selectedDateLabel, style: selectedDateTextStyle),
+      textAlign: TextAlign.center,
+      textDirection: Directionality.of(context),
+      textScaler: textScaler,
+    )..layout(maxWidth: 248 * scale);
+    final dateTextIsEnlarged = textScaler.scale(22 * scale) > 22 * scale;
+    final selectedDateHeight = dateTextIsEnlarged
+        ? math.max(41 * scale, selectedDateTextPainter.height + 12 * scale)
+        : 41 * scale;
+    selectedDateTextPainter.dispose();
+    final selectedDateBottom = selectedDateTop * scale + selectedDateHeight;
+    final contentOffset = math.max(
+      0.0,
+      selectedDateBottom + 10 * scale - 399 * scale,
+    );
+    final emptyMessageTop = math.max(
+      414 * scale,
+      selectedDateBottom + 10 * scale,
+    );
+    final actionTop = math.max(
+      651.0,
+      appointments.length > 3 ? 399.0 + 84.0 * appointments.length : 651.0,
+    );
+    final buttonVisualHeight = 41 * scale;
+    final buttonTouchHeight = math.max(48.0, buttonVisualHeight);
+    final contentHeight = math.max(
+      717 * scale,
+      actionTop * scale +
+          contentOffset +
+          (buttonTouchHeight + buttonVisualHeight) / 2,
+    );
     return SizedBox(
       key: const ValueKey('agenda-mobile-layout'),
       width: 390 * scale,
@@ -164,7 +194,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             left: 67 * scale,
             top: selectedDateTop * scale,
             width: 258 * scale,
-            height: 41 * scale,
+            height: selectedDateHeight,
             child: Container(
               key: const ValueKey('agenda-selected-date'),
               alignment: Alignment.center,
@@ -177,14 +207,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 ),
               ),
               child: Text(
-                '${_selecionado.day} - ${weekdays[_selecionado.weekday % 7]}',
+                selectedDateLabel,
+                key: const ValueKey('agenda-selected-date-label'),
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: VH.headingFontFamily,
-                  fontSize: 22 * scale,
-                  fontWeight: FontWeight.bold,
-                  color: VH.foreground,
-                ),
+                style: selectedDateTextStyle,
               ),
             ),
           ),
@@ -192,7 +218,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             Positioned(
               left: 35 * scale,
               right: 35 * scale,
-              top: 414 * scale,
+              top: emptyMessageTop,
               child: Text(
                 'Não há consultas neste dia.',
                 textAlign: TextAlign.center,
@@ -204,11 +230,16 @@ class _AgendaScreenState extends State<AgendaScreen> {
               ),
             ),
           for (var index = 0; index < appointments.length; index++) ...[
-            _mobileAppointment(appointments[index], index, scale),
+            _mobileAppointment(
+              appointments[index],
+              index,
+              scale,
+              topOffset: contentOffset,
+            ),
             if (index < appointments.length - 1)
               Positioned(
                 left: 88 * scale,
-                top: (466 + 85 * index) * scale,
+                top: (466 + 85 * index) * scale + contentOffset,
                 child: _FigmaDottedLine(
                   key: ValueKey('agenda-divider-$index'),
                   width: 221 * scale,
@@ -217,7 +248,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ],
           Positioned(
             left: 345 * scale,
-            top: 435 * scale,
+            top: 435 * scale + contentOffset,
             width: 20 * scale,
             height: 20 * scale,
             child: SizedBox.expand(
@@ -238,7 +269,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
           Positioned(
             left: 345 * scale,
-            top: 561 * scale,
+            top: 561 * scale + contentOffset,
             width: 20 * scale,
             height: 20 * scale,
             child: SizedBox.expand(
@@ -261,7 +292,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
             left: 145 * scale,
             top:
                 actionTop * scale -
-                (buttonTouchHeight - buttonVisualHeight) / 2,
+                (buttonTouchHeight - buttonVisualHeight) / 2 +
+                contentOffset,
             width: 99 * scale,
             height: buttonTouchHeight,
             child: Semantics(
@@ -310,8 +342,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
     );
   }
 
-  Widget _mobileAppointment(_AgendaItem item, int index, double scale) {
-    final top = (399 + 84 * index) * scale;
+  Widget _mobileAppointment(
+    _AgendaItem item,
+    int index,
+    double scale, {
+    required double topOffset,
+  }) {
+    final top = (399 + 84 * index) * scale + topOffset;
     final end = item.agendamento.endDate;
     final label = [
       item.agendamento.tipo,

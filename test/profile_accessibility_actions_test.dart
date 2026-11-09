@@ -77,6 +77,54 @@ void main() {
       semantics.dispose();
     }
   });
+
+  testWidgets('nome vazio mantém o diálogo aberto e anuncia validação', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    try {
+      await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('profile-change-name-action')),
+      );
+      await tester.pumpAndSettle();
+
+      final nameInput = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextFormField),
+      );
+      await tester.enterText(nameInput, '   ');
+      await tester.tap(find.widgetWithText(TextButton, 'Salvar'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('O nome não pode ficar vazio.'), findsOneWidget);
+      final error = tester.widget<Semantics>(
+        find.byKey(const ValueKey('profile-name-validation-error')),
+      );
+      expect(error.properties.liveRegion, isTrue);
+      expect(error.properties.label, 'O nome não pode ficar vazio.');
+      expect(tester.takeException(), isNull);
+
+      await tester.enterText(nameInput, '    ');
+      await tester.pumpAndSettle();
+      expect(find.text('O nome não pode ficar vazio.'), findsOneWidget);
+
+      await tester.enterText(nameInput, 'Nome atualizado');
+      await tester.pumpAndSettle();
+      expect(find.text('O nome não pode ficar vazio.'), findsNothing);
+      expect(find.byType(AlertDialog), findsOneWidget);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
   for (final entry in [
     (key: LogicalKeyboardKey.enter, label: 'Enter'),
     (key: LogicalKeyboardKey.space, label: 'Espaço'),

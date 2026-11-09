@@ -150,6 +150,101 @@ void main() {
     });
   }
 
+  testWidgets('HOME_PAGE_2 adapta título e espaçamento com texto a 200%', (
+    tester,
+  ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    tester.view.devicePixelRatio = 1;
+
+    for (final viewport in [const Size(390, 844), const Size(320, 640)]) {
+      tester.view.physicalSize = viewport;
+      await tester.pumpWidget(
+        MaterialApp(
+          routes: {
+            '/pets': (_) => const Scaffold(body: Text('Pets destination')),
+          },
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: const HomePage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final scale = _homeScaleFor(viewport);
+      final titleFinder = find.byKey(const ValueKey('home-title'));
+      final title = tester.widget<Text>(titleFinder);
+      final titleRect = tester.getRect(titleFinder);
+      final titlePainter = TextPainter(
+        text: TextSpan(
+          style: title.style,
+          children: (title.textSpan! as TextSpan).children,
+        ),
+        textDirection: TextDirection.ltr,
+        textScaler: TextScaler.linear(2),
+      )..layout(maxWidth: 390 * scale);
+      final subtitleRect = tester.getRect(
+        find.byKey(const ValueKey('home-subtitle')),
+      );
+      final ringRect = tester.getRect(
+        find.byKey(const ValueKey('home-dashed-ring')),
+      );
+      final frameRect = tester.getRect(
+        find.byKey(const ValueKey('home-figma-frame')),
+      );
+
+      expect(title.maxLines, isNull, reason: '$viewport');
+      expect(
+        titlePainter.computeLineMetrics().length,
+        greaterThan(1),
+        reason:
+            '$viewport: o título deve realmente quebrar em mais de uma linha',
+      );
+      titlePainter.dispose();
+      expect(titleRect.height, greaterThan(40 * scale), reason: '$viewport');
+      expect(
+        subtitleRect.top,
+        greaterThanOrEqualTo(titleRect.bottom + 8 * scale),
+        reason: '$viewport',
+      );
+      expect(
+        ringRect.top,
+        greaterThanOrEqualTo(subtitleRect.bottom + 20 * scale),
+        reason: '$viewport',
+      );
+      expect(
+        frameRect.height,
+        greaterThanOrEqualTo(ringRect.bottom + 10 * scale),
+        reason: '$viewport',
+      );
+
+      final petsButton = find.byKey(const ValueKey('home-open-pets'));
+      await tester.ensureVisible(petsButton);
+      await tester.pumpAndSettle();
+      final petsRect = tester.getRect(petsButton);
+      expect(petsRect.top, greaterThanOrEqualTo(0), reason: '$viewport');
+      expect(
+        petsRect.bottom,
+        lessThanOrEqualTo(viewport.height),
+        reason: '$viewport',
+      );
+      await tester.tap(petsButton);
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Pets destination'),
+        findsOneWidget,
+        reason: '$viewport',
+      );
+      Navigator.of(tester.element(find.text('Pets destination'))).pop();
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: '$viewport');
+    }
+  });
+
   testWidgets('HOME_PAGE_2: preserva o frame e rola em telas baixas', (
     tester,
   ) async {

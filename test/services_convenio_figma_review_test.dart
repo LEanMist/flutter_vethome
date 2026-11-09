@@ -249,7 +249,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: const ConvenioScreen(),
+        home: const ConvenioScreen(service: 'Consulta Geral'),
         routes: {
           '/nova-consulta': (context) {
             received = ModalRoute.of(context)!.settings.arguments as Map;
@@ -266,6 +266,70 @@ void main() {
     expect(received?['petId'], pet.id);
     expect(received?['plan'], 'DogLife');
     expect(received?['service'], isNotEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('acesso direto ao Convênio exige serviço antes de continuar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    final globallySelectedPet = VetRepository.pets.first;
+    final routePet = VetRepository.pets[1];
+    VetRepository.selectedPetId = globallySelectedPet.id;
+    Map<dynamic, dynamic>? received;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: ElevatedButton(
+              onPressed: () => Navigator.pushNamed(
+                context,
+                '/convenio',
+                arguments: {'petId': routePet.id},
+              ),
+              child: const Text('Abrir convênio'),
+            ),
+          ),
+        ),
+        routes: {
+          '/servicos': (_) => const ServicosScreen(),
+          '/convenio': (_) => const ConvenioScreen(),
+          '/nova-consulta': (context) {
+            received = ModalRoute.of(context)!.settings.arguments as Map;
+            return const Scaffold(body: Text('Consulta aberta'));
+          },
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Abrir convênio'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('PetLove'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Selecione pelo menos um serviço antes de continuar.'),
+      findsOneWidget,
+    );
+    expect(received, isNull);
+
+    await tester.tap(find.text('Selecionar serviços'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ServicosScreen), findsOneWidget);
+    expect(find.text('GATO'), findsOneWidget);
+    expect(VetRepository.selectedPetId, globallySelectedPet.id);
+    expect(received, isNull);
+
+    Navigator.of(tester.element(find.byType(ServicosScreen))).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Abrir convênio'), findsOneWidget);
+    expect(find.byType(ConvenioScreen), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -336,7 +400,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: const ConvenioScreen(),
+        home: const ConvenioScreen(service: 'Consulta Geral'),
         routes: {
           '/nova-consulta': (context) {
             received = ModalRoute.of(context)!.settings.arguments as Map;

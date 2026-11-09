@@ -42,6 +42,9 @@ class VHField extends StatefulWidget {
     this.validator,
     this.keyboardType,
     this.choices,
+    this.choiceDisplayLabel,
+    this.semanticsValue,
+    this.suffixText,
     this.suggestions = const [],
     this.onChanged,
     this.inputFormatters,
@@ -74,6 +77,9 @@ class VHField extends StatefulWidget {
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
   final List<String>? choices;
+  final String Function(String)? choiceDisplayLabel;
+  final String? Function(String)? semanticsValue;
+  final String? suffixText;
   final List<String> suggestions;
   final ValueChanged<String>? onChanged;
   final List<TextInputFormatter>? inputFormatters;
@@ -215,7 +221,9 @@ class _VHFieldState extends State<VHField> {
                       return ListTile(
                         minTileHeight: 48,
                         dense: true,
-                        title: Text(value),
+                        title: Text(
+                          widget.choiceDisplayLabel?.call(value) ?? value,
+                        ),
                         selected: controller.text == value,
                         tileColor:
                             _keyboardChoiceInteraction &&
@@ -502,6 +510,14 @@ class _VHFieldState extends State<VHField> {
       labelStyle: const TextStyle(fontSize: 12, color: VH.foreground),
       isDense: widget.compact,
       hintText: widget.value,
+      suffix: widget.suffixText == null
+          ? null
+          : Text(
+              widget.suffixText!,
+              style: widget.figmaForm
+                  ? VH.figmaFieldValueStyle.copyWith(fontSize: _fontSize(width))
+                  : null,
+            ),
       filled: true,
       fillColor: Colors.transparent,
       prefixIconConstraints: BoxConstraints.tightFor(
@@ -574,11 +590,13 @@ class _VHFieldState extends State<VHField> {
   );
   @override
   Widget build(BuildContext context) {
-    final choices = widget.choices;
-    final hasChoices = choices?.isNotEmpty ?? false;
-    final activeChoice = hasChoices
-        ? choices![_activeChoiceIndex % choices.length]
+    final choices = widget.choices ?? const <String>[];
+    final hasChoices = choices.isNotEmpty;
+    final activeRawChoice = hasChoices
+        ? choices[_activeChoiceIndex % choices.length]
         : '';
+    final activeChoice =
+        widget.choiceDisplayLabel?.call(activeRawChoice) ?? activeRawChoice;
     final fieldInput = Focus(
       canRequestFocus: false,
       skipTraversal: true,
@@ -637,8 +655,9 @@ class _VHFieldState extends State<VHField> {
               value: error == null
                   ? controller.text.isEmpty
                         ? 'Nenhuma opção selecionada'
-                        : controller.text
-                  : '${controller.text.isEmpty ? 'Nenhuma opção selecionada' : controller.text}. Erro: $error',
+                        : widget.semanticsValue?.call(controller.text) ??
+                              controller.text
+                  : '${controller.text.isEmpty ? 'Nenhuma opção selecionada' : widget.semanticsValue?.call(controller.text) ?? controller.text}. Erro: $error',
               hint: error != null
                   ? 'Erro: $error. Selecione uma opção para corrigir. ${isOpen ? 'Opção destacada: $activeChoice.' : ''}'
                   : isOpen
@@ -754,7 +773,7 @@ class _VHFieldState extends State<VHField> {
         ),
       ],
     );
-    return widget.labelAbove
+    return widget.labelAbove && widget.suffixText == null
         ? MergeSemantics(child: fieldContent)
         : fieldContent;
   }

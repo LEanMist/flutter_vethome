@@ -65,6 +65,7 @@ void main() {
     WidgetTester tester,
     Size viewport, {
     DateTime? initialDate,
+    double textScale = 1,
   }) async {
     tester.view.physicalSize = viewport;
     tester.view.devicePixelRatio = 1;
@@ -74,6 +75,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: VetTheme.light(VH.primary),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: AgendaScreen(initialDate: initialDate ?? DateTime(2026, 1, 13)),
       ),
     );
@@ -443,6 +450,55 @@ void main() {
     expect(lastWeekDay.bottom, lessThanOrEqualTo(selectedDate.top));
     expect(selectedDate.bottom, lessThanOrEqualTo(399 * expectedScale));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Agenda expande a faixa da data com texto ampliado', (
+    tester,
+  ) async {
+    final scenarios = [
+      (viewport: const Size(390, 844), date: DateTime(2026, 1, 13)),
+      (viewport: const Size(320, 640), date: DateTime(2026, 8, 15)),
+    ];
+
+    for (final scenario in scenarios) {
+      await pumpAgenda(
+        tester,
+        scenario.viewport,
+        initialDate: scenario.date,
+        textScale: 2,
+      );
+      final scale = (scenario.viewport.width / 390).clamp(0.8, 1.0);
+      final selectedDate = tester.getRect(
+        find.byKey(const ValueKey('agenda-selected-date')),
+      );
+      final label = tester.getRect(
+        find.byKey(const ValueKey('agenda-selected-date-label')),
+      );
+      final emptyMessage = find.text('Não há consultas neste dia.');
+      final appointmentCard = find.byWidgetPredicate(
+        (widget) =>
+            widget is InkWell &&
+            widget.key is ValueKey<String> &&
+            (widget.key! as ValueKey<String>).value.startsWith(
+              'agenda-appointment-',
+            ),
+      );
+      final followingContent = emptyMessage.evaluate().isNotEmpty
+          ? emptyMessage
+          : appointmentCard.first;
+      final followingContentRect = tester.getRect(followingContent);
+
+      expect(selectedDate.height, greaterThan(41 * scale));
+      expect(label.left, greaterThanOrEqualTo(selectedDate.left + 5 * scale));
+      expect(label.right, lessThanOrEqualTo(selectedDate.right - 5 * scale));
+      expect(label.top, greaterThanOrEqualTo(selectedDate.top + 5 * scale));
+      expect(label.bottom, lessThanOrEqualTo(selectedDate.bottom - 5 * scale));
+      expect(
+        followingContentRect.top,
+        greaterThanOrEqualTo(selectedDate.bottom + 8 * scale),
+      );
+      expect(tester.takeException(), isNull, reason: '${scenario.viewport}');
+    }
   });
 
   testWidgets('Agenda 360×800 rola sem sobrepor a navegação inferior', (

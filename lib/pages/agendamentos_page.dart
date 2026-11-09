@@ -151,10 +151,14 @@ class _AgendamentosPageState extends State<AgendamentosPage> {
                 Navigator.pushNamed(context, '/agenda', arguments: next.data),
           ),
         if (otherFuture.isNotEmpty) ...[
-          VetSectionTitle(
-            next == null
-                ? 'Agendamentos futuros'
-                : 'Outros agendamentos futuros',
+          Semantics(
+            key: const ValueKey('appointments-upcoming-section-heading'),
+            header: true,
+            child: VetSectionTitle(
+              next == null
+                  ? 'Agendamentos futuros'
+                  : 'Outros agendamentos futuros',
+            ),
           ),
           _appointmentList(
             listKey: 'appointments-upcoming-list',
@@ -162,7 +166,11 @@ class _AgendamentosPageState extends State<AgendamentosPage> {
             real: real,
           ),
         ],
-        const VetSectionTitle('Histórico de agendamentos'),
+        Semantics(
+          key: ValueKey('appointments-history-section-heading'),
+          header: true,
+          child: VetSectionTitle('Histórico de agendamentos'),
+        ),
         if (history.isEmpty)
           const Text('Nenhum agendamento anterior')
         else
