@@ -71,6 +71,9 @@ class AppointmentCard extends StatelessWidget {
                     confirmed ? 'Confirmado' : 'Pendente',
                     confirmed ? VetTones.success : VetTones.warning,
                     dense: true,
+                    textColor: confirmed
+                        ? VetTones.successForeground
+                        : VetTones.warningForeground,
                   ),
                 ],
               ),

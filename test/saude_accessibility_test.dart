@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/saude_page.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/vet/vet_card.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
@@ -141,6 +142,18 @@ void main() {
       findsOneWidget,
     );
     semantics.dispose();
+  });
+
+  testWidgets('Descrição do histórico mantém contraste legível', (
+    tester,
+  ) async {
+    final pet = VetRepository.pets.first;
+    final description = VetRepository.consultas(pet.id).first.descricao;
+    await tester.pumpWidget(MaterialApp(home: SaudePage(pet: pet)));
+    await tester.pumpAndSettle();
+
+    final descriptionText = tester.widget<Text>(find.text(description));
+    expect(descriptionText.style?.color, VetColors.brown);
   });
 
   testWidgets('Seções de Saúde são cabeçalhos semânticos no mobile e desktop', (

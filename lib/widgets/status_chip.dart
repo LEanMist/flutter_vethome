@@ -3,11 +3,18 @@ import 'package:flutter/material.dart';
 import 'pets/pets_theme.dart';
 
 class StatusChip extends StatelessWidget {
-  const StatusChip(this.label, this.color, {super.key, this.dense = false});
+  const StatusChip(
+    this.label,
+    this.color, {
+    super.key,
+    this.dense = false,
+    this.textColor,
+  });
 
   final String label;
   final Color color;
   final bool dense;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +31,7 @@ class StatusChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          color: color,
+          color: textColor ?? color,
           fontSize: (dense ? 10 : 11) * s,
           fontWeight: FontWeight.w700,
         ),

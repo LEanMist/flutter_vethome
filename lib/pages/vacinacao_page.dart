@@ -359,11 +359,27 @@ class _VacinaCard extends StatelessWidget {
   final VoidCallback? onEdit, onDelete;
   @override
   Widget build(BuildContext context) {
-    final (color, label) = switch (vaccine.status) {
-      VacinaStatus.emDia => (VetTones.success, 'Em dia'),
-      VacinaStatus.vencendo => (VetTones.warning, 'Em breve'),
-      VacinaStatus.atrasada => (VetTones.warning, 'Atrasada'),
-      VacinaStatus.semPrevisao => (VetColors.brown, 'Sem previsão'),
+    final (color, label, textColor) = switch (vaccine.status) {
+      VacinaStatus.emDia => (
+        VetTones.success,
+        'Em dia',
+        VetTones.successForeground,
+      ),
+      VacinaStatus.vencendo => (
+        VetTones.warning,
+        'Em breve',
+        VetTones.warningForeground,
+      ),
+      VacinaStatus.atrasada => (
+        VetTones.warning,
+        'Atrasada',
+        VetTones.warningForeground,
+      ),
+      VacinaStatus.semPrevisao => (
+        VetColors.brown,
+        'Sem previsão',
+        VetColors.brown,
+      ),
     };
     return VetCard(
       flat: true,
@@ -389,7 +405,7 @@ class _VacinaCard extends StatelessWidget {
                   ),
                 ),
               ),
-              StatusChip(label, color, dense: true),
+              StatusChip(label, color, dense: true, textColor: textColor),
               if (onEdit != null)
                 SizedBox(
                   width: 48,

@@ -110,7 +110,9 @@ class SaudePage extends StatelessWidget {
             value: vaccines.isEmpty
                 ? 'Nenhuma cadastrada'
                 : '${vaccines.where((v) => v.status == VacinaStatus.emDia).length}/${vaccines.length} em dia',
-            color: upToDate ? VetTones.success : VetTones.warning,
+            color: upToDate
+                ? VetTones.successForeground
+                : VetTones.warningForeground,
           ),
         ),
         const SizedBox(width: 12),
@@ -137,7 +139,7 @@ class SaudePage extends StatelessWidget {
             semanticsLabel: deworming?.isDemonstration == true
                 ? 'Vermifugação: dado demonstrativo; não há data real cadastrada.'
                 : null,
-            color: VetTones.info,
+            color: VetTones.infoForeground,
           ),
         ),
       ],
@@ -228,7 +230,12 @@ class _ConsultaCard extends StatelessWidget {
     );
     final status = c.isDemonstration
         ? const StatusChip('Demonstração', VetColors.brown, dense: true)
-        : const StatusChip('Concluído', VetTones.success, dense: true);
+        : const StatusChip(
+            'Concluído',
+            VetTones.success,
+            dense: true,
+            textColor: VetTones.successForeground,
+          );
     return Semantics(
       container: true,
       excludeSemantics: true,
@@ -272,10 +279,7 @@ class _ConsultaCard extends StatelessWidget {
             SizedBox(height: 8 * s),
             Text(
               c.descricao,
-              style: TextStyle(
-                fontSize: 12 * s,
-                color: VetColors.brown.withValues(alpha: 0.8),
-              ),
+              style: TextStyle(fontSize: 12 * s, color: VetColors.brown),
             ),
           ],
         ),
