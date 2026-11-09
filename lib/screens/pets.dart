@@ -459,6 +459,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                       species: pet.species,
                       size: 32,
                       listSilhouette: true,
+                      silhouetteColor: Colors.white,
                     ),
                   ],
                 ),

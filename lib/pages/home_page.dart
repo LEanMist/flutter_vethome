@@ -357,7 +357,7 @@ class _PlayButtonPainter extends CustomPainter {
       center,
       52,
       Paint()
-        ..color = VetColors.pink
+        ..color = VetColors.homePetControl
         ..style = PaintingStyle.stroke
         ..strokeWidth = 9.7,
     );
@@ -366,7 +366,7 @@ class _PlayButtonPainter extends CustomPainter {
       ..lineTo(101.06, 77.5)
       ..lineTo(65.72, 51.925)
       ..close();
-    canvas.drawPath(triangle, Paint()..color = VetColors.pink);
+    canvas.drawPath(triangle, Paint()..color = VetColors.homePetControl);
     canvas.restore();
   }
 

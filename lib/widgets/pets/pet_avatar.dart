@@ -15,6 +15,7 @@ class PetAvatar extends StatelessWidget {
     this.photoBase64,
     this.species,
     this.listSilhouette = false,
+    this.silhouetteColor,
   });
 
   final String image;
@@ -23,6 +24,7 @@ class PetAvatar extends StatelessWidget {
   final String? species;
   final String? photoBase64;
   final bool listSilhouette;
+  final Color? silhouetteColor;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +51,9 @@ class PetAvatar extends StatelessWidget {
               width: width,
               height: height,
               fit: BoxFit.contain,
-              color: listSilhouette ? VetColors.brownOnRose : null,
+              color: listSilhouette
+                  ? silhouetteColor ?? VetColors.brownOnRose
+                  : null,
               colorBlendMode: listSilhouette ? BlendMode.srcIn : null,
               cacheWidth: (width * dpr).round(),
               excludeFromSemantics: true,

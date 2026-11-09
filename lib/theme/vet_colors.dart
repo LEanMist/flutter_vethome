@@ -9,6 +9,8 @@ class VetColors {
   static const Color pink = Color(0xFFFAD3D5); // FAD3D5 (fundo, botões)
   static const Color rose = Color(0xFFC08081); // C08081 (header, cards)
   static const Color brown = Color(0xFF68442E); // 68442E (ícones, textos)
+  // Contraste de 4,24:1 no fundo rosa composto do botão principal da Home.
+  static const Color homePetControl = brown;
   // Contraste >= 4.5:1 para valores sobre o cartão rosa de Endereços.
   static const Color brownOnRoseCard = Color(0xFF603D28);
   // Contraste >= 4.5:1 sobre superfícies e gradientes rosa claros.

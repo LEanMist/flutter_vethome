@@ -6,6 +6,7 @@ import 'package:flutter_vethome/screens/pets.dart'
     show ServicosScreen, ConvenioScreen;
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
+import 'package:flutter_vethome/widgets/pets/pet_avatar.dart';
 import 'package:flutter_vethome/widgets/vet_choice_pill.dart' show VetChevron;
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
@@ -46,6 +47,17 @@ void main() {
     expect(title.style?.fontSize, 30);
     expect(title.style?.fontWeight, FontWeight.bold);
     expect(title.style?.color, Colors.white);
+    final petAvatar = find.byType(PetAvatar);
+    expect(petAvatar, findsOneWidget);
+    final avatarImage = tester.widget<Image>(
+      find.descendant(of: petAvatar, matching: find.byType(Image)),
+    );
+    expect(avatarImage.color, Colors.white);
+    expect(
+      _contrastRatio(Colors.white, VetColors.rose),
+      greaterThanOrEqualTo(3),
+      reason: 'A silhueta branca deve continuar visível no cabeçalho rosa.',
+    );
     for (final label in [
       'Serviços',
       'Exames',

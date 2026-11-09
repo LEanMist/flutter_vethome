@@ -9,6 +9,18 @@ import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 
+double _contrastRatio(Color first, Color second) {
+  final firstLuminance = first.computeLuminance();
+  final secondLuminance = second.computeLuminance();
+  final lighter = firstLuminance > secondLuminance
+      ? firstLuminance
+      : secondLuminance;
+  final darker = firstLuminance > secondLuminance
+      ? secondLuminance
+      : firstLuminance;
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 double _homeScaleFor(Size viewport) {
   final widthScale = (viewport.width / 390).clamp(0.0, 1.0).toDouble();
   return math.min(widthScale, math.max(0.8, viewport.height / 844));
@@ -146,6 +158,16 @@ void main() {
       expect(play.top - frame.top, closeTo(591 * scale, .01));
       expect(play.width, closeTo(155 * scale, .01));
       expect(play.height, closeTo(155 * scale, .01));
+      final playSurface = Color.alphaBlend(
+        VetColors.roseOverlay50,
+        VetColors.pink,
+      );
+      expect(
+        _contrastRatio(VetColors.homePetControl, playSurface),
+        greaterThanOrEqualTo(3),
+        reason:
+            'O símbolo do botão da Home deve contrastar com o círculo rosa.',
+      );
       expect(tester.takeException(), isNull);
     });
   }
