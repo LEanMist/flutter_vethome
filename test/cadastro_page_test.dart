@@ -117,6 +117,10 @@ void main() {
     expect(repository.findAll(), hasLength(1));
     expect(repository.findAll().single.nome, 'Ana Souza');
     expect(repository.findByEmail('ana@example.com'), isNotNull);
+    expect(
+      repository.autenticar('Ana Souza', 'SenhaForte1')?.email,
+      'ana@example.com',
+    );
   });
 }
 

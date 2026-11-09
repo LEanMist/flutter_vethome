@@ -16,9 +16,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(body: AgendamentoPage()),
-      ),
+      const MaterialApp(home: Scaffold(body: AgendamentoPage())),
     );
     await tester.pumpAndSettle();
 
@@ -26,7 +24,10 @@ void main() {
     final mesAtual = DateTime(agora.year, agora.month);
     final proximoMes = DateTime(agora.year, agora.month + 1);
 
-    expect(find.text('${_meses[mesAtual.month - 1]} ${mesAtual.year}'), findsOneWidget);
+    expect(
+      find.text('${_meses[mesAtual.month - 1]} ${mesAtual.year}'),
+      findsOneWidget,
+    );
     expect(find.byTooltip('Mês anterior'), findsNothing);
 
     await tester.tap(find.byTooltip('Próximo mês'));
@@ -79,7 +80,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('seleciona pet, horario e serviços e salva agendamento', (
+  testWidgets('cancela o rascunho na tela de serviços após confirmação', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -125,25 +126,116 @@ void main() {
     expect(find.text('Serviços'), findsOneWidget);
     expect(find.textContaining('Luna'), findsOneWidget);
     expect(find.textContaining('13:00'), findsOneWidget);
+    expect(find.byType(ExpansionTile), findsNWidgets(2));
+
+    await tester.tap(find.byKey(const ValueKey('servico-microchipagem')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ExpansionTile), findsNWidgets(2));
+    expect(
+      tester
+          .widget<Checkbox>(find.byKey(const ValueKey('servico-microchipagem')))
+          .value,
+      isTrue,
+    );
 
     await tester.tap(find.byKey(const ValueKey('servico-hemograma')));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Convênio'), 250);
-    await tester.tap(find.byKey(const ValueKey('convenio-dropdown')));
+    expect(find.text('Convênio'), findsNothing);
+    expect(find.text('Continuar'), findsOneWidget);
+    expect(
+      tester
+          .widget<ElevatedButton>(
+            find.ancestor(
+              of: find.text('Continuar'),
+              matching: find.byType(ElevatedButton),
+            ),
+          )
+          .onPressed,
+      isNotNull,
+    );
+
+    await tester.tap(find.byTooltip('Voltar'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Petlove').last);
+    expect(find.text('Deseja sair do agendamento?'), findsOneWidget);
+
+    await tester.tap(find.text('Não'));
+    await tester.pumpAndSettle();
+    expect(find.text('Serviços'), findsOneWidget);
+
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Convênio'), findsOneWidget);
+    expect(find.text('Cão'), findsOneWidget);
+    expect(find.text('PetLove'), findsOneWidget);
+    expect(find.text('Doglife'), findsOneWidget);
+    expect(find.text('Particular'), findsOneWidget);
+    expect(find.text('Doglife'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Voltar para serviços'));
+    await tester.pumpAndSettle();
+    expect(find.text('Serviços'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Voltar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sim'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Serviços'), findsNothing);
+    expect(await agendamentoRepository.findAll(), isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('continua para convenio e salva o agendamento completo', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final petRepository = InMemoryPetRepository()..save(_petTeste('Luna'));
+    final usuarioRepository = InMemoryUsuarioRepository()
+      ..save(_usuarioTeste());
+    final agendamentoRepository = InMemoryAgendamentoRepository();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AgendamentoPage(
+            petRepository: petRepository,
+            usuarioRepository: usuarioRepository,
+            agendamentoRepository: agendamentoRepository,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Agendar consulta'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Luna'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('horario-13:00')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('servico-hemograma')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('convenio-doglife')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Concluir agendamento'));
     await tester.pumpAndSettle();
 
     final agendamentos = await agendamentoRepository.findAll();
     expect(agendamentos, hasLength(1));
-    expect(agendamentos.single.usuarioId, usuarioRepository.findAll().single.id);
+    expect(
+      agendamentos.single.usuarioId,
+      usuarioRepository.findAll().single.id,
+    );
     expect(agendamentos.single.petId, petRepository.findAll().single.id);
     expect(agendamentos.single.horario, '13:00');
-    expect(agendamentos.single.convenio, ConvenioAgendamento.petlove);
+    expect(agendamentos.single.convenio, ConvenioAgendamento.doglife);
     expect(agendamentos.single.servicos.single.id, 'hemograma');
     expect(find.text('Luna - 13:00'), findsWidgets);
+    expect(find.text('Convênio'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

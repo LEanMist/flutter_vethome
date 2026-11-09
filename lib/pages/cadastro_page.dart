@@ -263,7 +263,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
     }
 
     try {
-      _repository.save(usuario);
+      _repository.save(usuario, senha: senha);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

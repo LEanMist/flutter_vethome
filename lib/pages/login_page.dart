@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vethome/pages/cadastro_page.dart';
+import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'menu_page.dart';
 import 'package:flutter_vethome/widgets/circulo_clicavel.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.usuarioRepository});
+
+  final UsuarioRepository? usuarioRepository;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -16,8 +19,18 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
 
+  UsuarioRepository get _repository =>
+      widget.usuarioRepository ?? InMemoryUsuarioRepository.instance;
+
   bool esconderSenha = true;
   bool lembrarDeMim = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _senhaController.dispose();
+    super.dispose();
+  }
 
   void mostrarMensagem(String mensagem) {
     ScaffoldMessenger.of(
@@ -26,6 +39,19 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void entrar() {
+    final identificador = _emailController.text.trim();
+    final senha = _senhaController.text;
+    if (identificador.isEmpty || senha.isEmpty) {
+      mostrarMensagem('Informe seu usuário ou e-mail e sua senha.');
+      return;
+    }
+
+    final usuario = _repository.autenticar(identificador, senha);
+    if (usuario == null) {
+      mostrarMensagem('Usuário/e-mail ou senha inválidos.');
+      return;
+    }
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const MenuPage()),
@@ -35,7 +61,10 @@ class _LoginPageState extends State<LoginPage> {
   void abrirInformacoesCadastro() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const InformacoesCadastroPage()),
+      MaterialPageRoute(
+        builder: (context) =>
+            InformacoesCadastroPage(usuarioRepository: _repository),
+      ),
     );
   }
 
@@ -168,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
                                           decoration: InputDecoration(
                                             filled: true,
                                             fillColor: Colors.transparent,
-                                            hintText: 'Usuario',
+                                            hintText: 'Usuário ou e-mail',
                                             hintStyle:
                                                 GoogleFonts.montserratAlternates(
                                                   fontWeight: FontWeight.w500,
@@ -325,73 +354,89 @@ class _LoginPageState extends State<LoginPage> {
                                     child: SizedBox(
                                       width: compacto ? 250 : 300,
                                       child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              SizedBox(
-                                                width: 28,
-                                                height: 28,
-                                                child: Transform.scale(
-                                                  scale: 0.75,
-                                                  child: Checkbox(
-                                                    value: lembrarDeMim,
-                                                    onChanged: (selecionado) {
-                                                      setState(() {
-                                                        lembrarDeMim =
-                                                            selecionado ??
-                                                            false;
-                                                      });
-                                                    },
-                                                    shape: const CircleBorder(),
-                                                    activeColor: const Color(
-                                                      0xFF68442E,
+                                          Expanded(
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                SizedBox(
+                                                  width: 28,
+                                                  height: 28,
+                                                  child: Transform.scale(
+                                                    scale: 0.75,
+                                                    child: Checkbox(
+                                                      value: lembrarDeMim,
+                                                      onChanged: (selecionado) {
+                                                        setState(() {
+                                                          lembrarDeMim =
+                                                              selecionado ??
+                                                              false;
+                                                        });
+                                                      },
+                                                      shape:
+                                                          const CircleBorder(),
+                                                      activeColor: const Color(
+                                                        0xFF68442E,
+                                                      ),
+                                                      checkColor: Colors.white,
+                                                      materialTapTargetSize:
+                                                          MaterialTapTargetSize
+                                                              .shrinkWrap,
+                                                      visualDensity:
+                                                          VisualDensity.compact,
                                                     ),
-                                                    checkColor: Colors.white,
-                                                    materialTapTargetSize:
-                                                        MaterialTapTargetSize
-                                                            .shrinkWrap,
-                                                    visualDensity:
-                                                        VisualDensity.compact,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 2),
+                                                Flexible(
+                                                  child: Text(
+                                                    'Lembre de mim',
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style:
+                                                        GoogleFonts.montserratAlternates(
+                                                          color: const Color(
+                                                            0xFF68442E,
+                                                          ),
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 8,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Align(
+                                              alignment: Alignment.centerRight,
+                                              child: TextButton(
+                                                onPressed: () {},
+                                                style: TextButton.styleFrom(
+                                                  padding: EdgeInsets.zero,
+                                                  minimumSize: Size.zero,
+                                                  tapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                ),
+                                                child: FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  child: Text(
+                                                    'Esqueceu a senha?',
+                                                    maxLines: 1,
+                                                    style:
+                                                        GoogleFonts.montserratAlternates(
+                                                          color: const Color(
+                                                            0xFF68442E,
+                                                          ),
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 8,
+                                                        ),
                                                   ),
                                                 ),
                                               ),
-                                              const SizedBox(width: 2),
-                                              Text(
-                                                'Lembre de mim',
-                                                style:
-                                                    GoogleFonts.montserratAlternates(
-                                                      color: const Color(
-                                                        0xFF68442E,
-                                                      ),
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 8,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                          TextButton(
-                                            onPressed: () {},
-                                            style: TextButton.styleFrom(
-                                              padding: EdgeInsets.all(11),
-                                              minimumSize: Size.zero,
-                                              tapTargetSize:
-                                                  MaterialTapTargetSize
-                                                      .shrinkWrap,
-                                            ),
-                                            child: Text(
-                                              'Esqueceu a senha?',
-                                              style:
-                                                  GoogleFonts.montserratAlternates(
-                                                    color: const Color(
-                                                      0xFF68442E,
-                                                    ),
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 8,
-                                                  ),
                                             ),
                                           ),
                                         ],
@@ -532,7 +577,7 @@ class _LoginPageState extends State<LoginPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 11,),
+                            const SizedBox(height: 11),
                             TextButton(
                               onPressed: abrirInformacoesCadastro,
                               style: TextButton.styleFrom(

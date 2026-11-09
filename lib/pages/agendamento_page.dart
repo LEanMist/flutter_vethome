@@ -43,7 +43,15 @@ class _AgendamentoPage extends State<AgendamentoPage> {
     'Novembro',
     'Dezembro',
   ];
-  static const _diasDaSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  static const _diasDaSemana = [
+    'Dom',
+    'Seg',
+    'Ter',
+    'Qua',
+    'Qui',
+    'Sex',
+    'Sáb',
+  ];
   static const _nomesDiasDaSemana = [
     'Domingo',
     'Segunda-feira',
@@ -140,6 +148,7 @@ class _AgendamentoPage extends State<AgendamentoPage> {
         builder: (_) => ServicosPage(
           rascunho: rascunho,
           petNome: petSelecionado.nome,
+          petTipo: petSelecionado.tipo,
           agendamentoRepository: _agendamentoRepository,
         ),
       ),
@@ -155,9 +164,9 @@ class _AgendamentoPage extends State<AgendamentoPage> {
   }
 
   void _mostrarMensagem(String mensagem) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   @override
@@ -177,11 +186,7 @@ class _AgendamentoPage extends State<AgendamentoPage> {
 
     setState(() {
       _mesVisivel = proximoMes;
-      final ultimoDia = DateTime(
-        proximoMes.year,
-        proximoMes.month + 1,
-        0,
-      ).day;
+      final ultimoDia = DateTime(proximoMes.year, proximoMes.month + 1, 0).day;
       var diaSelecionado = math.min(_dataSelecionada.day, ultimoDia);
       if (proximoMes == _mesAtual && diaSelecionado < DateTime.now().day) {
         diaSelecionado = DateTime.now().day;
@@ -211,8 +216,8 @@ class _AgendamentoPage extends State<AgendamentoPage> {
         final compacto =
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
         final alturaCalendario = math
-          .min(compacto ? 380.0 : 500.0, constraints.maxHeight * 0.68)
-          .toDouble();
+            .min(compacto ? 380.0 : 500.0, constraints.maxHeight * 0.68)
+            .toDouble();
         final tamanhoFonte = compacto ? 15.0 : 20.0;
         final alturaBase = compacto ? 118.0 : 128.0;
         final alturaCelula = math
@@ -235,179 +240,179 @@ class _AgendamentoPage extends State<AgendamentoPage> {
         return Column(
           children: [
             SizedBox(
-            height: alturaCalendario + 30,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: double.infinity,
-                  height: alturaCalendario,
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                  decoration: const BoxDecoration(
-                    color: VetCores.rosaEscuro,
-                    borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(26),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        height: 48,
-                        child: Row(
-                          children: [
-                            if (_mesVisivel.isAfter(_mesAtual))
-                              IconButton(
-                                tooltip: 'Mês anterior',
-                                onPressed: () => _mudarMes(-1),
-                                icon: const Icon(Icons.chevron_left_rounded),
-                                color: VetCores.marrom,
-                              )
-                            else
-                              const SizedBox(width: 48),
-                            Expanded(
-                              child: Text(
-                                '${_meses[_mesVisivel.month - 1]} ${_mesVisivel.year}',
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.comfortaa(
-                                  color: VetCores.marrom,
-                                  fontSize: tamanhoFonte + 2,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: 'Próximo mês',
-                              onPressed: () => _mudarMes(1),
-                              icon: const Icon(Icons.chevron_right_rounded),
-                              color: VetCores.marrom,
-                            ),
-                          ],
-                        ),
+              height: alturaCalendario + 30,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: alturaCalendario,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                    decoration: const BoxDecoration(
+                      color: VetCores.rosaEscuro,
+                      borderRadius: BorderRadius.vertical(
+                        bottom: Radius.circular(26),
                       ),
-                      SizedBox(
-                        height: compacto ? 30 : 40,
-                        child: Row(
-                          children: [
-                            for (final dia in _diasDaSemana)
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          height: 48,
+                          child: Row(
+                            children: [
+                              if (_mesVisivel.isAfter(_mesAtual))
+                                IconButton(
+                                  tooltip: 'Mês anterior',
+                                  onPressed: () => _mudarMes(-1),
+                                  icon: const Icon(Icons.chevron_left_rounded),
+                                  color: VetCores.marrom,
+                                )
+                              else
+                                const SizedBox(width: 48),
                               Expanded(
-                                child: Center(
-                                  child: Text(
-                                    dia,
-                                    style: GoogleFonts.comfortaa(
-                                      color: VetCores.marrom,
-                                      fontSize: tamanhoFonte,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                child: Text(
+                                  '${_meses[_mesVisivel.month - 1]} ${_mesVisivel.year}',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.comfortaa(
+                                    color: VetCores.marrom,
+                                    fontSize: tamanhoFonte + 2,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        height: alturaCelula * 6,
-                        child: GridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.zero,
-                          itemCount: 42,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 7,
-                                mainAxisExtent: alturaCelula,
+                              IconButton(
+                                tooltip: 'Próximo mês',
+                                onPressed: () => _mudarMes(1),
+                                icon: const Icon(Icons.chevron_right_rounded),
+                                color: VetCores.marrom,
                               ),
-                          itemBuilder: (context, index) {
-                            final data = DateTime(
-                              inicioGrade.year,
-                              inicioGrade.month,
-                              inicioGrade.day + index,
-                            );
-                            final selecionada = DateUtils.isSameDay(
-                              data,
-                              _dataSelecionada,
-                            );
-                            final hojeSelecionado = DateUtils.isSameDay(
-                              data,
-                              hoje,
-                            );
-                            final mesmoMes = data.month == _mesVisivel.month;
-                            final dataPassada = data.isBefore(hoje);
-
-                            return Padding(
-                              padding: const EdgeInsets.all(2),
-                              child: Material(
-                                key: selecionada
-                                    ? const ValueKey('selected-calendar-day')
-                                    : ValueKey(
-                                        'calendar-day-${data.year}-${data.month}-${data.day}',
-                                      ),
-                                color: selecionada
-                                    ? VetCores.rosaFundo
-                                    : Colors.transparent,
-                                shape: const CircleBorder(),
-                                child: InkWell(
-                                  customBorder: const CircleBorder(),
-                                  onTap: dataPassada
-                                      ? null
-                                      : () => _selecionarData(data),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: hojeSelecionado && !selecionada
-                                          ? Border.all(
-                                              color: VetCores.rosaClaro,
-                                              width: 1.5,
-                                            )
-                                          : null,
-                                    ),
-                                    alignment: Alignment.center,
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: compacto ? 30 : 40,
+                          child: Row(
+                            children: [
+                              for (final dia in _diasDaSemana)
+                                Expanded(
+                                  child: Center(
                                     child: Text(
-                                      '${data.day}',
+                                      dia,
                                       style: GoogleFonts.comfortaa(
-                                        color: selecionada
-                                            ? VetCores.marrom
-                                            : !mesmoMes || dataPassada
-                                            ? VetCores.marrom50
-                                            : VetCores.marrom,
+                                        color: VetCores.marrom,
                                         fontSize: tamanhoFonte,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        SizedBox(
+                          height: alturaCelula * 6,
+                          child: GridView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: EdgeInsets.zero,
+                            itemCount: 42,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 7,
+                                  mainAxisExtent: alturaCelula,
+                                ),
+                            itemBuilder: (context, index) {
+                              final data = DateTime(
+                                inicioGrade.year,
+                                inicioGrade.month,
+                                inicioGrade.day + index,
+                              );
+                              final selecionada = DateUtils.isSameDay(
+                                data,
+                                _dataSelecionada,
+                              );
+                              final hojeSelecionado = DateUtils.isSameDay(
+                                data,
+                                hoje,
+                              );
+                              final mesmoMes = data.month == _mesVisivel.month;
+                              final dataPassada = data.isBefore(hoje);
+
+                              return Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: Material(
+                                  key: selecionada
+                                      ? const ValueKey('selected-calendar-day')
+                                      : ValueKey(
+                                          'calendar-day-${data.year}-${data.month}-${data.day}',
+                                        ),
+                                  color: selecionada
+                                      ? VetCores.rosaFundo
+                                      : Colors.transparent,
+                                  shape: const CircleBorder(),
+                                  child: InkWell(
+                                    customBorder: const CircleBorder(),
+                                    onTap: dataPassada
+                                        ? null
+                                        : () => _selecionarData(data),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: hojeSelecionado && !selecionada
+                                            ? Border.all(
+                                                color: VetCores.rosaClaro,
+                                                width: 1.5,
+                                              )
+                                            : null,
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        '${data.day}',
+                                        style: GoogleFonts.comfortaa(
+                                          color: selecionada
+                                              ? VetCores.marrom
+                                              : !mesmoMes || dataPassada
+                                              ? VetCores.marrom50
+                                              : VetCores.marrom,
+                                          fontSize: tamanhoFonte,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: EtiquetaPerfil(
-                      compacto: compacto,
-                      largura: larguraEtiqueta,
-                      altura: alturaEtiqueta,
-                      raioInferior: 70,
-                      espessuraBorda: espessuraBordaEtiqueta,
-                      conteudo: Text(
-                        '${_dataSelecionada.day} - ${_nomesDiasDaSemana[_dataSelecionada.weekday % 7]}',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.comfortaa(
-                          color: VetCores.marrom,
-                          fontSize: compacto ? 22 : 18,
-                          fontWeight: FontWeight.bold,
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: EtiquetaPerfil(
+                        compacto: compacto,
+                        largura: larguraEtiqueta,
+                        altura: alturaEtiqueta,
+                        raioInferior: 70,
+                        espessuraBorda: espessuraBordaEtiqueta,
+                        conteudo: Text(
+                          '${_dataSelecionada.day} - ${_nomesDiasDaSemana[_dataSelecionada.weekday % 7]}',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.comfortaa(
+                            color: VetCores.marrom,
+                            fontSize: compacto ? 22 : 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
             ),
             Expanded(
               child: ListView.builder(
@@ -450,12 +455,7 @@ class _AgendamentoPage extends State<AgendamentoPage> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                8,
-                16,
-                compacto ? 16 : 20,
-              ),
+              padding: EdgeInsets.fromLTRB(16, 8, 16, compacto ? 16 : 20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -626,30 +626,30 @@ class _SeletorHorario extends StatelessWidget {
               runSpacing: 16,
               children: [
                 for (final horario in horarios)
-                SizedBox(
-                  width: 90,
-                  height: 48,
-                  child: ElevatedButton(
-                    key: ValueKey('horario-$horario'),
-                    onPressed: () => Navigator.of(context).pop(horario),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: VetCores.rosaEscuro,
-                      foregroundColor: VetCores.branco,
-                      elevation: 2,
-                      padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5),
+                  SizedBox(
+                    width: 90,
+                    height: 48,
+                    child: ElevatedButton(
+                      key: ValueKey('horario-$horario'),
+                      onPressed: () => Navigator.of(context).pop(horario),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VetCores.rosaEscuro,
+                        foregroundColor: VetCores.branco,
+                        elevation: 2,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      horario,
-                      style: GoogleFonts.comfortaa(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        horario,
+                        style: GoogleFonts.comfortaa(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ],

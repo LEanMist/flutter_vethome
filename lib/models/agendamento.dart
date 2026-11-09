@@ -53,12 +53,25 @@ class AgendamentoRascunho {
     required this.petId,
     required DateTime data,
     required this.horario,
-  }) : data = DateTime(data.year, data.month, data.day);
+    List<ServicoAgendamento> servicos = const [],
+  }) : data = DateTime(data.year, data.month, data.day),
+       servicos = List<ServicoAgendamento>.unmodifiable(servicos);
 
   final String usuarioId;
   final String petId;
   final DateTime data;
   final String horario;
+  final List<ServicoAgendamento> servicos;
+
+  AgendamentoRascunho comServicos(List<ServicoAgendamento> selecionados) {
+    return AgendamentoRascunho(
+      usuarioId: usuarioId,
+      petId: petId,
+      data: data,
+      horario: horario,
+      servicos: selecionados,
+    );
+  }
 
   List<String> get errors {
     final validationErrors = <String>[];
@@ -81,10 +94,7 @@ class AgendamentoRascunho {
     return List<String>.unmodifiable(validationErrors);
   }
 
-  Agendamento finalizar({
-    required List<ServicoAgendamento> servicos,
-    required ConvenioAgendamento convenio,
-  }) {
+  Agendamento finalizar({required ConvenioAgendamento convenio}) {
     return Agendamento(
       usuarioId: usuarioId,
       petId: petId,
