@@ -32,6 +32,7 @@ class VHForm extends StatefulWidget {
 
 class _VHFormState extends State<VHForm> {
   final _formKey = GlobalKey<FormState>();
+  bool _hasAttemptedSubmit = false;
   late List<TextEditingController> _controllers;
   late List<FocusNode> _focusNodes;
   late List<GlobalKey<State<StatefulWidget>>> _fieldKeys;
@@ -153,6 +154,9 @@ class _VHFormState extends State<VHForm> {
   }
 
   void _continue() {
+    if (!_hasAttemptedSubmit) {
+      setState(() => _hasAttemptedSubmit = true);
+    }
     if (!_formKey.currentState!.validate()) {
       _focusFirstInvalidField();
       return;
@@ -184,6 +188,20 @@ class _VHFormState extends State<VHForm> {
       controller: _controllers[i],
       value: field.value,
       keyboardType: field.keyboardType,
+      textInputAction: widget.dataPrefix == 'client.'
+          ? i == widget.fields.length - 1
+                ? TextInputAction.done
+                : TextInputAction.next
+          : null,
+      onFieldSubmitted: widget.dataPrefix != 'client.'
+          ? null
+          : (_) {
+              if (i + 1 < _focusNodes.length) {
+                _focusNodes[i + 1].requestFocus();
+              } else {
+                _continue();
+              }
+            },
       choices: field.choices,
       onChanged: (value) {
         setState(() {});
@@ -267,6 +285,9 @@ class _VHFormState extends State<VHForm> {
                         ),
                         child: Form(
                           key: _formKey,
+                          autovalidateMode: _hasAttemptedSubmit
+                              ? AutovalidateMode.onUserInteraction
+                              : AutovalidateMode.disabled,
                           child: LayoutBuilder(
                             builder: (context, constraints) {
                               final fieldWidth = desktop

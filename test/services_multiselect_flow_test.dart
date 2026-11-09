@@ -38,8 +38,9 @@ void main() {
   Future<void> openServices(
     WidgetTester tester, {
     bool realAppointment = false,
+    Size size = const Size(390, 844),
   }) async {
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -80,6 +81,21 @@ void main() {
       (tester.widget<SvgPicture>(selectionMarker(name)).bytesLoader
               as SvgAssetLoader)
           .assetName;
+
+  String categoryArrowAsset(WidgetTester tester, String name) =>
+      (tester
+                  .widget<SvgPicture>(
+                    find.byKey(ValueKey('services-category-arrow-$name')),
+                  )
+                  .bytesLoader
+              as SvgAssetLoader)
+          .assetName;
+
+  int categoryArrowRotation(WidgetTester tester, String name) => tester
+      .widget<RotatedBox>(
+        find.byKey(ValueKey('services-category-arrow-rotation-$name')),
+      )
+      .quarterTurns;
 
   Future<void> selectService(WidgetTester tester, String service) async {
     await tester.ensureVisible(find.text(service));
@@ -155,6 +171,83 @@ void main() {
     } finally {
       semantics.dispose();
     }
+  });
+
+  testWidgets('cada categoria tem uma ação acessível e um ponto de foco', (
+    tester,
+  ) async {
+    await openServices(tester, size: const Size(1280, 800));
+
+    final semantics = tester.ensureSemantics();
+    try {
+      for (final category in ['Microchipagem', 'Atestados']) {
+        final categorySemantics = find.byKey(
+          ValueKey('services-category-semantics-$category'),
+        );
+        final data = tester.getSemantics(categorySemantics).getSemanticsData();
+        expect(data.label, category);
+        expect(data.flagsCollection.isButton, isTrue);
+        expect(data.hasAction(SemanticsAction.tap), isTrue);
+
+        final arrow = find.byKey(ValueKey('services-category-arrow-$category'));
+        expect(arrow, findsOneWidget);
+        expect(
+          find.ancestor(of: arrow, matching: find.byType(ExcludeFocus)),
+          findsOneWidget,
+        );
+      }
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
+  testWidgets('setas começam no Figma e refletem a interação', (tester) async {
+    await openServices(tester);
+
+    const down = 'assets/imagens/figma/services-chevron-down.svg';
+    const right = 'assets/imagens/figma/services-chevron-right.svg';
+    expect(categoryArrowAsset(tester, 'Exames'), down);
+    expect(categoryArrowAsset(tester, 'Vacinas'), right);
+    expect(categoryArrowRotation(tester, 'Exames'), 1);
+    expect(categoryArrowRotation(tester, 'Vacinas'), 0);
+
+    await tester.tap(find.byKey(const ValueKey('services-pill-Exames')));
+    await tester.pumpAndSettle();
+    expect(categoryArrowAsset(tester, 'Exames'), down);
+    expect(categoryArrowRotation(tester, 'Exames'), 0);
+    await tester.tap(find.byKey(const ValueKey('services-pill-Exames')));
+    await tester.pumpAndSettle();
+    expect(categoryArrowAsset(tester, 'Exames'), down);
+    expect(categoryArrowRotation(tester, 'Exames'), 1);
+
+    await tester.tap(find.byKey(const ValueKey('services-pill-Vacinas')));
+    await tester.pumpAndSettle();
+    expect(categoryArrowAsset(tester, 'Vacinas'), right);
+    expect(categoryArrowRotation(tester, 'Vacinas'), 0);
+    await tester.tap(find.byKey(const ValueKey('services-pill-Vacinas')));
+    await tester.pumpAndSettle();
+    expect(categoryArrowAsset(tester, 'Vacinas'), right);
+    expect(categoryArrowRotation(tester, 'Vacinas'), 1);
+
+    final microchipArrow = find.byKey(
+      const ValueKey('services-category-chevron-Microchipagem'),
+    );
+    var rotation = tester.widget<RotatedBox>(
+      find
+          .ancestor(of: microchipArrow, matching: find.byType(RotatedBox))
+          .first,
+    );
+    expect(rotation.quarterTurns, 0);
+    await tester.tap(find.byKey(const ValueKey('services-pill-Microchipagem')));
+    await tester.pumpAndSettle();
+    rotation = tester.widget<RotatedBox>(
+      find
+          .ancestor(of: microchipArrow, matching: find.byType(RotatedBox))
+          .first,
+    );
+    expect(rotation.quarterTurns, 1);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('serviços mobile não adiciona seta e ainda pode voltar', (

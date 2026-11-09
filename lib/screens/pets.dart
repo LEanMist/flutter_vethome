@@ -275,6 +275,7 @@ class ServicosScreen extends StatefulWidget {
 
 class _ServicosScreenState extends State<ServicosScreen> {
   final Set<String> _expanded = {'Exames', 'Vacinas'};
+  final Set<String> _interactedCategories = <String>{};
   final Set<String> _selected = <String>{};
 
   static const _selectedServiceMarker =
@@ -283,6 +284,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
       'assets/imagens/figma/services-checkbox-unselected.svg';
 
   void _toggleCategory(String name) => setState(() {
+    _interactedCategories.add(name);
     if (!_expanded.remove(name)) _expanded.add(name);
   });
 
@@ -499,6 +501,11 @@ class _ServicosScreenState extends State<ServicosScreen> {
     }
 
     final visual = _ServiceCategoryVisual.forName(name);
+    final dynamicArrow = _interactedCategories.contains(name)
+        ? _expanded.contains(name)
+              ? _ServiceCategoryArrow.down
+              : _ServiceCategoryArrow.right
+        : visual.arrow;
     final borderRadius = visual.borderRadius;
     final gradient = LinearGradient(
       begin: Alignment(-1, -visual.gradientAlignmentY),
@@ -570,12 +577,23 @@ class _ServicosScreenState extends State<ServicosScreen> {
                             width: visual.arrowWidth,
                             height: visual.arrowHeight,
                             child: IgnorePointer(
-                              child: SvgPicture.asset(
-                                visual.arrow == _ServiceCategoryArrow.down
-                                    ? 'assets/imagens/figma/services-chevron-down.svg'
-                                    : 'assets/imagens/figma/services-chevron-right.svg',
-                                key: ValueKey('services-category-arrow-$name'),
-                                fit: BoxFit.fill,
+                              child: RotatedBox(
+                                key: ValueKey(
+                                  'services-category-arrow-rotation-$name',
+                                ),
+                                quarterTurns:
+                                    dynamicArrow == _ServiceCategoryArrow.down
+                                    ? 1
+                                    : 0,
+                                child: SvgPicture.asset(
+                                  visual.arrow == _ServiceCategoryArrow.down
+                                      ? 'assets/imagens/figma/services-chevron-down.svg'
+                                      : 'assets/imagens/figma/services-chevron-right.svg',
+                                  key: ValueKey(
+                                    'services-category-arrow-$name',
+                                  ),
+                                  fit: BoxFit.fill,
+                                ),
                               ),
                             ),
                           ),
@@ -592,17 +610,26 @@ class _ServicosScreenState extends State<ServicosScreen> {
               top: 8.5,
               width: 48,
               height: 48,
-              child: IconButton(
-                key: ValueKey('services-category-arrow-$name'),
-                tooltip: name,
-                onPressed: () => _toggleCategory(name),
-                padding: EdgeInsets.zero,
-                icon: Image.asset(
-                  'assets/imagens/figma/convenio-chevron.png',
-                  key: ValueKey('services-category-chevron-$name'),
-                  width: 17,
-                  height: 19,
-                  excludeFromSemantics: true,
+              child: ExcludeFocus(
+                child: IconButton(
+                  key: ValueKey('services-category-arrow-$name'),
+                  tooltip: name,
+                  onPressed: () => _toggleCategory(name),
+                  padding: EdgeInsets.zero,
+                  icon: RotatedBox(
+                    quarterTurns:
+                        _interactedCategories.contains(name) &&
+                            _expanded.contains(name)
+                        ? 1
+                        : 0,
+                    child: Image.asset(
+                      'assets/imagens/figma/convenio-chevron.png',
+                      key: ValueKey('services-category-chevron-$name'),
+                      width: 17,
+                      height: 19,
+                      excludeFromSemantics: true,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -669,14 +696,17 @@ class _ServicosScreenState extends State<ServicosScreen> {
       SizedBox(
         width: 48,
         height: 48,
-        child: IconButton(
-          tooltip: name,
-          onPressed: () => _toggleCategory(name),
-          icon: Transform.translate(
-            offset: const Offset(3, 0),
-            child: _expanded.contains(name)
-                ? const Icon(Icons.keyboard_arrow_down, color: VH.foreground)
-                : const VetChevron(),
+        child: ExcludeFocus(
+          child: IconButton(
+            key: ValueKey('services-category-arrow-$name'),
+            tooltip: name,
+            onPressed: () => _toggleCategory(name),
+            icon: Transform.translate(
+              offset: const Offset(3, 0),
+              child: _expanded.contains(name)
+                  ? const Icon(Icons.keyboard_arrow_down, color: VH.foreground)
+                  : const VetChevron(),
+            ),
           ),
         ),
       ),
@@ -702,6 +732,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Semantics(
+            key: ValueKey('services-category-semantics-${entry.key}'),
             button: true,
             label: entry.key,
             expanded: _expanded.contains(entry.key),

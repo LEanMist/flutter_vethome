@@ -106,6 +106,29 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   void initState() {
     super.initState();
     _calendarMonth = DateTime(_date.year, _date.month);
+
+    final start = _at(_time!);
+    final end = _at(_end!);
+    final initialConflict =
+        end.isAfter(start) &&
+        VetRepository.hasAppointmentConflict(
+          petId: widget.pet.id,
+          veterinarian: _appointmentVeterinarian,
+          start: start,
+          end: end,
+        );
+    if (initialConflict) {
+      _time = null;
+      _end = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _message(
+            'O horário padrão conflita com outro agendamento nesta data. '
+            'Escolha outro horário.',
+          );
+        }
+      });
+    }
   }
 
   @override

@@ -93,6 +93,13 @@ class _PerfilPageState extends State<PerfilPage> {
       if (mounted) {
         vetSoon(context, error.message.toString());
       }
+    } on PersistenceClearingException {
+      if (mounted) {
+        vetSoon(
+          context,
+          'A foto não foi alterada porque os dados locais estão sendo limpos.',
+        );
+      }
     } on PersistenceBlockedException {
       if (mounted) {
         vetSoon(context, 'Não foi possível salvar a foto localmente.');
@@ -108,10 +115,10 @@ class _PerfilPageState extends State<PerfilPage> {
       builder: (_) => _NomeDialog(inicial: _nome),
     );
     if (novo != null && novo.isNotEmpty && mounted) {
-      await _saveProfileChange(() {
-        _nome = novo;
-        VetRepository.updateClient(name: novo);
-      });
+      await _saveProfileChange(
+        () => _nome = novo,
+        persist: () => VetRepository.updateClient(name: novo),
+      );
     }
   }
 
@@ -121,14 +128,37 @@ class _PerfilPageState extends State<PerfilPage> {
       builder: (_) => _BirthDialog(initial: _nascimento),
     );
     if (data != null && mounted) {
-      await _saveProfileChange(() {
-        _nascimento = data;
-        VetRepository.updateClient(birthDate: data);
-      });
+      await _saveProfileChange(
+        () => _nascimento = data,
+        persist: () => VetRepository.updateClient(birthDate: data),
+      );
     }
   }
 
-  Future<void> _saveProfileChange(VoidCallback update) async {
+  Future<void> _saveProfileChange(
+    VoidCallback update, {
+    required VoidCallback persist,
+  }) async {
+    try {
+      persist();
+    } on PersistenceClearingException {
+      if (mounted) {
+        vetSoon(
+          context,
+          'A alteração não foi feita porque os dados locais estão sendo limpos.',
+        );
+      }
+      return;
+    } on PersistenceBlockedException {
+      if (mounted) {
+        vetSoon(
+          context,
+          'O armazenamento local está protegido. Nenhuma alteração foi feita.',
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
     setState(update);
     final saved = await VetRepository.flush();
     if (!saved && mounted) {

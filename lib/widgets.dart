@@ -47,6 +47,8 @@ class VHField extends StatefulWidget {
     this.suffixText,
     this.suggestions = const [],
     this.onChanged,
+    this.textInputAction,
+    this.onFieldSubmitted,
     this.inputFormatters,
     this.textAlign = TextAlign.start,
     this.figmaContentPaddingLeft,
@@ -82,6 +84,8 @@ class VHField extends StatefulWidget {
   final String? suffixText;
   final List<String> suggestions;
   final ValueChanged<String>? onChanged;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
   final List<TextInputFormatter>? inputFormatters;
   final TextAlign textAlign;
   final double? figmaContentPaddingLeft;
@@ -472,6 +476,8 @@ class _VHFieldState extends State<VHField> {
   }) => TextFormField(
     controller: c,
     focusNode: focus,
+    textInputAction: widget.textInputAction,
+    onFieldSubmitted: widget.onFieldSubmitted,
     autovalidateMode: widget.choices == null
         ? null
         : AutovalidateMode.onUserInteraction,

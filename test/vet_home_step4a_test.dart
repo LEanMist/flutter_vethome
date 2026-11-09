@@ -99,7 +99,11 @@ void main() {
       await tester.pumpAndSettle();
     } else {
       await tester.enterText(field, value);
-      await tester.testTextInput.receiveAction(TextInputAction.done);
+      if (definition.textInputAction != TextInputAction.done) {
+        await tester.testTextInput.receiveAction(
+          definition.textInputAction ?? TextInputAction.done,
+        );
+      }
       await tester.pumpAndSettle();
     }
   }
@@ -348,10 +352,12 @@ void main() {
           )
           .first,
     );
-    final saveAction = find.descendant(
-      of: find.byKey(const ValueKey('pet-edit-save-target')),
-      matching: find.byType(InkWell),
-    ).first;
+    final saveAction = find
+        .descendant(
+          of: find.byKey(const ValueKey('pet-edit-save-target')),
+          matching: find.byType(InkWell),
+        )
+        .first;
     await tester.tap(saveAction);
     await tester.pumpAndSettle();
     expect(VetRepository.petById(pet.id)?.name, 'Pet modal renomeado 4A');

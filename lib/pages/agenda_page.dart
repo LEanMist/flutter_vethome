@@ -154,12 +154,32 @@ class _AgendaScreenState extends State<AgendaScreen> {
       414 * scale,
       selectedDateBottom + 10 * scale,
     );
-    final actionTop = math.max(
-      651.0,
-      appointments.length > 3 ? 399.0 + 84.0 * appointments.length : 651.0,
-    );
     final buttonVisualHeight = 41 * scale;
     final buttonTouchHeight = math.max(48.0, buttonVisualHeight);
+    var precedingCardExpansion = 0.0;
+    if (appointments.length > 1) {
+      for (final appointment in appointments.take(appointments.length - 1)) {
+        precedingCardExpansion +=
+            _mobileAppointmentHeight(appointment, scale) - 50 * scale;
+      }
+    }
+    final lastCardBottom = appointments.isEmpty
+        ? 0.0
+        : (399 + 84 * (appointments.length - 1)) * scale +
+              precedingCardExpansion +
+              _mobileAppointmentHeight(appointments.last, scale);
+    final actionTop = math.max(
+      math.max(
+        651.0,
+        appointments.length > 3 ? 399.0 + 84.0 * appointments.length : 651.0,
+      ),
+      appointments.isEmpty
+          ? 0.0
+          : (lastCardBottom +
+                    8 * scale +
+                    (buttonTouchHeight - buttonVisualHeight) / 2) /
+                scale,
+    );
     final contentHeight = math.max(
       717 * scale,
       actionTop * scale +
@@ -229,23 +249,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 ),
               ),
             ),
-          for (var index = 0; index < appointments.length; index++) ...[
-            _mobileAppointment(
-              appointments[index],
-              index,
-              scale,
-              topOffset: contentOffset,
-            ),
-            if (index < appointments.length - 1)
-              Positioned(
-                left: 88 * scale,
-                top: (466 + 85 * index) * scale + contentOffset,
-                child: _FigmaDottedLine(
-                  key: ValueKey('agenda-divider-$index'),
-                  width: 221 * scale,
-                ),
-              ),
-          ],
+          ..._mobileAppointmentWidgets(
+            appointments,
+            scale,
+            topOffset: contentOffset,
+          ),
           Positioned(
             left: 345 * scale,
             top: 435 * scale + contentOffset,
@@ -342,15 +350,70 @@ class _AgendaScreenState extends State<AgendaScreen> {
     );
   }
 
+  List<Widget> _mobileAppointmentWidgets(
+    List<_AgendaItem> appointments,
+    double scale, {
+    required double topOffset,
+  }) {
+    final children = <Widget>[];
+    var accumulatedExpansion = 0.0;
+
+    for (var index = 0; index < appointments.length; index++) {
+      final item = appointments[index];
+      final top = (399 + 84 * index) * scale + topOffset + accumulatedExpansion;
+      final cardHeight = _mobileAppointmentHeight(item, scale);
+      final expansion = cardHeight - 50 * scale;
+      children.add(
+        _mobileAppointment(
+          item,
+          index,
+          scale,
+          top: top,
+          cardHeight: cardHeight,
+        ),
+      );
+      if (index < appointments.length - 1) {
+        children.add(
+          Positioned(
+            left: 88 * scale,
+            top:
+                (466 + 84 * index + (index > 0 ? 1 : 0)) * scale +
+                topOffset +
+                accumulatedExpansion +
+                expansion,
+            child: _FigmaDottedLine(
+              key: ValueKey('agenda-divider-$index'),
+              width: 221 * scale,
+            ),
+          ),
+        );
+      }
+      accumulatedExpansion += expansion;
+    }
+
+    return children;
+  }
+
+  double _mobileAppointmentHeight(_AgendaItem item, double scale) {
+    final standardHeight = 50 * scale;
+    if (!item.demo) return standardHeight;
+
+    final textScaler = MediaQuery.textScalerOf(context);
+    final contentHeight =
+        (textScaler.scale(9 * scale) + textScaler.scale(15 * scale)) * 1.5;
+    return math.max(standardHeight, contentHeight).toDouble();
+  }
+
   Widget _mobileAppointment(
     _AgendaItem item,
     int index,
     double scale, {
-    required double topOffset,
+    required double top,
+    required double cardHeight,
   }) {
-    final top = (399 + 84 * index) * scale + topOffset;
     final end = item.agendamento.endDate;
     final label = [
+      if (item.demo) 'Demonstração',
       item.agendamento.tipo,
       fmtHorario(item.agendamento.data, end),
       item.name,
@@ -362,7 +425,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           left: 40.5 * scale,
           top: top,
           width: 50 * scale,
-          height: 50 * scale,
+          height: cardHeight,
           child: Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -399,9 +462,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
           left: 102 * scale,
           top: top,
           width: 195 * scale,
-          height: 50 * scale,
+          height: cardHeight,
           child: Semantics(
             container: true,
+            excludeSemantics: true,
             button: !item.demo,
             label: label,
             onTap: item.demo ? null : () => _showAppointmentDetails(item),
@@ -418,19 +482,49 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   decoration: insetBox(color: VH.secondary, radius: 15 * scale),
                   alignment: Alignment.center,
                   padding: EdgeInsets.symmetric(horizontal: 8 * scale),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      item.agendamento.tipo,
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: VetColors.calendarTextOnRose,
-                        fontSize: 15 * scale,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: VH.bodyFontFamily,
-                      ),
-                    ),
-                  ),
+                  child: item.demo
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Demonstração',
+                              key: ValueKey('agenda-demo-badge-$index'),
+                              maxLines: 1,
+                              style: TextStyle(
+                                color: VetColors.calendarTextOnRose,
+                                fontSize: 9 * scale,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: VH.bodyFontFamily,
+                              ),
+                            ),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                item.agendamento.tipo,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  color: VetColors.calendarTextOnRose,
+                                  fontSize: 15 * scale,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: VH.bodyFontFamily,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            item.agendamento.tipo,
+                            maxLines: 1,
+                            style: TextStyle(
+                              color: VetColors.calendarTextOnRose,
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: VH.bodyFontFamily,
+                            ),
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -509,8 +603,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Semantics(
+                excludeSemantics: true,
                 button: !item.demo,
                 label: [
+                  if (item.demo) 'Demonstração',
                   item.agendamento.tipo,
                   fmtData(item.agendamento.data),
                   fmtHorario(item.agendamento.data, item.agendamento.endDate),

@@ -325,6 +325,17 @@ class _PetFormState extends State<PetForm> {
     setState(() => busy = true);
     try {
       await action?.call();
+    } on PersistenceClearingException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Os dados locais estão sendo limpos. Nenhuma alteração foi feita.',
+            ),
+          ),
+        );
     } on PersistenceBlockedException {
       if (!mounted) return;
       ScaffoldMessenger.of(context)

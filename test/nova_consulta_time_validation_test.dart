@@ -106,6 +106,45 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('conflito na data inicial limpa o horário padrão', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final conflict = Agendamento(
+      data: DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 12, 30),
+      endDate: DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 13, 30),
+      tipo: 'Conflito no horário padrão',
+      veterinario: 'Dra. Ana Silva',
+      local: 'Teste',
+      status: StatusAgendamento.pendente,
+    );
+    VetRepository.addAgendamento(pet.id, conflict);
+    addTearDown(() => VetRepository.removeAgendamento(pet.id, conflict));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NovaConsultaPage(
+          pet: pet,
+          service: 'Consulta',
+          plan: 'Particular',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('12:00'), findsNothing);
+    expect(find.text('--:--'), findsNWidgets(2));
+    expect(
+      find.text(
+        'O horário padrão conflita com outro agendamento nesta data. '
+        'Escolha outro horário.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   test('ontem é rejeitado sem criar agendamento', () {
     final before = VetRepository.agendamentos(pet.id).length;
     expect(

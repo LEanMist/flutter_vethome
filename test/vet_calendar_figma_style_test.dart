@@ -497,6 +497,18 @@ void main() {
         followingContentRect.top,
         greaterThanOrEqualTo(selectedDate.bottom + 8 * scale),
       );
+      if (appointmentCard.evaluate().isNotEmpty) {
+        final lastAppointment = tester.getRect(appointmentCard.last);
+        final actionTarget = tester.getRect(
+          find.byKey(const ValueKey('agenda-new-appointment-target')),
+        );
+        expect(
+          actionTarget.top + .01,
+          greaterThanOrEqualTo(lastAppointment.bottom + 8 * scale),
+          reason:
+              '${scenario.viewport}: Nova Consulta não deve cobrir o último cartão',
+        );
+      }
       expect(tester.takeException(), isNull, reason: '${scenario.viewport}');
     }
   });

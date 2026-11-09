@@ -142,6 +142,167 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('erro do Cadastro é removido quando o campo é corrigido', (
+    tester,
+  ) async {
+    await showRegistration(tester, const Size(390, 1035));
+    final nameField = find.byWidgetPredicate(
+      (widget) => widget is VHField && widget.label == 'Nome Completo',
+    );
+    final nameInput = find.descendant(
+      of: nameField,
+      matching: find.byType(TextFormField),
+    );
+
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: nameField,
+        matching: find.text('Preencha este campo'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.enterText(nameInput, 'Kelvin Teste');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: nameField,
+        matching: find.text('Preencha este campo'),
+      ),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('erro de confirmação acompanha alterações na senha', (
+    tester,
+  ) async {
+    await showRegistration(tester, const Size(390, 1035));
+    final passwordInput = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Senha',
+      ),
+      matching: find.byType(TextFormField),
+    );
+    final confirmationInput = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Confirmar Senha',
+      ),
+      matching: find.byType(TextFormField),
+    );
+
+    await tester.ensureVisible(passwordInput);
+    await tester.enterText(passwordInput, 'senha123');
+    await tester.ensureVisible(confirmationInput);
+    await tester.enterText(confirmationInput, 'outra123');
+    await tester.ensureVisible(find.text('Continuar'));
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    expect(find.text('As senhas não coincidem'), findsOneWidget);
+
+    await tester.ensureVisible(passwordInput);
+    await tester.enterText(passwordInput, 'outra123');
+    await tester.pumpAndSettle();
+    expect(find.text('As senhas não coincidem'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tecla Próximo avança e último campo usa Concluído', (
+    tester,
+  ) async {
+    await showRegistration(tester, const Size(390, 1035));
+    final nameInput = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Nome Completo',
+      ),
+      matching: find.byType(TextFormField),
+    );
+    final birthInput = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Data de Nascimento',
+      ),
+      matching: find.byType(TextFormField),
+    );
+    final lastInput = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Confirmar Senha',
+      ),
+      matching: find.byType(TextFormField),
+    );
+    final nameTextField = find.descendant(
+      of: nameInput,
+      matching: find.byType(TextField),
+    );
+    final birthTextField = find.descendant(
+      of: birthInput,
+      matching: find.byType(TextField),
+    );
+    final lastTextField = find.descendant(
+      of: lastInput,
+      matching: find.byType(TextField),
+    );
+
+    expect(
+      tester.widget<TextField>(nameTextField).textInputAction,
+      TextInputAction.next,
+    );
+    await tester.tap(nameInput);
+    await tester.testTextInput.receiveAction(TextInputAction.next);
+    await tester.pump();
+    expect(
+      tester.widget<TextField>(birthTextField).focusNode?.hasFocus,
+      isTrue,
+    );
+    expect(
+      tester.widget<TextField>(lastTextField).textInputAction,
+      TextInputAction.done,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tecla Concluído valida o Cadastro e foca o primeiro erro', (
+    tester,
+  ) async {
+    await showRegistration(tester, const Size(390, 1035));
+    final lastInput = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Confirmar Senha',
+      ),
+      matching: find.byType(TextFormField),
+    );
+    final nameField = find.byWidgetPredicate(
+      (widget) => widget is VHField && widget.label == 'Nome Completo',
+    );
+    final nameInput = find.descendant(
+      of: nameField,
+      matching: find.byType(TextFormField),
+    );
+    final nameEditable = find.descendant(
+      of: nameInput,
+      matching: find.byType(EditableText),
+    );
+
+    await tester.ensureVisible(lastInput);
+    await tester.tap(lastInput);
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: nameField,
+        matching: find.text('Preencha este campo'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<EditableText>(nameEditable).focusNode.hasFocus,
+      isTrue,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('REGISTER_PAGE: indicador lateral usa o vetor Figma', (
     tester,
   ) async {
