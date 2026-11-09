@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -130,5 +132,37 @@ void main() {
     expect(find.text('11 9793-8918'), findsOneWidget);
     expect(find.text('Kelvinpro@gmail.com'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('contatos de Suporte anunciam que são fictícios', (tester) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await openSupport(tester, viewport: const Size(390, 844));
+
+      final phone = find.bySemanticsLabel(
+        'Telefone fictício para demonstração: 11 9793-8918',
+      );
+      final email = find.bySemanticsLabel(
+        'E-mail fictício para demonstração: Kelvinpro@gmail.com',
+      );
+      expect(phone, findsOneWidget);
+      expect(email, findsOneWidget);
+      expect(
+        tester
+            .getSemantics(phone)
+            .getSemanticsData()
+            .hasAction(SemanticsAction.longPress),
+        isTrue,
+      );
+      expect(
+        tester
+            .getSemantics(email)
+            .getSemanticsData()
+            .hasAction(SemanticsAction.longPress),
+        isTrue,
+      );
+    } finally {
+      semantics.dispose();
+    }
   });
 }
