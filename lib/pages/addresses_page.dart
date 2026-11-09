@@ -154,11 +154,7 @@ class _AddressesPageState extends State<AddressesPage> {
           constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
-              const VetHeader(
-                title: 'Endereços',
-                showBack: false,
-                showDebugTools: false,
-              ),
+              const VetHeader(title: 'Endereços', showBack: false),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {

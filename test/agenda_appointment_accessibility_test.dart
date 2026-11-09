@@ -119,7 +119,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      for (final label in ['Hemograma', 'Urina', 'Creatinina']) {
+      final labels = size.width < 900
+          ? ['Rambo Augusto', 'Nicolly Santos', 'Olivia Palito']
+          : ['Hemograma', 'Urina', 'Creatinina'];
+      for (final label in labels) {
         final text = tester.widget<Text>(find.text(label));
         final foreground = text.style!.color!;
         expect(foreground, VetColors.calendarTextOnRose);

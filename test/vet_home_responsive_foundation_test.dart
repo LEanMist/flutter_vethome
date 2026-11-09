@@ -104,6 +104,61 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('barra inferior respeita o recuo Figma com e sem safe area', (
+    tester,
+  ) async {
+    useViewport(tester, const Size(390, 844));
+
+    for (final paddingBottom in [0.0, 36.0]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: EdgeInsets.only(bottom: paddingBottom),
+              viewPadding: const EdgeInsets.only(bottom: 36),
+            ),
+            child: child!,
+          ),
+          home: const VetPageScaffold(
+            title: 'Navegação',
+            children: [SizedBox.shrink()],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getRect(find.byTooltip('Configurações')),
+        const Rect.fromLTWH(310, 734, 50, 50),
+        reason: 'padding.bottom=$paddingBottom',
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets(
+    'barra inferior tolera arredondamento subpixel da largura Figma',
+    (tester) async {
+      useViewport(tester, const Size(390.4, 844));
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: VetPageScaffold(
+            title: 'Navegação',
+            showBack: false,
+            children: [SizedBox.shrink()],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getRect(find.byTooltip('Configurações')),
+        const Rect.fromLTWH(310.2, 734, 50, 50),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final size in [
     const Size(320, 640),
     const Size(390, 844),

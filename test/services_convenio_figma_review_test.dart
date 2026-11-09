@@ -137,13 +137,24 @@ void main() {
       ),
       findsOneWidget,
     );
-    // Figma CONVENIO_PAGE 2783:840, viewport de 390 × 844.
+    // Frame 22 4010:387, viewport de 390 × 844.
     // Mantém o fluxo/rotas existentes enquanto alinha a posição dos planos.
     expect(tester.getTopLeft(find.text('Convênio')).dy, closeTo(37, 1));
-    expect(tester.getTopLeft(find.text('PetLove')).dy, closeTo(359, 1));
-    expect(tester.getTopLeft(find.text('Doglife')).dy, closeTo(479, 2));
-    expect(tester.getTopLeft(find.text('Particular')).dy, closeTo(598, 2));
-    // CONVENIO_PAGE 2783:840: planos 254 × 59 e títulos
+    for (final (plan, top) in const [
+      ('PetLove', 273.0),
+      ('DogLife', 392.0),
+      ('Particular', 633.0),
+    ]) {
+      expect(
+        tester.getRect(find.byKey(ValueKey('convenio-plan-pill-$plan'))),
+        Rect.fromLTWH(0, top, 254, 59),
+      );
+    }
+    expect(
+      tester.getRect(find.byKey(const ValueKey('convenio-figma-unnamed-pill'))),
+      const Rect.fromLTWH(0, 511, 254, 59),
+    );
+    // Frame 22 4010:387: planos 254 × 59 e títulos
     // Montserrat Alternates Bold, 20 px.
     for (final label in ['PetLove', 'Doglife', 'Particular']) {
       final title = tester.widget<Text>(find.text(label));
@@ -181,13 +192,19 @@ void main() {
     );
     expect(
       find.image(
+        const AssetImage('assets/imagens/figma/coisademedico-1-2.png'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.image(
         const AssetImage('assets/imagens/figma/convenio-particular.png'),
       ),
       findsOneWidget,
     );
     expect(
       find.image(const AssetImage('assets/imagens/figma/convenio-chevron.png')),
-      findsNWidgets(3),
+      findsNWidgets(4),
     );
     for (final label in ['Convênio', 'PetLove', 'Doglife', 'Particular']) {
       // ignore: avoid_print

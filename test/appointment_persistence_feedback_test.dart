@@ -210,7 +210,23 @@ void main() {
 
     expect(find.byType(AgendaScreen), findsOneWidget);
     expect(agendaDate, appointment.data);
-    expect(find.text(service), findsWidgets);
+    expect(find.text(pet.name), findsWidgets);
+    final card = find.byKey(
+      ValueKey(
+        'agenda-appointment-${appointment.data.microsecondsSinceEpoch}-${appointment.tipo}',
+      ),
+    );
+    expect(
+      find.ancestor(
+        of: card,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label?.contains(service) == true,
+        ),
+      ),
+      findsOneWidget,
+    );
     expect(
       find.text(
         'Consulta criada nesta sessão. Não foi possível salvar localmente.',

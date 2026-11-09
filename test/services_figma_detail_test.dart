@@ -20,7 +20,7 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
-    expect(find.byType(SvgPicture), findsNWidgets(12));
+    expect(find.byType(SvgPicture), findsNWidgets(14));
 
     final optionFinder = find.text('Hemograma');
     expect(optionFinder, findsOneWidget);
@@ -69,7 +69,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
 
-    // SERVICES_PAGE 2791:3113; medidas absolutas no frame 390 × 844.
+    // SERVICES_PAGE 2564:398; medidas absolutas no frame 390 × 844.
     const categories = [
       (
         'Exames',
@@ -85,15 +85,15 @@ void main() {
       ),
       (
         'Microchipagem',
-        Rect.fromLTWH(-1, 546, 263, 59),
-        Rect.fromLTWH(13, 560, 30, 30),
-        Rect.fromLTWH(289.5, 569, 17, 19),
+        Rect.fromLTWH(0, 546, 300, 59),
+        Rect.fromLTWH(16.83, 560, 36.03, 30),
+        Rect.fromLTWH(259, 567, 16, 16),
       ),
       (
         'Atestados',
-        Rect.fromLTWH(-5, 627, 267, 59),
+        Rect.fromLTWH(-5, 627, 305, 59),
         Rect.fromLTWH(8, 641, 32, 32),
-        Rect.fromLTWH(289.5, 650, 17, 19),
+        Rect.fromLTWH(259, 648, 16, 16),
       ),
     ];
 
@@ -105,9 +105,10 @@ void main() {
         find.byKey(ValueKey('services-category-icon-$name')),
       );
       final arrow = find.byKey(ValueKey('services-category-arrow-$name'));
-      final actualArrow = name == 'Microchipagem' || name == 'Atestados'
+      final directChoice = name == 'Microchipagem' || name == 'Atestados';
+      final actualArrow = directChoice
           ? tester.getRect(
-              find.byKey(ValueKey('services-category-chevron-$name')),
+              find.byKey(ValueKey('services-category-checkbox-$name')),
             )
           : tester.getRect(arrow);
 
@@ -123,6 +124,16 @@ void main() {
       expect(actualArrow.top, closeTo(arrowRect.top, .02), reason: name);
       expect(actualArrow.width, closeTo(arrowRect.width, .02), reason: name);
       expect(actualArrow.height, closeTo(arrowRect.height, .02), reason: name);
+      if (directChoice) {
+        expect(arrow, findsNothing);
+        final marker = tester.widget<SvgPicture>(
+          find.byKey(ValueKey('services-category-checkbox-$name')),
+        );
+        expect(
+          (marker.bytesLoader as SvgAssetLoader).assetName,
+          'assets/imagens/figma/services-checkbox-unselected.svg',
+        );
+      }
     }
 
     for (final (name, top) in const [('Exames', 249.0), ('Vacinas', 427.0)]) {

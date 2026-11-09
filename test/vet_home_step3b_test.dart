@@ -48,7 +48,7 @@ void main() {
     );
   });
 
-  testWidgets('VetHeader mostra títulos completos e preserva os botões', (
+  testWidgets('VetHeader mostra títulos completos sem atalho duplicado', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -76,7 +76,7 @@ void main() {
         expect(text.overflow, isNot(TextOverflow.ellipsis));
         expect(paragraph.didExceedMaxLines, isFalse);
         expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-        expect(find.byTooltip('Telas de teste'), findsOneWidget);
+        expect(find.byTooltip('Telas de teste'), findsNothing);
         expect(tester.takeException(), isNull);
       }
     }

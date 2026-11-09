@@ -60,6 +60,52 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('erros de cadastro expandem o painel sem cortar os campos', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    Finder field(String label) => find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == label,
+      ),
+      matching: find.byType(TextFormField),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: Scaffold(
+          body: AddressForm(
+            title: 'Endereço',
+            cepService: _MissingCepService(),
+            onSkip: () {},
+            onSaved: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final panel = find.byKey(const ValueKey('address-registration-panel'));
+    expect(tester.getSize(panel).height, 565);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Continuar'));
+    await tester.pumpAndSettle();
+
+    final panelRect = tester.getRect(panel);
+    expect(panelRect.height, greaterThan(565));
+    expect(find.text('Informe um CEP com 8 números'), findsOneWidget);
+    expect(find.text('Preencha este campo'), findsNWidgets(3));
+    await tester.ensureVisible(field('Cidade'));
+    final lastError = find.text('Preencha este campo').last;
+    await tester.ensureVisible(lastError);
+    expect(tester.getRect(lastError).bottom, lessThanOrEqualTo(844));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('feedback do CEP continua alcançável a 200% em tela estreita', (
     tester,
   ) async {

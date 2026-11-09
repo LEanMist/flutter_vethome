@@ -424,6 +424,7 @@ void main() {
     (tester) async {
       largeViewport(tester);
       await tester.pumpWidget(const MaterialApp(home: TestePage()));
+      await tester.scrollUntilVisible(find.text('Nova consulta'), 250);
       await tester.ensureVisible(find.text('Nova consulta'));
       await tester.pumpAndSettle();
       for (final pet in [...VetRepository.pets]) {

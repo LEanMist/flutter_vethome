@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -23,6 +24,18 @@ class _FailingClearStorage extends LocalStorage {
 
   @override
   Future<void> clear() async => throw StateError('falha ao remover');
+}
+
+class _GatedClearStorage extends LocalStorage {
+  final clearStarted = Completer<void>();
+  final finishClear = Completer<void>();
+
+  @override
+  Future<void> clear() async {
+    clearStarted.complete();
+    await finishClear.future;
+    await super.clear();
+  }
 }
 
 LocalState _savedState() => LocalState(
@@ -87,6 +100,34 @@ void main() {
     expect(VetRepository.persistenceStatus, LocalLoadStatus.empty);
     expect(VetRepository.unsavedChanges.value, isFalse);
   });
+
+  test(
+    'limpezas simultâneas compartilham uma operação e não restauram email',
+    () async {
+      final storage = _GatedClearStorage();
+      await VetRepository.initialize(storage: storage);
+      final firstClear = LocalDataManager.clearUserData();
+
+      try {
+        await storage.clearStarted.future.timeout(const Duration(seconds: 3));
+        final secondClear = LocalDataManager.clearUserData();
+
+        expect(identical(firstClear, secondClear), isTrue);
+        storage.finishClear.complete();
+        expect(await Future.wait([firstClear, secondClear]), [true, true]);
+
+        final preferences = await SharedPreferences.getInstance();
+        expect(
+          preferences.containsKey(LocalDataManager.rememberedEmailKey),
+          isFalse,
+        );
+        expect((await LocalStorage().load()).status, LocalLoadStatus.empty);
+      } finally {
+        if (!storage.finishClear.isCompleted) storage.finishClear.complete();
+        await firstClear;
+      }
+    },
+  );
 
   test(
     'limpar dados substitui o snapshot por um tombstone sem perfil',

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
@@ -9,7 +8,6 @@ import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/auth/demo_mode_notice.dart';
-import 'teste_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -53,15 +51,18 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<bool> _saveRememberedEmail() async {
+  Future<bool> _saveRememberedEmail({
+    required String email,
+    required bool remember,
+  }) async {
     try {
       final preferences = await SharedPreferences.getInstance();
-      if (!lembrarDeMim) {
+      if (!remember) {
         return await preferences.remove(LocalDataManager.rememberedEmailKey);
       }
       return await preferences.setString(
         LocalDataManager.rememberedEmailKey,
-        _emailController.text.trim(),
+        email,
       );
     } catch (_) {
       return false;
@@ -87,9 +88,13 @@ class _LoginPageState extends State<LoginPage> {
       mostrarMensagem(message);
       return;
     }
-    _signingIn = true;
-    final emailSaved = await _saveRememberedEmail();
-    _signingIn = false;
+    final email = _emailController.text.trim();
+    final rememberEmail = lembrarDeMim;
+    setState(() => _signingIn = true);
+    final emailSaved = await _saveRememberedEmail(
+      email: email,
+      remember: rememberEmail,
+    );
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     Navigator.pushReplacementNamed(context, '/home');
@@ -131,6 +136,7 @@ class _LoginPageState extends State<LoginPage> {
               final textScale = MediaQuery.textScalerOf(context).scale(1);
               final rememberControl = _RememberMeControl(
                 value: lembrarDeMim,
+                enabled: !_signingIn,
                 focusNode: _rememberFocusNode,
                 onChanged: (value) => setState(() => lembrarDeMim = value),
               );
@@ -140,9 +146,11 @@ class _LoginPageState extends State<LoginPage> {
                   minimumSize: const Size(0, 48),
                   padding: const EdgeInsets.only(left: 8),
                 ),
-                onPressed: () => mostrarMensagem(
-                  'A recuperação de senha ainda não está disponível nesta demonstração.',
-                ),
+                onPressed: _signingIn
+                    ? null
+                    : () => mostrarMensagem(
+                        'A recuperação de senha ainda não está disponível nesta demonstração.',
+                      ),
                 child: const Text(
                   'Esqueceu sua senha?',
                   style: TextStyle(fontSize: 12, color: VetColors.brownOnRose),
@@ -231,6 +239,7 @@ class _LoginPageState extends State<LoginPage> {
                                 _emailController,
                                 prefix: 'frame-6.png',
                                 scale: s,
+                                enabled: !_signingIn,
                               ),
                               SizedBox(height: 17 * s),
                               _loginField(
@@ -239,6 +248,7 @@ class _LoginPageState extends State<LoginPage> {
                                 prefix: 'frame-7-5.png',
                                 scale: s,
                                 password: true,
+                                enabled: !_signingIn,
                               ),
                             ],
                           ),
@@ -252,7 +262,7 @@ class _LoginPageState extends State<LoginPage> {
                           width: 303 * s,
                           height: 54,
                           child: ElevatedButton.icon(
-                            onPressed: entrar,
+                            onPressed: _signingIn ? null : entrar,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: VetColors.rose,
                               foregroundColor: VetColors.calendarTextOnRose,
@@ -260,17 +270,30 @@ class _LoginPageState extends State<LoginPage> {
                               shadowColor: Colors.black.withValues(alpha: .25),
                               shape: const StadiumBorder(),
                             ),
-                            icon: const Icon(
-                              Icons.login,
-                              size: 21,
-                              color: Colors.white,
-                            ),
+                            icon: _signingIn
+                                ? const ExcludeSemantics(
+                                    child: SizedBox.square(
+                                      dimension: 21,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.login,
+                                    size: 21,
+                                    color: Colors.white,
+                                  ),
                             iconAlignment: IconAlignment.end,
-                            label: const Text(
-                              'Entrar',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                            label: Semantics(
+                              liveRegion: _signingIn,
+                              child: Text(
+                                _signingIn ? 'Entrando…' : 'Entrar',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -408,21 +431,6 @@ class _LoginPageState extends State<LoginPage> {
                           icon: const Icon(Icons.arrow_back),
                         ),
                       ),
-                    if (kDebugMode)
-                      Positioned(
-                        top: MediaQuery.viewPaddingOf(context).top + 4,
-                        right: 8,
-                        child: IconButton(
-                          tooltip: 'Telas de teste',
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const TestePage(),
-                            ),
-                          ),
-                          icon: const Icon(Icons.dashboard_outlined),
-                        ),
-                      ),
                   ],
                 ),
               );
@@ -446,6 +454,7 @@ class _LoginPageState extends State<LoginPage> {
     required String prefix,
     required double scale,
     bool password = false,
+    bool enabled = true,
   }) => SizedBox(
     width: 242 * scale,
     height: _loginFieldHeight(context),
@@ -465,6 +474,7 @@ class _LoginPageState extends State<LoginPage> {
         ],
       ),
       child: TextField(
+        enabled: enabled,
         controller: controller,
         focusNode: password ? _passwordFocusNode : null,
         obscureText: password && esconderSenha,
@@ -518,8 +528,9 @@ class _LoginPageState extends State<LoginPage> {
           suffixIcon: password
               ? IconButton(
                   tooltip: esconderSenha ? 'Mostrar senha' : 'Ocultar senha',
-                  onPressed: () =>
-                      setState(() => esconderSenha = !esconderSenha),
+                  onPressed: enabled
+                      ? () => setState(() => esconderSenha = !esconderSenha)
+                      : null,
                   icon: Icon(
                     esconderSenha
                         ? Icons.visibility_outlined
@@ -538,11 +549,13 @@ class _LoginPageState extends State<LoginPage> {
 class _RememberMeControl extends StatefulWidget {
   const _RememberMeControl({
     required this.value,
+    required this.enabled,
     required this.focusNode,
     required this.onChanged,
   });
 
   final bool value;
+  final bool enabled;
   final FocusNode focusNode;
   final ValueChanged<bool> onChanged;
 
@@ -553,16 +566,24 @@ class _RememberMeControl extends StatefulWidget {
 class _RememberMeControlState extends State<_RememberMeControl> {
   bool _focused = false;
 
-  void _toggle() => widget.onChanged(!widget.value);
+  void _toggle() {
+    if (widget.enabled) widget.onChanged(!widget.value);
+  }
 
   @override
   Widget build(BuildContext context) => Semantics(
     label: 'Lembre-se de mim',
     checked: widget.value,
+    enabled: widget.enabled,
+    excludeSemantics: true,
+    onTap: widget.enabled ? _toggle : null,
     child: FocusableActionDetector(
       key: const ValueKey('remember-me-control'),
+      enabled: widget.enabled,
       focusNode: widget.focusNode,
-      mouseCursor: SystemMouseCursors.click,
+      mouseCursor: widget.enabled
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
       shortcuts: const {
         SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
         SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
@@ -578,20 +599,17 @@ class _RememberMeControlState extends State<_RememberMeControl> {
       onShowFocusHighlight: (focused) => setState(() => _focused = focused),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () {
-          widget.focusNode.requestFocus();
-          _toggle();
-        },
+        onTap: widget.enabled
+            ? () {
+                widget.focusNode.requestFocus();
+                _toggle();
+              }
+            : null,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.only(left: 5),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(100),
-            border: _focused
-                ? Border.all(color: VH.foreground.withValues(alpha: .55))
-                : null,
-          ),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(100)),
           child: Row(
             children: [
               SizedBox(
@@ -601,6 +619,12 @@ class _RememberMeControlState extends State<_RememberMeControl> {
                 child: DecoratedBox(
                   decoration: inset_shadow.BoxDecoration(
                     borderRadius: BorderRadius.circular(100),
+                    border: _focused
+                        ? Border.all(
+                            color: VH.foreground.withValues(alpha: .85),
+                            width: 1.5,
+                          )
+                        : null,
                     gradient: LinearGradient(
                       begin: Alignment.bottomLeft,
                       end: Alignment.topRight,

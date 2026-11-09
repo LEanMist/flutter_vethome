@@ -1,7 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../pages/teste_page.dart';
 import '../../theme/vet_colors.dart';
 import '../pets/pets_theme.dart';
 
@@ -13,14 +11,12 @@ class VetHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.showBack = true,
-    this.showDebugTools = true,
     this.bottom,
     this.titleSize = 30,
   });
 
   final String title;
   final bool showBack;
-  final bool showDebugTools;
   final Widget? bottom;
   final double titleSize;
 
@@ -83,32 +79,7 @@ class VetHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(
-                width: 48 * s,
-                child: kDebugMode && showDebugTools
-                    ? IconButton(
-                        tooltip: 'Telas de teste',
-                        constraints: BoxConstraints.tightFor(
-                          width: 48 * s,
-                          height: 48 * s,
-                        ),
-                        padding: EdgeInsets.zero,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const TestePage(),
-                            ),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.dashboard_outlined,
-                          color: Colors.white,
-                          size: 22 * s,
-                        ),
-                      )
-                    : null,
-              ),
+              SizedBox(width: 48 * s),
             ],
           ),
           if (bottom != null)

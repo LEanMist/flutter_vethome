@@ -55,6 +55,7 @@ class _AddressFormState extends State<AddressForm> {
   int _request = 0;
   bool _loading = false;
   bool _saving = false;
+  bool _validationAttempted = false;
   @override
   void dispose() {
     for (final c in [_name, _cep, _street, _city, _number, _complement]) {
@@ -103,7 +104,13 @@ class _AddressFormState extends State<AddressForm> {
   }
 
   Future<void> _save() async {
-    if (_loading || _saving || !_key.currentState!.validate()) return;
+    if (_loading || _saving) return;
+    if (!_key.currentState!.validate()) {
+      if (mounted && !_validationAttempted) {
+        setState(() => _validationAttempted = true);
+      }
+      return;
+    }
     setState(() => _saving = true);
     try {
       final result = _result;
@@ -355,12 +362,20 @@ class _AddressFormState extends State<AddressForm> {
                       // Preserve the measured Figma panel before interaction.
                       // CEP feedback can add another line to the form; let the
                       // panel grow for that state instead of clipping fields.
-                      height: registration && _status.isEmpty ? 565 : null,
+                      height:
+                          registration &&
+                              _status.isEmpty &&
+                              !_validationAttempted
+                          ? 565
+                          : null,
                       child: Container(
                         key: registration
                             ? const ValueKey('address-registration-panel')
                             : null,
-                        clipBehavior: registration && _status.isEmpty
+                        clipBehavior:
+                            registration &&
+                                _status.isEmpty &&
+                                !_validationAttempted
                             ? Clip.antiAlias
                             : Clip.none,
                         padding: EdgeInsets.fromLTRB(

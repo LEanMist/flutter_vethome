@@ -51,7 +51,7 @@ void main() {
   });
 
   testWidgets(
-    'Agenda mobile anuncia dias com consulta real sem marcar a grade',
+    'Agenda mobile marca consultas reais com ponto branco e as anuncia',
     (tester) async {
       final semantics = tester.ensureSemantics();
       try {
@@ -92,8 +92,34 @@ void main() {
           const ValueKey('calendar-2026-2-18-surface'),
         );
         expect(surface, findsOneWidget);
+        final indicator = find.descendant(
+          of: surface,
+          matching: find.byType(CircleAvatar),
+        );
         expect(
-          find.descendant(of: surface, matching: find.byType(CircleAvatar)),
+          indicator,
+          findsOneWidget,
+          reason: 'A data ocupada deve mostrar o ponto abaixo do número',
+        );
+        expect(
+          tester.widget<CircleAvatar>(indicator).backgroundColor,
+          Colors.white,
+        );
+        expect(
+          tester.getCenter(indicator).dy,
+          greaterThan(
+            tester
+                .getCenter(
+                  find.descendant(of: surface, matching: find.text('18')),
+                )
+                .dy,
+          ),
+        );
+        final emptyDay = find.byKey(
+          const ValueKey('calendar-2026-2-17-surface'),
+        );
+        expect(
+          find.descendant(of: emptyDay, matching: find.byType(CircleAvatar)),
           findsNothing,
         );
         expect(tester.takeException(), isNull);
@@ -103,7 +129,7 @@ void main() {
     },
   );
 
-  testWidgets('consulta real acomoda texto ampliado sem mudar tamanho normal', (
+  testWidgets('Agenda mantém Nova Consulta visível sem rolar em dia cheio', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -111,7 +137,55 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    final date = DateTime(2026, 2, 18);
     final pet = VetRepository.pets.first;
+    await tester.runAsync(() async {
+      for (var index = 0; index < 4; index++) {
+        VetRepository.addAgendamento(
+          pet.id,
+          Agendamento(
+            data: DateTime(2026, 2, 18, 9 + index),
+            tipo: 'Consulta $index',
+            veterinario: 'Dra. Exemplo',
+            local: 'Clínica VetHome',
+            status: StatusAgendamento.confirmado,
+          ),
+        );
+      }
+      expect(await VetRepository.flush(), isTrue);
+    });
+
+    await tester.pumpWidget(MaterialApp(home: AgendaScreen(initialDate: date)));
+    await tester.pumpAndSettle();
+
+    final action = find.byKey(const ValueKey('agenda-new-appointment-target'));
+    expect(
+      find.byKey(const ValueKey('agenda-sticky-action-footer')),
+      findsOneWidget,
+    );
+    expect(tester.getRect(action).top, greaterThanOrEqualTo(0));
+    expect(
+      tester.getRect(action).bottom,
+      lessThanOrEqualTo(tester.getRect(find.byTooltip('Configurações')).top),
+    );
+
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+    expect(find.text('Escolha seu Pet'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cartão da Agenda acomoda nome ampliado e anuncia o serviço', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final originalPet = VetRepository.pets.first;
+    final pet = originalPet.copyWith(name: 'Rambo Augusto da Silva');
+    VetRepository.pets[0] = pet;
     final appointment = Agendamento(
       data: DateTime(2026, 2, 18, 10),
       endDate: DateTime(2026, 2, 18, 11),
@@ -148,10 +222,17 @@ void main() {
 
     await showAtTextScale(1);
     expect(tester.getSize(card).height, 50);
+    expect(find.text(pet.name), findsOneWidget);
 
     await showAtTextScale(2);
     expect(tester.getSize(card).height, greaterThan(50));
-    expect(tester.getSize(find.text(appointment.tipo)).height, greaterThan(50));
+    expect(tester.getSize(find.text(pet.name)).height, greaterThan(50));
+    final accessibleCard = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics &&
+          widget.properties.label?.contains(appointment.tipo) == true,
+    );
+    expect(accessibleCard, findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -215,7 +296,10 @@ void main() {
     expect(deleteVisualRect.top, closeTo(surfaceRect.top + 283, .01));
     expect(deleteVisualRect.width, closeTo(109, .01));
     expect(deleteVisualRect.height, closeTo(41, .01));
-    expect(find.text(pet.name), findsOneWidget);
+    expect(
+      find.descendant(of: detail, matching: find.text(pet.name)),
+      findsOneWidget,
+    );
     expect(
       find.descendant(of: detail, matching: find.text(appointment.tipo)),
       findsOneWidget,
@@ -250,7 +334,13 @@ void main() {
     expect(VetRepository.realAppointments(pet.id), isEmpty);
     expect(find.text(appointment.tipo), findsNothing);
 
-    await tester.tap(find.text('Hemograma'));
+    await tester.tap(
+      find.byKey(
+        ValueKey(
+          'agenda-appointment-${DateTime(2026, 1, 13, 10).microsecondsSinceEpoch}-Hemograma',
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('appointment-detail-dialog')),

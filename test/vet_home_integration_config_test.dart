@@ -68,7 +68,7 @@ void main() {
     });
   }
 
-  testWidgets('cabeçalho padrão preserva geometria Figma e catálogo', (
+  testWidgets('cabeçalho padrão preserva geometria sem atalho duplicado', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -89,7 +89,7 @@ void main() {
       const BorderRadius.vertical(bottom: Radius.circular(30)),
     );
     expect(decoration.boxShadow, isNull);
-    expect(find.byTooltip('Telas de teste'), findsOneWidget);
+    expect(find.byTooltip('Telas de teste'), findsNothing);
   });
 
   testWidgets('Configurações mantém rotas, tema, suporte, histórico e saída', (

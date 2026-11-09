@@ -60,13 +60,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
       if (_isDemoDate(_selecionado))
         for (final example in const [
-          (hour: 10, type: 'Hemograma'),
-          (hour: 13, type: 'Urina'),
-          (hour: 16, type: 'Creatinina'),
+          (hour: 10, type: 'Hemograma', name: 'Rambo Augusto'),
+          (hour: 13, type: 'Urina', name: 'Nicolly Santos'),
+          (hour: 16, type: 'Creatinina', name: 'Olivia Palito'),
         ])
           (
             petId: '',
-            name: 'VetHome',
+            name: example.name,
             demo: true,
             agendamento: Agendamento(
               data: DateTime(2026, 1, 13, example.hour),
@@ -79,10 +79,20 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
     ]..sort((a, b) => a.agendamento.data.compareTo(b.agendamento.data));
 
-    final isMobile = MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
+    final viewport = MediaQuery.sizeOf(context);
+    final isMobile = viewport.width < VH.desktopBreakpoint;
+    final mobileScale = (viewport.width / 390).clamp(0.8, 1.0).toDouble();
+    final pinMobileAction = isMobile;
     final page = VHPage(
       tab: '/agenda',
       showPetsTab: true,
+      footer: pinMobileAction
+          ? Container(
+              key: const ValueKey('agenda-sticky-action-footer'),
+              color: VH.background,
+              child: Center(child: _mobileNewAppointmentAction(mobileScale)),
+            )
+          : null,
       children: [
         if (isMobile)
           _mobileAgenda(consultasDoDia)
@@ -114,9 +124,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final scale = (width / 390).clamp(0.8, 1.0).toDouble();
     final textScaler = MediaQuery.textScalerOf(context);
-    final calendarWeekCount = VetCalendar.monthDays(_mes).length ~/ 7;
-    // O Figma usa y=323 em meses de cinco semanas; seis semanas exigem espaço.
-    final selectedDateTop = calendarWeekCount > 5 ? 348.0 : 323.0;
+    const selectedDateTop = 362.0;
     final weekdays = const [
       'Domingo',
       'Segunda Feira',
@@ -148,14 +156,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final selectedDateBottom = selectedDateTop * scale + selectedDateHeight;
     final contentOffset = math.max(
       0.0,
-      selectedDateBottom + 10 * scale - 399 * scale,
+      selectedDateBottom + 47 * scale - 450 * scale,
     );
     final emptyMessageTop = math.max(
-      414 * scale,
+      450 * scale,
       selectedDateBottom + 10 * scale,
     );
-    final buttonVisualHeight = 41 * scale;
-    final buttonTouchHeight = math.max(48.0, buttonVisualHeight);
     var precedingCardExpansion = 0.0;
     if (appointments.length > 1) {
       for (final appointment in appointments.take(appointments.length - 1)) {
@@ -165,26 +171,14 @@ class _AgendaScreenState extends State<AgendaScreen> {
     }
     final lastCardBottom = appointments.isEmpty
         ? 0.0
-        : (399 + 84 * (appointments.length - 1)) * scale +
+        : (450 + 84 * (appointments.length - 1)) * scale +
               precedingCardExpansion +
               _mobileAppointmentHeight(appointments.last, scale);
-    final actionTop = math.max(
-      math.max(
-        651.0,
-        appointments.length > 3 ? 399.0 + 84.0 * appointments.length : 651.0,
-      ),
-      appointments.isEmpty
-          ? 0.0
-          : (lastCardBottom +
-                    8 * scale +
-                    (buttonTouchHeight - buttonVisualHeight) / 2) /
-                scale,
-    );
     final contentHeight = math.max(
-      717 * scale,
-      actionTop * scale +
-          contentOffset +
-          (buttonTouchHeight + buttonVisualHeight) / 2,
+      414 * scale,
+      appointments.isEmpty
+          ? emptyMessageTop + 36 * scale
+          : lastCardBottom + contentOffset,
     );
     return SizedBox(
       key: const ValueKey('agenda-mobile-layout'),
@@ -211,7 +205,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           Positioned(
-            left: 67 * scale,
+            left: 66 * scale,
             top: selectedDateTop * scale,
             width: 258 * scale,
             height: selectedDateHeight,
@@ -222,8 +216,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 color: VetColors.pinkOverlay50,
                 border: Border.all(color: VetColors.rose, width: 5 * scale),
                 borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(100 * scale),
-                  bottom: Radius.circular(200 * scale),
+                  top: Radius.circular(200 * scale),
+                  bottom: Radius.circular(100 * scale),
                 ),
               ),
               child: Text(
@@ -255,8 +249,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
             topOffset: contentOffset,
           ),
           Positioned(
-            left: 345 * scale,
-            top: 435 * scale + contentOffset,
+            left: 339 * scale,
+            top: 486.4 * scale + contentOffset,
             width: 20 * scale,
             height: 20 * scale,
             child: SizedBox.expand(
@@ -276,8 +270,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           Positioned(
-            left: 345 * scale,
-            top: 561 * scale + contentOffset,
+            left: 339 * scale,
+            top: 612 * scale + contentOffset,
             width: 20 * scale,
             height: 20 * scale,
             child: SizedBox.expand(
@@ -296,56 +290,56 @@ class _AgendaScreenState extends State<AgendaScreen> {
               ),
             ),
           ),
-          Positioned(
-            left: 145 * scale,
-            top:
-                actionTop * scale -
-                (buttonTouchHeight - buttonVisualHeight) / 2 +
-                contentOffset,
-            width: 99 * scale,
-            height: buttonTouchHeight,
-            child: Semantics(
-              key: const ValueKey('agenda-new-appointment-target'),
-              button: true,
-              label: 'Nova Consulta',
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
+        ],
+      ),
+    );
+  }
+
+  Widget _mobileNewAppointmentAction(double scale) {
+    final visualHeight = 41 * scale;
+    final touchHeight = math.max(48.0, visualHeight);
+    return SizedBox(
+      width: 99 * scale,
+      height: touchHeight,
+      child: Semantics(
+        key: const ValueKey('agenda-new-appointment-target'),
+        button: true,
+        label: 'Nova Consulta',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(100 * scale),
+            onTap: () => openPetChoiceDialog(context),
+            child: Center(
+              child: Container(
+                width: 99 * scale,
+                height: visualHeight,
+                decoration: BoxDecoration(
+                  color: VH.primary,
                   borderRadius: BorderRadius.circular(100 * scale),
-                  onTap: () => openPetChoiceDialog(context),
-                  child: Center(
-                    child: Container(
-                      width: 99 * scale,
-                      height: buttonVisualHeight,
-                      decoration: BoxDecoration(
-                        color: VH.primary,
-                        borderRadius: BorderRadius.circular(100 * scale),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: VetColors.shadowDark,
-                            offset: Offset(2, 2),
-                            blurRadius: 5,
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Nova Consulta',
-                        maxLines: 1,
-                        style: TextStyle(
-                          fontFamily: VH.bodyFontFamily,
-                          fontSize: 10 * scale,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: VetColors.shadowDark,
+                      offset: Offset(2, 2),
+                      blurRadius: 5,
                     ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'Nova Consulta',
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontFamily: VH.bodyFontFamily,
+                    fontSize: 10 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -360,7 +354,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
     for (var index = 0; index < appointments.length; index++) {
       final item = appointments[index];
-      final top = (399 + 84 * index) * scale + topOffset + accumulatedExpansion;
+      final top = (450 + 84 * index) * scale + topOffset + accumulatedExpansion;
       final cardHeight = _mobileAppointmentHeight(item, scale);
       final expansion = cardHeight - 50 * scale;
       children.add(
@@ -375,9 +369,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
       if (index < appointments.length - 1) {
         children.add(
           Positioned(
-            left: 88 * scale,
+            left: 82 * scale,
             top:
-                (466 + 84 * index + (index > 0 ? 1 : 0)) * scale +
+                (516 + 84 * index + (index > 0 ? 1 : 0)) * scale +
                 topOffset +
                 accumulatedExpansion +
                 expansion,
@@ -408,7 +402,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
     final titlePainter = TextPainter(
       text: TextSpan(
-        text: item.agendamento.tipo,
+        text: item.name,
         style: TextStyle(
           color: VetColors.calendarTextOnRose,
           fontSize: fontSize,
@@ -443,9 +437,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
     return Stack(
       children: [
         Positioned(
-          left: 40.5 * scale,
+          left: 40 * scale,
           top: top,
-          width: 50 * scale,
+          width: 39 * scale,
           height: cardHeight,
           child: Center(
             child: FittedBox(
@@ -480,7 +474,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
         ),
         Positioned(
-          left: 102 * scale,
+          left: 96 * scale,
           top: top,
           width: 195 * scale,
           height: cardHeight,
@@ -521,7 +515,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                item.agendamento.tipo,
+                                item.name,
                                 maxLines: 1,
                                 style: TextStyle(
                                   color: VetColors.calendarTextOnRose,
@@ -536,7 +530,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       : MediaQuery.textScalerOf(context).scale(15 * scale) >
                             15 * scale
                       ? Text(
-                          item.agendamento.tipo,
+                          item.name,
                           textAlign: TextAlign.center,
                           softWrap: true,
                           style: TextStyle(
@@ -549,7 +543,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       : FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            item.agendamento.tipo,
+                            item.name,
                             maxLines: 1,
                             style: TextStyle(
                               color: VetColors.calendarTextOnRose,

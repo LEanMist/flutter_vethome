@@ -1,8 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/landing_page.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
+
+double _contrastRatio(Color first, Color second) {
+  final firstLuminance = first.computeLuminance();
+  final secondLuminance = second.computeLuminance();
+  final lighter = firstLuminance > secondLuminance
+      ? firstLuminance
+      : secondLuminance;
+  final darker = firstLuminance > secondLuminance
+      ? secondLuminance
+      : firstLuminance;
+  return (lighter + 0.05) / (darker + 0.05);
+}
 
 void main() {
+  testWidgets('Landing: rótulos de serviços mantêm contraste legível', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1543, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: LandingPage()));
+    await tester.pumpAndSettle();
+
+    for (final (asset, label) in const [
+      ('landing-service-exams.jpg', 'Exames'),
+      ('landing-service-vaccines.jpg', 'Vacinas'),
+    ]) {
+      final text = tester.widget<Text>(
+        find.descendant(
+          of: find.byKey(ValueKey('landing-service-label-$asset')),
+          matching: find.text(label),
+        ),
+      );
+      expect(text.style?.color, VetColors.calendarTextOnRose);
+      expect(
+        _contrastRatio(text.style!.color!, VetColors.rose),
+        greaterThanOrEqualTo(4.5),
+      );
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Landing: seta de serviços mantém ícone e alvo de toque', (
     tester,
   ) async {

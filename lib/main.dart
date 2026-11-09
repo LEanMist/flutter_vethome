@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/local_data_manager.dart';
@@ -7,6 +8,7 @@ import 'data/vet_repository.dart';
 import 'pages/critical_storage_error_page.dart';
 import 'routes/app_routes.dart';
 import 'theme.dart';
+import 'widgets/debug_screen_switcher.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +25,9 @@ class VetHomeApp extends StatefulWidget {
 }
 
 class _VetHomeAppState extends State<VetHomeApp> {
+  final _criticalNavigatorKey = GlobalKey<NavigatorState>();
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
   // Nova leitura (sem gravação); reconstrói o app para refletir o novo status.
   Future<void> _retryStorage() async {
     await VetRepository.retryInitialization();
@@ -50,6 +55,13 @@ class _VetHomeAppState extends State<VetHomeApp> {
             supportedLocales: const [Locale('pt', 'BR')],
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
             theme: VetTheme.light(themeSeed),
+            navigatorKey: _criticalNavigatorKey,
+            builder: (context, child) => kDebugMode
+                ? DebugScreenSwitcher(
+                    navigatorKey: _criticalNavigatorKey,
+                    child: child ?? const SizedBox.shrink(),
+                  )
+                : child ?? const SizedBox.shrink(),
             home: CriticalStorageErrorPage(
               status: VetRepository.persistenceStatus,
               onRetry: _retryStorage,
@@ -65,6 +77,13 @@ class _VetHomeAppState extends State<VetHomeApp> {
           supportedLocales: const [Locale('pt', 'BR')],
           localizationsDelegates: GlobalMaterialLocalizations.delegates,
           theme: VetTheme.light(themeSeed),
+          navigatorKey: _navigatorKey,
+          builder: (context, child) => kDebugMode
+              ? DebugScreenSwitcher(
+                  navigatorKey: _navigatorKey,
+                  child: child ?? const SizedBox.shrink(),
+                )
+              : child ?? const SizedBox.shrink(),
           initialRoute: '/',
           routes: AppRoutes.routes,
         );

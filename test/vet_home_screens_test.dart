@@ -191,9 +191,19 @@ void main() {
 
     expect(find.text('Janeiro'), findsOneWidget);
     expect(find.text('2026'), findsOneWidget);
-    expect(find.text('Hemograma'), findsOneWidget);
-    expect(find.text('Creatinina'), findsOneWidget);
-    expect(find.text('Urina'), findsOneWidget);
+    expect(find.text('Rambo Augusto'), findsOneWidget);
+    expect(find.text('Olivia Palito'), findsOneWidget);
+    expect(find.text('Nicolly Santos'), findsOneWidget);
+    for (final service in ['Hemograma', 'Creatinina', 'Urina']) {
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label?.contains(service) == true,
+        ),
+        findsOneWidget,
+      );
+    }
   });
 
   testWidgets('configuracoes nao mostra voltar e mantem navegacao inferior', (

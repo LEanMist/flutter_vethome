@@ -51,7 +51,26 @@ void main() {
     ];
     expect(find.text(months[tomorrow.month - 1]), findsOneWidget);
     expect(find.text('${tomorrow.year}'), findsOneWidget);
-    expect(find.text('Consulta'), findsWidgets);
+    final appointment = VetRepository.agendamentos(
+      pet.id,
+    ).singleWhere((item) => item.tipo == 'Consulta');
+    expect(find.text(pet.name), findsWidgets);
+    final card = find.byKey(
+      ValueKey(
+        'agenda-appointment-${appointment.data.microsecondsSinceEpoch}-${appointment.tipo}',
+      ),
+    );
+    expect(
+      find.ancestor(
+        of: card,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label?.contains('Consulta') == true,
+        ),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('próximo agendamento do pet abre o mês correspondente', (
@@ -105,7 +124,23 @@ void main() {
     ];
     expect(find.text(months[date.month - 1]), findsOneWidget);
     expect(find.text('${date.year}'), findsOneWidget);
-    expect(find.text('Retorno teste'), findsWidgets);
+    expect(find.text(pet.name), findsWidgets);
+    final card = find.byKey(
+      ValueKey(
+        'agenda-appointment-${date.microsecondsSinceEpoch}-Retorno teste',
+      ),
+    );
+    expect(
+      find.ancestor(
+        of: card,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label?.contains('Retorno teste') == true,
+        ),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Convênio não mostra abas e retorna pela navegação do sistema', (
@@ -160,7 +195,10 @@ void main() {
       ),
     );
 
-    await tester.ensureVisible(find.widgetWithText(OutlinedButton, 'Pets'));
+    await tester.scrollUntilVisible(
+      find.widgetWithText(OutlinedButton, 'Pets'),
+      300,
+    );
     await tester.tap(find.widgetWithText(OutlinedButton, 'Pets'));
     await tester.pumpAndSettle();
     expect(find.text('/pets'), findsOneWidget);

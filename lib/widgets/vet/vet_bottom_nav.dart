@@ -50,18 +50,20 @@ class VetBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
     final media = MediaQuery.of(context);
-    final followsFigmaMobileSpacing = media.size.width <= PetsTheme.designWidth;
+    // Navegadores podem expor o frame de 390 px como 390.4; trate esse
+    // arredondamento subpixel como a largura de referência do Figma.
+    final followsFigmaMobileSpacing =
+        media.size.width <= PetsTheme.designWidth + .5;
     final destinations = (showPetsTab
         ? _allDestinationIndices
         : _destinationIndicesWithoutPets);
     final mobileItemGap = (destinations.length == 5 ? 20.0 : 34.0) * s;
     final standardBottomGap = 12 * s;
     final fitsFigmaMobileHeight =
-        media.size.width <= PetsTheme.designWidth &&
-        media.size.height >= 844 * s;
+        followsFigmaMobileSpacing && media.size.height >= 844 * s;
     final referenceBottomGap = 50 * s;
     final bottomMargin = fitsFigmaMobileHeight
-        ? (referenceBottomGap - media.viewPadding.bottom)
+        ? (referenceBottomGap - media.padding.bottom)
               .clamp(standardBottomGap, referenceBottomGap)
               .toDouble()
         : standardBottomGap;

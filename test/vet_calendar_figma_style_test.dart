@@ -316,7 +316,7 @@ void main() {
     await pumpAgenda(tester, const Size(390, 844));
 
     final appointmentBoxes = [
-      for (final label in ['Hemograma', 'Creatinina', 'Urina'])
+      for (final label in ['Rambo Augusto', 'Nicolly Santos', 'Olivia Palito'])
         tester.getRect(
           find
               .ancestor(of: find.text(label), matching: find.byType(Container))
@@ -328,66 +328,70 @@ void main() {
       expect(rect.right, lessThanOrEqualTo(390));
     }
 
-    // Figma CALENDAR_PAGE 2783:950: calendário 390×344, grade 327 px,
-    // data selecionada em y=323 e cartões 195×50 em x=102.
+    // Figma CALENDAR_PAGE 4133:182 (Telas para IA): calendário 390×383,
+    // grade 305 px, data selecionada em y=362 e cartões em x=96.
     expect(
       tester.getRect(find.byKey(const ValueKey('vet-calendar'))),
-      const Rect.fromLTWH(0, 0, 390, 344),
+      const Rect.fromLTWH(0, 0, 390, 383),
     );
+    final innerPanel = find.byKey(
+      const ValueKey('agenda-calendar-inner-panel'),
+    );
+    expect(tester.getRect(innerPanel), const Rect.fromLTWH(22, 22, 347, 327));
     expect(
-      find.byKey(const ValueKey('agenda-calendar-inner-panel')),
-      findsNothing,
+      (tester.widget<Container>(innerPanel).decoration! as BoxDecoration).color,
+      VetColors.pink.withValues(alpha: .3),
     );
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-calendar-month-slot'))),
-      const Rect.fromLTWH(126, 17, 71, 35),
+      const Rect.fromLTWH(133, 28, 71, 35),
     );
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-calendar-year-slot'))),
-      const Rect.fromLTWH(207, 17, 35, 35),
+      const Rect.fromLTWH(214, 28, 35, 35),
     );
     final monthGrid = tester.getRect(
       find.byKey(const ValueKey('agenda-calendar-month-grid')),
     );
-    expect(monthGrid.topLeft, const Offset(31, 65));
-    expect(monthGrid.width, closeTo(327, .01));
+    expect(monthGrid.topLeft, const Offset(42, 75));
+    expect(monthGrid.width, closeTo(305, .01));
     final januaryFirst = tester.getRect(
       find.byKey(const ValueKey('calendar-date-semantics-2026-1-1')),
     );
-    expect(januaryFirst.left, closeTo(223.5714, .01));
-    expect(januaryFirst.top, closeTo(105, .01));
+    expect(januaryFirst.left, closeTo(222, .01));
+    expect(januaryFirst.top, closeTo(120, .01));
     expect(januaryFirst.width, closeTo(35, .01));
     expect(januaryFirst.height, closeTo(35, .01));
     final cardTopByLabel = {
-      'Hemograma': 399.0,
-      'Urina': 483.0,
-      'Creatinina': 567.0,
+      'Rambo Augusto': 450.0,
+      'Nicolly Santos': 534.0,
+      'Olivia Palito': 618.0,
     };
     for (final entry in cardTopByLabel.entries) {
       final card = find
           .ancestor(of: find.text(entry.key), matching: find.byType(Container))
           .first;
-      expect(tester.getRect(card), Rect.fromLTWH(102, entry.value, 195, 50));
+      expect(tester.getRect(card), Rect.fromLTWH(96, entry.value, 195, 50));
     }
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-selected-date'))),
-      const Rect.fromLTWH(67, 323, 258, 41),
+      const Rect.fromLTWH(66, 362, 258, 41),
     );
     for (var index = 0; index < 2; index++) {
       final line = tester.getRect(
         find.byKey(ValueKey('agenda-divider-$index')),
       );
-      expect(line.left, closeTo(88, .5));
+      expect(line.left, closeTo(82, .5));
       expect(line.width, closeTo(221, .5));
-      expect(line.center.dy, closeTo(467 + 85 * index, .5));
+      expect(line.center.dy, closeTo(517 + 85 * index, .5));
     }
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-chevron-up'))),
-      const Rect.fromLTWH(345, 435, 20, 20),
+      const Rect.fromLTWH(339, 486.4, 20, 20),
     );
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-chevron-down'))),
-      const Rect.fromLTWH(345, 561, 20, 20),
+      const Rect.fromLTWH(339, 612, 20, 20),
     );
     final newAppointmentButton = find
         .ancestor(
@@ -397,7 +401,7 @@ void main() {
         .first;
     expect(
       tester.getRect(newAppointmentButton),
-      const Rect.fromLTWH(145, 651, 99, 41),
+      const Rect.fromLTWH(145.5, 673.5, 99, 41),
     );
     final newAppointmentTarget = tester.getRect(
       find.byKey(const ValueKey('agenda-new-appointment-target')),
@@ -407,6 +411,10 @@ void main() {
     expect(
       newAppointmentTarget.center,
       tester.getRect(newAppointmentButton).center,
+    );
+    expect(
+      find.byKey(const ValueKey('agenda-sticky-action-footer')),
+      findsOneWidget,
     );
     expect(find.byTooltip('Pets'), findsOneWidget);
     expect(
@@ -422,9 +430,9 @@ void main() {
       find.text('Sáb'),
       find.byKey(const ValueKey('agenda-calendar-month-navigation')),
       find.byTooltip('Configurações'),
-      find.text('Hemograma'),
-      find.text('Urina'),
-      find.text('Creatinina'),
+      find.text('Rambo Augusto'),
+      find.text('Nicolly Santos'),
+      find.text('Olivia Palito'),
     ]) {
       final rect = tester.getRect(finder);
       expect(rect.left, greaterThanOrEqualTo(0));
@@ -448,7 +456,7 @@ void main() {
     final expectedScale = viewport.width / 390;
 
     expect(lastWeekDay.bottom, lessThanOrEqualTo(selectedDate.top));
-    expect(selectedDate.bottom, lessThanOrEqualTo(399 * expectedScale));
+    expect(selectedDate.bottom, lessThanOrEqualTo(403 * expectedScale));
     expect(tester.takeException(), isNull);
   });
 
@@ -502,39 +510,44 @@ void main() {
         final actionTarget = tester.getRect(
           find.byKey(const ValueKey('agenda-new-appointment-target')),
         );
-        expect(
-          actionTarget.top + .01,
-          greaterThanOrEqualTo(lastAppointment.bottom + 8 * scale),
-          reason:
-              '${scenario.viewport}: Nova Consulta não deve cobrir o último cartão',
+        final stickyFooter = find.byKey(
+          const ValueKey('agenda-sticky-action-footer'),
         );
+        if (stickyFooter.evaluate().isNotEmpty) {
+          final footerRect = tester.getRect(stickyFooter);
+          expect(actionTarget.top, greaterThanOrEqualTo(footerRect.top));
+          expect(actionTarget.bottom, lessThanOrEqualTo(footerRect.bottom));
+          expect(
+            footerRect.bottom,
+            lessThanOrEqualTo(
+              tester.getRect(find.byTooltip('Configurações')).top,
+            ),
+          );
+          expect(lastAppointment.bottom, greaterThan(actionTarget.top));
+        } else {
+          expect(
+            actionTarget.top + .01,
+            greaterThanOrEqualTo(lastAppointment.bottom + 8 * scale),
+            reason:
+                '${scenario.viewport}: Nova Consulta não deve cobrir o último cartão',
+          );
+        }
       }
       expect(tester.takeException(), isNull, reason: '${scenario.viewport}');
     }
   });
 
-  testWidgets('Agenda 360×800 rola sem sobrepor a navegação inferior', (
-    tester,
-  ) async {
+  testWidgets('Agenda 360×800 mantém Nova Consulta sem rolar', (tester) async {
     await pumpAgenda(tester, const Size(360, 800));
     final navigation = find.byTooltip('Configurações');
     final navigationRectBefore = tester.getRect(navigation);
-
-    await tester.scrollUntilVisible(
-      find.text('Nova Consulta'),
-      300,
-      scrollable: find
-          .descendant(
-            of: find.byType(SingleChildScrollView),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await tester.pumpAndSettle();
-
     final buttonRect = tester.getRect(find.text('Nova Consulta'));
+    final buttonTargetRect = tester.getRect(
+      find.byKey(const ValueKey('agenda-new-appointment-target')),
+    );
     final navigationRectAfter = tester.getRect(navigation);
     expect(buttonRect.bottom, lessThanOrEqualTo(navigationRectAfter.top));
+    expect(buttonTargetRect.height, greaterThanOrEqualTo(48));
     expect(navigationRectAfter, navigationRectBefore);
     expect(tester.getRect(find.text('Sáb')).right, lessThanOrEqualTo(360));
     expect(tester.takeException(), isNull);
@@ -542,8 +555,6 @@ void main() {
 
   testWidgets('Nova Consulta mantém alvo de 48 px em 320×640', (tester) async {
     await pumpAgenda(tester, const Size(320, 640));
-    await tester.ensureVisible(find.text('Nova Consulta'));
-    await tester.pumpAndSettle();
 
     final target = tester.getRect(
       find.byKey(const ValueKey('agenda-new-appointment-target')),
@@ -560,6 +571,15 @@ void main() {
     expect(target.width, greaterThanOrEqualTo(48));
     expect(button.height, closeTo(41 * (320 / 390), .01));
     expect(target.center, button.center);
+    expect(
+      target.bottom,
+      lessThanOrEqualTo(tester.getRect(find.byTooltip('Configurações')).top),
+      reason: 'A ação deve ficar disponível acima da navegação sem rolagem',
+    );
+    expect(
+      find.byKey(const ValueKey('agenda-sticky-action-footer')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 }

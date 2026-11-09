@@ -238,19 +238,22 @@ class ConfigScreen extends StatelessWidget {
               color: VetColors.pink,
               borderRadius: BorderRadius.circular(30),
             ),
-            padding: const EdgeInsets.fromLTRB(8, 24, 8, 24),
+            padding: const EdgeInsets.fromLTRB(0, 24, 0, 24),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Suporte',
-                    style: TextStyle(
-                      fontFamily: VH.bodyFontFamily,
-                      fontSize: 40,
-                      height: 1.2,
-                      fontWeight: FontWeight.bold,
-                      color: VetColors.brown,
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      'Suporte',
+                      style: TextStyle(
+                        fontFamily: VH.bodyFontFamily,
+                        fontSize: 40,
+                        height: 1.2,
+                        fontWeight: FontWeight.bold,
+                        color: VetColors.brown,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 21),

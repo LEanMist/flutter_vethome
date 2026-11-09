@@ -93,16 +93,13 @@ class VetPageScaffold extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 16 * s, vertical: 8),
             child: footer!,
           );
-    final navigation = SafeArea(
-      top: false,
-      child: VetBottomNav(
-        selectedIndex: selectedIndex,
-        onSelected: (i) => vetNavigate(
-          context,
-          i,
-          selected: selectedIndex,
-          isTabRoot: isTabRoot,
-        ),
+    final navigation = VetBottomNav(
+      selectedIndex: selectedIndex,
+      onSelected: (i) => vetNavigate(
+        context,
+        i,
+        selected: selectedIndex,
+        isTabRoot: isTabRoot,
       ),
     );
 

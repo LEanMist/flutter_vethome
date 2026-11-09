@@ -82,6 +82,15 @@ void main() {
               as SvgAssetLoader)
           .assetName;
 
+  String categoryMarkerAsset(WidgetTester tester, String name) =>
+      (tester
+                  .widget<SvgPicture>(
+                    find.byKey(ValueKey('services-category-checkbox-$name')),
+                  )
+                  .bytesLoader
+              as SvgAssetLoader)
+          .assetName;
+
   String categoryArrowAsset(WidgetTester tester, String name) =>
       (tester
                   .widget<SvgPicture>(
@@ -230,23 +239,6 @@ void main() {
     expect(categoryArrowAsset(tester, 'Vacinas'), right);
     expect(categoryArrowRotation(tester, 'Vacinas'), 1);
 
-    final microchipArrow = find.byKey(
-      const ValueKey('services-category-chevron-Microchipagem'),
-    );
-    var rotation = tester.widget<RotatedBox>(
-      find
-          .ancestor(of: microchipArrow, matching: find.byType(RotatedBox))
-          .first,
-    );
-    expect(rotation.quarterTurns, 0);
-    await tester.tap(find.byKey(const ValueKey('services-pill-Microchipagem')));
-    await tester.pumpAndSettle();
-    rotation = tester.widget<RotatedBox>(
-      find
-          .ancestor(of: microchipArrow, matching: find.byType(RotatedBox))
-          .first,
-    );
-    expect(rotation.quarterTurns, 1);
     expect(tester.takeException(), isNull);
   });
 
@@ -286,31 +278,72 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('setas e faixas alternam categorias após o ajuste do Figma', (
+  testWidgets('categorias diretas selecionam sem abrir sublistas no mobile', (
     tester,
   ) async {
     await openServices(tester);
 
     expect(find.text('Hemograma'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('services-pill-Exames')));
-    await tester.pumpAndSettle();
-    expect(find.text('Hemograma'), findsNothing);
-
-    final examsArrow = find.byKey(
-      const ValueKey('services-category-arrow-Exames'),
-    );
-    await tester.tapAt(tester.getCenter(examsArrow));
-    await tester.pumpAndSettle();
-    expect(find.text('Hemograma'), findsOneWidget);
-
-    expect(find.text('Atestado'), findsNothing);
-    final atestadosArrow = find.byKey(
-      const ValueKey('services-category-arrow-Atestados'),
-    );
-    await tester.tapAt(tester.getCenter(atestadosArrow));
-    await tester.pumpAndSettle();
-    expect(find.text('Atestado'), findsOneWidget);
+    final continueButton = find.byKey(const ValueKey('services-continue'));
+    expect(tester.widget<ElevatedButton>(continueButton).onPressed, isNull);
+    for (final category in ['Microchipagem', 'Atestados']) {
+      final marker = find.byKey(
+        ValueKey('services-category-checkbox-$category'),
+      );
+      expect(
+        categoryMarkerAsset(tester, category),
+        'assets/imagens/figma/services-checkbox-unselected.svg',
+      );
+      expect(
+        find.byKey(ValueKey('services-category-arrow-$category')),
+        findsNothing,
+      );
+      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.pumpAndSettle();
+      expect(
+        categoryMarkerAsset(tester, category),
+        'assets/imagens/figma/services-checkbox-selected.svg',
+      );
+      expect(marker, findsOneWidget);
+      expect(
+        tester.widget<ElevatedButton>(continueButton).onPressed,
+        isNotNull,
+      );
+      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.pumpAndSettle();
+      expect(
+        categoryMarkerAsset(tester, category),
+        'assets/imagens/figma/services-checkbox-unselected.svg',
+      );
+    }
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('checkboxes de Microchipagem e Atestados são acessíveis', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await openServices(tester);
+      for (final category in ['Microchipagem', 'Atestados']) {
+        final finder = find.byKey(
+          ValueKey('services-category-semantics-$category'),
+        );
+        var data = tester.getSemantics(finder).getSemanticsData();
+        expect(data.label, category);
+        expect(data.flagsCollection.isChecked, CheckedState.isFalse);
+        expect(data.flagsCollection.isButton, isFalse);
+        expect(data.hasAction(SemanticsAction.tap), isTrue);
+
+        await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+        await tester.pumpAndSettle();
+        data = tester.getSemantics(finder).getSemanticsData();
+        expect(data.flagsCollection.isChecked, CheckedState.isTrue);
+      }
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('dois serviços chegam ao agendamento e geram um registro', (

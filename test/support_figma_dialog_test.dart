@@ -115,8 +115,38 @@ void main() {
     expect(email.style?.fontFamily, 'Comfortaa');
     expect(email.style?.fontSize, 30);
     expect(email.style?.fontWeight, FontWeight.w500);
+    expect(
+      tester
+          .getSize(
+            find.ancestor(
+              of: find.text('Kelvinpro@gmail.com'),
+              matching: find.byType(SelectableText),
+            ),
+          )
+          .height,
+      lessThan(40),
+      reason: 'o e-mail deve ficar em uma única linha, como no Figma',
+    );
     expect(find.byType(SelectableText), findsNWidgets(2));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('título de Suporte é anunciado como cabeçalho', (tester) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await openSupport(tester, viewport: const Size(390, 844));
+      final title = find.descendant(
+        of: find.byKey(const ValueKey('support-figma-surface')),
+        matching: find.text('Suporte'),
+      );
+
+      expect(
+        tester.getSemantics(title).getSemanticsData().flagsCollection.isHeader,
+        isTrue,
+      );
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('Suporte se adapta a tela estreita com texto ampliado', (

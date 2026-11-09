@@ -337,8 +337,10 @@ class VetCalendar extends StatelessWidget {
     final compactWeekLabels = const ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     final cellDimension = 35 * scale;
     final columnGap = 10 * scale;
-    final rowGap = 5 * scale;
-    final gridWidth = 327 * scale;
+    // Seis linhas de datas usam intervalos menores para não encobrir a faixa
+    // selecionada; meses de cinco linhas mantêm a distância do Figma.
+    final rowGap = (weekCount > 5 ? 7.0 : 10.0) * scale;
+    final gridWidth = 305 * scale;
     final columnWidth = (gridWidth - columnGap * 6) / 7;
 
     return Semantics(
@@ -364,7 +366,7 @@ class VetCalendar extends StatelessWidget {
         child: Container(
           key: const ValueKey('vet-calendar'),
           width: 390 * scale,
-          height: 344 * scale,
+          height: 383 * scale,
           clipBehavior: Clip.none,
           decoration: BoxDecoration(
             color: VH.secondary,
@@ -375,6 +377,19 @@ class VetCalendar extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
+              Positioned(
+                left: 22 * scale,
+                top: 22 * scale,
+                width: 347 * scale,
+                height: 327 * scale,
+                child: Container(
+                  key: const ValueKey('agenda-calendar-inner-panel'),
+                  decoration: BoxDecoration(
+                    color: VetColors.pink.withValues(alpha: .3),
+                    borderRadius: BorderRadius.circular(30 * scale),
+                  ),
+                ),
+              ),
               if (compactText)
                 Positioned(
                   left: 0,
@@ -407,8 +422,8 @@ class VetCalendar extends StatelessWidget {
                 )
               else ...[
                 Positioned(
-                  left: 126 * scale,
-                  top: 17 * scale,
+                  left: 133 * scale,
+                  top: 28 * scale,
                   width: 71 * scale,
                   height: 35 * scale,
                   child: SizedBox.expand(
@@ -433,8 +448,8 @@ class VetCalendar extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  left: 207 * scale,
-                  top: 17 * scale,
+                  left: 214 * scale,
+                  top: 28 * scale,
                   width: 35 * scale,
                   height: 35 * scale,
                   child: SizedBox.expand(
@@ -460,8 +475,8 @@ class VetCalendar extends StatelessWidget {
                 ),
               ],
               Positioned(
-                left: 31 * scale,
-                top: 65 * scale,
+                left: 42 * scale,
+                top: 75 * scale,
                 width: gridWidth,
                 child: Column(
                   key: const ValueKey('agenda-calendar-month-grid'),
@@ -563,7 +578,8 @@ class VetCalendar extends StatelessWidget {
       today: false,
       inMonth: inMonth,
       enabled: _enabled(date),
-      indicator: false,
+      indicator: hasIndicator?.call(date) ?? false,
+      indicatorColor: Colors.white,
       hasAppointmentForSemantics: hasIndicator?.call(date) ?? false,
       todayForSemantics: _sameDay(date, today),
       scale: scale,
@@ -588,6 +604,7 @@ class _CalendarDay extends StatefulWidget {
     this.fontSizeFactor = 1,
     this.todayForSemantics = false,
     this.hasAppointmentForSemantics = false,
+    this.indicatorColor,
     this.onPreviousMonth,
     this.onNextMonth,
   });
@@ -598,6 +615,7 @@ class _CalendarDay extends StatefulWidget {
   final double fontSizeFactor;
   final bool todayForSemantics;
   final bool hasAppointmentForSemantics;
+  final Color? indicatorColor;
   final VoidCallback? onPreviousMonth, onNextMonth;
   final VoidCallback onTap;
 
@@ -744,7 +762,8 @@ class _CalendarDayState extends State<_CalendarDay> {
                             radius: 2 * widget.scale,
                             backgroundColor: widget.selected
                                 ? VH.onSecondary
-                                : VetColors.calendarTextOnRose,
+                                : widget.indicatorColor ??
+                                      VetColors.calendarTextOnRose,
                           ),
                         ),
                     ],

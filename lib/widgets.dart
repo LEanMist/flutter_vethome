@@ -1,12 +1,10 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/utils/form_fields.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
-import 'pages/teste_page.dart';
 import 'theme.dart';
 import 'widgets/vet/vet_bottom_nav.dart';
 
@@ -929,24 +927,6 @@ class VHHeader extends StatelessWidget {
                 tooltip: 'Voltar',
                 onPressed: () => Navigator.of(context).maybePop(),
                 icon: const Icon(Icons.arrow_back, color: VH.onSecondary),
-              ),
-            ),
-          if (!settingsStyle && kDebugMode)
-            Positioned(
-              top: 8,
-              right: 10,
-              child: IconButton(
-                tooltip: 'Telas de teste',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TestePage()),
-                  );
-                },
-                icon: const Icon(
-                  Icons.dashboard_outlined,
-                  color: VH.onSecondary,
-                ),
               ),
             ),
           if (sub != null)
