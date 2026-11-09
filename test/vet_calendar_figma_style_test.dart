@@ -61,7 +61,11 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> pumpAgenda(WidgetTester tester, Size viewport) async {
+  Future<void> pumpAgenda(
+    WidgetTester tester,
+    Size viewport, {
+    DateTime? initialDate,
+  }) async {
     tester.view.physicalSize = viewport;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -70,7 +74,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: VetTheme.light(VH.primary),
-        home: AgendaScreen(initialDate: DateTime(2026, 1, 13)),
+        home: AgendaScreen(initialDate: initialDate ?? DateTime(2026, 1, 13)),
       ),
     );
     await tester.pumpAndSettle();
@@ -419,6 +423,25 @@ void main() {
       expect(rect.left, greaterThanOrEqualTo(0));
       expect(rect.right, lessThanOrEqualTo(390));
     }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Agenda seis semanas não sobrepõe a data selecionada em 320 px', (
+    tester,
+  ) async {
+    const viewport = Size(320, 640);
+    await pumpAgenda(tester, viewport, initialDate: DateTime(2026, 8, 15));
+
+    final lastWeekDay = tester.getRect(
+      find.byKey(const ValueKey('calendar-2026-9-5-surface')),
+    );
+    final selectedDate = tester.getRect(
+      find.byKey(const ValueKey('agenda-selected-date')),
+    );
+    final expectedScale = viewport.width / 390;
+
+    expect(lastWeekDay.bottom, lessThanOrEqualTo(selectedDate.top));
+    expect(selectedDate.bottom, lessThanOrEqualTo(399 * expectedScale));
     expect(tester.takeException(), isNull);
   });
 

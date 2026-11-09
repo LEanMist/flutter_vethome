@@ -113,6 +113,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
   Widget _mobileAgenda(List<_AgendaItem> appointments) {
     final width = MediaQuery.sizeOf(context).width;
     final scale = (width / 390).clamp(0.8, 1.0).toDouble();
+    final calendarWeekCount = VetCalendar.monthDays(_mes).length ~/ 7;
+    // O Figma usa y=323 em meses de cinco semanas; seis semanas exigem espaço.
+    final selectedDateTop = calendarWeekCount > 5 ? 348.0 : 323.0;
     final actionTop = math.max(
       651.0,
       appointments.length > 3 ? 399.0 + 84.0 * appointments.length : 651.0,
@@ -159,7 +162,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
           Positioned(
             left: 67 * scale,
-            top: 323 * scale,
+            top: selectedDateTop * scale,
             width: 258 * scale,
             height: 41 * scale,
             child: Container(
