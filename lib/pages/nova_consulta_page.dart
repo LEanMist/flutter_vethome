@@ -12,6 +12,8 @@ import '../widgets/pet_summary.dart';
 import '../widgets/vet_calendar.dart';
 import '../widgets/vet/vet_page_scaffold.dart';
 
+const _appointmentVeterinarian = 'Dra. Ana Silva';
+
 bool isFutureAppointmentTime(DateTime time, DateTime now, {DateTime? after}) =>
     time.isAfter(now) && (after == null || time.isAfter(after));
 
@@ -27,6 +29,14 @@ bool tryScheduleAppointment({
             now,
             after: appointment.data,
           ))) {
+    return false;
+  }
+  if (VetRepository.hasAppointmentConflict(
+    petId: petId,
+    veterinarian: appointment.veterinario,
+    start: appointment.data,
+    end: appointment.endDate ?? appointment.data.add(const Duration(hours: 1)),
+  )) {
     return false;
   }
   VetRepository.addAgendamento(petId, appointment);
@@ -156,6 +166,8 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
         date: _date,
         minimum: end ? _at(_time!) : null,
         selected: end ? _end : _time,
+        petId: widget.pet.id,
+        veterinarian: _appointmentVeterinarian,
       ),
     );
     if (value != null && mounted) {
@@ -189,15 +201,25 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       return;
     }
     final date = _at(_time!);
+    final endDate = _at(_end!);
+    if (VetRepository.hasAppointmentConflict(
+      petId: widget.pet.id,
+      veterinarian: _appointmentVeterinarian,
+      start: date,
+      end: endDate,
+    )) {
+      _message('Este horário se sobrepõe a outro agendamento salvo.');
+      return;
+    }
     late final bool scheduled;
     try {
       scheduled = tryScheduleAppointment(
         petId: widget.pet.id,
         appointment: Agendamento(
           data: date,
-          endDate: _at(_end!),
+          endDate: endDate,
           tipo: widget.service,
-          veterinario: 'Dra. Ana Silva',
+          veterinario: _appointmentVeterinarian,
           local: 'VetHome · ${widget.plan}',
           status: StatusAgendamento.pendente,
           descricao: _description.text.trim(),
@@ -508,8 +530,16 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
 }
 
 class _TimeChoices extends StatefulWidget {
-  const _TimeChoices({required this.date, this.minimum, this.selected});
+  const _TimeChoices({
+    required this.date,
+    required this.petId,
+    required this.veterinarian,
+    this.minimum,
+    this.selected,
+  });
   final DateTime date;
+  final String petId;
+  final String veterinarian;
   final DateTime? minimum;
   final TimeOfDay? selected;
   @override
@@ -539,7 +569,21 @@ class _TimeChoicesState extends State<_TimeChoices> {
       widget.date.day,
       hour,
     );
-    return isFutureAppointmentTime(date, DateTime.now(), after: widget.minimum);
+    final start = widget.minimum ?? date;
+    final end = widget.minimum == null
+        ? date.add(const Duration(hours: 1))
+        : date;
+    return isFutureAppointmentTime(
+          date,
+          DateTime.now(),
+          after: widget.minimum,
+        ) &&
+        !VetRepository.hasAppointmentConflict(
+          petId: widget.petId,
+          veterinarian: widget.veterinarian,
+          start: start,
+          end: end,
+        );
   }
 
   @override

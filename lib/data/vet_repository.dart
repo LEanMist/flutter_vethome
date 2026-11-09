@@ -737,6 +737,32 @@ class VetRepository {
     _save();
   }
 
+  /// Confere conflitos somente contra consultas criadas pelo usuário.
+  /// Eventos de demonstração não ocupam horários reais.
+  static bool hasAppointmentConflict({
+    required String petId,
+    required String veterinarian,
+    required DateTime start,
+    required DateTime end,
+  }) {
+    if (!end.isAfter(start)) return true;
+    final requestedVeterinarian = veterinarian.trim().toLowerCase();
+    for (final entry in _novosAgendamentos.entries) {
+      for (final existing in entry.value) {
+        final samePet = entry.key == petId;
+        final sameVeterinarian =
+            existing.veterinario.trim().toLowerCase() == requestedVeterinarian;
+        if (!samePet && !sameVeterinarian) continue;
+        final existingEnd =
+            existing.endDate ?? existing.data.add(const Duration(hours: 1));
+        if (start.isBefore(existingEnd) && existing.data.isBefore(end)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /// Remove somente a mesma consulta salva; eventos de demonstração ficam fora
   /// da lista do repositório.
   static bool removeAgendamento(String petId, Agendamento agendamento) {

@@ -36,7 +36,7 @@ flutter test --no-pub -d chrome
 flutter build web --no-pub
 ```
 
-O teste nativo ignora deliberadamente um caso exclusivo do navegador; a execução com `-d chrome` cobre esse caso. Na validação mais recente, passaram **270 testes** no runner nativo e no Chrome, com um skip esperado em cada runner para o caso exclusivo da outra plataforma. A análise estática não encontrou problemas e o build Web foi aprovado.
+O teste nativo ignora deliberadamente um caso exclusivo do navegador; a execução com `-d chrome` cobre esse caso. Na validação mais recente, passaram **529 testes** no runner nativo e no Chrome, com **3 testes ignorados em cada runner**. A análise estática não encontrou problemas e o build Web release foi aprovado.
 
 ## Estado das plataformas
 
