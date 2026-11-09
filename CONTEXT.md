@@ -527,3 +527,10 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - Revisões coordenadas em quatro chats normais de VetHome: Serviços/Convênio encontrou a recuperação de rota e pet; Agenda confirmou a semântica dos títulos; a revisão independente não encontrou defeito adicional nas correções; Sobre/Suporte não apresentou divergência nova. Os chats estão ociosos após as revisões.
 - Validação final desta rodada: `flutter test --no-pub` — **541 aprovados e 3 ignorados**; testes focados no Chrome de Serviços, Convênio, seleção múltipla e Agendamentos — **28/28**; `flutter analyze --no-pub` sem problemas; `flutter build web --release --no-pub` aprovado em **110,3 s**, com dry run Wasm aprovado; formatação sem mudanças e `git diff --check` aprovado (avisos de conversão LF/CRLF do Git).
 - `.wrangler/` e `CONTINUACAO_OUTRA_CONTA.md` permanecem preservados fora das mudanças rastreadas desta publicação.
+
+## Contagem de caracteres da senha — 09/11/2026
+
+- A validação do cadastro agora conta o texto original da senha para o mínimo de seis caracteres, incluindo espaços intencionais. O campo vazio ou composto apenas por espaços continua rejeitado, e a confirmação continua comparando os valores completos.
+- `test/registration_navigation_privacy_test.dart` cobre a rejeição de seis espaços e a aceitação de `1234  ` (seis caracteres no total). Uma revisão independente por outro chat não encontrou problema residual; aquele chat não conseguiu executar comandos, então a validação foi feita neste checkout.
+- Validação local: `flutter test --no-pub` — **561 aprovados e 3 ignorados**; `flutter analyze --no-pub` sem problemas; teste focado de cadastro — **4/4**; formatação sem mudanças; `git diff --check` aprovado, com avisos do Git sobre conversão LF/CRLF. Não foi necessário gerar outro build Web para esta correção de validação.
+- `.wrangler/` e `CONTINUACAO_OUTRA_CONTA.md` foram mantidos fora das mudanças rastreadas.

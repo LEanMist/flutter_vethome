@@ -111,7 +111,7 @@ class _VHFormState extends State<VHForm> {
         digits.length != 11) {
       return 'Informe um telefone com 10 ou 11 dígitos';
     }
-    if (field.label == 'Senha' && value.length < 6) {
+    if (field.label == 'Senha' && (rawValue ?? '').length < 6) {
       return 'Use ao menos 6 caracteres';
     }
     if (field.label == 'Confirmar Senha' &&

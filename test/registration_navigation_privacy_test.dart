@@ -160,7 +160,7 @@ void main() {
     expect(find.text('Não deve abrir'), findsNothing);
   });
 
-  testWidgets('confirmação aceita a mesma senha com espaços intencionais', (
+  testWidgets('senha mínima conta espaços intencionais e rejeita só espaços', (
     tester,
   ) async {
     useLargeViewport(tester);
@@ -179,18 +179,28 @@ void main() {
       'CPF': '52998224725',
       'Telefone/Celular': '11999999999',
       'E-mail': 'cliente@example.test',
-      'Senha': ' senha123 ',
-      'Confirmar Senha': ' senha123 ',
+      'Senha': '      ',
+      'Confirmar Senha': '      ',
     }.entries) {
       await fill(tester, entry.key, entry.value);
     }
 
     await tester.ensureVisible(find.text('Continuar'));
     await tester.tap(find.text('Continuar'));
+    await tester.pump();
+
+    expect(find.text('Preencha este campo'), findsWidgets);
+    expect(find.text('Etapa endereço'), findsNothing);
+
+    await fill(tester, 'Senha', '1234  ');
+    await fill(tester, 'Confirmar Senha', '1234  ');
+    await tester.ensureVisible(find.text('Continuar'));
+    await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
 
     expect(find.text('Etapa endereço'), findsOneWidget);
     expect(find.text('As senhas não coincidem'), findsNothing);
+    expect(find.text('Use ao menos 6 caracteres'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
