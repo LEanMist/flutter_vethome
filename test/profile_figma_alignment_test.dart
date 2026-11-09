@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/widgets/pets/pets_theme.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -230,6 +231,44 @@ void main() {
     );
     expect(tester.takeException(), isNull);
     semantics.dispose();
+  });
+
+  testWidgets('Perfil evita sobrepor o avatar com nome longo em texto 200%', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final previousName = VetRepository.clientName;
+    const longName = 'Gabriela Fernandes Souza';
+    VetRepository.clientName = longName;
+    addTearDown(() => VetRepository.clientName = previousName);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(390, 844),
+            devicePixelRatio: 1,
+            textScaler: TextScaler.linear(2),
+          ),
+          child: const PerfilPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final nameRect = tester.getRect(
+      find.byKey(const ValueKey('profile-change-name-action')),
+    );
+    final photoRect = tester.getRect(
+      find.byKey(const ValueKey('profile-change-photo-action')),
+    );
+    expect(find.text(longName), findsOneWidget);
+    expect(nameRect.bottom, lessThanOrEqualTo(photoRect.top));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Perfil desktop mantém composição e ações originais', (

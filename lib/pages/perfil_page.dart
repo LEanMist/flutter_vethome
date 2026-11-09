@@ -178,7 +178,7 @@ class _PerfilPageState extends State<PerfilPage> {
     children: [
       SizedBox(
         width: double.infinity,
-        height: top + 72 * s + 280 * s,
+        height: top + 72 * s + _mobileAvatarHeight(s),
         child: Stack(
           alignment: Alignment.topCenter,
           children: [
@@ -254,7 +254,7 @@ class _PerfilPageState extends State<PerfilPage> {
   Widget _buildAvatarTab(double s, {bool mobileFigma = false}) {
     return Container(
       width: 220 * s,
-      height: 280 * s,
+      height: mobileFigma ? _mobileAvatarHeight(s) : 280 * s,
       decoration: BoxDecoration(
         color: VetColors.pinkOverlay50,
         border: Border.all(color: VetColors.rose, width: 5 * s),
@@ -272,10 +272,14 @@ class _PerfilPageState extends State<PerfilPage> {
   Widget _buildMobileFigmaAvatar(double s) => Stack(
     clipBehavior: Clip.none,
     children: [
-      Positioned(left: 22 * s, top: 83 * s, child: _buildPhotoAction(s)),
+      Positioned(
+        left: 22 * s,
+        top: _mobileAvatarPhotoTop(s),
+        child: _buildPhotoAction(s),
+      ),
       Positioned(
         left: 9.9486 * s,
-        top: 72.3448 * s,
+        top: 72.3448 * s + _mobileAvatarPhotoTop(s) - 83 * s,
         child: IgnorePointer(
           child: CustomPaint(
             key: const ValueKey('profile-avatar-dashes'),
@@ -284,9 +288,48 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
         ),
       ),
-      Positioned(top: 15 * s, left: 0, right: 0, child: _buildNameAction(s)),
+      Positioned(
+        top: _mobileAvatarNameTop(s),
+        left: 0,
+        right: 0,
+        child: _buildNameAction(s),
+      ),
     ],
   );
+
+  double _mobileAvatarNameTop(double s) => 15 * s;
+
+  double _mobileAvatarPhotoTop(double s) {
+    // Include the paragraph's leading when reserving room for two scaled lines.
+    final nameStyle = DefaultTextStyle.of(context).style.merge(
+      TextStyle(
+        fontSize: 22 * s,
+        fontFamily: PetsTheme.fontComfortaa,
+        fontWeight: FontWeight.bold,
+        height: 1.5,
+      ),
+    );
+    final namePainter = TextPainter(
+      text: TextSpan(text: _nome, style: nameStyle),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 2,
+    )..layout(maxWidth: 210 * s);
+    return math.max(
+      83 * s,
+      _mobileAvatarNameTop(s) + namePainter.height + 8 * s,
+    );
+  }
+
+  double _mobileAvatarHeight(double s) {
+    final photoTop = _mobileAvatarPhotoTop(s);
+    final photoShift = photoTop - 83 * s;
+    final ellipseBottom = 72.3448 * s + photoShift + 186.971 * s;
+    return math.max(
+      280 * s,
+      math.max(photoTop + 165 * s, ellipseBottom) + 16 * s,
+    );
+  }
 
   Widget _buildLegacyAvatarContent(double s) => Column(
     children: [
