@@ -534,3 +534,11 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - `test/registration_navigation_privacy_test.dart` cobre a rejeição de seis espaços e a aceitação de `1234  ` (seis caracteres no total). Uma revisão independente por outro chat não encontrou problema residual; aquele chat não conseguiu executar comandos, então a validação foi feita neste checkout.
 - Validação local: `flutter test --no-pub` — **561 aprovados e 3 ignorados**; `flutter analyze --no-pub` sem problemas; teste focado de cadastro — **4/4**; formatação sem mudanças; `git diff --check` aprovado, com avisos do Git sobre conversão LF/CRLF. Não foi necessário gerar outro build Web para esta correção de validação.
 - `.wrangler/` e `CONTINUACAO_OUTRA_CONTA.md` foram mantidos fora das mudanças rastreadas.
+
+## Login e texto ampliado na Agenda — 09/11/2026
+
+- `VetRepository.authenticate` agora conta os caracteres originais da senha, em linha com o cadastro. Continua rejeitando senha vazia ou composta apenas por espaços e respeita os espaços digitados na confirmação.
+- Na Agenda mobile, cartões de consultas reais preservam 50 px na escala padrão e crescem quando o texto do sistema é ampliado; o título passa a quebrar linha em vez de ser reduzido para caber em uma linha. Cartões demonstrativos mantêm seu tratamento existente.
+- `local_profile_conflict_test.dart` cobre a senha `1234  ` e rejeita seis espaços. `agenda_appointment_detail_test.dart` compara a altura normal com texto a 200%. A revisão independente no chat “Revisão visual da Agenda” confirmou que não encontrou problema residual; a comparação visual em dispositivo não foi executada.
+- Validação após as duas correções: `flutter test --no-pub` — **562 aprovados e 3 ignorados**; `flutter analyze --no-pub` sem problemas; testes focados de Agenda — **4/4** e autenticação/perfil local — **7/7**; build Web release aprovado em **117,6 s**, dry run Wasm aprovado, formatação sem mudanças e `git diff --check` aprovado (avisos Git LF/CRLF).
+- `.wrangler/` e `CONTINUACAO_OUTRA_CONTA.md` permanecem preservados fora do stage.

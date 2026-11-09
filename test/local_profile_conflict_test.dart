@@ -236,6 +236,14 @@ void main() {
       isTrue,
     );
     expect(
+      VetRepository.authenticate('PESSOA-A@example.test', '1234  '),
+      isTrue,
+    );
+    expect(
+      VetRepository.authenticate('PESSOA-A@example.test', '      '),
+      isFalse,
+    );
+    expect(
       VetRepository.authenticate('pessoa-b@example.test', '123456'),
       isFalse,
     );

@@ -396,12 +396,33 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
   double _mobileAppointmentHeight(_AgendaItem item, double scale) {
     final standardHeight = 50 * scale;
-    if (!item.demo) return standardHeight;
-
     final textScaler = MediaQuery.textScalerOf(context);
-    final contentHeight =
-        (textScaler.scale(9 * scale) + textScaler.scale(15 * scale)) * 1.5;
-    return math.max(standardHeight, contentHeight).toDouble();
+    if (item.demo) {
+      final contentHeight =
+          (textScaler.scale(9 * scale) + textScaler.scale(15 * scale)) * 1.5;
+      return math.max(standardHeight, contentHeight).toDouble();
+    }
+
+    final fontSize = 15 * scale;
+    if (textScaler.scale(fontSize) <= fontSize) return standardHeight;
+
+    final titlePainter = TextPainter(
+      text: TextSpan(
+        text: item.agendamento.tipo,
+        style: TextStyle(
+          color: VetColors.calendarTextOnRose,
+          fontSize: fontSize,
+          fontWeight: FontWeight.w600,
+          fontFamily: VH.bodyFontFamily,
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: Directionality.of(context),
+      textScaler: textScaler,
+    )..layout(maxWidth: 179 * scale);
+    final titleHeight = titlePainter.height;
+    titlePainter.dispose();
+    return math.max(standardHeight, titleHeight).toDouble();
   }
 
   Widget _mobileAppointment(
@@ -511,6 +532,19 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               ),
                             ),
                           ],
+                        )
+                      : MediaQuery.textScalerOf(context).scale(15 * scale) >
+                            15 * scale
+                      ? Text(
+                          item.agendamento.tipo,
+                          textAlign: TextAlign.center,
+                          softWrap: true,
+                          style: TextStyle(
+                            color: VetColors.calendarTextOnRose,
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: VH.bodyFontFamily,
+                          ),
                         )
                       : FittedBox(
                           fit: BoxFit.scaleDown,

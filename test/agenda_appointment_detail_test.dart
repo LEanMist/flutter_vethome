@@ -103,6 +103,58 @@ void main() {
     },
   );
 
+  testWidgets('consulta real acomoda texto ampliado sem mudar tamanho normal', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final pet = VetRepository.pets.first;
+    final appointment = Agendamento(
+      data: DateTime(2026, 2, 18, 10),
+      endDate: DateTime(2026, 2, 18, 11),
+      tipo: 'Consulta dermatológica, hemograma e ultrassonografia',
+      veterinario: 'Dra. Exemplo',
+      local: 'Clínica VetHome',
+      status: StatusAgendamento.confirmado,
+    );
+    await tester.runAsync(() async {
+      VetRepository.addAgendamento(pet.id, appointment);
+      expect(await VetRepository.flush(), isTrue);
+    });
+
+    Future<void> showAtTextScale(double textScale) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
+          home: AgendaScreen(initialDate: appointment.data),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    final card = find.byKey(
+      ValueKey(
+        'agenda-appointment-${appointment.data.microsecondsSinceEpoch}-${appointment.tipo}',
+      ),
+    );
+
+    await showAtTextScale(1);
+    expect(tester.getSize(card).height, 50);
+
+    await showAtTextScale(2);
+    expect(tester.getSize(card).height, greaterThan(50));
+    expect(tester.getSize(find.text(appointment.tipo)).height, greaterThan(50));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('consulta real abre o cartão Figma e pode ser excluída', (
     tester,
   ) async {

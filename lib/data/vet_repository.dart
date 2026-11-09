@@ -480,7 +480,8 @@ class VetRepository {
 
   static bool authenticate(String email, String password) =>
       RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email.trim()) &&
-      password.trim().length >= 6 &&
+      password.trim().isNotEmpty &&
+      password.length >= 6 &&
       !hasDifferentLocalClientEmail(email);
 
   /// Esta demonstração mantém um único perfil local por instalação.
