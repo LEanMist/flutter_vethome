@@ -134,7 +134,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.bySemanticsLabel(RegExp(r'^Peso: .+')), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp(r'^Vermifugação: .+')), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(
+        'Vermifugação: dado demonstrativo; não há data real cadastrada.',
+      ),
+      findsOneWidget,
+    );
     semantics.dispose();
   });
 
@@ -195,14 +200,20 @@ void main() {
       await tester.pumpAndSettle();
 
       final first = VetRepository.consultas(pet.id).first;
+      expect(
+        VetRepository.consultas(pet.id).every((c) => c.isDemonstration),
+        isTrue,
+      );
       final expected = RegExp(
-        '^Atendimento em .+\\. Concluído\\. ${RegExp.escape(first.tipo)}\\. '
-        'Veterinário: ${RegExp.escape(first.veterinario)}\\. '
-        '${RegExp.escape(first.descricao)}',
+        '^Atendimento demonstrativo; não representa um registro clínico real\\. '
+        'Data ilustrativa: .+\\. ${RegExp.escape(first.tipo)}\\. '
+        'Veterinário de exemplo: ${RegExp.escape(first.veterinario)}\\. '
+        'Descrição de exemplo: ${RegExp.escape(first.descricao)}',
       );
       await tester.ensureVisible(find.text(first.tipo).first);
       await tester.pumpAndSettle();
       expect(find.bySemanticsLabel(expected), findsOneWidget);
+      expect(find.text('Demonstração'), findsNWidgets(4));
       semantics.dispose();
     },
   );

@@ -24,10 +24,7 @@ class SaudePage extends StatelessWidget {
     final historico = VetRepository.consultas(pet.id);
     final vacinas = VetRepository.vacinas(pet.id);
 
-    final vermif = historico
-        .where((c) => c.tipo == 'Vermifugação')
-        .map((c) => fmtDiaMes(c.data))
-        .firstOrNull;
+    final vermif = historico.where((c) => c.tipo == 'Vermifugação').firstOrNull;
     final emDia = vacinasEmDia(vacinas);
 
     return VetPageScaffold(
@@ -76,7 +73,7 @@ class SaudePage extends StatelessWidget {
     List<Consulta> history,
     List<Vacina> vaccines,
     bool upToDate,
-    String? deworming,
+    Consulta? deworming,
   ) => [
     ..._summary(pet, vaccines, upToDate, deworming),
     _healthSectionHeading(
@@ -90,7 +87,7 @@ class SaudePage extends StatelessWidget {
     PetModel pet,
     List<Vacina> vaccines,
     bool upToDate,
-    String? deworming,
+    Consulta? deworming,
   ) => [
     PetSummary(pet: pet, size: PetSummarySize.medium),
     const SizedBox(height: 12),
@@ -132,7 +129,14 @@ class SaudePage extends StatelessWidget {
           child: _MiniStatus(
             icon: Icons.medical_services,
             title: 'Vermifugação',
-            value: deworming ?? '—',
+            value: deworming == null
+                ? '—'
+                : deworming.isDemonstration
+                ? 'Demonstração'
+                : fmtDiaMes(deworming.data),
+            semanticsLabel: deworming?.isDemonstration == true
+                ? 'Vermifugação: dado demonstrativo; não há data real cadastrada.'
+                : null,
             color: VetTones.info,
           ),
         ),
@@ -154,12 +158,14 @@ class _MiniStatus extends StatelessWidget {
     required this.title,
     required this.value,
     required this.color,
+    this.semanticsLabel,
   });
 
   final IconData icon;
   final String title;
   final String value;
   final Color color;
+  final String? semanticsLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +183,7 @@ class _MiniStatus extends StatelessWidget {
     return Semantics(
       container: true,
       excludeSemantics: true,
-      label: '$title: $value',
+      label: semanticsLabel ?? '$title: $value',
       child: VetCard(
         flat: true,
         color: VetColors.rose.withValues(alpha: .2),
@@ -220,13 +226,19 @@ class _ConsultaCard extends StatelessWidget {
         color: VetColors.brown,
       ),
     );
-    const status = StatusChip('Concluído', VetTones.success, dense: true);
+    final status = c.isDemonstration
+        ? const StatusChip('Demonstração', VetColors.brown, dense: true)
+        : const StatusChip('Concluído', VetTones.success, dense: true);
     return Semantics(
       container: true,
       excludeSemantics: true,
-      label:
-          'Atendimento em ${fmtData(c.data)}. Concluído. '
-          '${c.tipo}. Veterinário: ${c.veterinario}. ${c.descricao}',
+      label: c.isDemonstration
+          ? 'Atendimento demonstrativo; não representa um registro clínico real. '
+                'Data ilustrativa: ${fmtData(c.data)}. ${c.tipo}. '
+                'Veterinário de exemplo: ${c.veterinario}. '
+                'Descrição de exemplo: ${c.descricao}'
+          : 'Atendimento em ${fmtData(c.data)}. Concluído. '
+                '${c.tipo}. Veterinário: ${c.veterinario}. ${c.descricao}',
       child: VetCard(
         flat: true,
         color: VetColors.rose.withValues(alpha: .16),

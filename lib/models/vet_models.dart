@@ -30,11 +30,13 @@ class Consulta {
     required this.tipo,
     required this.veterinario,
     required this.descricao,
+    this.isDemonstration = false,
   });
   final DateTime data;
   final String tipo;
   final String veterinario;
   final String descricao;
+  final bool isDemonstration;
 }
 
 enum VacinaStatus { emDia, vencendo, atrasada, semPrevisao }
