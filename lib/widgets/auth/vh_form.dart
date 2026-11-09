@@ -33,11 +33,15 @@ class VHForm extends StatefulWidget {
 class _VHFormState extends State<VHForm> {
   final _formKey = GlobalKey<FormState>();
   late List<TextEditingController> _controllers;
+  late List<FocusNode> _focusNodes;
+  late List<GlobalKey<State<StatefulWidget>>> _fieldKeys;
 
   @override
   void initState() {
     super.initState();
     _controllers = _makeControllers();
+    _focusNodes = _makeFocusNodes();
+    _fieldKeys = _makeFieldKeys();
   }
 
   @override
@@ -51,7 +55,12 @@ class _VHFormState extends State<VHForm> {
       for (final controller in _controllers) {
         controller.dispose();
       }
+      for (final focusNode in _focusNodes) {
+        focusNode.dispose();
+      }
       _controllers = _makeControllers();
+      _focusNodes = _makeFocusNodes();
+      _fieldKeys = _makeFieldKeys();
     }
   }
 
@@ -62,10 +71,22 @@ class _VHFormState extends State<VHForm> {
       ),
   ];
 
+  List<FocusNode> _makeFocusNodes() => [
+    for (final field in widget.fields) FocusNode(debugLabel: field.label),
+  ];
+
+  List<GlobalKey<State<StatefulWidget>>> _makeFieldKeys() => [
+    for (var i = 0; i < widget.fields.length; i++)
+      GlobalKey<State<StatefulWidget>>(),
+  ];
+
   @override
   void dispose() {
     for (final controller in _controllers) {
       controller.dispose();
+    }
+    for (final focusNode in _focusNodes) {
+      focusNode.dispose();
     }
     super.dispose();
   }
@@ -109,8 +130,33 @@ class _VHFormState extends State<VHForm> {
 
   bool _isValidDate(String value) => parseBirthDate(value) != null;
 
+  void _focusFirstInvalidField() {
+    for (var i = 0; i < widget.fields.length; i++) {
+      if (_validate(widget.fields[i], _controllers[i].text) == null) continue;
+
+      final focusNode = _focusNodes[i];
+      final fieldContext = _fieldKeys[i].currentContext;
+      focusNode.requestFocus();
+      if (fieldContext != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !fieldContext.mounted) return;
+          Scrollable.ensureVisible(
+            fieldContext,
+            duration: const Duration(milliseconds: 250),
+            alignment: .2,
+            curve: Curves.easeOut,
+          );
+        });
+      }
+      return;
+    }
+  }
+
   void _continue() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _focusFirstInvalidField();
+      return;
+    }
     final data = withoutRegistrationPasswords(<String, String>{
       ...widget.initialData,
       for (var i = 0; i < widget.fields.length; i++)
@@ -129,6 +175,8 @@ class _VHFormState extends State<VHForm> {
     return VHField(
       field.label,
       field.icon,
+      key: _fieldKeys[i],
+      focusNode: _focusNodes[i],
       password: field.password,
       figmaForm: true,
       labelHorizontalPadding: mobileRegistration ? 28 : null,

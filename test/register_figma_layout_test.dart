@@ -116,6 +116,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('cadastro foca e revela o primeiro campo inválido', (
+    tester,
+  ) async {
+    await showRegistration(tester, const Size(320, 640));
+    await tester.ensureVisible(find.text('Continuar'));
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    final firstField = find.byWidgetPredicate(
+      (widget) => widget is VHField && widget.label == 'Nome Completo',
+    );
+    final firstInput = find.descendant(
+      of: firstField,
+      matching: find.byType(TextFormField),
+    );
+    final fieldRect = tester.getRect(firstInput);
+    final editable = find.descendant(
+      of: firstInput,
+      matching: find.byType(EditableText),
+    );
+    expect(tester.widget<EditableText>(editable).focusNode.hasFocus, isTrue);
+    expect(fieldRect.top, greaterThanOrEqualTo(0));
+    expect(fieldRect.bottom, lessThanOrEqualTo(640));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('REGISTER_PAGE: indicador lateral usa o vetor Figma', (
     tester,
   ) async {
