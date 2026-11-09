@@ -2,17 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/pet_model.dart';
+import 'api_config.dart';
 import 'utils/utils.dart';
 
 class PetService {
-  //emulador android
-  static const String baseUrl = 'http://10.0.2.2:8080';
-
-  //celular fisico
-  // static const String baseUrl = 'http://10.106.75.47:8080';
-
-  //web
-  // static const String baseUrl = 'http://localhost:8080';
+  static String get baseUrl => ApiConfig.baseUrl;
 
   static Future<List<PetModel>> listarPets({String? cpfCliente}) async {
     final uri = cpfCliente == null || cpfCliente.trim().isEmpty
