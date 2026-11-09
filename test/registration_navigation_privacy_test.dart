@@ -159,4 +159,38 @@ void main() {
     expect(find.text('As senhas não coincidem'), findsOneWidget);
     expect(find.text('Não deve abrir'), findsNothing);
   });
+
+  testWidgets('confirmação aceita a mesma senha com espaços intencionais', (
+    tester,
+  ) async {
+    useLargeViewport(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const CadastroScreen(),
+        routes: {
+          '/endereco': (_) => const Scaffold(body: Text('Etapa endereço')),
+        },
+      ),
+    );
+
+    for (final entry in const {
+      'Nome Completo': 'Cliente Seguro',
+      'Data de Nascimento': '05/02/1995',
+      'CPF': '52998224725',
+      'Telefone/Celular': '11999999999',
+      'E-mail': 'cliente@example.test',
+      'Senha': ' senha123 ',
+      'Confirmar Senha': ' senha123 ',
+    }.entries) {
+      await fill(tester, entry.key, entry.value);
+    }
+
+    await tester.ensureVisible(find.text('Continuar'));
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Etapa endereço'), findsOneWidget);
+    expect(find.text('As senhas não coincidem'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }

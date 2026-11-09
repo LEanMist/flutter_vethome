@@ -138,6 +138,49 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets('Seções de Saúde são cabeçalhos semânticos no mobile e desktop', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      final headings = {
+        'health-summary-heading': 'Resumo de saúde',
+        'appointments-history-heading': 'Histórico de atendimentos',
+      };
+
+      for (final viewport in [const Size(390, 844), const Size(1024, 800)]) {
+        tester.view.physicalSize = viewport;
+        tester.view.devicePixelRatio = 1;
+        await tester.pumpWidget(
+          MaterialApp(home: SaudePage(pet: VetRepository.pets.first)),
+        );
+        await tester.pumpAndSettle();
+
+        for (final entry in headings.entries) {
+          final heading = find.byKey(ValueKey(entry.key));
+          expect(find.text(entry.value), findsOneWidget, reason: '$viewport');
+          expect(
+            tester.widget<Semantics>(heading).properties.header,
+            isTrue,
+            reason: '${entry.value} em $viewport',
+          );
+          expect(
+            tester
+                .getSemantics(heading)
+                .getSemanticsData()
+                .flagsCollection
+                .isHeader,
+            isTrue,
+            reason: '${entry.value} em $viewport',
+          );
+        }
+        expect(tester.takeException(), isNull, reason: '$viewport');
+      }
+    } finally {
+      semantics.dispose();
+    }
+  });
+
   testWidgets(
     'Histórico anuncia data, situação, tipo, veterinário e descrição',
     (tester) async {

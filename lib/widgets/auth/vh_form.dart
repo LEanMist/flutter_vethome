@@ -115,7 +115,7 @@ class _VHFormState extends State<VHForm> {
     }
     if (field.label == 'Confirmar Senha' &&
         widget.fields.any((item) => item.label == 'Senha') &&
-        value !=
+        (rawValue ?? '') !=
             _controllers[widget.fields.indexWhere(
                   (item) => item.label == 'Senha',
                 )]

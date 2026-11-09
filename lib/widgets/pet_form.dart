@@ -872,7 +872,7 @@ class _PetFormState extends State<PetForm> {
       figmaLabelHorizontalPadding: 7,
       figmaContentPaddingLeft: figmaEdit ? 15 : null,
       figmaLabelBottomPadding: 0,
-      suffixText: figmaEdit ? 'kg' : null,
+      suffixText: figmaEdit || registration ? 'kg' : null,
       validator: _validateWeight,
     );
     final neuteredField = field(

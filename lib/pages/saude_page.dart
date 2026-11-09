@@ -56,7 +56,10 @@ class SaudePage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const VetSectionTitle('Histórico de atendimentos'),
+                    _healthSectionHeading(
+                      'appointments-history-heading',
+                      'Histórico de atendimentos',
+                    ),
                     for (final c in historico) _ConsultaCard(c),
                   ],
                 ),
@@ -76,7 +79,10 @@ class SaudePage extends StatelessWidget {
     String? deworming,
   ) => [
     ..._summary(pet, vaccines, upToDate, deworming),
-    const VetSectionTitle('Histórico de atendimentos'),
+    _healthSectionHeading(
+      'appointments-history-heading',
+      'Histórico de atendimentos',
+    ),
     for (final consultation in history) _ConsultaCard(consultation),
   ];
 
@@ -88,7 +94,7 @@ class SaudePage extends StatelessWidget {
   ) => [
     PetSummary(pet: pet, size: PetSummarySize.medium),
     const SizedBox(height: 12),
-    const VetSectionTitle('Resumo de saúde'),
+    _healthSectionHeading('health-summary-heading', 'Resumo de saúde'),
     const DemoBadge(),
     const SizedBox(height: 8),
     Text(
@@ -134,6 +140,12 @@ class SaudePage extends StatelessWidget {
     ),
     const SizedBox(height: 12),
   ];
+
+  Widget _healthSectionHeading(String key, String title) => Semantics(
+    key: ValueKey(key),
+    header: true,
+    child: VetSectionTitle(title),
+  );
 }
 
 class _MiniStatus extends StatelessWidget {

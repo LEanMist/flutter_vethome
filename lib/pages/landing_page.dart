@@ -21,11 +21,15 @@ class LandingPage extends StatelessWidget {
             constraints.maxWidth / designSize.width,
             constraints.maxHeight / designSize.height,
           );
+          final scaledTitleLineHeight =
+              MediaQuery.textScalerOf(context).scale(47) * 1.2;
+          final titleNeedsReflow = scaledTitleLineHeight * 2 > 114;
           if (desktopScale < 1) {
-            return constraints.maxWidth >= tabletBreakpoint
+            return constraints.maxWidth >= tabletBreakpoint && !titleNeedsReflow
                 ? _buildTablet(context)
                 : _buildMobile(context);
           }
+          if (titleNeedsReflow) return _buildMobile(context);
           return Center(
             child: FittedBox(
               fit: BoxFit.contain,
@@ -826,33 +830,45 @@ class _LandingNavLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const textStyle = TextStyle(
+      fontFamily: 'Raleway',
+      fontSize: 20,
+      height: 1.15,
+      fontWeight: FontWeight.w700,
+      color: VetColors.brown,
+    );
+    final textScaler = MediaQuery.textScalerOf(context);
+    var layoutWidth = width;
+    if (textScaler.scale(textStyle.fontSize!) > textStyle.fontSize!) {
+      final painter = TextPainter(
+        text: TextSpan(text: label, style: textStyle),
+        textDirection: Directionality.of(context),
+        textScaler: textScaler,
+        maxLines: 1,
+      )..layout();
+      layoutWidth = math.max(width, painter.width + 16);
+    }
     final text = Text(
       label,
       textAlign: TextAlign.start,
       maxLines: 1,
       softWrap: false,
-      style: const TextStyle(
-        fontFamily: 'Raleway',
-        fontSize: 20,
-        height: 1.15,
-        fontWeight: FontWeight.w700,
-        color: VetColors.brown,
-      ),
+      style: textStyle,
     );
-    if (onPressed == null) return SizedBox(width: width, child: text);
+    if (onPressed == null) return SizedBox(width: layoutWidth, child: text);
     return Semantics(
       button: true,
       label: semanticLabel,
       onTap: onPressed,
       child: ExcludeSemantics(
         child: SizedBox(
-          width: width,
+          width: layoutWidth,
           child: TextButton(
             onPressed: onPressed,
             style: TextButton.styleFrom(
               foregroundColor: VetColors.brown,
-              minimumSize: Size(width, 59),
-              maximumSize: Size(width, 59),
+              minimumSize: Size(layoutWidth, 59),
+              maximumSize: Size(layoutWidth, 59),
               padding: EdgeInsets.zero,
               textStyle: const TextStyle(
                 fontFamily: 'Raleway',

@@ -44,6 +44,8 @@ void main() {
     expect(tester.getSize(panel), const Size(290, 480));
     expect(find.byType(PetPhotoButton), findsNothing);
     expect(find.text('Castração'), findsNothing);
+    expect(find.text('kg'), findsOneWidget);
+    await _expectWeightSuffixWithinInput(tester);
 
     for (final entry in const {
       'Tipo de Animal': 153.0,
@@ -78,6 +80,23 @@ void main() {
       expect(tester.getTopLeft(input).dy, closeTo(entry.value.$1, 1));
       expect(tester.getSize(input), Size(entry.value.$2, 56));
     }
+
+    final weightField = find.byWidgetPredicate(
+      (widget) => widget is VHField && widget.label == 'Peso',
+    );
+    final weightInput = find.descendant(
+      of: weightField,
+      matching: find.byType(TextFormField),
+    );
+    await tester.enterText(weightInput, '24');
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextFormField>(weightInput).controller?.text, '24');
+    expect(tester.widget<VHField>(weightField).suffixText, 'kg');
+    expect(
+      find.descendant(of: weightField, matching: find.text('kg')),
+      findsOneWidget,
+    );
+    await _expectWeightSuffixWithinInput(tester);
 
     final continueButton = find.widgetWithText(ElevatedButton, 'Continuar');
     final continueStyle = tester.widget<ElevatedButton>(continueButton).style!;
@@ -149,6 +168,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('pet-form-mobile-grid')), findsOneWidget);
+    expect(find.text('kg'), findsOneWidget);
+    await _expectWeightSuffixWithinInput(tester);
     final continueButton = find.widgetWithText(ElevatedButton, 'Continuar');
     await tester.ensureVisible(continueButton);
     expect(tester.getRect(continueButton).bottom, lessThanOrEqualTo(640));
@@ -535,8 +556,32 @@ void main() {
     expect(find.byKey(const ValueKey('pet-form-desktop-grid')), findsOneWidget);
     expect(find.byType(PetPhotoButton), findsNothing);
     expect(find.text('Castração'), findsNothing);
+    expect(find.text('kg'), findsOneWidget);
+    await _expectWeightSuffixWithinInput(tester);
     expect(tester.takeException(), isNull);
   });
+}
+
+Future<void> _expectWeightSuffixWithinInput(WidgetTester tester) async {
+  final weightField = find.byWidgetPredicate(
+    (widget) => widget is VHField && widget.label == 'Peso',
+  );
+  final weightSuffix = find.descendant(
+    of: weightField,
+    matching: find.text('kg'),
+  );
+  final weightInput = find.descendant(
+    of: weightField,
+    matching: find.byType(TextFormField),
+  );
+  await tester.ensureVisible(weightSuffix);
+
+  final suffixBounds = tester.getRect(weightSuffix);
+  final inputBounds = tester.getRect(weightInput);
+  expect(suffixBounds.left, greaterThan(inputBounds.left));
+  expect(suffixBounds.right, lessThanOrEqualTo(inputBounds.right));
+  expect(suffixBounds.top, greaterThanOrEqualTo(inputBounds.top));
+  expect(suffixBounds.bottom, lessThanOrEqualTo(inputBounds.bottom));
 }
 
 Future<void> _noop(PetFormValue _) async {}

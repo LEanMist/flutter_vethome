@@ -161,6 +161,76 @@ void main() {
     expect(error, isNull, reason: 'entrar na demonstração');
   });
 
+  testWidgets('Landing ampla refluí com texto do sistema a 200%', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1543, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const LandingPage(),
+        routes: {'/login': (_) => const Scaffold(body: Text('Login aberto'))},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('landing-figma-frame')), findsNothing);
+    expect(find.byKey(const ValueKey('landing-mobile-title')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    final explore = find.bySemanticsLabel('Entrar na demonstração');
+    await tester.ensureVisible(explore);
+    expect(tester.getRect(explore).height, greaterThanOrEqualTo(48));
+    await tester.tap(explore);
+    await tester.pumpAndSettle();
+    expect(find.text('Login aberto'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Landing tablet mantém texto dos serviços ampliado a 200%', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const LandingPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('landing-mobile-title')), findsOneWidget);
+    expect(find.byKey(const ValueKey('landing-tablet-title')), findsNothing);
+
+    final serviceLabel = find.byKey(
+      const ValueKey('landing-service-label-landing-service-home.jpg'),
+    );
+    await tester.ensureVisible(serviceLabel);
+    final labelBounds = tester.getRect(serviceLabel);
+    expect(labelBounds.height, greaterThan(37));
+    expect(labelBounds.left, greaterThanOrEqualTo(0));
+    expect(labelBounds.right, lessThanOrEqualTo(900));
+    expect(tester.takeException(), isNull);
+  });
+
   for (final viewport in const [Size(320, 640), Size(390, 844)]) {
     testWidgets(
       'Landing mobile reflow at ${viewport.width.toInt()} px keeps controls usable',

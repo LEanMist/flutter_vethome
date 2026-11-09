@@ -11,6 +11,8 @@ import '../widgets/vet/vet_header.dart';
 import '../widgets/vet/vet_bottom_nav.dart';
 import '../core/utils/vet_nav.dart';
 
+enum _AddressDeleteFailure { clearing, blocked, unknown }
+
 class AddressesPage extends StatefulWidget {
   const AddressesPage({super.key});
 
@@ -59,7 +61,15 @@ class _AddressesPageState extends State<AddressesPage> {
           );
     if (!mounted) return;
     setState(() {});
-    if (saved == false) _showSaveFailure();
+    if (saved == false) {
+      _showSaveFailure();
+    } else if (saved == _AddressDeleteFailure.clearing) {
+      _showDeleteBlocked(clearing: true);
+    } else if (saved == _AddressDeleteFailure.blocked) {
+      _showDeleteBlocked(clearing: false);
+    } else if (saved == _AddressDeleteFailure.unknown) {
+      _showDeleteFailure();
+    }
   }
 
   Future<void> _delete(SavedAddress address) async {
@@ -81,16 +91,45 @@ class _AddressesPageState extends State<AddressesPage> {
       ),
     );
     if (confirmed == true && mounted) {
-      setState(() => VetRepository.removeAddress(address.id));
-      final saved = await VetRepository.flush();
-      if (!saved && mounted) _showSaveFailure();
+      try {
+        VetRepository.removeAddress(address.id);
+        if (mounted) setState(() {});
+        final saved = await VetRepository.flush();
+        if (!saved && mounted) _showSaveFailure();
+      } on PersistenceClearingException {
+        if (mounted) _showDeleteBlocked(clearing: true);
+      } on PersistenceBlockedException {
+        if (mounted) _showDeleteBlocked(clearing: false);
+      } catch (_) {
+        if (mounted) _showDeleteFailure();
+      }
     }
   }
 
   void _showSaveFailure() {
+    _showMessage(_saveFailureMessage);
+  }
+
+  void _showDeleteBlocked({required bool clearing}) {
+    _showMessage(
+      clearing
+          ? 'A exclusão individual foi bloqueada enquanto os dados estavam '
+                'sendo limpos.'
+          : 'O armazenamento está indisponível. O endereço não foi excluído.',
+    );
+  }
+
+  void _showDeleteFailure() {
+    _showMessage(
+      'Não foi possível concluir a exclusão. Confira se o endereço continua '
+      'na lista e tente novamente.',
+    );
+  }
+
+  void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text(_saveFailureMessage)));
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -426,9 +465,23 @@ class AddressEditorPage extends StatelessWidget {
           ),
         );
         if (confirmed != true || !context.mounted) return;
-        VetRepository.removeAddress(value.id);
-        final saved = await VetRepository.flush();
-        if (context.mounted) Navigator.pop(context, saved ? null : false);
+        try {
+          VetRepository.removeAddress(value.id);
+          final saved = await VetRepository.flush();
+          if (context.mounted) Navigator.pop(context, saved ? null : false);
+        } on PersistenceClearingException {
+          if (context.mounted) {
+            Navigator.pop(context, _AddressDeleteFailure.clearing);
+          }
+        } on PersistenceBlockedException {
+          if (context.mounted) {
+            Navigator.pop(context, _AddressDeleteFailure.blocked);
+          }
+        } catch (_) {
+          if (context.mounted) {
+            Navigator.pop(context, _AddressDeleteFailure.unknown);
+          }
+        }
       },
     );
 

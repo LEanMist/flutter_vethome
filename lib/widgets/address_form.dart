@@ -317,12 +317,17 @@ class _AddressFormState extends State<AddressForm> {
                     alignment: Alignment(registrationPanelAlignment, 0),
                     child: SizedBox(
                       width: registration ? 290 : double.infinity,
-                      height: registration ? 565 : null,
+                      // Preserve the measured Figma panel before interaction.
+                      // CEP feedback can add another line to the form; let the
+                      // panel grow for that state instead of clipping fields.
+                      height: registration && _status.isEmpty ? 565 : null,
                       child: Container(
                         key: registration
                             ? const ValueKey('address-registration-panel')
                             : null,
-                        clipBehavior: registration ? Clip.antiAlias : Clip.none,
+                        clipBehavior: registration && _status.isEmpty
+                            ? Clip.antiAlias
+                            : Clip.none,
                         padding: EdgeInsets.fromLTRB(
                           registration ? 11 : 10,
                           registration
