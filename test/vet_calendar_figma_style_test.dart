@@ -27,6 +27,7 @@ void main() {
     required Size viewport,
     DateTime? month,
     DateTime? selected,
+    bool agendaPageStyle = false,
     VoidCallback? onPreviousMonth,
     VoidCallback? onNextMonth,
   }) async {
@@ -51,6 +52,7 @@ void main() {
                   onPreviousMonth: onPreviousMonth ?? () {},
                   onNextMonth: onNextMonth ?? () {},
                   hasIndicator: (date) => date == DateTime(2026, 10, 9),
+                  agendaPageStyle: agendaPageStyle,
                 ),
               ),
             ),
@@ -204,6 +206,39 @@ void main() {
       Rect.fromLTWH(312, panelRect.top + 300, 35, 35),
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Agenda suaviza datas adjacentes sem perder contraste legível', (
+    tester,
+  ) async {
+    await pumpCalendar(
+      tester,
+      viewport: const Size(390, 844),
+      month: DateTime(2026, 11),
+      selected: DateTime(2026, 11, 13),
+      agendaPageStyle: true,
+    );
+
+    final outsideDay = find.byKey(const ValueKey('calendar-2026-12-1-surface'));
+    final outsideText = tester.widget<Text>(
+      find.descendant(of: outsideDay, matching: find.text('1')),
+    );
+    final figmaPanelSurface = Color.alphaBlend(
+      VetColors.pink.withValues(alpha: .3),
+      VetColors.rose,
+    );
+    final figmaAdjacentText = Color.alphaBlend(
+      VetColors.brown.withValues(alpha: .3),
+      figmaPanelSurface,
+    );
+
+    expect(outsideText.style?.color, VetColors.calendarAdjacentDayText);
+    expect(_contrastRatio(figmaAdjacentText, figmaPanelSurface), lessThan(4.5));
+    expect(
+      _contrastRatio(outsideText.style!.color!, figmaPanelSurface),
+      greaterThanOrEqualTo(4.8),
+    );
+    expect(outsideText.style?.fontWeight, FontWeight.w500);
   });
 
   testWidgets('calendário de consulta permite avançar o mês por gesto', (

@@ -582,6 +582,10 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 
 - O preenchimento original do chip `#C08081` a 50% sobre o fundo `#FAD3D5` compõe `#DDAAAB`. O texto marrom `#68442E` ficava em **4,23:1**; rótulos e ícone de expandir agora usam `calendarTextOnRose` e mantêm o preenchimento do Figma.
 - `VetTheme` ajusta apenas o acento de texto dos temas que não atingem 4,5:1 sobre o fundo rosa. O tema marrom padrão permanece `#68442E`; as amostras continuam mostrando as cores originais. O primeiro plano dos ícones de seleção escolhe uma cor com contraste suficiente sobre cada amostra.
+- Na Agenda, o tom do Figma para datas do mês adjacente compõe cerca de **1,40:1** sobre o painel rosa. O app agora aproxima esse tom, mas ajusta a cor até **4,8:1**, exclusivamente no calendário da Agenda; a seleção e a indicação de consulta permanecem distintas, e o calendário de Nova Consulta não muda.
+- A prévia Web da Agenda confirmou o fundo rosa, o cartão rosa-escuro, a seleção marrom e os pontos de dias com compromissos; a suavização das datas adjacentes foi verificada pelo teste de widget.
+- As ações de texto dos diálogos de Configurações usam o marrom `#68442E` em todos os temas. A cor foi verificada contra os estados de hover, foco e pressionado sobre o fundo rosa; o ajuste preserva o preenchimento e não depende do acento escolhido pelo usuário.
 - Datas e horários indisponíveis continuam visualmente atenuados para indicar o estado inativo; a cor exata desses estados não foi confirmada no Figma.
 - A prévia Web atualizada confirmou visualmente as cores das amostras, dos botões e da barra inferior. O teste da amostra rosa foi revertido para o tema marrom padrão ao terminar.
-- Testes focados do cartão e do seletor de temas passaram; a suíte completa passou (**592 aprovados, 3 ignorados**) e `flutter analyze --no-pub` não encontrou problemas.
+- Validação destas correções de cor: `flutter test --no-pub test/theme_preferences_test.dart test/vet_calendar_figma_style_test.dart` — **19 testes passaram**; `flutter analyze --no-pub` sem problemas; `git diff --check` aprovado, com avisos de conversão LF/CRLF do Git.
+- A suíte completa passou antes destas correções (**592 aprovados, 3 ignorados**); ainda não foi repetida após elas.

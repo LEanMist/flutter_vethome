@@ -10,6 +10,15 @@ import '../theme/vet_colors.dart';
 import '../widgets.dart';
 import '../widgets/appointment_card.dart';
 
+Widget _withBrownDialogActions(Widget dialog) => TextButtonTheme(
+  data: const TextButtonThemeData(
+    style: ButtonStyle(
+      foregroundColor: WidgetStatePropertyAll<Color?>(VetColors.brown),
+    ),
+  ),
+  child: dialog,
+);
+
 class _ThemeColorWheel extends StatelessWidget {
   const _ThemeColorWheel({required this.selectedColor});
 
@@ -139,72 +148,74 @@ class ConfigScreen extends StatelessWidget {
     final color = await showDialog<Color>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: VH.background,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 24,
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(12, 20, 12, 0),
-          title: const Text('Tema do Aplicativo'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ThemeColorWheel(selectedColor: selected),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 0,
-                children: [
-                  for (final palette in colors)
-                    Semantics(
-                      key: ValueKey('theme-swatch-target-${palette.name}'),
-                      button: true,
-                      selected: selected == palette.color,
-                      label: 'Tema ${palette.name}',
-                      child: Tooltip(
-                        message: palette.name,
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () =>
-                              setDialogState(() => selected = palette.color),
-                          child: SizedBox.square(
-                            dimension: 48,
-                            child: Center(
-                              child: CircleAvatar(
-                                key: ValueKey(
-                                  'theme-swatch-visual-${palette.name}',
+        builder: (context, setDialogState) => _withBrownDialogActions(
+          AlertDialog(
+            backgroundColor: VH.background,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 24,
+            ),
+            contentPadding: const EdgeInsets.fromLTRB(12, 20, 12, 0),
+            title: const Text('Tema do Aplicativo'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _ThemeColorWheel(selectedColor: selected),
+                const SizedBox(height: 18),
+                Wrap(
+                  spacing: 0,
+                  children: [
+                    for (final palette in colors)
+                      Semantics(
+                        key: ValueKey('theme-swatch-target-${palette.name}'),
+                        button: true,
+                        selected: selected == palette.color,
+                        label: 'Tema ${palette.name}',
+                        child: Tooltip(
+                          message: palette.name,
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () =>
+                                setDialogState(() => selected = palette.color),
+                            child: SizedBox.square(
+                              dimension: 48,
+                              child: Center(
+                                child: CircleAvatar(
+                                  key: ValueKey(
+                                    'theme-swatch-visual-${palette.name}',
+                                  ),
+                                  radius: selected == palette.color ? 19 : 16,
+                                  backgroundColor: palette.color,
+                                  child: selected == palette.color
+                                      ? Icon(
+                                          Icons.check,
+                                          color: VetColors.foregroundOn(
+                                            palette.color,
+                                          ),
+                                          size: 18,
+                                        )
+                                      : null,
                                 ),
-                                radius: selected == palette.color ? 19 : 16,
-                                backgroundColor: palette.color,
-                                child: selected == palette.color
-                                    ? Icon(
-                                        Icons.check,
-                                        color: VetColors.foregroundOn(
-                                          palette.color,
-                                        ),
-                                        size: 18,
-                                      )
-                                    : null,
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, selected),
+                child: const Text('Confirmar'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, selected),
-              child: const Text('Confirmar'),
-            ),
-          ],
         ),
       ),
     );
@@ -434,26 +445,28 @@ class ConfigScreen extends StatelessWidget {
   Future<void> _signOut(BuildContext context) async {
     final action = await showDialog<_ExitAction>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VH.background,
-        title: const Text('Sair do VetHome?'),
-        content: const Text(
-          'Sair volta para a tela de login. Os dados salvos continuam neste dispositivo.',
+      builder: (context) => _withBrownDialogActions(
+        AlertDialog(
+          backgroundColor: VH.background,
+          title: const Text('Sair do VetHome?'),
+          content: const Text(
+            'Sair volta para a tela de login. Os dados salvos continuam neste dispositivo.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, _ExitAction.cancel),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, _ExitAction.clearData),
+              child: const Text('Apagar dados locais'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, _ExitAction.signOut),
+              child: const Text('Sair'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, _ExitAction.cancel),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, _ExitAction.clearData),
-            child: const Text('Apagar dados locais'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, _ExitAction.signOut),
-            child: const Text('Sair'),
-          ),
-        ],
       ),
     );
 
@@ -463,22 +476,24 @@ class ConfigScreen extends StatelessWidget {
     if (action == _ExitAction.clearData) {
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: VH.background,
-          title: const Text('Apagar os dados deste dispositivo?'),
-          content: const Text(
-            'Isso remove o perfil salvo, o e-mail lembrado, pets cadastrados, fotos, endereços, consultas e vacinas. Os dados demonstrativos iniciais continuarão disponíveis; a preferência de tema será mantida.',
+        builder: (context) => _withBrownDialogActions(
+          AlertDialog(
+            backgroundColor: VH.background,
+            title: const Text('Apagar os dados deste dispositivo?'),
+            content: const Text(
+              'Isso remove o perfil salvo, o e-mail lembrado, pets cadastrados, fotos, endereços, consultas e vacinas. Os dados demonstrativos iniciais continuarão disponíveis; a preferência de tema será mantida.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Apagar dados'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Apagar dados'),
-            ),
-          ],
         ),
       );
       if (confirmed != true || !context.mounted) return;
@@ -493,24 +508,26 @@ class ConfigScreen extends StatelessWidget {
           final hasUnsavedChanges = VetRepository.unsavedChanges.value;
           final reload = await showDialog<bool>(
             context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: VH.background,
-              title: const Text('Dados atualizados em outra janela'),
-              content: Text(
-                hasUnsavedChanges
-                    ? 'Nenhum dado foi apagado. Para continuar, carregue a versão mais recente. As alterações ainda não salvas nesta janela serão descartadas.'
-                    : 'Nenhum dado foi apagado. Carregue a versão mais recente e confirme a exclusão novamente.',
+            builder: (context) => _withBrownDialogActions(
+              AlertDialog(
+                backgroundColor: VH.background,
+                title: const Text('Dados atualizados em outra janela'),
+                content: Text(
+                  hasUnsavedChanges
+                      ? 'Nenhum dado foi apagado. Para continuar, carregue a versão mais recente. As alterações ainda não salvas nesta janela serão descartadas.'
+                      : 'Nenhum dado foi apagado. Carregue a versão mais recente e confirme a exclusão novamente.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Agora não'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Carregar dados atuais'),
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Agora não'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Carregar dados atuais'),
-                ),
-              ],
             ),
           );
           if (!context.mounted || reload != true) return;
@@ -552,23 +569,25 @@ class ConfigScreen extends StatelessWidget {
       if (VetRepository.unsavedChanges.value) {
         final leaveAnyway = await showDialog<bool>(
           context: context,
-          builder: (dialogContext) => AlertDialog(
-            backgroundColor: VH.background,
-            title: const Text('Sair com alterações não salvas?'),
-            content: const Text(
-              'Há alterações que ainda não foram salvas neste dispositivo. '
-              'Elas podem ser perdidas ao sair. Volte para tentar salvar novamente.',
+          builder: (dialogContext) => _withBrownDialogActions(
+            AlertDialog(
+              backgroundColor: VH.background,
+              title: const Text('Sair com alterações não salvas?'),
+              content: const Text(
+                'Há alterações que ainda não foram salvas neste dispositivo. '
+                'Elas podem ser perdidas ao sair. Volte para tentar salvar novamente.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Continuar editando'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text('Sair mesmo assim'),
+                ),
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('Continuar editando'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('Sair mesmo assim'),
-              ),
-            ],
           ),
         );
         if (!context.mounted || leaveAnyway != true) return;
@@ -620,22 +639,24 @@ class _LocalSaveNoticeState extends State<_LocalSaveNotice> {
     if (_saving) return;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VH.background,
-        title: const Text('Carregar dados atualizados?'),
-        content: const Text(
-          'As alterações ainda não salvas nesta janela serão descartadas. O VetHome vai carregar os dados salvos pela outra janela.',
+      builder: (context) => _withBrownDialogActions(
+        AlertDialog(
+          backgroundColor: VH.background,
+          title: const Text('Carregar dados atualizados?'),
+          content: const Text(
+            'As alterações ainda não salvas nesta janela serão descartadas. O VetHome vai carregar os dados salvos pela outra janela.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Carregar dados'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Carregar dados'),
-          ),
-        ],
       ),
     );
     if (!mounted || confirmed != true) return;

@@ -579,6 +579,7 @@ class VetCalendar extends StatelessWidget {
       inMonth: inMonth,
       enabled: _enabled(date),
       indicator: hasIndicator?.call(date) ?? false,
+      outsideMonthTextColor: VetColors.calendarAdjacentDayText,
       indicatorColor: Colors.white,
       hasAppointmentForSemantics: hasIndicator?.call(date) ?? false,
       todayForSemantics: _sameDay(date, today),
@@ -599,6 +600,7 @@ class _CalendarDay extends StatefulWidget {
     required this.inMonth,
     required this.enabled,
     required this.indicator,
+    this.outsideMonthTextColor,
     required this.onTap,
     this.scale = 1,
     this.fontSizeFactor = 1,
@@ -611,6 +613,7 @@ class _CalendarDay extends StatefulWidget {
 
   final DateTime date;
   final bool selected, today, inMonth, enabled, indicator;
+  final Color? outsideMonthTextColor;
   final double scale;
   final double fontSizeFactor;
   final bool todayForSemantics;
@@ -745,7 +748,10 @@ class _CalendarDayState extends State<_CalendarDay> {
                           color: widget.selected
                               ? VH.onSecondary
                               : widget.enabled
-                              ? VetColors.calendarTextOnRose
+                              ? !widget.inMonth &&
+                                        widget.outsideMonthTextColor != null
+                                    ? widget.outsideMonthTextColor
+                                    : VetColors.calendarTextOnRose
                               : VH.foreground.withValues(alpha: .2),
                           fontWeight:
                               !widget.selected &&

@@ -17,6 +17,9 @@ class VetColors {
   static const Color brownOnRose = Color(0xFF573820);
   // Contraste >= 4.5:1 sobre o rosa sólido do calendário (#C08081).
   static const Color calendarTextOnRose = Color(0xFF352216);
+  // Aproxima o marrom do Figma para dias adjacentes na Agenda sem perder
+  // contraste: o tom de 30% do desenho cai para 1,4:1 no painel composto.
+  static final Color calendarAdjacentDayText = _calendarAdjacentDayText();
   // Tinta escura usada para manter contraste em temas claros.
   static const Color contrastInk = Color(0xFF1A1210);
   static const Color chatMessageText = brownOnRose;
@@ -50,6 +53,15 @@ class VetColors {
       }
     }
     return Color.lerp(foreground, endpoint, upper)!;
+  }
+
+  static Color _calendarAdjacentDayText() {
+    final panelSurface = Color.alphaBlend(pink.withValues(alpha: .3), rose);
+    final figmaTint = Color.alphaBlend(
+      brown.withValues(alpha: .3),
+      panelSurface,
+    );
+    return textColorOn(figmaTint, panelSurface, minimumContrast: 4.8);
   }
 
   /// Escolhe branco ou tinta escura para elementos sobre uma cor sólida.

@@ -121,6 +121,54 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('ações do seletor mantêm contraste em todos os estados e temas', (
+    tester,
+  ) async {
+    final previousSeed = VH.themeSeed.value;
+    addTearDown(() => VH.themeSeed.value = previousSeed);
+
+    for (final palette in ThemePreferences.options) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: VetTheme.light(palette.color),
+          home: const ConfigScreen(),
+        ),
+      );
+      await tester.tap(find.text('Tema do Aplicativo'));
+      await tester.pumpAndSettle();
+
+      final button = find.widgetWithText(TextButton, 'Cancelar');
+      final themeStyle = TextButtonTheme.of(tester.element(button));
+      final actionColor = themeStyle.style?.foregroundColor?.resolve(
+        const <WidgetState>{},
+      );
+      expect(actionColor, VetColors.brown, reason: palette.name);
+
+      final inkWellFinder = find.descendant(
+        of: button,
+        matching: find.byType(InkWell),
+      );
+      final overlayColor = tester.widget<InkWell>(inkWellFinder).overlayColor;
+      for (final state in <WidgetState>{
+        WidgetState.hovered,
+        WidgetState.focused,
+        WidgetState.pressed,
+      }) {
+        final overlay = overlayColor?.resolve({state}) ?? Colors.transparent;
+        final buttonSurface = Color.alphaBlend(overlay, VetColors.pink);
+        expect(
+          _contrastRatio(actionColor!, buttonSurface),
+          greaterThanOrEqualTo(4.5),
+          reason: '${palette.name}, $state',
+        );
+      }
+
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   test('acentos de texto de todos os temas mantêm contraste no fundo', () {
     for (final palette in ThemePreferences.options) {
       final theme = VetTheme.light(palette.color);
