@@ -366,10 +366,32 @@ void main() {
     expect(find.text('V8'), findsOneWidget);
     expect(find.text('Antirrábica'), findsOneWidget);
     expect(find.text('Hemograma'), findsNothing);
+
+    await tester.tap(find.text('V8'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('services-category-semantics-Exames')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('V8'), findsNothing);
+    expect(
+      categoryMarkerAsset(tester, 'Vacinas'),
+      'assets/imagens/figma/services-checkbox-selected.svg',
+    );
+    expect(
+      tester
+          .widget<Semantics>(
+            find.byKey(const ValueKey('services-category-semantics-Vacinas')),
+          )
+          .properties
+          .hint,
+      'Selecionados: V8',
+    );
     expect(
       scrollable.position.maxScrollExtent,
       0,
-      reason: 'Trocar de categoria não deve exigir rolagem.',
+      reason: 'Trocar de categoria e preservar seleção não deve rolar.',
     );
     expect(tester.takeException(), isNull);
   });

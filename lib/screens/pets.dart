@@ -777,6 +777,15 @@ class _ServicosScreenState extends State<ServicosScreen> {
                           ),
                         ),
                       ),
+                      if (_categoryHasSelection(name)) ...[
+                        const SizedBox(width: 8),
+                        SvgPicture.asset(
+                          _selectedServiceMarker,
+                          key: ValueKey('services-category-checkbox-$name'),
+                          width: 16,
+                          height: 16,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -805,10 +814,16 @@ class _ServicosScreenState extends State<ServicosScreen> {
     ],
   );
 
+  bool _categoryHasSelection(String name) =>
+      categories[name]?.any(_selected.contains) ?? false;
+
   Widget _category(dynamic pet, MapEntry<String, List<String>> entry) {
     final mobile = MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
     final directChoice =
         mobile && (entry.key == 'Microchipagem' || entry.key == 'Atestados');
+    final selectedServices = entry.value
+        .where(_selected.contains)
+        .toList(growable: false);
     final categoryAction = directChoice
         ? () => _toggleService(entry.value.single)
         : () => _toggleCategory(entry.key);
@@ -835,6 +850,9 @@ class _ServicosScreenState extends State<ServicosScreen> {
               key: ValueKey('services-category-semantics-${entry.key}'),
               button: !directChoice,
               label: entry.key,
+              hint: selectedServices.isEmpty
+                  ? null
+                  : 'Selecionados: ${selectedServices.join(', ')}',
               checked: directChoice
                   ? _selected.contains(entry.value.single)
                   : null,
