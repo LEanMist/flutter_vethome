@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -234,18 +236,52 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('D10 selects each of the five exported icon states', (
+  testWidgets('D10 keeps Figma brown icons when a destination is selected', (
     tester,
   ) async {
     viewport(tester, const Size(390, 844));
     const labels = ['Pets', 'Perfil', 'Conversa', 'Agenda', 'Configurações'];
-    const selectedAssets = [
-      'pets-6.png',
-      'frame-51-2.png',
-      'frame-52-5.png',
-      'frame-52-3.png',
-      'frame-49.png',
+    const figmaAssets = [
+      'pets.png',
+      'frame-53.png',
+      'frame-52.png',
+      'frame-50.png',
+      'frame-49-2.png',
     ];
+
+    Color composite(Color foreground, Color background) =>
+        Color.alphaBlend(foreground, background);
+
+    double linearChannel(double normalized) {
+      return normalized <= .04045
+          ? normalized / 12.92
+          : math.pow((normalized + .055) / 1.055, 2.4).toDouble();
+    }
+
+    double luminance(Color color) =>
+        .2126 * linearChannel(color.r) +
+        .7152 * linearChannel(color.g) +
+        .0722 * linearChannel(color.b);
+
+    double contrastRatio(Color first, Color second) {
+      final firstLuminance = luminance(first);
+      final secondLuminance = luminance(second);
+      final lighter = firstLuminance > secondLuminance
+          ? firstLuminance
+          : secondLuminance;
+      final darker = firstLuminance > secondLuminance
+          ? secondLuminance
+          : firstLuminance;
+      return (lighter + .05) / (darker + .05);
+    }
+
+    final navSurface = composite(VetColors.roseOverlay50, VetColors.pink);
+    final selectedPetsSurface = composite(VetColors.roseOverlay50, navSurface);
+    expect(
+      contrastRatio(VetColors.brown, selectedPetsSurface),
+      greaterThanOrEqualTo(3),
+    );
+
     for (var selected = 0; selected < labels.length; selected++) {
       await tester.pumpWidget(
         MaterialApp(
@@ -268,7 +304,7 @@ void main() {
           );
           expect(
             (image.image as AssetImage).assetName,
-            endsWith(selectedAssets[i]),
+            endsWith(figmaAssets[i]),
           );
         }
       }

@@ -30,14 +30,6 @@ class VetBottomNav extends StatelessWidget {
     'assets/imagens/figma/frame-49-2.png',
   ];
 
-  static const List<String> _selectedIcons = [
-    'assets/imagens/figma/pets-6.png',
-    'assets/imagens/figma/frame-51-2.png',
-    'assets/imagens/figma/frame-52-5.png',
-    'assets/imagens/figma/frame-52-3.png',
-    'assets/imagens/figma/frame-49.png',
-  ];
-
   static const List<String> _labels = [
     'Pets',
     'Perfil',
@@ -108,7 +100,6 @@ class VetBottomNav extends StatelessWidget {
                     _VetNavDestination(
                       label: _labels[destination.value],
                       icon: _icons[destination.value],
-                      selectedIcon: _selectedIcons[destination.value],
                       selected: destination.value == selectedIndex,
                       highlighted: destination.key == 0,
                       scale: s,
@@ -138,7 +129,6 @@ class _VetNavDestination extends StatefulWidget {
   const _VetNavDestination({
     required this.label,
     required this.icon,
-    required this.selectedIcon,
     required this.selected,
     required this.highlighted,
     required this.scale,
@@ -147,7 +137,6 @@ class _VetNavDestination extends StatefulWidget {
 
   final String label;
   final String icon;
-  final String selectedIcon;
   final bool selected;
   final bool highlighted;
   final double scale;
@@ -221,9 +210,7 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
                                 ),
                           child: ExcludeSemantics(
                             child: Image.asset(
-                              widget.selected
-                                  ? widget.selectedIcon
-                                  : widget.icon,
+                              widget.icon,
                               width: 35 * widget.scale,
                               height: 35 * widget.scale,
                             ),
@@ -231,7 +218,7 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
                         )
                       : ExcludeSemantics(
                           child: Image.asset(
-                            widget.selected ? widget.selectedIcon : widget.icon,
+                            widget.icon,
                             width: 50 * widget.scale,
                             height: 50 * widget.scale,
                           ),

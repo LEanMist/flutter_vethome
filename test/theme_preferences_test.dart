@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_vethome/data/theme_preferences.dart';
 import 'package:flutter_vethome/pages/config_page.dart';
 import 'package:flutter_vethome/theme.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -76,6 +77,72 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('ícone selecionado mantém contraste em cada amostra de tema', (
+    tester,
+  ) async {
+    final previousSeed = VH.themeSeed.value;
+    addTearDown(() => VH.themeSeed.value = previousSeed);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(previousSeed),
+        home: const ConfigScreen(),
+      ),
+    );
+    await tester.tap(find.text('Tema do Aplicativo'));
+    await tester.pumpAndSettle();
+
+    for (final palette in ThemePreferences.options) {
+      await tester.tap(
+        find.byKey(ValueKey('theme-swatch-target-${palette.name}')),
+      );
+      await tester.pumpAndSettle();
+
+      final icon = find.descendant(
+        of: find.byKey(ValueKey('theme-swatch-visual-${palette.name}')),
+        matching: find.byIcon(Icons.check),
+      );
+      expect(icon, findsOneWidget, reason: palette.name);
+      final foreground = tester.widget<Icon>(icon).color!;
+      expect(
+        foreground,
+        VetColors.foregroundOn(palette.color),
+        reason: palette.name,
+      );
+      expect(
+        _contrastRatio(foreground, palette.color),
+        greaterThanOrEqualTo(3),
+        reason: palette.name,
+      );
+    }
+
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  test('acentos de texto de todos os temas mantêm contraste no fundo', () {
+    for (final palette in ThemePreferences.options) {
+      final theme = VetTheme.light(palette.color);
+      final primary = theme.colorScheme.primary;
+
+      expect(
+        _contrastRatio(primary, VetColors.pink),
+        greaterThanOrEqualTo(4.5),
+        reason: palette.name,
+      );
+      expect(
+        _contrastRatio(theme.colorScheme.onPrimary, primary),
+        greaterThanOrEqualTo(4.5),
+        reason: palette.name,
+      );
+    }
+    expect(
+      VetTheme.light(VetColors.brown).colorScheme.primary,
+      VetColors.brown,
+    );
+  });
+
   for (final size in [const Size(320, 640), const Size(390, 844)]) {
     testWidgets('alvos do seletor de tema cabem em $size', (tester) async {
       tester.view.physicalSize = size;
@@ -137,4 +204,16 @@ void main() {
     expect(saved, isFalse);
     expect(preferences.getInt(ThemePreferences.storageKey), isNull);
   });
+}
+
+double _contrastRatio(Color foreground, Color background) {
+  final foregroundLuminance = foreground.computeLuminance();
+  final backgroundLuminance = background.computeLuminance();
+  final lighter = foregroundLuminance > backgroundLuminance
+      ? foregroundLuminance
+      : backgroundLuminance;
+  final darker = foregroundLuminance > backgroundLuminance
+      ? backgroundLuminance
+      : foregroundLuminance;
+  return (lighter + .05) / (darker + .05);
 }

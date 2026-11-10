@@ -177,9 +177,11 @@ class ConfigScreen extends StatelessWidget {
                                 radius: selected == palette.color ? 19 : 16,
                                 backgroundColor: palette.color,
                                 child: selected == palette.color
-                                    ? const Icon(
+                                    ? Icon(
                                         Icons.check,
-                                        color: Colors.white,
+                                        color: VetColors.foregroundOn(
+                                          palette.color,
+                                        ),
                                         size: 18,
                                       )
                                     : null,

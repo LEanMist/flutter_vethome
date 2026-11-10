@@ -112,14 +112,18 @@ class VetTheme {
   VetTheme._();
 
   static ThemeData light(Color primaryColor) {
+    final accessiblePrimary = VetColors.textColorOn(
+      primaryColor,
+      VH.background,
+    );
     final generatedScheme = ColorScheme.fromSeed(
       seedColor: primaryColor,
-      primary: primaryColor,
+      primary: accessiblePrimary,
       brightness: Brightness.light,
     );
     final colorScheme = generatedScheme.copyWith(
-      primary: primaryColor,
-      onPrimary: Colors.white,
+      primary: accessiblePrimary,
+      onPrimary: VetColors.foregroundOn(accessiblePrimary),
       secondary: VH.secondary,
       onSecondary: VH.onSecondary,
       surface: VH.background,

@@ -50,7 +50,7 @@ class AppointmentBookingCard extends StatelessWidget {
   final VoidCallback onSave;
   final bool saving;
 
-  static const _chipColor = Color.fromRGBO(192, 128, 129, 0.5);
+  static const _chipColor = VetColors.roseOverlay50;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -373,7 +373,7 @@ class AppointmentBookingCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: VetColors.brown,
+              color: VetColors.calendarTextOnRose,
               fontFamily: 'MontserratAlternates',
               fontSize: 12 * textScale,
               fontWeight: FontWeight.w500,
@@ -447,7 +447,7 @@ class AppointmentBookingCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: VetColors.brown,
+                                  color: VetColors.calendarTextOnRose,
                                   fontFamily: 'MontserratAlternates',
                                   fontSize: 12 * textScale,
                                   fontWeight: FontWeight.w500,
@@ -456,7 +456,7 @@ class AppointmentBookingCard extends StatelessWidget {
                             ),
                             Icon(
                               Icons.expand_more,
-                              color: VetColors.brown,
+                              color: VetColors.calendarTextOnRose,
                               size: 18 * textScale,
                             ),
                           ],

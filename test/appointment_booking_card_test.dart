@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -104,6 +105,57 @@ void main() {
       const Offset(265, 408),
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('texto do serviço tem contraste no chip rosa', (tester) async {
+    await pumpAt(tester, 390);
+
+    final chip = find.byKey(const ValueKey('appointment-booking-service'));
+    final decoration =
+        tester.widget<Container>(chip).decoration! as BoxDecoration;
+    final effectiveBackground = Color.alphaBlend(
+      decoration.color!,
+      VetColors.pink,
+    );
+    final label = tester.widget<Text>(
+      find.descendant(of: chip, matching: find.text('Hemograma')),
+    );
+
+    expect(label.style!.color, VetColors.calendarTextOnRose);
+    expect(
+      _contrastRatio(label.style!.color!, effectiveBackground),
+      greaterThanOrEqualTo(4.5),
+    );
+  });
+
+  testWidgets('texto e ícone dos serviços múltiplos têm contraste', (
+    tester,
+  ) async {
+    await pumpAt(tester, 390, service: 'Hemograma + Creatinina + Urina');
+
+    final chip = find.byKey(const ValueKey('appointment-booking-service'));
+    final decoration = tester.widget<Ink>(chip).decoration! as BoxDecoration;
+    final effectiveBackground = Color.alphaBlend(
+      decoration.color!,
+      VetColors.pink,
+    );
+    final label = tester.widget<Text>(
+      find.descendant(of: chip, matching: find.text('3 serviços selecionados')),
+    );
+    final expandIcon = tester.widget<Icon>(
+      find.descendant(of: chip, matching: find.byIcon(Icons.expand_more)),
+    );
+
+    expect(label.style!.color, VetColors.calendarTextOnRose);
+    expect(expandIcon.color, VetColors.calendarTextOnRose);
+    expect(
+      _contrastRatio(label.style!.color!, effectiveBackground),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      _contrastRatio(expandIcon.color!, effectiveBackground),
+      greaterThanOrEqualTo(3),
+    );
   });
 
   testWidgets('cartão reduz na largura de 320 sem overflow', (tester) async {
@@ -214,4 +266,16 @@ void main() {
     expect(find.byKey(const ValueKey('time-choice-panel')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+}
+
+double _contrastRatio(Color foreground, Color background) {
+  final foregroundLuminance = foreground.computeLuminance();
+  final backgroundLuminance = background.computeLuminance();
+  final lighter = foregroundLuminance > backgroundLuminance
+      ? foregroundLuminance
+      : backgroundLuminance;
+  final darker = foregroundLuminance > backgroundLuminance
+      ? backgroundLuminance
+      : foregroundLuminance;
+  return (lighter + .05) / (darker + .05);
 }

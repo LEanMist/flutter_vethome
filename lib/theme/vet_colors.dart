@@ -17,7 +17,59 @@ class VetColors {
   static const Color brownOnRose = Color(0xFF573820);
   // Contraste >= 4.5:1 sobre o rosa sólido do calendário (#C08081).
   static const Color calendarTextOnRose = Color(0xFF352216);
+  // Tinta escura usada para manter contraste em temas claros.
+  static const Color contrastInk = Color(0xFF1A1210);
   static const Color chatMessageText = brownOnRose;
+
+  /// Ajusta uma cor de texto até atingir o contraste pedido sobre a superfície.
+  /// A cor se move em direção ao preto ou branco que oferece maior contraste,
+  /// preservando o matiz sempre que possível.
+  static Color textColorOn(
+    Color foreground,
+    Color background, {
+    double minimumContrast = 4.5,
+  }) {
+    if (_contrastRatio(foreground, background) >= minimumContrast) {
+      return foreground;
+    }
+
+    final endpoint =
+        _contrastRatio(Colors.black, background) >=
+            _contrastRatio(Colors.white, background)
+        ? Colors.black
+        : Colors.white;
+    var lower = 0.0;
+    var upper = 1.0;
+    for (var iteration = 0; iteration < 20; iteration++) {
+      final middle = (lower + upper) / 2;
+      final candidate = Color.lerp(foreground, endpoint, middle)!;
+      if (_contrastRatio(candidate, background) >= minimumContrast) {
+        upper = middle;
+      } else {
+        lower = middle;
+      }
+    }
+    return Color.lerp(foreground, endpoint, upper)!;
+  }
+
+  /// Escolhe branco ou tinta escura para elementos sobre uma cor sólida.
+  static Color foregroundOn(Color background) {
+    final darkContrast = _contrastRatio(contrastInk, background);
+    final whiteContrast = _contrastRatio(Colors.white, background);
+    return whiteContrast >= darkContrast ? Colors.white : contrastInk;
+  }
+
+  static double _contrastRatio(Color foreground, Color background) {
+    final foregroundLuminance = foreground.computeLuminance();
+    final backgroundLuminance = background.computeLuminance();
+    final lighter = foregroundLuminance > backgroundLuminance
+        ? foregroundLuminance
+        : backgroundLuminance;
+    final darker = foregroundLuminance > backgroundLuminance
+        ? backgroundLuminance
+        : foregroundLuminance;
+    return (lighter + .05) / (darker + .05);
+  }
 
   // Cores e transparências dos nós do Figma Education.
   static const Color roseOverlay25 = Color.fromRGBO(192, 128, 129, .25);
