@@ -87,10 +87,14 @@ class _AgendaScreenState extends State<AgendaScreen> {
       tab: '/agenda',
       showPetsTab: true,
       footer: pinMobileAction
-          ? Container(
-              key: const ValueKey('agenda-sticky-action-footer'),
-              color: VH.background,
-              child: Center(child: _mobileNewAppointmentAction(mobileScale)),
+          ? SizedBox(
+              height: 70 * mobileScale,
+              child: Container(
+                key: const ValueKey('agenda-sticky-action-footer'),
+                color: VH.background,
+                alignment: Alignment.topCenter,
+                child: _mobileNewAppointmentAction(mobileScale),
+              ),
             )
           : null,
       children: [
@@ -124,7 +128,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final scale = (width / 390).clamp(0.8, 1.0).toDouble();
     final textScaler = MediaQuery.textScalerOf(context);
-    const selectedDateTop = 362.0;
+    const selectedDateTop = 323.0;
     final weekdays = const [
       'Domingo',
       'Segunda Feira',
@@ -156,10 +160,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final selectedDateBottom = selectedDateTop * scale + selectedDateHeight;
     final contentOffset = math.max(
       0.0,
-      selectedDateBottom + 47 * scale - 450 * scale,
+      selectedDateBottom + 35 * scale - 399 * scale,
     );
     final emptyMessageTop = math.max(
-      450 * scale,
+      399 * scale,
       selectedDateBottom + 10 * scale,
     );
     var precedingCardExpansion = 0.0;
@@ -171,7 +175,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     }
     final lastCardBottom = appointments.isEmpty
         ? 0.0
-        : (450 + 84 * (appointments.length - 1)) * scale +
+        : (399 + 84 * (appointments.length - 1)) * scale +
               precedingCardExpansion +
               _mobileAppointmentHeight(appointments.last, scale);
     final contentHeight = math.max(
@@ -205,7 +209,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           Positioned(
-            left: 66 * scale,
+            left: 67 * scale,
             top: selectedDateTop * scale,
             width: 258 * scale,
             height: selectedDateHeight,
@@ -249,8 +253,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
             topOffset: contentOffset,
           ),
           Positioned(
-            left: 339 * scale,
-            top: 486.4 * scale + contentOffset,
+            left: 345 * scale,
+            top: 435 * scale + contentOffset,
             width: 20 * scale,
             height: 20 * scale,
             child: SizedBox.expand(
@@ -270,8 +274,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           Positioned(
-            left: 339 * scale,
-            top: 612 * scale + contentOffset,
+            left: 345 * scale,
+            top: 560 * scale + contentOffset,
             width: 20 * scale,
             height: 20 * scale,
             child: SizedBox.expand(
@@ -354,7 +358,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
     for (var index = 0; index < appointments.length; index++) {
       final item = appointments[index];
-      final top = (450 + 84 * index) * scale + topOffset + accumulatedExpansion;
+      final top = (399 + 84 * index) * scale + topOffset + accumulatedExpansion;
       final cardHeight = _mobileAppointmentHeight(item, scale);
       final expansion = cardHeight - 50 * scale;
       children.add(
@@ -369,9 +373,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
       if (index < appointments.length - 1) {
         children.add(
           Positioned(
-            left: 82 * scale,
+            left: 88 * scale,
             top:
-                (516 + 84 * index + (index > 0 ? 1 : 0)) * scale +
+                (465 + 84 * index + (index > 0 ? 1 : 0)) * scale +
                 topOffset +
                 accumulatedExpansion +
                 expansion,
@@ -437,7 +441,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     return Stack(
       children: [
         Positioned(
-          left: 40 * scale,
+          left: 46 * scale,
           top: top,
           width: 39 * scale,
           height: cardHeight,
@@ -474,7 +478,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
         ),
         Positioned(
-          left: 96 * scale,
+          left: 102 * scale,
           top: top,
           width: 195 * scale,
           height: cardHeight,
@@ -515,7 +519,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                item.name,
+                                item.agendamento.tipo,
                                 maxLines: 1,
                                 style: TextStyle(
                                   color: VetColors.calendarTextOnRose,

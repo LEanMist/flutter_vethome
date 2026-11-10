@@ -556,6 +556,14 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - Validação após as duas correções: `flutter test --no-pub` — **562 aprovados e 3 ignorados**; `flutter analyze --no-pub` sem problemas; testes focados de Agenda — **4/4** e autenticação/perfil local — **7/7**; build Web release aprovado em **117,6 s**, dry run Wasm aprovado, formatação sem mudanças e `git diff --check` aprovado (avisos Git LF/CRLF).
 - `.wrangler/` e `CONTINUACAO_OUTRA_CONTA.md` permanecem preservados fora do stage.
 
+## Agenda alinhada à referência atual (10/11/2026)
+- A referência é `CALENDAR_PAGE` (`2783:950`) na página “Telas para Entregar”, não o frame antigo `4133:182`. O calendário móvel agora usa cabeçalho rosa de 390×344, sem painel interno, grade em x=31/y=65 (327×230), faixa da data em x=67/y=323 e cartões em x=102, y=399/483/567. O botão “Nova Consulta” mantém a coordenada visual y=651, fica no rodapé fixo acima da navegação e conserva alvo de toque de pelo menos 48 px.
+- A grade apresenta datas reais dos meses adjacentes; nos meses de seis semanas, reduz o passo das linhas para 36 px para não cobrir a data selecionada. Em cartões de demonstração, o serviço fica visível sob o selo “Demonstração”, e o nome do pet continua no rótulo acessível.
+- Desvios deliberados para preservar dados corretos: janeiro de 2026 começa na quinta-feira (o protótipo coloca o dia 1 no domingo), o nome do dia selecionado é calculado pela data real, os eventos permanecem em ordem cronológica e “Creatinina” não é trocado pelo texto incorreto “Creatina” do protótipo. A tela antiga de Pets/Detalhes permanece intacta.
+- Testes Figma, acessibilidade e regressão foram atualizados para a grade atual, datas adjacentes e rótulos dos serviços. Validação: suíte completa `flutter test --no-pub --reporter compact --concurrency=2` — **632 passaram e 3 foram ignorados**; `flutter analyze --no-pub` sem problemas; `flutter build web --release --no-pub` aprovado em 72,9 s, com dry run Wasm aprovado; formatação e `git diff --check` aprovados.
+- Não foi possível fazer uma inspeção manual do app nesta sessão: `orca skills get computer-use --json` retornou que `orca` não é reconhecido. As coordenadas foram comparadas com o Figma e verificadas por testes de widgets; a validação visual interativa continua pendente.
+- `.wrangler/` e `CONTINUACAO_OUTRA_CONTA.md` permanecem preservados fora do stage.
+
 ## Persistência bloqueada durante limpeza — 09/11/2026
 
 - Salvar endereço agora captura bloqueio durante limpeza, armazenamento indisponível e erros inesperados. O formulário permanece aberto com os campos preenchidos e apresenta uma mensagem acessível; os dois bloqueios conhecidos explicam por que a gravação não ocorreu.

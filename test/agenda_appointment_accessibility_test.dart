@@ -82,6 +82,7 @@ void main() {
         expect(data.label, startsWith('Demonstração, Consulta Geral,'));
         expect('Demonstração'.allMatches(data.label).length, 1);
         expect('Consulta Geral'.allMatches(data.label).length, 1);
+        expect(data.label, contains(VetRepository.pets[index].name));
         expect(data.flagsCollection.isButton, isFalse);
         expect(data.hasAction(SemanticsAction.tap), isFalse);
         expect(node.childrenCountInTraversalOrder, 0);
@@ -119,9 +120,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final labels = size.width < 900
-          ? ['Rambo Augusto', 'Nicolly Santos', 'Olivia Palito']
-          : ['Hemograma', 'Urina', 'Creatinina'];
+      final labels = ['Hemograma', 'Urina', 'Creatinina'];
       for (final label in labels) {
         final text = tester.widget<Text>(find.text(label));
         final foreground = text.style!.color!;

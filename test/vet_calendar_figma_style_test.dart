@@ -417,7 +417,7 @@ void main() {
     await pumpAgenda(tester, const Size(390, 844));
 
     final appointmentBoxes = [
-      for (final label in ['Rambo Augusto', 'Nicolly Santos', 'Olivia Palito'])
+      for (final label in ['Hemograma', 'Urina', 'Creatinina'])
         tester.getRect(
           find
               .ancestor(of: find.text(label), matching: find.byType(Container))
@@ -429,70 +429,72 @@ void main() {
       expect(rect.right, lessThanOrEqualTo(390));
     }
 
-    // Figma CALENDAR_PAGE 4133:182 (Telas para IA): calendário 390×383,
-    // grade 305 px, data selecionada em y=362 e cartões em x=96.
+    // CALENDAR_PAGE 2783:950, na página de entrega atual: cabeçalho 390×344,
+    // grade x=31/y=65, faixa selecionada em y=323 e cartões a partir de x=102.
     expect(
       tester.getRect(find.byKey(const ValueKey('vet-calendar'))),
-      const Rect.fromLTWH(0, 0, 390, 383),
+      const Rect.fromLTWH(0, 0, 390, 344),
     );
-    final innerPanel = find.byKey(
-      const ValueKey('agenda-calendar-inner-panel'),
-    );
-    expect(tester.getRect(innerPanel), const Rect.fromLTWH(22, 22, 347, 327));
     expect(
-      (tester.widget<Container>(innerPanel).decoration! as BoxDecoration).color,
-      VetColors.pink.withValues(alpha: .3),
+      find.byKey(const ValueKey('agenda-calendar-inner-panel')),
+      findsNothing,
     );
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-calendar-month-slot'))),
-      const Rect.fromLTWH(133, 28, 71, 35),
+      const Rect.fromLTWH(126, 17, 71, 35),
     );
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-calendar-year-slot'))),
-      const Rect.fromLTWH(214, 28, 35, 35),
+      const Rect.fromLTWH(207, 17, 35, 35),
     );
     final monthGrid = tester.getRect(
       find.byKey(const ValueKey('agenda-calendar-month-grid')),
     );
-    expect(monthGrid.topLeft, const Offset(42, 75));
-    expect(monthGrid.width, closeTo(305, .01));
+    expect(monthGrid, const Rect.fromLTWH(31, 65, 327, 230));
     final januaryFirst = tester.getRect(
       find.byKey(const ValueKey('calendar-date-semantics-2026-1-1')),
     );
-    expect(januaryFirst.left, closeTo(222, .01));
-    expect(januaryFirst.top, closeTo(120, .01));
+    // O protótipo coloca 1º de janeiro no domingo; o app mantém o calendário
+    // gregoriano correto, quinta-feira, e preserva o mesmo tamanho de toque.
+    expect(januaryFirst.left, closeTo(223.57, .02));
+    expect(januaryFirst.top, closeTo(105, .01));
     expect(januaryFirst.width, closeTo(35, .01));
     expect(januaryFirst.height, closeTo(35, .01));
+    expect(
+      find.byKey(const ValueKey('calendar-date-semantics-2025-12-28')),
+      findsOneWidget,
+      reason: 'A grade deve exibir os dias do mês adjacente.',
+    );
     final cardTopByLabel = {
-      'Rambo Augusto': 450.0,
-      'Nicolly Santos': 534.0,
-      'Olivia Palito': 618.0,
+      'Hemograma': 399.0,
+      'Urina': 483.0,
+      'Creatinina': 567.0,
     };
     for (final entry in cardTopByLabel.entries) {
       final card = find
           .ancestor(of: find.text(entry.key), matching: find.byType(Container))
           .first;
-      expect(tester.getRect(card), Rect.fromLTWH(96, entry.value, 195, 50));
+      expect(tester.getRect(card), Rect.fromLTWH(102, entry.value, 195, 50));
     }
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-selected-date'))),
-      const Rect.fromLTWH(66, 362, 258, 41),
+      const Rect.fromLTWH(67, 323, 258, 41),
     );
     for (var index = 0; index < 2; index++) {
       final line = tester.getRect(
         find.byKey(ValueKey('agenda-divider-$index')),
       );
-      expect(line.left, closeTo(82, .5));
+      expect(line.left, closeTo(88, .5));
       expect(line.width, closeTo(221, .5));
-      expect(line.center.dy, closeTo(517 + 85 * index, .5));
+      expect(line.center.dy, closeTo(466 + 85 * index, .5));
     }
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-chevron-up'))),
-      const Rect.fromLTWH(339, 486.4, 20, 20),
+      const Rect.fromLTWH(345, 435, 20, 20),
     );
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-chevron-down'))),
-      const Rect.fromLTWH(339, 612, 20, 20),
+      const Rect.fromLTWH(345, 560, 20, 20),
     );
     final newAppointmentButton = find
         .ancestor(
@@ -502,7 +504,7 @@ void main() {
         .first;
     expect(
       tester.getRect(newAppointmentButton),
-      const Rect.fromLTWH(145.5, 673.5, 99, 41),
+      const Rect.fromLTWH(145.5, 651.5, 99, 41),
     );
     final newAppointmentTarget = tester.getRect(
       find.byKey(const ValueKey('agenda-new-appointment-target')),
@@ -513,9 +515,18 @@ void main() {
       newAppointmentTarget.center,
       tester.getRect(newAppointmentButton).center,
     );
+    final stickyFooter = find.byKey(
+      const ValueKey('agenda-sticky-action-footer'),
+    );
+    expect(stickyFooter, findsOneWidget);
+    final footerRect = tester.getRect(stickyFooter);
+    expect(footerRect.top, 648);
+    expect(footerRect.bottom, 718);
+    expect(newAppointmentTarget.top, greaterThanOrEqualTo(footerRect.top));
+    expect(newAppointmentTarget.bottom, lessThanOrEqualTo(footerRect.bottom));
     expect(
-      find.byKey(const ValueKey('agenda-sticky-action-footer')),
-      findsOneWidget,
+      footerRect.bottom,
+      lessThanOrEqualTo(tester.getRect(find.byTooltip('Pets')).top),
     );
     expect(find.byTooltip('Pets'), findsOneWidget);
     expect(
@@ -531,9 +542,9 @@ void main() {
       find.text('Sáb'),
       find.byKey(const ValueKey('agenda-calendar-month-navigation')),
       find.byTooltip('Configurações'),
-      find.text('Rambo Augusto'),
-      find.text('Nicolly Santos'),
-      find.text('Olivia Palito'),
+      find.text('Hemograma'),
+      find.text('Urina'),
+      find.text('Creatinina'),
     ]) {
       final rect = tester.getRect(finder);
       expect(rect.left, greaterThanOrEqualTo(0));

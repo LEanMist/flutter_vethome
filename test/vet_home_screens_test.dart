@@ -191,9 +191,23 @@ void main() {
 
     expect(find.text('Janeiro'), findsOneWidget);
     expect(find.text('2026'), findsOneWidget);
-    expect(find.text('Rambo Augusto'), findsOneWidget);
-    expect(find.text('Olivia Palito'), findsOneWidget);
-    expect(find.text('Nicolly Santos'), findsOneWidget);
+    for (final service in ['Hemograma', 'Urina', 'Creatinina']) {
+      expect(find.text(service), findsOneWidget);
+    }
+    for (final petName in [
+      'Rambo Augusto',
+      'Nicolly Santos',
+      'Olivia Palito',
+    ]) {
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label?.contains(petName) == true,
+        ),
+        findsOneWidget,
+      );
+    }
     for (final service in ['Hemograma', 'Creatinina', 'Urina']) {
       expect(
         find.byWidgetPredicate(

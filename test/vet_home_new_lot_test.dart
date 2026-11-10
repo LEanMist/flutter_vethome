@@ -690,7 +690,11 @@ void main() {
           find.byKey(const ValueKey('calendar-2026-10-31')),
           findsOneWidget,
         );
-        expect(find.byKey(const ValueKey('calendar-2026-9-27')), findsNothing);
+        expect(
+          find.byKey(const ValueKey('calendar-2026-9-27')),
+          findsOneWidget,
+          reason: 'A grade atual da Agenda mostra os dias do mês anterior.',
+        );
         expect(find.byKey(const ValueKey('calendar-2026-11-7')), findsNothing);
         expect(find.text('14:30'), findsOneWidget);
         expect(find.text('15:30'), findsOneWidget);

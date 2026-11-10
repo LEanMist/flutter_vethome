@@ -326,23 +326,63 @@ class VetCalendar extends StatelessWidget {
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final compactText = textScale > 1;
     final dayFontScale = textScale >= 1.4 ? .9 : 1.0;
-    final first = DateTime(month.year, month.month);
-    final leadingDays = first.weekday % 7;
-    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
-    final weekCount = ((leadingDays + daysInMonth + 6) ~/ 7).clamp(5, 6);
-    final slots = List<DateTime?>.generate(weekCount * 7, (index) {
-      final day = index - leadingDays + 1;
-      return day < 1 ? null : DateTime(month.year, month.month, day);
-    });
+    final slots = monthDays(month);
+    final weekCount = slots.length ~/ 7;
     final weekLabels = const ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     final compactWeekLabels = const ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     final cellDimension = 35 * scale;
     final columnGap = 10 * scale;
-    // Seis linhas de datas usam intervalos menores para não encobrir a faixa
-    // selecionada; meses de cinco linhas mantêm a distância do Figma.
-    final rowGap = (weekCount > 5 ? 7.0 : 10.0) * scale;
-    final gridWidth = 305 * scale;
+    // A referência atual tem 40 px entre linhas. Meses com seis semanas
+    // comprimem o intervalo para 36 px para manter a faixa selecionada livre.
+    final rowStep = (weekCount > 5 ? 36.0 : 40.0) * scale;
+    final gridWidth = 327 * scale;
+    final gridHeight = (weekCount > 5 ? 251.0 : 230.0) * scale;
     final columnWidth = (gridWidth - columnGap * 6) / 7;
+    final calendarRows = <Widget>[
+      _agendaCalendarRow(
+        gap: columnGap,
+        cellDimension: cellDimension,
+        columnWidth: columnWidth,
+        children: [
+          for (var index = 0; index < weekLabels.length; index++)
+            Semantics(
+              container: true,
+              label: weekdayNames[index],
+              child: ExcludeSemantics(
+                child: Center(
+                  child: Text(
+                    compactText ? compactWeekLabels[index] : weekLabels[index],
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      color: VetColors.calendarTextOnRose,
+                      fontSize: (compactText ? 14 : 15) * scale,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: VH.headingFontFamily,
+                      height: compactText ? 1 : null,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+      for (var row = 0; row < weekCount; row++)
+        _agendaCalendarRow(
+          gap: columnGap,
+          cellDimension: cellDimension,
+          columnWidth: columnWidth,
+          children: [
+            for (var column = 0; column < 7; column++)
+              _agendaCalendarDate(
+                slots[row * 7 + column],
+                today: today,
+                scale: scale,
+                fontSizeFactor: dayFontScale,
+              ),
+          ],
+        ),
+    ];
 
     return Semantics(
       key: const ValueKey('agenda-calendar-month-navigation'),
@@ -367,7 +407,7 @@ class VetCalendar extends StatelessWidget {
         child: Container(
           key: const ValueKey('vet-calendar'),
           width: 390 * scale,
-          height: 383 * scale,
+          height: 344 * scale,
           clipBehavior: Clip.none,
           decoration: BoxDecoration(
             color: VH.secondary,
@@ -378,19 +418,6 @@ class VetCalendar extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Positioned(
-                left: 22 * scale,
-                top: 22 * scale,
-                width: 347 * scale,
-                height: 327 * scale,
-                child: Container(
-                  key: const ValueKey('agenda-calendar-inner-panel'),
-                  decoration: BoxDecoration(
-                    color: VetColors.pink.withValues(alpha: .3),
-                    borderRadius: BorderRadius.circular(30 * scale),
-                  ),
-                ),
-              ),
               if (compactText)
                 Positioned(
                   left: 0,
@@ -423,8 +450,8 @@ class VetCalendar extends StatelessWidget {
                 )
               else ...[
                 Positioned(
-                  left: 133 * scale,
-                  top: 28 * scale,
+                  left: 126 * scale,
+                  top: 17 * scale,
                   width: 71 * scale,
                   height: 35 * scale,
                   child: SizedBox.expand(
@@ -449,8 +476,8 @@ class VetCalendar extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  left: 214 * scale,
-                  top: 28 * scale,
+                  left: 207 * scale,
+                  top: 17 * scale,
                   width: 35 * scale,
                   height: 35 * scale,
                   child: SizedBox.expand(
@@ -476,62 +503,27 @@ class VetCalendar extends StatelessWidget {
                 ),
               ],
               Positioned(
-                left: 42 * scale,
-                top: 75 * scale,
+                left: 31 * scale,
+                top: 65 * scale,
                 width: gridWidth,
-                child: Column(
+                height: gridHeight,
+                child: SizedBox(
                   key: const ValueKey('agenda-calendar-month-grid'),
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _agendaCalendarRow(
-                      gap: columnGap,
-                      cellDimension: cellDimension,
-                      columnWidth: columnWidth,
-                      children: [
-                        for (var index = 0; index < weekLabels.length; index++)
-                          Semantics(
-                            container: true,
-                            label: weekdayNames[index],
-                            child: ExcludeSemantics(
-                              child: Center(
-                                child: Text(
-                                  compactText
-                                      ? compactWeekLabels[index]
-                                      : weekLabels[index],
-                                  maxLines: 1,
-                                  softWrap: false,
-                                  style: TextStyle(
-                                    color: VetColors.calendarTextOnRose,
-                                    fontSize: (compactText ? 14 : 15) * scale,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: VH.headingFontFamily,
-                                    height: compactText ? 1 : null,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    SizedBox(height: rowGap),
-                    for (var row = 0; row < weekCount; row++) ...[
-                      _agendaCalendarRow(
-                        gap: columnGap,
-                        cellDimension: cellDimension,
-                        columnWidth: columnWidth,
-                        children: [
-                          for (var column = 0; column < 7; column++)
-                            _agendaCalendarDate(
-                              slots[row * 7 + column],
-                              today: today,
-                              scale: scale,
-                              fontSizeFactor: dayFontScale,
-                            ),
-                        ],
+                  width: gridWidth,
+                  height: gridHeight,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: List.generate(
+                      calendarRows.length,
+                      (row) => Positioned(
+                        left: 0,
+                        top: row * rowStep,
+                        width: gridWidth,
+                        height: cellDimension,
+                        child: calendarRows[row],
                       ),
-                      if (row < weekCount - 1) SizedBox(height: rowGap),
-                    ],
-                  ],
+                    ),
+                  ),
                 ),
               ),
             ],
