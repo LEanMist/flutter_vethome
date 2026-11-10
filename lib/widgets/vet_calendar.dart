@@ -679,6 +679,7 @@ class _CalendarDayState extends State<_CalendarDay> {
 
   @override
   Widget build(BuildContext context) {
+    final unavailable = !widget.enabled && !widget.selected;
     final dateLabel = [
       '${VetCalendar.weekdayNames[widget.date.weekday % 7].toLowerCase()}, '
           '${widget.date.day} de '
@@ -753,7 +754,13 @@ class _CalendarDayState extends State<_CalendarDay> {
                                         widget.outsideMonthTextColor != null
                                     ? widget.outsideMonthTextColor
                                     : VetColors.calendarTextOnRose
-                              : VH.foreground.withValues(alpha: .2),
+                              : VetColors.calendarTextOnRose,
+                          decoration: unavailable
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
+                          decorationColor: unavailable
+                              ? VetColors.calendarTextOnRose
+                              : null,
                           fontWeight:
                               !widget.selected &&
                                   !widget.inMonth &&

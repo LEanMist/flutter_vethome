@@ -84,6 +84,28 @@ void main() {
         reason: 'Desvio do Figma no texto ${expected.$1}',
       );
     }
+    for (final (name, rect) in const [
+      ('Microchipagem', Rect.fromLTWH(-1, 546, 263, 59)),
+      ('Atestados', Rect.fromLTWH(-5, 627, 267, 59)),
+    ]) {
+      expect(
+        tester.getRect(find.byKey(ValueKey('services-pill-$name'))),
+        rect,
+        reason: '$name deve manter a largura e posição de SERVICES_PAGE.',
+      );
+      final arrow = tester.widget<Image>(
+        find.byKey(ValueKey('services-category-chevron-$name')),
+      );
+      expect(
+        (arrow.image as AssetImage).assetName,
+        'assets/imagens/figma/convenio-chevron.png',
+      );
+      final arrowRect = tester.getRect(
+        find.byKey(ValueKey('services-category-chevron-$name')),
+      );
+      expect(arrowRect.left, closeTo(289.5, 1));
+      expect(arrowRect.top, closeTo(name == 'Microchipagem' ? 569 : 650, 1));
+    }
     final examsPill = tester.widget<Ink>(
       find.ancestor(of: find.text('Exames'), matching: find.byType(Ink)).first,
     );
@@ -157,13 +179,13 @@ void main() {
       ),
       findsOneWidget,
     );
-    // Frame 22 4010:387, viewport de 390 × 844.
+    // CONVENIO_PAGE 2783:840 em "Telas para Entregar", viewport de 390 × 844.
     // Mantém o fluxo/rotas existentes enquanto alinha a posição dos planos.
     expect(tester.getTopLeft(find.text('Convênio')).dy, closeTo(37, 1));
     for (final (plan, top) in const [
-      ('PetLove', 273.0),
-      ('DogLife', 392.0),
-      ('Particular', 633.0),
+      ('PetLove', 342.0),
+      ('DogLife', 461.0),
+      ('Particular', 580.0),
     ]) {
       expect(
         tester.getRect(find.byKey(ValueKey('convenio-plan-pill-$plan'))),
@@ -178,10 +200,10 @@ void main() {
       reason: 'A navegação global não pode cobrir o último plano.',
     );
     expect(
-      tester.getRect(find.byKey(const ValueKey('convenio-figma-unnamed-pill'))),
-      const Rect.fromLTWH(0, 511, 254, 59),
+      find.byKey(const ValueKey('convenio-figma-unnamed-pill')),
+      findsNothing,
     );
-    // Frame 22 4010:387: planos 254 × 59 e títulos
+    // CONVENIO_PAGE 2783:840: planos 254 × 59 e títulos
     // Montserrat Alternates Bold, 20 px.
     for (final label in ['PetLove', 'Doglife', 'Particular']) {
       final title = tester.widget<Text>(find.text(label));
@@ -222,19 +244,13 @@ void main() {
     );
     expect(
       find.image(
-        const AssetImage('assets/imagens/figma/coisademedico-1-2.png'),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.image(
         const AssetImage('assets/imagens/figma/convenio-particular.png'),
       ),
       findsOneWidget,
     );
     expect(
       find.image(const AssetImage('assets/imagens/figma/convenio-chevron.png')),
-      findsNWidgets(4),
+      findsNWidgets(3),
     );
     for (final label in ['Convênio', 'PetLove', 'Doglife', 'Particular']) {
       // ignore: avoid_print

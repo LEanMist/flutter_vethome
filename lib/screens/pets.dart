@@ -553,7 +553,12 @@ class _ServicosScreenState extends State<ServicosScreen> {
 
   // Ajuste exclusivo de Serviços: categoria Montserrat Alternates 20 px,
   // sem alterar VetChoicePill utilizado pelas outras telas.
-  Widget _servicePill(String name, {required VoidCallback onTap}) {
+  Widget _servicePill(
+    String name, {
+    required VoidCallback onTap,
+    VoidCallback? arrowOnTap,
+    bool selected = false,
+  }) {
     if (MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint) {
       return _desktopServicePill(name);
     }
@@ -628,27 +633,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                             ),
                           ),
                         ),
-                        if (visual.arrow == _ServiceCategoryArrow.checkbox)
-                          Positioned(
-                            left: visual.arrowLeft,
-                            top: visual.arrowTop,
-                            width: visual.arrowWidth,
-                            height: visual.arrowHeight,
-                            child: IgnorePointer(
-                              child: SvgPicture.asset(
-                                _selected.contains(categories[name]!.single)
-                                    ? _selectedServiceMarker
-                                    : _unselectedServiceMarker,
-                                key: ValueKey(
-                                  'services-category-checkbox-$name',
-                                ),
-                                width: 16,
-                                height: 16,
-                              ),
-                            ),
-                          )
-                        else if (visual.arrow !=
-                            _ServiceCategoryArrow.doubleRight)
+                        if (visual.arrow != _ServiceCategoryArrow.doubleRight)
                           Positioned(
                             left: visual.arrowLeft,
                             top: visual.arrowTop,
@@ -692,7 +677,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                 child: IconButton(
                   key: ValueKey('services-category-arrow-$name'),
                   tooltip: name,
-                  onPressed: () => _toggleCategory(name),
+                  onPressed: arrowOnTap ?? () => _toggleCategory(name),
                   padding: EdgeInsets.zero,
                   icon: RotatedBox(
                     quarterTurns:
@@ -700,13 +685,20 @@ class _ServicosScreenState extends State<ServicosScreen> {
                             _expanded.contains(name)
                         ? 1
                         : 0,
-                    child: Image.asset(
-                      'assets/imagens/figma/convenio-chevron.png',
-                      key: ValueKey('services-category-chevron-$name'),
-                      width: 17,
-                      height: 19,
-                      excludeFromSemantics: true,
-                    ),
+                    child: selected
+                        ? SvgPicture.asset(
+                            _selectedServiceMarker,
+                            key: ValueKey('services-category-checkbox-$name'),
+                            width: 16,
+                            height: 16,
+                          )
+                        : Image.asset(
+                            'assets/imagens/figma/convenio-chevron.png',
+                            key: ValueKey('services-category-chevron-$name'),
+                            width: 17,
+                            height: 19,
+                            excludeFromSemantics: true,
+                          ),
                   ),
                 ),
               ),
@@ -825,7 +817,15 @@ class _ServicosScreenState extends State<ServicosScreen> {
               expanded: directChoice ? null : _expanded.contains(entry.key),
               onTap: categoryAction,
               child: ExcludeSemantics(
-                child: _servicePill(entry.key, onTap: categoryAction),
+                child: _servicePill(
+                  entry.key,
+                  onTap: categoryAction,
+                  arrowOnTap: directChoice
+                      ? categoryAction
+                      : () => _toggleCategory(entry.key),
+                  selected:
+                      directChoice && _selected.contains(entry.value.single),
+                ),
               ),
             ),
             AnimatedSize(
@@ -951,7 +951,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
   }
 }
 
-enum _ServiceCategoryArrow { down, right, doubleRight, checkbox }
+enum _ServiceCategoryArrow { down, right, doubleRight }
 
 class _ServiceCategoryVisual {
   const _ServiceCategoryVisual({
@@ -1029,11 +1029,11 @@ class _ServiceCategoryVisual {
       arrowHeight: 16.63,
     ),
     'Microchipagem' => const _ServiceCategoryVisual(
-      left: 0,
-      width: 300,
-      iconLeft: 16.83,
+      left: -1,
+      width: 263,
+      iconLeft: 14,
       iconTop: 14,
-      iconWidth: 36.03,
+      iconWidth: 30,
       iconHeight: 30,
       labelLeft: 61,
       gradientAlignmentY: 0.0756,
@@ -1042,15 +1042,11 @@ class _ServiceCategoryVisual {
         topRight: Radius.circular(25),
         bottomRight: Radius.circular(25),
       ),
-      arrow: _ServiceCategoryArrow.checkbox,
-      arrowLeft: 259,
-      arrowTop: 21,
-      arrowWidth: 16,
-      arrowHeight: 16,
+      arrow: _ServiceCategoryArrow.doubleRight,
     ),
     'Atestados' => const _ServiceCategoryVisual(
       left: -5,
-      width: 305,
+      width: 267,
       iconLeft: 13,
       iconTop: 14,
       iconWidth: 32,
@@ -1061,11 +1057,7 @@ class _ServiceCategoryVisual {
         topRight: Radius.circular(400),
         bottomRight: Radius.circular(800),
       ),
-      arrow: _ServiceCategoryArrow.checkbox,
-      arrowLeft: 264,
-      arrowTop: 21,
-      arrowWidth: 16,
-      arrowHeight: 16,
+      arrow: _ServiceCategoryArrow.doubleRight,
     ),
     _ => throw ArgumentError.value(name, 'name', 'Categoria desconhecida'),
   };
@@ -1097,10 +1089,9 @@ class ConvenioScreen extends StatelessWidget {
     final media = MediaQuery.of(context);
     const navigationHeight = 50.0;
     const headerHeight = 157.0;
-    const initialGap = 116.0;
+    const initialGap = 185.0;
     const planGap = 60.0;
-    const finalPlanGap = 63.0;
-    final referenceGaps = initialGap + planGap + planGap + finalPlanGap;
+    final referenceGaps = initialGap + planGap + planGap;
     final compactLargeTextPlans =
         media.size.height <= 640 && media.textScaler.scale(20) >= 36;
     final allowPlanTitleWrap = media.textScaler.scale(20) > 20.5;
@@ -1135,7 +1126,6 @@ class ConvenioScreen extends StatelessWidget {
     final plansHeight = [
       planCardHeight('PetLove'),
       planCardHeight('Doglife'),
-      59.0,
       planCardHeight('Particular'),
     ].fold<double>(0, (total, height) => total + height);
     final availableGaps =
@@ -1161,7 +1151,7 @@ class ConvenioScreen extends StatelessWidget {
                   'Se sair agora, ele não seguirá para a consulta.',
             ),
       children: [
-        // Figma 4010:387: cabeçalho de 157 px com aba da espécie (somente mobile).
+        // Figma 2783:840: cabeçalho de 157 px com aba da espécie (mobile).
         VetResponsiveLayout(
           breakpoint: VH.compactBreakpoint,
           mobile: _figmaHeader(pet),
@@ -1176,9 +1166,8 @@ class ConvenioScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // FRAME 22 (4010:387): PetLove em y=273, Doglife em
-                  // y=392 e Particular em y=633. O frame também mostra uma
-                  // faixa sem rótulo em y=511; ela não vira opção selecionável.
+                  // CONVENIO_PAGE (2783:840), em "Telas para Entregar":
+                  // três opções em y=342, 461 e 580, sem opção sem rótulo.
                   SizedBox(height: initialGap * mobileSpacingScale),
                   _figmaPlan(
                     context,
@@ -1196,8 +1185,6 @@ class ConvenioScreen extends StatelessWidget {
                     verticalPadding: planVerticalPadding,
                   ),
                   SizedBox(height: planGap * mobileSpacingScale),
-                  _figmaUnnamedPlan(),
-                  SizedBox(height: finalPlanGap * mobileSpacingScale),
                   _figmaPlan(
                     context,
                     pet.id,
@@ -1479,58 +1466,6 @@ class ConvenioScreen extends StatelessWidget {
       ],
     );
   }
-
-  /// Faixa decorativa sem rótulo presente no Frame 22 (4010:387).
-  /// O Figma não informa o nome nem o comportamento dessa opção.
-  Widget _figmaUnnamedPlan() => ExcludeFocus(
-    child: ExcludeSemantics(
-      child: SizedBox(
-        height: 59,
-        child: Row(
-          children: [
-            Container(
-              key: const ValueKey('convenio-figma-unnamed-pill'),
-              width: 254,
-              height: 59,
-              padding: const EdgeInsets.only(left: 15),
-              alignment: Alignment.centerLeft,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [VH.secondary, VH.background],
-                ),
-                borderRadius: const BorderRadius.horizontal(
-                  right: Radius.circular(25),
-                ),
-                boxShadow: VH.controlShadow,
-              ),
-              child: Image.asset(
-                'assets/imagens/figma/coisademedico-1-2.png',
-                width: 30,
-                height: 30,
-                excludeFromSemantics: true,
-              ),
-            ),
-            const SizedBox(width: 9.5),
-            SizedBox(
-              width: 48,
-              height: 59,
-              child: Center(
-                child: Image.asset(
-                  'assets/imagens/figma/convenio-chevron.png',
-                  width: 17,
-                  height: 19,
-                  fit: BoxFit.fill,
-                  excludeFromSemantics: true,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 
   void _openPlan(
     BuildContext context,

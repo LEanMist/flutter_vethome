@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/agenda_page.dart';
 import 'package:flutter_vethome/theme.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';
 
 void main() {
@@ -381,6 +382,44 @@ void main() {
     }
   });
 
+  testWidgets('datas indisponíveis continuam legíveis e identificáveis', (
+    tester,
+  ) async {
+    await pumpCalendar(
+      tester,
+      1,
+      agendaPageStyle: false,
+      firstDate: DateTime(2026, 1, 13),
+    );
+
+    final semantics = tester.ensureSemantics();
+    try {
+      final unavailable = tester.getSemantics(
+        find.byKey(const ValueKey('calendar-date-semantics-2026-1-12')),
+      );
+      final unavailableData = unavailable.getSemanticsData();
+      expect(unavailableData.flagsCollection.isEnabled, Tristate.isFalse);
+      expect(unavailableData.hasAction(SemanticsAction.tap), isFalse);
+
+      final day = find.byKey(const ValueKey('calendar-2026-1-12-surface'));
+      final number = tester.widget<Text>(
+        find.descendant(of: day, matching: find.text('12')),
+      );
+      expect(number.style?.color, VetColors.calendarTextOnRose);
+      expect(number.style?.decoration, TextDecoration.lineThrough);
+      expect(number.style?.decorationColor, VetColors.calendarTextOnRose);
+
+      final contrast = _contrastRatio(
+        VetColors.calendarTextOnRose,
+        VetColors.rose,
+      );
+      expect(contrast, greaterThanOrEqualTo(4.5));
+    } finally {
+      semantics.dispose();
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('ambas as variações anunciam os dias da semana por extenso', (
     tester,
   ) async {
@@ -460,4 +499,16 @@ void main() {
       expect(tester.takeException(), isNull, reason: 'TextScaler $factor');
     }
   });
+}
+
+double _contrastRatio(Color first, Color second) {
+  final firstLuminance = first.computeLuminance();
+  final secondLuminance = second.computeLuminance();
+  final lighter = firstLuminance > secondLuminance
+      ? firstLuminance
+      : secondLuminance;
+  final darker = firstLuminance > secondLuminance
+      ? secondLuminance
+      : firstLuminance;
+  return (lighter + .05) / (darker + .05);
 }

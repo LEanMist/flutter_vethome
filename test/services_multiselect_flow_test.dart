@@ -125,6 +125,15 @@ void main() {
               as SvgAssetLoader)
           .assetName;
 
+  String categoryChevronAsset(WidgetTester tester, String name) =>
+      (tester
+                  .widget<Image>(
+                    find.byKey(ValueKey('services-category-chevron-$name')),
+                  )
+                  .image
+              as AssetImage)
+          .assetName;
+
   String categoryArrowAsset(WidgetTester tester, String name) =>
       (tester
                   .widget<SvgPicture>(
@@ -378,14 +387,13 @@ void main() {
       final marker = find.byKey(
         ValueKey('services-category-checkbox-$category'),
       );
+      final arrow = find.byKey(ValueKey('services-category-arrow-$category'));
       expect(
-        categoryMarkerAsset(tester, category),
-        'assets/imagens/figma/services-checkbox-unselected.svg',
+        categoryChevronAsset(tester, category),
+        'assets/imagens/figma/convenio-chevron.png',
       );
-      expect(
-        find.byKey(ValueKey('services-category-arrow-$category')),
-        findsNothing,
-      );
+      expect(marker, findsNothing);
+      expect(arrow, findsOneWidget);
       await tester.tap(find.byKey(ValueKey('services-pill-$category')));
       await tester.pumpAndSettle();
       expect(
@@ -394,14 +402,19 @@ void main() {
       );
       expect(marker, findsOneWidget);
       expect(
+        find.byKey(ValueKey('services-category-chevron-$category')),
+        findsNothing,
+      );
+      expect(
         tester.widget<ElevatedButton>(continueButton).onPressed,
         isNotNull,
       );
-      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.tap(arrow);
       await tester.pumpAndSettle();
+      expect(marker, findsNothing);
       expect(
-        categoryMarkerAsset(tester, category),
-        'assets/imagens/figma/services-checkbox-unselected.svg',
+        categoryChevronAsset(tester, category),
+        'assets/imagens/figma/convenio-chevron.png',
       );
     }
     expect(tester.takeException(), isNull);
