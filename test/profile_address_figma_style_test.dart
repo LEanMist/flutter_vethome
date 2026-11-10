@@ -156,15 +156,22 @@ void main() {
           },
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('Endereços'), findsOneWidget);
       expect(find.text('Meus Endereços'), findsNothing);
       final bottomNavigation = find.byType(VetBottomNav);
-      expect(
-        bottomNavigation,
-        viewport.width < 900 ? findsOneWidget : findsNothing,
+      expect(bottomNavigation, findsOneWidget);
+      final settingsDestination = find.descendant(
+        of: bottomNavigation,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label == 'Configurações' &&
+              widget.properties.selected == true,
+        ),
       );
+      expect(settingsDestination, findsOneWidget);
       expect(find.text('Nome:'), findsOneWidget);
       expect(find.text('Endereço:'), findsOneWidget);
       expect(find.text('Casa da Irmã'), findsOneWidget);
@@ -195,16 +202,6 @@ void main() {
         expect(tester.getTopLeft(newAddressButton).dy, 710);
         expect(tester.getTopLeft(bottomNavigation).dy, 794);
         expect(tester.getSize(bottomNavigation), const Size(390, 50));
-        final settingsDestination = find.descendant(
-          of: bottomNavigation,
-          matching: find.byWidgetPredicate(
-            (widget) =>
-                widget is Semantics &&
-                widget.properties.label == 'Configurações' &&
-                widget.properties.selected == true,
-          ),
-        );
-        expect(settingsDestination, findsOneWidget);
       }
 
       expect(find.text('Deletar'), findsOneWidget);

@@ -357,10 +357,7 @@ void main() {
       await showAddresses(tester, viewport);
       expect(find.text('Endereços'), findsOneWidget);
       expect(find.text('Novo Endereço'), findsOneWidget);
-      expect(
-        find.byType(VetBottomNav),
-        viewport.width < 900 ? findsOneWidget : findsNothing,
-      );
+      expect(find.byType(VetBottomNav), findsOneWidget);
       if (viewport.width >= 900) {
         final card = find
             .ancestor(

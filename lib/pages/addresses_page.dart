@@ -140,15 +140,16 @@ class _AddressesPageState extends State<AddressesPage> {
     return Scaffold(
       extendBody: !desktop,
       backgroundColor: VetColors.pink,
-      bottomNavigationBar: desktop
-          ? null
-          : VetBottomNav(
-              key: const ValueKey('addresses-bottom-navigation'),
-              selectedIndex: 4,
-              compact: true,
-              onSelected: (index) =>
-                  vetNavigate(context, index, selected: 4, isTabRoot: false),
-            ),
+      bottomNavigationBar: SizedBox(
+        height: desktop ? 88 : 50,
+        child: VetBottomNav(
+          key: const ValueKey('addresses-bottom-navigation'),
+          selectedIndex: 4,
+          compact: !desktop,
+          onSelected: (index) =>
+              vetNavigate(context, index, selected: 4, isTabRoot: false),
+        ),
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
