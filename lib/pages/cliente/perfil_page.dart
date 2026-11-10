@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../service/utils/formatters.dart';
 import '../../service/utils/vet_nav.dart';
-import '../../data/vet_repository.dart';
+import '../../data/session.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets/pets/pets_theme.dart';
 import '../../widgets/vet/vet_bottom_nav.dart';
@@ -22,8 +22,8 @@ class PerfilPage extends StatefulWidget {
 
 class _PerfilPageState extends State<PerfilPage> {
   // TO DO: carregar/salvar dados reais (API, SharedPreferences, etc.)
-  String _nome = VetRepository.clientName;
-  DateTime _nascimento = VetRepository.clientBirthDate;
+  String _nome = Session.clientName;
+  DateTime _nascimento = Session.clientBirthDate;
   File? _foto;
 
   final ImagePicker _picker = ImagePicker();
@@ -31,7 +31,7 @@ class _PerfilPageState extends State<PerfilPage> {
   @override
   void initState() {
     super.initState();
-    final path = VetRepository.clientPhotoPath;
+    final path = Session.clientPhotoPath;
     if (path != null) _foto = File(path);
   }
 
@@ -72,7 +72,7 @@ class _PerfilPageState extends State<PerfilPage> {
       if (picked != null && mounted) {
         setState(() {
           _foto = File(picked.path);
-          VetRepository.clientPhotoPath = picked.path;
+          Session.clientPhotoPath = picked.path;
         });
       }
     } catch (_) {
@@ -88,7 +88,7 @@ class _PerfilPageState extends State<PerfilPage> {
     if (novo != null && novo.isNotEmpty && mounted) {
       setState(() {
         _nome = novo;
-        VetRepository.updateClient(name: novo);
+        Session.updateClient(name: novo);
       });
     }
   }
@@ -103,13 +103,13 @@ class _PerfilPageState extends State<PerfilPage> {
     if (data != null && mounted) {
       setState(() {
         _nascimento = data;
-        VetRepository.updateClient(birthDate: data);
+        Session.updateClient(birthDate: data);
       });
     }
   }
 
   // Future<void> _mudarEndereco() async {
-  //   final controller = TextEditingController(text: VetRepository.clientAddress);
+  //   final controller = TextEditingController(text: Session.clientAddress);
   //   try {
   //     final String? value = await showDialog<String>(
   //       context: context,
@@ -135,7 +135,7 @@ class _PerfilPageState extends State<PerfilPage> {
   //       ),
   //     );
   //     if (value != null && value.isNotEmpty && mounted) {
-  //       VetRepository.updateClient(address: value);
+  //       Session.updateClient(address: value);
   //       vetSoon(context, 'Endereço atualizado');
   //     }
   //   } finally {

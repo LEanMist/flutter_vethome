@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../data/vet_repository.dart';
+import '../../data/session.dart';
 import '../../models/pet_model.dart';
 import '../../service/consulta_service.dart';
 import '../../theme/vet_colors.dart';
@@ -102,8 +102,8 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
 
     try {
       final payload = {
-        'cpfCliente': VetRepository.clientCpf,
-        'idPet': widget.pet.name,
+        'cpfCliente': Session.clientCpf,
+        'idPet': widget.pet.id?.toString(),
         'servicos': widget.service,
         'convenio': widget.plan,
         'data': '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year}',
@@ -116,7 +116,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
 
       if (!mounted) return;
 
-      // VetRepository.addAgendamento(
+      // VetMock.addAgendamento(
       //   widget.pet.name,
       //   Agendamento(
       //     data: dateTime,
@@ -240,7 +240,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
               ),
               SizedBox(height: 10 * scale),
               Text(
-                'Agendamento para ${VetRepository.clientName}',
+                'Agendamento para ${Session.clientName}',
                 style: TextStyle(color: VetColors.brown, fontSize: 13 * scale),
               ),
             ],

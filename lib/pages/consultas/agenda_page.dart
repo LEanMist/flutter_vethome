@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../service/utils/formatters.dart';
-import '../../data/vet_repository.dart';
+import '../../data/mock/vet_mock.dart';
+import '../../data/pet_repository.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -36,8 +37,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final firstOffset = DateTime(_mes.year, _mes.month, 1).weekday % 7;
     final daysInMonth = DateTime(_mes.year, _mes.month + 1, 0).day;
     final consultasDoDia = [
-      for (final pet in VetRepository.pets)
-        for (final agendamento in VetRepository.agendamentos(pet.name))
+      for (final pet in PetRepository.pets)
+        for (final agendamento in VetMock.agendamentos(pet.name))
           if (_sameDay(agendamento.data, _selecionado))
             (pet: pet, agendamento: agendamento),
     ]..sort((a, b) => a.agendamento.data.compareTo(b.agendamento.data));
@@ -329,8 +330,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
   bool _isDemoDate(DateTime date) =>
       date.year == 2026 && date.month == 1 && date.day == 13;
 
-  bool _hasAppointment(DateTime date) => VetRepository.pets.any(
-        (pet) => VetRepository.agendamentos(
+  bool _hasAppointment(DateTime date) => PetRepository.pets.any(
+        (pet) => VetMock.agendamentos(
           pet.name,
         ).any((appointment) => _sameDay(appointment.data, date)),
       );

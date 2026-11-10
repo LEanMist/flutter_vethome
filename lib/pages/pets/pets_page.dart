@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../service/utils/vet_nav.dart';
-import '../../data/vet_repository.dart';
+import '../../data/pet_repository.dart';
 import '../../models/pet_model.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets/pets/pet_card_widget.dart';
@@ -28,11 +28,19 @@ class _PetsPageState extends State<PetsPage> {
   }
 
   Future<void> _carregarPets() async {
+    String? erro;
     try {
-      await VetRepository.carregarPets();
+      await PetRepository.carregarPets();
+    } catch (e) {
+      erro = e.toString().replaceFirst('Exception: ', '');
     } finally {
       if (mounted) {
         setState(() => _loading = false);
+        if (erro != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Não foi possível carregar os pets: $erro')),
+          );
+        }
       }
     }
   }
@@ -139,7 +147,7 @@ class _PetsPageState extends State<PetsPage> {
   }
 
   Widget _buildPetListSection(BuildContext context, double s) {
-    final List<PetModel> pets = VetRepository.pets;
+    final List<PetModel> pets = PetRepository.pets;
 
     if (pets.isEmpty) {
       return Container(

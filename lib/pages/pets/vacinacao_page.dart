@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../service/utils/formatters.dart';
-import '../../data/vet_repository.dart';
+import '../../data/mock/vet_mock.dart';
 import '../../models/pet_model.dart';
 import '../../models/vet_models.dart';
 import '../../theme/vet_colors.dart';
@@ -26,7 +26,7 @@ class VacinacaoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final vacinas = VetRepository.vacinas(pet.name);
+    final vacinas = VetMock.vacinas(pet.name);
 
     return VetPageScaffold(
       title: 'Vacinação',

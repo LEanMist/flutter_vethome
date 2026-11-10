@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../service/utils/formatters.dart';
-import '../data/vet_repository.dart';
+import '../data/mock/vet_mock.dart';
+import '../data/pet_repository.dart';
+import '../data/session.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import '../widgets/dialog/address_dialog.dart';
@@ -132,10 +134,10 @@ class ConfigScreen extends StatelessWidget {
     final address = await showDialog<String>(
       context: context,
       builder: (_) =>
-          AddressDialog(initialAddress: VetRepository.clientAddress),
+          AddressDialog(initialAddress: Session.clientAddress),
     );
     if (address != null) {
-      VetRepository.updateClient(address: address);
+      Session.updateClient(address: address);
     }
   }
 
@@ -162,8 +164,8 @@ class ConfigScreen extends StatelessWidget {
 
   void _showHistory(BuildContext context) {
     final appointments = [
-      for (final pet in VetRepository.pets)
-        for (final appointment in VetRepository.agendamentos(pet.name))
+      for (final pet in PetRepository.pets)
+        for (final appointment in VetMock.agendamentos(pet.name))
           (pet: pet, appointment: appointment),
     ]..sort((a, b) => b.appointment.data.compareTo(a.appointment.data));
 

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../../data/vet_repository.dart';
+import '../../data/pet_repository.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -86,7 +86,7 @@ class _VHFormState extends State<VHForm> {
                 .text) {
       return 'As senhas não coincidem';
     }
-    if (field.label == 'Nome do Pet' && VetRepository.petNameExists(value)) {
+    if (field.label == 'Nome do Pet' && PetRepository.petNameExists(value)) {
       return 'Já existe um pet com esse nome';
     }
     if (field.label == 'Peso') {

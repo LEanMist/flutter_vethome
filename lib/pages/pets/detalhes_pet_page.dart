@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../service/utils/formatters.dart';
 import '../../service/utils/vet_nav.dart';
-import '../../data/vet_repository.dart';
+import '../../data/mock/vet_mock.dart';
+import '../../data/pet_repository.dart';
 import '../../models/pet_model.dart';
 import '../../models/vet_models.dart';
 import 'editar_pet_page.dart';
@@ -61,7 +62,7 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
       ),
     );
     if (confirmed == true && mounted) {
-      VetRepository.removePet(pet);
+      PetRepository.removePet(pet);
       Navigator.pop(context);
     }
   }
@@ -69,10 +70,10 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final PetProfile perfil = VetRepository.perfil(pet.name);
-    final consultas = VetRepository.consultas(pet.name);
-    final vacinas = VetRepository.vacinas(pet.name);
-    final proximo = proximoAgendamento(VetRepository.agendamentos(pet.name));
+    final PetProfile perfil = VetMock.perfil(pet.name);
+    final consultas = VetMock.consultas(pet.name);
+    final vacinas = VetMock.vacinas(pet.name);
+    final proximo = proximoAgendamento(VetMock.agendamentos(pet.name));
 
     return VetPageScaffold(
       title: 'Detalhes',
@@ -161,11 +162,11 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  final index = VetRepository.pets.indexWhere(
+                  final index = PetRepository.pets.indexWhere(
                     (item) => item.name == pet.name,
                   );
                   if (index >= 0) {
-                    VetRepository.selectedPetIndex = index;
+                    PetRepository.selectedPetIndex = index;
                   }
                   Navigator.pushNamed(context, '/servicos');
                 },

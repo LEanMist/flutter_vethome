@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../data/session.dart';
 import '../../service/cliente_service.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
@@ -23,15 +24,8 @@ class CadastroScreen extends StatelessWidget {
           VHField('Confirmar Senha', Icons.lock, password: true),
         ],
         onSubmit: (data) async {
-          try {
-            await ClienteService.cadastrarCliente(data);
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Falha: $e')),
-              );
-            }
-          }
+          await ClienteService.cadastrarCliente(data);
+          Session.registerClient(data); // guarda o CPF do cliente recém-criado
         },
       ),
     );

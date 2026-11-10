@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../service/utils/formatters.dart';
-import '../../data/vet_repository.dart';
+import '../../data/mock/vet_mock.dart';
 import '../../models/pet_model.dart';
 import '../../models/vet_models.dart';
 import '../../theme/vet_colors.dart';
@@ -20,9 +20,9 @@ class SaudePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final perfil = VetRepository.perfil(pet.name);
-    final historico = VetRepository.consultas(pet.name);
-    final vacinas = VetRepository.vacinas(pet.name);
+    final perfil = VetMock.perfil(pet.name);
+    final historico = VetMock.consultas(pet.name);
+    final vacinas = VetMock.vacinas(pet.name);
 
     final vermif = historico
         .where((c) => c.tipo == 'Vermifugação')

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../data/session.dart';
 import '../../models/animal_enums.dart';
 import '../../service/pet_service.dart';
 import '../../theme.dart';
@@ -44,9 +45,10 @@ class CadastroPetScreen extends StatelessWidget {
               Icons.scale,
               keyboardType: TextInputType.number,
             ),
-            const VHField(
+            VHField(
               'CPF Cliente',
               Icons.tag,
+              value: Session.clientCpf,
               keyboardType: TextInputType.number,
             ),
 

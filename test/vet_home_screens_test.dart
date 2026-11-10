@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/vet_repository.dart';
+import 'package:flutter_vethome/data/pet_repository.dart';
 import 'package:flutter_vethome/pages/pets/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/cliente/perfil_page.dart';
 import 'package:flutter_vethome/pages/consultas/agenda_page.dart';
@@ -140,7 +140,7 @@ testWidgets('formulario usa enums para tipo e sexo do animal', (tester) async {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: DetalhesPetPage(pet: VetRepository.pets.first)),
+      MaterialApp(home: DetalhesPetPage(pet: PetRepository.pets.first)),
     );
 
     await tester.ensureVisible(find.text('Editar'));

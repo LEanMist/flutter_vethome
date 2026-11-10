@@ -2,6 +2,7 @@
 // Modelo simples usado pela PetsPage e pelo PetCardWidget.
 
 class PetModel {
+  final int? id;
   final String name;
   final String imagePath;
   final String description;
@@ -13,6 +14,7 @@ class PetModel {
   final bool? neutered;
 
   const PetModel({
+    this.id,
     required this.name,
     required this.imagePath,
     required this.description,
@@ -47,7 +49,11 @@ class PetModel {
         ? 'Pet'
         : '$species • ${birthDate == null ? 'idade não informada' : _describeAge(birthDate)}';
 
+    final rawId = json['id'];
+    final id = rawId is num ? rawId.toInt() : int.tryParse('${rawId ?? ''}');
+
     return PetModel(
+      id: id,
       name: rawName.toString(),
       imagePath: '',
       description: description,
@@ -61,6 +67,7 @@ class PetModel {
   }
 
   Map<String, dynamic> toJson() => {
+        'id': id,
         'nome': name,
         'especie': species,
         'sexo': sex,

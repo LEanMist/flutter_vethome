@@ -9,15 +9,17 @@ class PetService {
   static String get baseUrl => ApiConfig.baseUrl;
 
   static Future<List<PetModel>> listarPets({String? cpfCliente}) async {
-    final uri = cpfCliente == null || cpfCliente.trim().isEmpty
-        ? Uri.parse('$baseUrl/pet')
-        : Uri.parse(
-            '$baseUrl/pet?cpfCliente=${Uri.encodeQueryComponent(cpfCliente)}',
-          );
+    final cpf = Utils.limparCpf(cpfCliente);
+    // O backend exige cpfCliente (GET /pet sem ele devolve 400).
+    if (cpf.isEmpty) return [];
+
+    final uri = Uri.parse('$baseUrl/pet').replace(
+      queryParameters: {'cpfCliente': cpf, 'size': '100'},
+    );
 
     final response = await http.get(
       uri,
-      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+      headers: {'Accept': 'application/json'},
     );
 
     if (response.statusCode != 200) {
@@ -26,24 +28,33 @@ class PetService {
       );
     }
 
-    final decoded = jsonDecode(response.body);
-    if (decoded is! List) {
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+
+    // O Spring devolve Page<...>: {"content": [...], "totalElements": ...}
+    final List items;
+    if (decoded is Map && decoded['content'] is List) {
+      items = decoded['content'] as List;
+    } else if (decoded is List) {
+      items = decoded;
+    } else {
       throw Exception('Resposta inválida do backend para pets.');
     }
 
-    return decoded
+    return items
         .map((item) => PetModel.fromJson(Map<String, dynamic>.from(item)))
         .toList();
   }
 
   static Future<void> cadastrarPet(Map<String, String?> dados) async {
+    final peso = double.tryParse((dados['peso'] ?? '').replaceAll(',', '.'));
+
     final body = {
       'nome': dados['nome'],
       'dataNasc': Utils.formatDate(dados['dataNasc']),
       'especie': dados['especie'],
       'sexo': dados['sexo'],
       'raca': dados['raca'] ?? '',
-      'peso': dados['peso'],
+      'peso': peso, // número, não string ("12,5" quebraria no Jackson)
       'cpfCliente': Utils.limparCpf(dados['cpfCliente']),
     };
 

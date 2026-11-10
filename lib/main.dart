@@ -6,7 +6,7 @@ import 'pages/sobre_page.dart';
 import 'pages/chat_page.dart';
 import 'pages/consultas/agenda_page.dart';
 import 'pages/config_page.dart';
-import 'data/vet_repository.dart';
+import 'data/pet_repository.dart';
 import 'models/pet_model.dart';
 import 'pages/consultas/agendamentos_page.dart';
 import 'pages/cadastros/cadastro_page.dart';
@@ -47,7 +47,7 @@ PetModel _petFromRoute(BuildContext context) {
   final image = args['petImage'];
   final description = args['description'];
 
-  if (VetRepository.pets.isEmpty) {
+  if (PetRepository.pets.isEmpty) {
     return PetModel(
       name: name is String ? name : 'Pet',
       imagePath: image is String ? image : '',
@@ -55,7 +55,7 @@ PetModel _petFromRoute(BuildContext context) {
     );
   }
 
-  final pet = VetRepository.firstPet;
+  final pet = PetRepository.firstPet;
   return PetModel(
     name: name is String ? name : pet.name,
     imagePath: image is String ? image : pet.imagePath,
@@ -117,7 +117,7 @@ class VetHomeApp extends StatelessWidget {
             final values = args is Map ? args : const <String, dynamic>{};
             final pet = values['pet'] is PetModel
                 ? values['pet'] as PetModel
-                : (VetRepository.pets.isNotEmpty ? VetRepository.pets.first : PetModel(
+                : (PetRepository.pets.isNotEmpty ? PetRepository.pets.first : PetModel(
                     name: 'Pet',
                     imagePath: '',
                     description: 'Pet sem cadastro',

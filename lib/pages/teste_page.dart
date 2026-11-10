@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../data/vet_repository.dart';
+import '../data/pet_repository.dart';
 import 'consultas/agendamentos_page.dart';
 import 'pets/detalhes_pet_page.dart';
 import 'pets/editar_pet_page.dart';
@@ -26,7 +26,7 @@ class TestePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pet = VetRepository.firstPet;
+    final pet = PetRepository.firstPet;
     final telas = <({String titulo, IconData icone, WidgetBuilder pagina})>[
       (titulo: 'Login', icone: Icons.login, pagina: (_) => const LoginPage()),
       (

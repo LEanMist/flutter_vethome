@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
-import '../../data/vet_repository.dart';
+import '../../data/session.dart';
 import '../teste_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -25,15 +25,32 @@ class _LoginPageState extends State<LoginPage> {
     ).showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
-  void entrar() {
-    if (!VetRepository.authenticate(
+  bool _entrando = false;
+
+  Future<void> entrar() async {
+    if (_entrando) return;
+    if (!Session.credenciaisValidas(
       _emailController.text,
       _passwordController.text,
     )) {
       mostrarMensagem('Informe um e-mail válido e uma senha com 6 caracteres.');
       return;
     }
-    Navigator.pushReplacementNamed(context, '/pets');
+
+    setState(() => _entrando = true);
+    try {
+      await Session.entrar(
+        _emailController.text,
+        _passwordController.text,
+      );
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/pets');
+    } catch (e) {
+      if (!mounted) return;
+      mostrarMensagem(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _entrando = false);
+    }
   }
 
   @override

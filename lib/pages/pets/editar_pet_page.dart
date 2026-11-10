@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../data/vet_repository.dart';
+import '../../data/pet_repository.dart';
 import '../../models/pet_model.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets/pets/pets_theme.dart';
@@ -71,6 +71,7 @@ class _EditarPetPageState extends State<EditarPetPage> {
     final weight = double.parse(_weight.text.replaceAll(',', '.'));
     final species = _species.text.trim();
     final updated = PetModel(
+      id: widget.pet.id,
       name: _name.text.trim(),
       imagePath: species.toLowerCase().contains('gato')
           ? PetsTheme.imgCachorroegatoPng36x32
@@ -83,7 +84,7 @@ class _EditarPetPageState extends State<EditarPetPage> {
       breed: _breed.text.trim(),
       neutered: widget.pet.neutered,
     );
-    VetRepository.updatePet(widget.pet, updated);
+    PetRepository.updatePet(widget.pet, updated);
     Navigator.pop(context, updated);
   }
 
@@ -106,7 +107,7 @@ class _EditarPetPageState extends State<EditarPetPage> {
       ),
     );
     if (!mounted || confirmed != true) return;
-    VetRepository.removePet(widget.pet);
+    PetRepository.removePet(widget.pet);
     Navigator.pop(context, 'deleted');
   }
 
@@ -124,7 +125,7 @@ class _EditarPetPageState extends State<EditarPetPage> {
               validator: (value) {
                 final name = value?.trim() ?? '';
                 if (name.isEmpty) return 'Preencha este campo';
-                if (VetRepository.petNameExists(
+                if (PetRepository.petNameExists(
                   name,
                   except: widget.pet.name,
                 )) {

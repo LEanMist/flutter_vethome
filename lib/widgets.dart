@@ -4,7 +4,7 @@ export 'widgets/dialog/address_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
-import 'data/vet_repository.dart';
+import 'data/pet_repository.dart';
 import 'models/pet_model.dart';
 import 'pages/teste_page.dart';
 import 'theme.dart';
@@ -401,7 +401,7 @@ class Pet {
   final bool isDog;
 }
 
-List<Pet> get pets => VetRepository.pets.map(_toPet).toList();
+List<Pet> get pets => PetRepository.pets.map(_toPet).toList();
 
 Pet _toPet(PetModel model) {
   final birth = model.birthDate;

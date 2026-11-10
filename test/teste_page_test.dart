@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/vet_repository.dart';
+import 'package:flutter_vethome/data/pet_repository.dart';
 import 'package:flutter_vethome/pages/pets/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/teste_page.dart';
 
@@ -18,7 +18,7 @@ void main() {
       MaterialApp(
         initialRoute: '/details',
         routes: {
-          '/details': (_) => DetalhesPetPage(pet: VetRepository.pets.first),
+          '/details': (_) => DetalhesPetPage(pet: PetRepository.pets.first),
           '/servicos': (_) => const Scaffold(body: Text('Serviços')),
           '/escolhaPet': (_) => const Scaffold(body: Text('Escolha seu Pet')),
         },

@@ -6,32 +6,25 @@ import 'utils/utils.dart';
 class ConsultaService {
   static String get baseUrl => ApiConfig.baseUrl;
 
+  /// Monta o JSON exatamente com os nomes que o backend espera (DadosCriarConsulta).
   static Map<String, dynamic> buildPayload(Map<String, String?> dados) {
-    final body = <String, dynamic>{
+    final idPet = int.tryParse((dados['idPet'] ?? '').trim());
+    if (idPet == null) {
+      throw Exception(
+        'Este pet ainda não tem id do servidor. Recarregue a lista de pets e tente de novo.',
+      );
+    }
+
+    return {
       'cpfCliente': Utils.limparCpf(dados['cpfCliente']),
-      'idPet': (dados['idPet'] ?? '').trim(),
+      'idPet': idPet,
       'servicos': (dados['servicos'] ?? '').trim(),
       'convenio':
           (dados['convenio'] ?? dados['complemento'] ?? 'Particular').trim(),
-      'data': (dados['data'] ?? '').trim(),
-      'horario': (dados['horarioInicio'] ?? '').trim(),
-      'descricao': (dados['descricao'] ?? '').trim(),
+      'dataConsulta': Utils.formatDate(dados['data']), // yyyy-MM-dd
+      'horarioConsulta': (dados['horarioInicio'] ?? '').trim(), // HH:mm
+      'descricao_consulta': (dados['descricao'] ?? '').trim(),
     };
-
-
-    final data = (dados['data'] ?? '').trim();
-    if (data.isNotEmpty) body['data'] = Utils.formatDate(data);
-
-    final horarioInicio = (dados['horarioInicio'] ?? '').trim();
-    if (horarioInicio.isNotEmpty) body['horarioInicio'] = horarioInicio;
-
-    final horarioFim = (dados['horarioFim'] ?? '').trim();
-    if (horarioFim.isNotEmpty) body['horarioFim'] = horarioFim;
-
-    final descricao = (dados['descricao'] ?? '').trim();
-    if (descricao.isNotEmpty) body['descricao'] = descricao;
-
-    return body;
   }
 
   static Future<void> criarConsulta(Map<String, String?> dados) async {
@@ -44,9 +37,9 @@ class ConsultaService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Erro ao criar consulta: ${response.body}');
+      throw Exception(
+        'Erro ao criar consulta (${response.statusCode}): ${response.body}',
+      );
     }
   }
-  
 }
-

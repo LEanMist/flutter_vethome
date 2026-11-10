@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../data/vet_repository.dart';
+import '../data/mock/vet_mock.dart';
+import '../data/session.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -23,7 +24,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void enviar() {
     final text = ctrl.text.trim();
     if (text.isEmpty) return;
-    setState(() => VetRepository.sendChatMessage(text));
+    setState(() => VetMock.sendChatMessage(text));
     ctrl.clear();
   }
 
@@ -68,7 +69,7 @@ class _ChatScreenState extends State<ChatScreen> {
           decoration: insetBox(color: VH.muted),
           child: Column(
             children: [
-              for (final message in VetRepository.chatMessages)
+              for (final message in VetMock.chatMessages)
                 Align(
                   alignment: message.fromClient
                       ? Alignment.centerRight
@@ -101,7 +102,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   : () => Navigator.pushNamed(context, '/sobre'),
                               child: Text(
                                 message.fromClient
-                                    ? VetRepository.clientName
+                                    ? Session.clientName
                                     : 'Gabriella Falcão',
                                 style: const TextStyle(
                                   fontSize: 11,

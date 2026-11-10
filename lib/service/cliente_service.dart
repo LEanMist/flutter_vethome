@@ -6,7 +6,6 @@ import 'utils/utils.dart';
 class ClienteService {
   static String get baseUrl => ApiConfig.baseUrl;
 
-
   static Future<void> cadastrarCliente(Map<String, String?> dados) async {
     final body = {
       'nome': dados['Nome Completo'],
@@ -27,5 +26,30 @@ class ClienteService {
       throw Exception('Erro ao cadastrar cliente: ${response.body}');
     }
   }
- 
+
+  /// Login no backend. Devolve {id, nome, cpf, email, telefone, dataNascimento}.
+  static Future<Map<String, dynamic>> login(String email, String senha) async {
+    final http.Response response;
+    try {
+      response = await http
+          .post(
+            Uri.parse('$baseUrl/login'),
+            headers: {'Content-Type': 'application/json; charset=UTF-8'},
+            body: jsonEncode({'email': email.trim(), 'senha': senha}),
+          )
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {
+      throw Exception(
+        'Não foi possível conectar ao servidor ($baseUrl). O backend está rodando?',
+      );
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception('E-mail ou senha incorretos.');
+    }
+    if (response.statusCode != 200) {
+      throw Exception('Erro ao entrar (${response.statusCode}): ${response.body}');
+    }
+    return Map<String, dynamic>.from(jsonDecode(utf8.decode(response.bodyBytes)));
+  }
 }

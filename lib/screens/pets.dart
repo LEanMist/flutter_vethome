@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../data/vet_repository.dart';
+import '../data/pet_repository.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -24,11 +24,19 @@ class _PetsScreenState extends State<PetsScreen> {
   }
 
   Future<void> _carregarPets() async {
+    String? erro;
     try {
-      await VetRepository.carregarPets();
+      await PetRepository.carregarPets();
+    } catch (e) {
+      erro = e.toString().replaceFirst('Exception: ', '');
     } finally {
       if (mounted) {
         setState(() => _loading = false);
+        if (erro != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Não foi possível carregar os pets: $erro')),
+          );
+        }
       }
     }
   }
@@ -56,7 +64,7 @@ class _PetsScreenState extends State<PetsScreen> {
                   PetRow(
                     pets[i],
                     onTap: () {
-                      VetRepository.selectedPetIndex = i;
+                      PetRepository.selectedPetIndex = i;
                       Navigator.pushNamed(context, '/pet');
                     },
                   ),
@@ -126,7 +134,7 @@ class PetScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pet = pets[VetRepository.selectedPetIndex];
+    final pet = pets[PetRepository.selectedPetIndex];
     return VHPage(
       tab: '/pets',
       children: [
@@ -167,7 +175,7 @@ class EditPetScreen extends StatelessWidget {
       tab: '/pets',
       children: [
         const VHHeader('Editar Pet'),
-        PetInfo(pets[VetRepository.selectedPetIndex], editable: true),
+        PetInfo(pets[PetRepository.selectedPetIndex], editable: true),
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
           child: Align(
@@ -200,7 +208,7 @@ class EscolhaPetScreen extends StatelessWidget {
                 PetRow(
                   pets[i],
                   onTap: () {
-                    VetRepository.selectedPetIndex = i;
+                    PetRepository.selectedPetIndex = i;
                     Navigator.pushNamed(context, '/servicos');
                   },
                 ),
@@ -224,7 +232,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cao = pets[VetRepository.selectedPetIndex].isDog;
+    final cao = pets[PetRepository.selectedPetIndex].isDog;
     void convenio([String? service]) {
       if (service != null) servicoAtual = service;
       Navigator.pushNamed(context, '/convenio');
@@ -320,7 +328,7 @@ class _ConvenioScreenState extends State<ConvenioScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cao = pets[VetRepository.selectedPetIndex].isDog;
+    final cao = pets[PetRepository.selectedPetIndex].isDog;
     const plans = [
       (name: 'PetLove', icon: Icons.favorite_outline),
       (name: 'Doglife', icon: Icons.health_and_safety_outlined),
@@ -332,7 +340,7 @@ class _ConvenioScreenState extends State<ConvenioScreen> {
         context,
         '/nova-consulta',
         arguments: {
-          'pet': VetRepository.pets[VetRepository.selectedPetIndex],
+          'pet': PetRepository.pets[PetRepository.selectedPetIndex],
           'service': servicoAtual,
           'plan': _selectedPlan,
         },
