@@ -730,88 +730,129 @@ class _ServicosScreenState extends State<ServicosScreen> {
     );
   }
 
-  Widget _desktopServicePill(String name) => Row(
-    children: [
-      Expanded(
-        child: Material(
-          color: Colors.transparent,
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment(-1.005, 0.876),
-                end: Alignment(1.005, -0.876),
-                colors: [VH.secondary, VH.background],
-              ),
-              borderRadius: BorderRadius.circular(100),
-              boxShadow: VH.controlShadow,
-            ),
-            child: InkWell(
-              onTap: () => _toggleCategory(name),
-              borderRadius: BorderRadius.circular(100),
-              overlayColor: WidgetStateProperty.resolveWith(
-                VH.interactionOverlay,
-              ),
-              child: SizedBox(
-                height: 59,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 30,
-                        height: 30,
-                        child: VetPictogram(name),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: VH.bodyFontFamily,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            // O tom escuro mantém contraste acessível no gradiente.
-                            color: VetColors.chatMessageText,
+  Widget _desktopServicePill(String name) => LayoutBuilder(
+    builder: (context, constraints) {
+      final selected = _categoryHasSelection(name);
+      final textScaler = MediaQuery.textScalerOf(context);
+      final scaledFontSize = textScaler.scale(20);
+      const labelStyle = TextStyle(
+        fontFamily: VH.bodyFontFamily,
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
+        color: VetColors.chatMessageText,
+      );
+      final labelWidth =
+          constraints.maxWidth - 48 - 16 - 8 - 30 - 12 - (selected ? 24 : 0);
+      final singleLinePainter = TextPainter(
+        text: TextSpan(text: name, style: labelStyle),
+        textDirection: Directionality.of(context),
+        textScaler: textScaler,
+        maxLines: 1,
+      )..layout(maxWidth: labelWidth);
+      final needsWrap =
+          scaledFontSize > 20.5 && singleLinePainter.didExceedMaxLines;
+      final int? maxLines = needsWrap ? null : 1;
+      final displayName = needsWrap
+          ? switch (name) {
+              'Microchipagem' => 'Micro\nchip\nagem',
+              'Atestados' => 'Ate\nstados',
+              _ => name,
+            }
+          : name;
+      final labelPainter = TextPainter(
+        text: TextSpan(text: displayName, style: labelStyle),
+        textDirection: Directionality.of(context),
+        textScaler: textScaler,
+        maxLines: maxLines,
+      )..layout(maxWidth: labelWidth);
+      final pillHeight = labelPainter.height + 24 > 59
+          ? labelPainter.height + 24
+          : 59.0;
+
+      return Row(
+        children: [
+          Expanded(
+            child: Material(
+              color: Colors.transparent,
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment(-1.005, 0.876),
+                    end: Alignment(1.005, -0.876),
+                    colors: [VH.secondary, VH.background],
+                  ),
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: VH.controlShadow,
+                ),
+                child: InkWell(
+                  onTap: () => _toggleCategory(name),
+                  borderRadius: BorderRadius.circular(100),
+                  overlayColor: WidgetStateProperty.resolveWith(
+                    VH.interactionOverlay,
+                  ),
+                  child: SizedBox(
+                    height: pillHeight,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: VetPictogram(name),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              displayName,
+                              key: ValueKey('services-category-label-$name'),
+                              maxLines: maxLines,
+                              overflow: maxLines == null
+                                  ? null
+                                  : TextOverflow.ellipsis,
+                              style: labelStyle,
+                            ),
+                          ),
+                          if (selected) ...[
+                            const SizedBox(width: 8),
+                            SvgPicture.asset(
+                              _selectedServiceMarker,
+                              key: ValueKey('services-category-checkbox-$name'),
+                              width: 16,
+                              height: 16,
+                            ),
+                          ],
+                        ],
                       ),
-                      if (_categoryHasSelection(name)) ...[
-                        const SizedBox(width: 8),
-                        SvgPicture.asset(
-                          _selectedServiceMarker,
-                          key: ValueKey('services-category-checkbox-$name'),
-                          width: 16,
-                          height: 16,
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
-      SizedBox(
-        width: 48,
-        height: 48,
-        child: ExcludeFocus(
-          child: IconButton(
-            key: ValueKey('services-category-arrow-$name'),
-            tooltip: name,
-            onPressed: () => _toggleCategory(name),
-            icon: Transform.translate(
-              offset: const Offset(3, 0),
-              child: _isCategoryExpanded(name)
-                  ? const Icon(Icons.keyboard_arrow_down, color: VH.foreground)
-                  : const VetChevron(),
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: ExcludeFocus(
+              child: IconButton(
+                key: ValueKey('services-category-arrow-$name'),
+                tooltip: name,
+                onPressed: () => _toggleCategory(name),
+                icon: Transform.translate(
+                  offset: const Offset(3, 0),
+                  child: _isCategoryExpanded(name)
+                      ? const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: VH.foreground,
+                        )
+                      : const VetChevron(),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
-    ],
+        ],
+      );
+    },
   );
 
   bool _categoryHasSelection(String name) =>

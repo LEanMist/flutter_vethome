@@ -73,6 +73,7 @@ void main() {
     WidgetTester tester, {
     bool realAppointment = false,
     Size size = const Size(390, 844),
+    double? textScale,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -84,6 +85,14 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        builder: textScale == null
+            ? null
+            : (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
         home: const ServicosScreen(),
         routes: {
           '/convenio': (_) => const ConvenioScreen(),
@@ -392,6 +401,42 @@ void main() {
       scrollable.position.maxScrollExtent,
       0,
       reason: 'Trocar de categoria e preservar seleção não deve rolar.',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Serviços desktop mantém os nomes legíveis com texto a 200%', (
+    tester,
+  ) async {
+    await openServices(tester, size: const Size(1280, 720), textScale: 2);
+
+    for (final name in ['Exames', 'Vacinas', 'Microchipagem', 'Atestados']) {
+      final label = find.byKey(ValueKey('services-category-label-$name'));
+      expect(label, findsOneWidget);
+      expect(
+        tester
+            .widget<Semantics>(
+              find.byKey(ValueKey('services-category-semantics-$name')),
+            )
+            .properties
+            .label,
+        name,
+        reason: '$name deve manter o nome completo para leitores de tela.',
+      );
+      expect(
+        tester.renderObject<RenderParagraph>(label).didExceedMaxLines,
+        isFalse,
+        reason:
+            '$name não deve ser cortado com texto ampliado. Texto: '
+            '${tester.widget<Text>(label).data}; linhas: '
+            '${tester.widget<Text>(label).maxLines}; '
+            'tamanho: ${tester.getSize(label)}.',
+      );
+    }
+    expect(
+      tester.getRect(find.byKey(const ValueKey('services-continue'))).bottom,
+      lessThanOrEqualTo(720),
+      reason: 'Continuar permanece visível com texto ampliado.',
     );
     expect(tester.takeException(), isNull);
   });
