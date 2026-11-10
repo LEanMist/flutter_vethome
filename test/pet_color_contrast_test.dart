@@ -5,6 +5,7 @@ import 'package:flutter_vethome/models/pet_model.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
 import 'package:flutter_vethome/widgets/pets/pet_card_widget.dart';
+import 'package:flutter_vethome/widgets/pets/pets_theme.dart';
 import 'package:flutter_vethome/widgets/vet_choice_pill.dart';
 
 double _contrastRatio(Color first, Color second) {
@@ -103,4 +104,25 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  test('realces interativos da lista Pets mantêm contraste AA', () {
+    final surface = Color.alphaBlend(
+      VetColors.roseOverlay50,
+      Color.alphaBlend(VetColors.roseOverlay25, VetColors.pink),
+    );
+    for (final state in [
+      WidgetState.hovered,
+      WidgetState.focused,
+      WidgetState.pressed,
+    ]) {
+      final overlay = PetsTheme.listInteractionOverlay({state})!;
+      expect(
+        _contrastRatio(
+          VetColors.brownOnRose,
+          Color.alphaBlend(overlay, surface),
+        ),
+        greaterThan(4.5),
+      );
+    }
+  });
 }

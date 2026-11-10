@@ -14,6 +14,8 @@ class PetCardWidget extends StatelessWidget {
   final PetModel pet;
   final VoidCallback? onTap;
   final Color nameColor;
+  final int maxNameLines;
+  final WidgetStateProperty<Color?>? overlayColor;
   final bool raised;
   final String? semanticLabel;
 
@@ -22,6 +24,8 @@ class PetCardWidget extends StatelessWidget {
     required this.pet,
     this.onTap,
     this.nameColor = VetColors.brownOnRose,
+    this.maxNameLines = 1,
+    this.overlayColor,
     this.raised = false,
     this.semanticLabel,
   });
@@ -64,7 +68,9 @@ class PetCardWidget extends StatelessWidget {
           mouseCursor: onTap == null
               ? MouseCursor.defer
               : SystemMouseCursors.click,
-          overlayColor: WidgetStateProperty.resolveWith(VH.interactionOverlay),
+          overlayColor:
+              overlayColor ??
+              WidgetStateProperty.resolveWith(VH.interactionOverlay),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: 52 * s),
             child: Padding(
@@ -85,7 +91,7 @@ class PetCardWidget extends StatelessWidget {
                   Expanded(
                     child: Text(
                       pet.name,
-                      maxLines: 1,
+                      maxLines: maxNameLines,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 20 * s,

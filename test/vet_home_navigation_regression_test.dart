@@ -31,8 +31,13 @@ void main() {
     );
 
     final save = find.byKey(const ValueKey('appointment-booking-save'));
-    await tester.ensureVisible(save);
-    await tester.tap(save);
+    final compactConfirm = find.byKey(
+      const ValueKey('appointment-booking-compact-confirm'),
+    );
+    final confirm = save.evaluate().isNotEmpty ? save : compactConfirm;
+    expect(confirm, findsOneWidget);
+    await tester.ensureVisible(confirm);
+    await tester.tap(confirm);
     await tester.pumpAndSettle();
 
     const months = [

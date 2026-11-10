@@ -65,14 +65,18 @@ class _PetsPageState extends State<PetsPage> {
       padding: EdgeInsets.only(top: topInset),
       child: SizedBox(
         width: 134 * s,
-        child: Text(
-          'Pets',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 30 * s,
-            fontWeight: FontWeight.w700,
-            fontFamily: PetsTheme.fontComfortaa,
-            color: Colors.white,
+        child: Semantics(
+          key: const ValueKey('pets-page-heading'),
+          header: true,
+          child: Text(
+            'Pets',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 30 * s,
+              fontWeight: FontWeight.w700,
+              fontFamily: PetsTheme.fontComfortaa,
+              color: Colors.white,
+            ),
           ),
         ),
       ),
@@ -237,6 +241,10 @@ class _PetsPageState extends State<PetsPage> {
   Widget _petCard(BuildContext context, int index) => PetCardWidget(
     pet: VetRepository.pets[index],
     raised: true,
+    maxNameLines: 2,
+    overlayColor: WidgetStateProperty.resolveWith(
+      PetsTheme.listInteractionOverlay,
+    ),
     semanticLabel: 'Abrir detalhes de ${VetRepository.pets[index].name}',
     onTap: () async {
       VetRepository.selectedPetId = VetRepository.pets[index].id;

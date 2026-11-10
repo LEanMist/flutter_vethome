@@ -8,6 +8,7 @@ import '../models/vet_models.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/appointment_booking_card.dart';
+import '../widgets/pets/pets_theme.dart';
 import '../widgets/pet_summary.dart';
 import '../widgets/vet_calendar.dart';
 import '../widgets/vet/vet_page_scaffold.dart';
@@ -57,6 +58,14 @@ class NovaConsultaPage extends StatefulWidget {
 }
 
 class _NovaConsultaPageState extends State<NovaConsultaPage> {
+  static const _localityNoticeText =
+      'Demonstração local: esta consulta é salva apenas neste dispositivo e não é enviada à veterinária.';
+  static const _localityNoticeStyle = TextStyle(
+    color: VetColors.brown,
+    fontSize: 12,
+    height: 1.35,
+  );
+
   DateTime _date = DateTime.now().add(const Duration(days: 1));
   late DateTime _calendarMonth;
   TimeOfDay? _time = const TimeOfDay(hour: 12, minute: 0);
@@ -328,7 +337,9 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   @override
   Widget build(BuildContext context) {
     final pet = VetRepository.petById(widget.pet.id) ?? widget.pet;
-    final isMobile = MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
+    final media = MediaQuery.of(context);
+    final isMobile = media.size.width < VH.desktopBreakpoint;
+    final compactMobileAction = isMobile && _needsCompactConfirmButton(context);
     final page = VetPageScaffold(
       title: 'Novo agendamento',
       pet: pet,
@@ -336,7 +347,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       contentMaxWidth: 1120,
       edgeToEdgeContentOnMobile: true,
       footer: isMobile
-          ? null
+          ? (compactMobileAction ? _compactConfirmButton() : null)
           : Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -382,6 +393,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
                 onChooseEnd: () => _chooseTime(end: true),
                 onSave: _schedule,
                 saving: _saving,
+                showSaveButton: !compactMobileAction,
               ),
             ],
           ),
@@ -403,12 +415,59 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     );
   }
 
+  bool _needsCompactConfirmButton(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final scale = PetsTheme.scaleOf(context);
+    final cardScale = math
+        .min(media.size.width / AppointmentBookingCard.designWidth, 1.0)
+        .toDouble();
+    final headerTopPadding = media.padding.top > 14 * scale
+        ? media.padding.top
+        : 14 * scale;
+    final headerHeight = math.max(
+      VH.headerHeight,
+      headerTopPadding + 70 * scale,
+    );
+    final navigationHeight = 88 * scale + media.viewPadding.bottom;
+    final pagePadding = VH.pagePaddingFor(media.size.width) * scale;
+    final noticeTextPainter = TextPainter(
+      text: TextSpan(
+        text: _localityNoticeText,
+        style: DefaultTextStyle.of(context).style.merge(_localityNoticeStyle),
+      ),
+      textScaler: media.textScaler,
+      textDirection: Directionality.of(context),
+    )..layout(maxWidth: math.max(1, media.size.width - 26));
+    final noticeHeight = math.max(18.0, noticeTextPainter.height) + 8;
+    noticeTextPainter.dispose();
+    final actionBottom =
+        headerHeight +
+        pagePadding +
+        noticeHeight +
+        12 +
+        AppointmentBookingCard.designHeight * cardScale;
+    return actionBottom > media.size.height - navigationHeight;
+  }
+
+  Widget _compactConfirmButton() => SizedBox(
+    width: double.infinity,
+    child: ElevatedButton(
+      key: const ValueKey('appointment-booking-compact-confirm'),
+      onPressed: _saving ? null : _schedule,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: VetColors.brown,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.all(16),
+        minimumSize: const Size.fromHeight(48),
+      ),
+      child: Text(_saving ? 'Salvando…' : 'Confirmar agendamento'),
+    ),
+  );
+
   Widget _localityNotice() => Semantics(
     key: const ValueKey('appointment-locality-notice'),
     container: true,
-    label:
-        'Demonstração local: esta consulta é salva apenas neste dispositivo '
-        'e não é enviada à veterinária.',
+    label: _localityNoticeText,
     child: ExcludeSemantics(
       child: const Padding(
         padding: EdgeInsets.only(bottom: 8),
@@ -418,15 +477,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
             Icon(Icons.info_outline, size: 18, color: VetColors.brown),
             SizedBox(width: 8),
             Expanded(
-              child: Text(
-                'Demonstração local: esta consulta é salva apenas neste dispositivo '
-                'e não é enviada à veterinária.',
-                style: TextStyle(
-                  color: VetColors.brown,
-                  fontSize: 12,
-                  height: 1.35,
-                ),
-              ),
+              child: Text(_localityNoticeText, style: _localityNoticeStyle),
             ),
           ],
         ),

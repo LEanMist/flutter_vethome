@@ -94,7 +94,12 @@ void main() {
         expect(surface, findsOneWidget);
         final indicator = find.descendant(
           of: surface,
-          matching: find.byType(CircleAvatar),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is CircleAvatar &&
+                widget.radius == 2 &&
+                widget.backgroundColor == Colors.white,
+          ),
         );
         expect(
           indicator,

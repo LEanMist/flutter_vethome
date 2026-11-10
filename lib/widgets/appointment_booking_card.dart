@@ -23,10 +23,12 @@ class AppointmentBookingCard extends StatelessWidget {
     required this.onChooseEnd,
     required this.onSave,
     this.saving = false,
+    this.showSaveButton = true,
   });
 
   static const double designWidth = 390;
   static const double designHeight = 461;
+  static const double designHeightWithoutSaveButton = 405;
   static const double minimumTouchTarget = 48;
 
   static const _calendarIcon = 'assets/imagens/figma/appointment-calendar.svg';
@@ -49,6 +51,7 @@ class AppointmentBookingCard extends StatelessWidget {
   final VoidCallback onChooseEnd;
   final VoidCallback onSave;
   final bool saving;
+  final bool showSaveButton;
 
   static const _chipColor = VetColors.roseOverlay50;
 
@@ -60,18 +63,21 @@ class AppointmentBookingCard extends StatelessWidget {
           : MediaQuery.sizeOf(context).width;
       final cardWidth = math.min(availableWidth, designWidth);
       final scale = cardWidth / designWidth;
+      final cardHeight = showSaveButton
+          ? designHeight
+          : designHeightWithoutSaveButton;
 
       return Center(
         child: SizedBox(
           key: const ValueKey('appointment-booking-scaled-size'),
           width: cardWidth,
-          height: designHeight * scale,
+          height: cardHeight * scale,
           child: FittedBox(
             alignment: Alignment.topLeft,
             fit: BoxFit.fill,
             child: SizedBox(
               width: designWidth,
-              height: designHeight,
+              height: cardHeight,
               child: _buildDesignCard(context, scale),
             ),
           ),
@@ -288,45 +294,46 @@ class AppointmentBookingCard extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
-            left: 265,
-            top: saveTargetTop,
-            width: 105,
-            height: saveTargetHeight,
-            child: FigmaActionTarget(
-              key: const ValueKey('appointment-booking-save'),
+          if (showSaveButton)
+            Positioned(
+              left: 265,
+              top: saveTargetTop,
               width: 105,
               height: saveTargetHeight,
-              label: saving ? 'Salvando consulta' : 'Salvar consulta',
-              onPressed: saving ? null : onSave,
-              child: Container(
-                key: const ValueKey('appointment-booking-save-visual'),
+              child: FigmaActionTarget(
+                key: const ValueKey('appointment-booking-save'),
                 width: 105,
-                height: saveVisualHeight,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(255, 255, 255, 0.01),
-                  borderRadius: BorderRadius.circular(100),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x40000000),
-                      offset: Offset(2, 2),
-                      blurRadius: 2,
+                height: saveTargetHeight,
+                label: saving ? 'Salvando consulta' : 'Salvar consulta',
+                onPressed: saving ? null : onSave,
+                child: Container(
+                  key: const ValueKey('appointment-booking-save-visual'),
+                  width: 105,
+                  height: saveVisualHeight,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color.fromRGBO(255, 255, 255, 0.01),
+                    borderRadius: BorderRadius.circular(100),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x40000000),
+                        offset: Offset(2, 2),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    saving ? 'Salvando…' : 'Salvar',
+                    style: TextStyle(
+                      color: VetColors.brown,
+                      fontFamily: 'MontserratAlternates',
+                      fontSize: 14 * textScale,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-                child: Text(
-                  saving ? 'Salvando…' : 'Salvar',
-                  style: TextStyle(
-                    color: VetColors.brown,
-                    fontFamily: 'MontserratAlternates',
-                    fontSize: 14 * textScale,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

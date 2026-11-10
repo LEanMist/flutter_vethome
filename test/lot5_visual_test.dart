@@ -135,6 +135,36 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'lista Pets expande o cartão para nomes longos em telas estreitas',
+    (tester) async {
+      viewport(tester, const Size(320, 640));
+      const longName =
+          'Um nome de pet muito comprido para a largura disponível';
+      VetRepository.pets
+        ..clear()
+        ..add(
+          PetModel(
+            name: longName,
+            imagePath: 'assets/imagens/figma/vethomepng-2.png',
+            description: '',
+          ),
+        );
+      await tester.pumpWidget(const MaterialApp(home: PetsPage()));
+
+      final card = find.byType(PetCardWidget).first;
+      final nameFinder = find.descendant(
+        of: card,
+        matching: find.text(longName),
+      );
+      final name = tester.widget<Text>(nameFinder);
+      expect(name.maxLines, 2);
+      expect(tester.getSize(nameFinder).height, greaterThan(25));
+      expect(tester.getSize(card).height, greaterThan(52 * 320 / 390));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('cartão da lista tem um único rótulo acessível e acionável', (
     tester,
   ) async {
@@ -142,6 +172,10 @@ void main() {
     final semantics = tester.ensureSemantics();
     try {
       await tester.pumpWidget(const MaterialApp(home: PetsPage()));
+
+      final heading = find.byKey(const ValueKey('pets-page-heading'));
+      expect(heading, findsOneWidget);
+      expect(tester.getSemantics(heading).flagsCollection.isHeader, isTrue);
 
       final card = find.byType(PetCardWidget).first;
       final node = tester.getSemantics(card);
@@ -157,6 +191,11 @@ void main() {
     viewport(tester, const Size(320, 640));
     await tester.pumpWidget(const MaterialApp(home: PetsPage()));
     expect(find.byType(PetCardWidget), findsWidgets);
+    final petsCard = find.byType(PetCardWidget).first;
+    final petsName = tester.widget<Text>(
+      find.descendant(of: petsCard, matching: find.byType(Text)).first,
+    );
+    expect(petsName.maxLines, 2);
     expect(
       tester.getSize(find.byKey(const ValueKey('pets-add-target'))),
       const Size(107, 48),
@@ -169,6 +208,11 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: EscolhaPetScreen()));
     expect(find.byType(PetCardWidget), findsWidgets);
+    final choiceCard = find.byType(PetCardWidget).first;
+    final choiceName = tester.widget<Text>(
+      find.descendant(of: choiceCard, matching: find.byType(Text)).first,
+    );
+    expect(choiceName.maxLines, 1);
     expect(tester.takeException(), isNull);
   });
 

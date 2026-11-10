@@ -63,6 +63,11 @@ class _PetSummaryState extends State<PetSummary> {
       child: Semantics(
         key: detailed ? const ValueKey('pet-summary-details-toggle') : null,
         expanded: detailed ? expanded : null,
+        hint: detailed
+            ? expanded
+                  ? 'Ocultar informações adicionais do pet'
+                  : 'Mostrar informações adicionais do pet'
+            : null,
         explicitChildNodes: detailed,
         child: InkWell(
           borderRadius: BorderRadius.circular(25),
@@ -102,13 +107,16 @@ class _PetSummaryState extends State<PetSummary> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            pet.name,
-                            style: const TextStyle(
-                              color: VetColors.brown,
-                              fontFamily: 'Comfortaa',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
+                          Semantics(
+                            header: detailed,
+                            child: Text(
+                              pet.name,
+                              style: const TextStyle(
+                                color: VetColors.brown,
+                                fontFamily: 'Comfortaa',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -140,9 +148,13 @@ class _PetSummaryState extends State<PetSummary> {
                 if (detailed) ...[
                   Align(
                     alignment: Alignment.centerRight,
-                    child: Icon(
-                      expanded ? Icons.expand_less : Icons.expand_more,
-                      color: VetColors.brown,
+                    child: AnimatedRotation(
+                      turns: expanded ? .5 : 0,
+                      duration: const Duration(milliseconds: 220),
+                      child: const Icon(
+                        Icons.expand_more,
+                        color: VetColors.brown,
+                      ),
                     ),
                   ),
                   AnimatedSize(

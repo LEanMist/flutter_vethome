@@ -8,8 +8,12 @@ import 'package:flutter_vethome/pages/vacinacao_page.dart';
 import 'package:flutter_vethome/widgets.dart';
 
 class _InMemoryVaccineStorage extends LocalStorage {
+  _InMemoryVaccineStorage({this.result = const LocalLoadResult.empty()});
+
+  final LocalLoadResult result;
+
   @override
-  Future<LocalLoadResult> load() async => const LocalLoadResult.empty();
+  Future<LocalLoadResult> load() async => result;
 
   @override
   Future<void> save(LocalState state) async {}
@@ -119,35 +123,60 @@ void main() {
     }
   }
 
-  testWidgets('opções da vacina têm alvo de 48 px sem overflow', (
-    tester,
-  ) async {
-    final pet = VetRepository.pets.first;
-    VetRepository.saveVaccine(
-      pet.id,
-      Vacina(
-        nome: 'Vacina múltipla para cães',
-        aplicada: DateUtils.dateOnly(DateTime.now()),
-      ),
-    );
-
-    for (final viewport in [
-      const Size(320, 640),
-      const Size(390, 844),
-      const Size(1280, 800),
-    ]) {
-      await openVaccination(tester, viewport, 1.0);
-      final options = find.byTooltip(
-        'Opções da vacina Vacina múltipla para cães',
+  group('carteira com vacina cadastrada', () {
+    setUp(() async {
+      final pet = VetRepository.pets.first;
+      final seededState = LocalState(
+        client: ClientData(
+          name: VetRepository.clientName,
+          birthDate: VetRepository.clientBirthDate,
+          address: VetRepository.clientAddress,
+          phone: VetRepository.clientPhone,
+          email: VetRepository.clientEmail,
+          gender: VetRepository.clientGender,
+          genderCustom: VetRepository.clientGenderCustom,
+          photoBase64: VetRepository.clientPhotoBase64,
+          addresses: List.of(VetRepository.addresses),
+        ),
+        pets: List.of(VetRepository.pets),
+        appointments: const {},
+        vaccinations: {
+          pet.id: [
+            Vacina(
+              nome: 'Vacina múltipla para cães',
+              aplicada: DateUtils.dateOnly(DateTime.now()),
+            ),
+          ],
+        },
       );
-      await tester.ensureVisible(options);
-      await tester.pumpAndSettle();
+      await VetRepository.initialize(
+        storage: _InMemoryVaccineStorage(
+          result: LocalLoadResult.valid(seededState),
+        ),
+      );
+    });
 
-      final target = tester.getRect(options);
-      expect(target.width, greaterThanOrEqualTo(48));
-      expect(target.height, greaterThanOrEqualTo(48));
-      expect(tester.takeException(), isNull);
-    }
+    testWidgets('opções da vacina têm alvo de 48 px sem overflow', (
+      tester,
+    ) async {
+      for (final viewport in [
+        const Size(320, 640),
+        const Size(390, 844),
+        const Size(1280, 800),
+      ]) {
+        await openVaccination(tester, viewport, 1.0);
+        final options = find.byTooltip(
+          'Opções da vacina Vacina múltipla para cães',
+        );
+        await tester.ensureVisible(options);
+        await tester.pumpAndSettle();
+
+        final target = tester.getRect(options);
+        expect(target.width, greaterThanOrEqualTo(48));
+        expect(target.height, greaterThanOrEqualTo(48));
+        expect(tester.takeException(), isNull);
+      }
+    });
   });
 
   testWidgets(

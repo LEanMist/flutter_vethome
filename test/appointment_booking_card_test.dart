@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,18 +16,27 @@ void main() {
   Future<void> pumpAt(
     WidgetTester tester,
     double width, {
+    double height = 844,
+    double textScale = 1,
     String service = 'Hemograma',
   }) async {
-    tester.view.physicalSize = Size(width, 844);
+    tester.view.physicalSize = Size(width, height);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
-        home: NovaConsultaPage(
-          pet: VetRepository.pets.first,
-          service: service,
-          plan: 'Particular',
+        home: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: NovaConsultaPage(
+              pet: VetRepository.pets.first,
+              service: service,
+              plan: 'Particular',
+            ),
+          ),
         ),
       ),
     );
@@ -91,6 +101,10 @@ void main() {
     );
     final save = find.byKey(const ValueKey('appointment-booking-save'));
     expect(save, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('appointment-booking-compact-confirm')),
+      findsNothing,
+    );
     expect(tester.getSize(save), const Size(105, 48));
     expect(
       tester.getTopLeft(save) - tester.getTopLeft(card),
@@ -107,6 +121,42 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('confirmação fica visível em viewports baixos', (tester) async {
+    for (final width in [320.0, 390.0]) {
+      await pumpAt(tester, width, height: 640);
+
+      final confirm = find.byKey(
+        const ValueKey('appointment-booking-compact-confirm'),
+      );
+      expect(confirm, findsOneWidget);
+      expect(tester.widget<ElevatedButton>(confirm).onPressed, isNotNull);
+      expect(
+        find.byKey(const ValueKey('appointment-booking-save')),
+        findsNothing,
+      );
+      expect(
+        tester.getRect(confirm).bottom,
+        lessThanOrEqualTo(tester.getTopLeft(find.byType(VetBottomNav)).dy),
+        reason:
+            'A confirmação deve ficar acima da barra inferior em $width px.',
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('confirmação continua fixa com texto ampliado', (tester) async {
+    await pumpAt(tester, 320, height: 720, textScale: 2);
+
+    expect(
+      find.byKey(const ValueKey('appointment-booking-compact-confirm')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('appointment-booking-save')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('texto do serviço tem contraste no chip rosa', (tester) async {
     await pumpAt(tester, 390);
 
