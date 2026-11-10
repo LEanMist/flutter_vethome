@@ -42,7 +42,7 @@ void main() {
       ('Tema do Aplicativo', 171.0),
       ('Meus Endereços', 229.0),
       ('Suporte', 287.0),
-      ('Historico', 347.0),
+      ('Histórico', 347.0),
       ('Sair', 402.0),
     ]) {
       final rect = tester.getRect(find.text(label));

@@ -39,7 +39,7 @@ void main() {
         'Tema do Aplicativo',
         'Meus Endereços',
         'Suporte',
-        'Historico',
+        'Histórico',
         'Sair',
       ]) {
         final text = tester.widget<Text>(find.text(label));
@@ -131,7 +131,7 @@ void main() {
     await tester.tapAt(const Offset(2, 2));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('support-figma-surface')), findsNothing);
-    await tester.tap(find.text('Historico'));
+    await tester.tap(find.text('Histórico'));
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsOneWidget);
     await tester.ensureVisible(find.text('Fechar'));

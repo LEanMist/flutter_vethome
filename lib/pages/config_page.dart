@@ -92,7 +92,7 @@ class ConfigScreen extends StatelessWidget {
         action: () => Navigator.pushNamed(context, '/enderecos'),
       ),
       (label: 'Suporte', action: () => _showSupport(context)),
-      (label: 'Historico', action: () => _showHistory(context)),
+      (label: 'Histórico', action: () => _showHistory(context)),
       (label: 'Sair', action: () => _signOut(context)),
     ];
     return VHPage(

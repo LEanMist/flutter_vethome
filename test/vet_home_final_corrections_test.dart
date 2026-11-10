@@ -123,8 +123,8 @@ void main() {
         pet.id,
       ).map((a) => a.data).toList();
       await tester.pumpWidget(const MaterialApp(home: ConfigScreen()));
-      await tester.ensureVisible(find.text('Historico'));
-      await tester.tap(find.text('Historico'));
+      await tester.ensureVisible(find.text('Histórico'));
+      await tester.tap(find.text('Histórico'));
       await tester.pumpAndSettle();
       final history = find.byType(BottomSheet);
       final list = tester.widget<ListView>(
