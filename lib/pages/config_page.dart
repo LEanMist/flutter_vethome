@@ -352,9 +352,9 @@ class ConfigScreen extends StatelessWidget {
         for (final a in VetRepository.realAppointments(pet.id))
           (pet: pet, event: a),
     ]..sort((a, b) => a.event.data.compareTo(b.event.data));
-    final future =
-        events.where((e) => e.event.data.isAfter(DateTime.now())).toList()
-          ..sort((a, b) => a.event.data.compareTo(b.event.data));
+    final now = DateTime.now();
+    final future = events.where((e) => e.event.data.isAfter(now)).toList();
+    final past = events.where((e) => !e.event.data.isAfter(now)).toList();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -370,28 +370,34 @@ class ConfigScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Histórico',
-                  style: TextStyle(
-                    fontFamily: 'Comfortaa',
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'Histórico',
+                    style: TextStyle(
+                      fontFamily: 'Comfortaa',
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: ListView(
                     children: [
-                      if (future.isEmpty) ...[
-                        const Text(
-                          'Próximo agendamento',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                      if (future.isEmpty && events.isNotEmpty) ...[
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            'Próximo agendamento',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
                           child: Text('Nenhum agendamento futuro'),
                         ),
-                      ] else
+                      ] else if (future.isNotEmpty)
                         AppointmentCard(
                           pet: future.first.pet,
                           event: future.first.event,
@@ -405,18 +411,57 @@ class ConfigScreen extends StatelessWidget {
                             );
                           },
                         ),
+                      if (future.length > 1) ...[
+                        const Divider(height: 24),
+                        Semantics(
+                          key: ValueKey('settings-other-future-heading'),
+                          header: true,
+                          child: Text(
+                            'Outros agendamentos futuros',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        for (final item in future.skip(1))
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: AppointmentCard(
+                              pet: item.pet,
+                              event: item.event,
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                Navigator.pushNamed(
+                                  context,
+                                  '/agenda',
+                                  arguments: item.event.data,
+                                );
+                              },
+                            ),
+                          ),
+                      ],
                       const Divider(height: 24),
-                      const Text(
-                        'Histórico de agendamentos',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
+                      Semantics(
+                        key: ValueKey('settings-history-heading'),
+                        header: true,
+                        child: Text(
+                          'Histórico de agendamentos',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      if (events.isEmpty)
-                        const Text('Nenhuma consulta registrada.'),
-                      for (final item in events)
+                      if (past.isEmpty)
+                        Text(
+                          events.isEmpty
+                              ? 'Nenhuma consulta registrada.'
+                              : 'Nenhuma consulta anterior registrada.',
+                        ),
+                      for (final item in past)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Column(
