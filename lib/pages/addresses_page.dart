@@ -435,6 +435,7 @@ class AddressEditorPage extends StatelessWidget {
     final compactEditor = address != null && !desktop;
     final form = AddressForm(
       figmaEditLayout: compactEditor,
+      pinSaveAction: address == null && !desktop,
       title: address == null ? 'Novo endereço' : 'Editar endereço',
       initial: address,
       saveErrorMessage: (error) {

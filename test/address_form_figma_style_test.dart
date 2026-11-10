@@ -251,6 +251,30 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('novo endereço mantém Salvar visível em tela baixa', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+
+    await tester.pumpWidget(const MaterialApp(home: AddressEditorPage()));
+    await tester.pumpAndSettle();
+
+    final footer = find.byKey(
+      const ValueKey('address-form-pinned-save-footer'),
+    );
+    final saveButton = find.widgetWithText(ElevatedButton, 'Salvar endereço');
+    expect(footer, findsOneWidget);
+    expect(saveButton, findsOneWidget);
+    expect(tester.getRect(footer).bottom, lessThanOrEqualTo(616));
+    expect(tester.getRect(saveButton).bottom, lessThanOrEqualTo(616));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('editor Figma mantém Salvar acessível em tela baixa', (
     tester,
   ) async {

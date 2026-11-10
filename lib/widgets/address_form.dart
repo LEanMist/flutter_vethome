@@ -22,6 +22,7 @@ class AddressForm extends StatefulWidget {
     this.cepService = const CepService(),
     this.figmaEditLayout = false,
     this.saveErrorMessage,
+    this.pinSaveAction = false,
   });
   final String title;
   final FutureOr<void> Function(SavedAddress) onSaved;
@@ -32,6 +33,7 @@ class AddressForm extends StatefulWidget {
   final CepService cepService;
   final bool figmaEditLayout;
   final String Function(Object error)? saveErrorMessage;
+  final bool pinSaveAction;
   @override
   State<AddressForm> createState() => _AddressFormState();
 }
@@ -318,6 +320,13 @@ class _AddressFormState extends State<AddressForm> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final compactHeight = !registration && constraints.maxHeight < 680;
+            final pinPrimaryAction =
+                widget.pinSaveAction &&
+                !desktop &&
+                !registration &&
+                !editing &&
+                widget.onSkip == null &&
+                constraints.maxHeight < 680;
             // Align halves its -1..1 range; this places the panel at x=49.
             final registrationPanelAlignment =
                 registration && constraints.maxWidth > 322
@@ -522,51 +531,72 @@ class _AddressFormState extends State<AddressForm> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    height: registration
-                        ? 30
-                        : compactHeight
-                        ? 12
-                        : 16,
-                  ),
-                  editing
-                      ? Center(
-                          child: SizedBox(
-                            width: 259,
-                            height: 34,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                deleteButton!,
-                                SizedBox(
-                                  width: 90,
-                                  height: 34,
-                                  child: saveButton,
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      : registration
-                      ? Center(
-                          child: SizedBox(
-                            width: 181,
-                            height: 65,
-                            child: saveButton,
-                          ),
-                        )
-                      : SizedBox(height: 48, child: saveButton),
-                  if (widget.onSkip != null) ...[
-                    const SizedBox(height: 2),
-                    TextButton(
-                      style: widget.skipButtonStyle,
-                      onPressed: _saving ? null : _skip,
-                      child: Text(_saving ? 'Salvando…' : 'Pular'),
+                  if (!pinPrimaryAction) ...[
+                    SizedBox(
+                      height: registration
+                          ? 30
+                          : compactHeight
+                          ? 12
+                          : 16,
                     ),
+                    editing
+                        ? Center(
+                            child: SizedBox(
+                              width: 259,
+                              height: 34,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  deleteButton!,
+                                  SizedBox(
+                                    width: 90,
+                                    height: 34,
+                                    child: saveButton,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : registration
+                        ? Center(
+                            child: SizedBox(
+                              width: 181,
+                              height: 65,
+                              child: saveButton,
+                            ),
+                          )
+                        : SizedBox(height: 48, child: saveButton),
+                    if (widget.onSkip != null) ...[
+                      const SizedBox(height: 2),
+                      TextButton(
+                        style: widget.skipButtonStyle,
+                        onPressed: _saving ? null : _skip,
+                        child: Text(_saving ? 'Salvando…' : 'Pular'),
+                      ),
+                    ],
                   ],
                 ],
               ),
             );
+
+            if (pinPrimaryAction) {
+              return Column(
+                children: [
+                  Expanded(child: SingleChildScrollView(child: content)),
+                  Padding(
+                    key: const ValueKey('address-form-pinned-save-footer'),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: saveButton,
+                    ),
+                  ),
+                ],
+              );
+            }
+
             return !desktop ||
                     constraints.maxHeight < 700 ||
                     MediaQuery.viewInsetsOf(context).bottom > 0
