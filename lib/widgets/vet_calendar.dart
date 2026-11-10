@@ -296,6 +296,7 @@ class VetCalendar extends StatelessWidget {
                                         dates[row * 7 + column],
                                       ) ??
                                       false,
+                                  indicatorColor: Colors.white,
                                   onTap: () =>
                                       onSelected(dates[row * 7 + column]),
                                   scale: scale,

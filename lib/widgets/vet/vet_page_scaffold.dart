@@ -20,6 +20,7 @@ class VetPageScaffold extends StatelessWidget {
     this.showBack = true,
     this.headerBottom,
     this.footer,
+    this.footerReserveHeight,
     this.titleSize = 30,
     this.contentMaxWidth = VH.mobileContentMaxWidth,
     this.edgeToEdgeContentOnMobile = false,
@@ -35,6 +36,7 @@ class VetPageScaffold extends StatelessWidget {
   final bool showBack;
   final Widget? headerBottom;
   final Widget? footer;
+  final double? footerReserveHeight;
   final double titleSize;
   final double contentMaxWidth;
   final bool edgeToEdgeContentOnMobile;
@@ -59,7 +61,9 @@ class VetPageScaffold extends StatelessWidget {
                 (headerBottom == null ? 0 : 52 * s))
             .clamp(125.0, double.infinity);
     final navigationHeight = 88 * s + media.viewPadding.bottom;
-    final reservedFooterHeight = footer == null ? 0.0 : 140 * s;
+    final reservedFooterHeight = footer == null
+        ? 0.0
+        : footerReserveHeight ?? 140 * s;
     // In short viewports, scroll the whole page so fixed chrome cannot overflow.
     final shortViewportThreshold =
         headerHeight + navigationHeight + reservedFooterHeight;

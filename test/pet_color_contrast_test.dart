@@ -61,6 +61,12 @@ void main() {
       _contrastRatio(VetColors.brownOnRose, cardSurface),
       greaterThan(4.5),
     );
+    expect(_contrastRatio(chevron.color, cardSurface), greaterThanOrEqualTo(3));
+    expect(silhouette.color, isNotNull);
+    expect(
+      _contrastRatio(silhouette.color!, cardSurface),
+      greaterThanOrEqualTo(3),
+    );
     expect(tester.takeException(), isNull);
   });
 

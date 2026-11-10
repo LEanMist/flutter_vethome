@@ -88,6 +88,10 @@ class AppointmentBookingCard extends StatelessWidget {
 
   Widget _buildDesignCard(BuildContext context, double scale) {
     final textScale = 1 / scale;
+    final fullDateLabel = _dateLabel(date);
+    final visibleDateLabel = scale < 1
+        ? _compactDateLabel(date)
+        : fullDateLabel;
     final timeTargetHeight = minimumTouchTarget / scale;
     final narrowLayoutOffset = math.max(0.0, timeTargetHeight - 56.0);
     final descriptionOffset = math.max(0.0, (timeTargetHeight - 53.0) / 2 + 1);
@@ -121,8 +125,8 @@ class AppointmentBookingCard extends StatelessWidget {
             key: const ValueKey('appointment-booking-date'),
             left: 81,
             top: 131,
-            label: _dateLabel(date),
-            semanticLabel: 'Data: ${_dateLabel(date)}. Alterar data.',
+            label: visibleDateLabel,
+            semanticLabel: 'Data: $fullDateLabel. Alterar data.',
             color: VetColors.rose,
             textScale: textScale,
             tapTargetHeight: timeTargetHeight,
@@ -686,4 +690,8 @@ class AppointmentBookingCard extends StatelessWidget {
         '${weekday[0].toUpperCase()}${weekday.substring(1)}';
     return '$capitalizedWeekday, ${date.day} de ${months[date.month - 1]}';
   }
+
+  static String _compactDateLabel(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}/'
+      '${date.month.toString().padLeft(2, '0')}/${date.year}';
 }

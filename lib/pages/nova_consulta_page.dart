@@ -346,6 +346,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       selectedIndex: 3,
       contentMaxWidth: 1120,
       edgeToEdgeContentOnMobile: true,
+      footerReserveHeight: compactMobileAction ? 112 : null,
       footer: isMobile
           ? (compactMobileAction ? _compactConfirmButton() : null)
           : Column(
@@ -446,7 +447,8 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
         noticeHeight +
         12 +
         AppointmentBookingCard.designHeight * cardScale;
-    return actionBottom > media.size.height - navigationHeight;
+    final usableViewportHeight = media.size.height - media.viewInsets.bottom;
+    return actionBottom > usableViewportHeight - navigationHeight;
   }
 
   Widget _compactConfirmButton() => SizedBox(

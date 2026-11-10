@@ -18,10 +18,15 @@ void main() {
     double width, {
     double height = 844,
     double textScale = 1,
+    double keyboardHeight = 0,
     String service = 'Hemograma',
   }) async {
     tester.view.physicalSize = Size(width, height);
     tester.view.devicePixelRatio = 1;
+    if (keyboardHeight > 0) {
+      tester.view.viewInsets = FakeViewPadding(bottom: keyboardHeight);
+      addTearDown(tester.view.resetViewInsets);
+    }
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
@@ -79,6 +84,11 @@ void main() {
     );
     final dateButton = find.byKey(const ValueKey('appointment-booking-date'));
     expect(tester.getSize(dateButton), const Size(222, 48));
+    final visibleDate = tester.widget<Text>(
+      find.descendant(of: dateButton, matching: find.byType(Text)),
+    );
+    expect(visibleDate.data, contains(', '));
+    expect(visibleDate.data, contains(' de '));
     expect(
       find.descendant(
         of: dateButton,
@@ -157,6 +167,46 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('confirmação permanece visível com o teclado aberto', (
+    tester,
+  ) async {
+    for (final (width, height, keyboardHeight) in [
+      (390.0, 844.0, 300.0),
+      (320.0, 640.0, 300.0),
+    ]) {
+      await pumpAt(
+        tester,
+        width,
+        height: height,
+        keyboardHeight: keyboardHeight,
+      );
+
+      final confirm = find.byKey(
+        const ValueKey('appointment-booking-compact-confirm'),
+      );
+      final navigation = find.byType(VetBottomNav);
+      final visibleBottom = height - keyboardHeight;
+
+      expect(
+        confirm,
+        findsOneWidget,
+        reason:
+            'O teclado deve mover a confirmação para o rodapé em $width px.',
+      );
+      expect(
+        tester.getRect(confirm).bottom,
+        lessThanOrEqualTo(tester.getTopLeft(navigation).dy),
+      );
+      expect(tester.getRect(confirm).bottom, lessThanOrEqualTo(visibleBottom));
+      expect(
+        tester.getRect(navigation).bottom,
+        lessThanOrEqualTo(visibleBottom),
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('texto do serviço tem contraste no chip rosa', (tester) async {
     await pumpAt(tester, 390);
 
@@ -259,6 +309,29 @@ void main() {
       'Retorno de exame',
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('data curta cabe a 320 px sem perder a leitura acessível', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await pumpAt(tester, 320);
+
+      final dateButton = find.byKey(const ValueKey('appointment-booking-date'));
+      final visibleDate = tester.widget<Text>(
+        find.descendant(of: dateButton, matching: find.byType(Text)),
+      );
+      final semanticsNode = tester.getSemantics(dateButton);
+
+      expect(visibleDate.data, matches(RegExp(r'^\d{2}/\d{2}/\d{4}$')));
+      expect(visibleDate.overflow, TextOverflow.ellipsis);
+      expect(semanticsNode.label, startsWith('Data: '));
+      expect(semanticsNode.label, contains('Alterar data'));
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('cartão permite consultar todos os serviços selecionados', (

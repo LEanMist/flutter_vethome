@@ -170,6 +170,26 @@ void main() {
     expect(outsideText.style?.fontWeight, FontWeight.w500);
   });
 
+  testWidgets('indicador da Agenda mantém centro branco no calendário largo', (
+    tester,
+  ) async {
+    await pumpCalendar(
+      tester,
+      viewport: const Size(1280, 800),
+      selected: DateTime(2026, 10, 8),
+    );
+
+    final day = find.byKey(const ValueKey('calendar-2026-10-9-surface'));
+    final dots = tester.widgetList<CircleAvatar>(
+      find.descendant(of: day, matching: find.byType(CircleAvatar)),
+    );
+
+    expect(dots, hasLength(2));
+    expect(dots.first.backgroundColor, VetColors.calendarTextOnRose);
+    expect(dots.last.backgroundColor, Colors.white);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('calendário de consulta segue a geometria do Figma', (
     tester,
   ) async {
