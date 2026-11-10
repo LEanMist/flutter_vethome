@@ -117,6 +117,24 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('lista vazia orienta como cadastrar o primeiro pet', (
+    tester,
+  ) async {
+    viewport(tester, const Size(390, 844));
+    VetRepository.pets.clear();
+    await tester.pumpWidget(const MaterialApp(home: PetsPage()));
+
+    expect(find.byKey(const ValueKey('pets-empty-state')), findsOneWidget);
+    expect(find.byIcon(Icons.pets_outlined), findsOneWidget);
+    expect(find.text('Nenhum pet cadastrado'), findsOneWidget);
+    expect(
+      find.text('Cadastre seu primeiro pet pelo botão + abaixo.'),
+      findsOneWidget,
+    );
+    expect(find.byTooltip('Adicionar pet'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('cartão da lista tem um único rótulo acessível e acionável', (
     tester,
   ) async {

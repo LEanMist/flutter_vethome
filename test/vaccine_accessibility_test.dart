@@ -149,4 +149,27 @@ void main() {
       expect(tester.takeException(), isNull);
     }
   });
+
+  testWidgets(
+    'vacinas demonstrativas são identificadas e ordenadas pelo vencimento',
+    (tester) async {
+      await openVaccination(tester, const Size(390, 844), 1.0);
+      final semantics = tester.ensureSemantics();
+      try {
+        expect(
+          find.bySemanticsLabel(RegExp(r'^Vacina demonstrativa:')),
+          findsNWidgets(3),
+        );
+
+        final giardiaTop = tester.getTopLeft(find.text('Giardia')).dy;
+        final v10Top = tester.getTopLeft(find.text('V10')).dy;
+        final rabiesTop = tester.getTopLeft(find.text('Antirrábica')).dy;
+        expect(giardiaTop, lessThan(v10Top));
+        expect(v10Top, lessThan(rabiesTop));
+        expect(tester.takeException(), isNull);
+      } finally {
+        semantics.dispose();
+      }
+    },
+  );
 }

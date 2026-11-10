@@ -110,6 +110,12 @@ class SaudePage extends StatelessWidget {
             value: vaccines.isEmpty
                 ? 'Nenhuma cadastrada'
                 : '${vaccines.where((v) => v.status == VacinaStatus.emDia).length}/${vaccines.length} em dia',
+            semanticsLabel: VetRepository.usesDemoVaccines(pet.id)
+                ? 'Vacinação: dados demonstrativos; '
+                      '${vaccines.where((v) => v.status == VacinaStatus.emDia).length} '
+                      'de ${vaccines.length} exemplos em dia. '
+                      'Nenhuma vacina real cadastrada.'
+                : null,
             color: upToDate
                 ? VetTones.successForeground
                 : VetTones.warningForeground,

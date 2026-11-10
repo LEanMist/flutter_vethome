@@ -131,7 +131,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.bySemanticsLabel(RegExp(r'^Vacinação: \d+/\d+ em dia$')),
+      find.bySemanticsLabel(
+        'Vacinação: dados demonstrativos; 2 de 3 exemplos em dia. '
+        'Nenhuma vacina real cadastrada.',
+      ),
       findsOneWidget,
     );
     expect(find.bySemanticsLabel(RegExp(r'^Peso: .+')), findsOneWidget);

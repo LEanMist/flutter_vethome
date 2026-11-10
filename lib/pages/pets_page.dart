@@ -130,7 +130,7 @@ class _PetsPageState extends State<PetsPage> {
                   borderRadius: BorderRadius.circular(25 * s),
                 ),
                 child: VetRepository.pets.isEmpty
-                    ? const Center(child: Text('Nenhum pet cadastrado'))
+                    ? _emptyPetsState(s)
                     : desktop
                     ? GridView.builder(
                         key: const ValueKey('pets-desktop-grid'),
@@ -184,6 +184,54 @@ class _PetsPageState extends State<PetsPage> {
         ],
       );
     },
+  );
+
+  Widget _emptyPetsState(double scale) => Center(
+    key: const ValueKey('pets-empty-state'),
+    child: Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 62 * scale,
+            height: 62 * scale,
+            decoration: const BoxDecoration(
+              color: VetColors.pinkOverlay50,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.pets_outlined,
+              size: 31 * scale,
+              color: VetColors.brownOnRose,
+            ),
+          ),
+          SizedBox(height: 14 * scale),
+          Text(
+            'Nenhum pet cadastrado',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: VetColors.brownOnRose,
+              fontSize: 17 * scale,
+              fontWeight: FontWeight.w700,
+              fontFamily: PetsTheme.fontComfortaa,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          Text(
+            'Cadastre seu primeiro pet pelo botão + abaixo.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: VetColors.brownOnRose,
+              fontSize: 13 * scale,
+              height: 1.35,
+              fontFamily: PetsTheme.fontMontserratAlternates,
+            ),
+          ),
+        ],
+      ),
+    ),
   );
 
   Widget _petCard(BuildContext context, int index) => PetCardWidget(

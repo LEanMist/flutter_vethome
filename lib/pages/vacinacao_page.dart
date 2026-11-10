@@ -19,6 +19,37 @@ const _clearingVaccineMessage =
     'A alteração na carteira foi bloqueada enquanto os dados locais estavam '
     'sendo limpos. Nenhuma alteração foi realizada.';
 
+int _vaccineStatusOrder(VacinaStatus status) => switch (status) {
+  VacinaStatus.atrasada => 0,
+  VacinaStatus.vencendo => 1,
+  VacinaStatus.emDia => 2,
+  VacinaStatus.semPrevisao => 3,
+};
+
+List<Vacina> _vaccinesByUrgency(List<Vacina> vaccines) {
+  final indexed = [
+    for (var index = 0; index < vaccines.length; index++)
+      MapEntry(index, vaccines[index]),
+  ];
+  indexed.sort((first, second) {
+    final status = _vaccineStatusOrder(
+      first.value.status,
+    ).compareTo(_vaccineStatusOrder(second.value.status));
+    if (status != 0) return status;
+
+    final firstDate = first.value.proxima;
+    final secondDate = second.value.proxima;
+    if (firstDate != null && secondDate != null) {
+      final dueDate = DateUtils.dateOnly(
+        firstDate,
+      ).compareTo(DateUtils.dateOnly(secondDate));
+      if (dueDate != 0) return dueDate;
+    }
+    return first.key.compareTo(second.key);
+  });
+  return [for (final entry in indexed) entry.value];
+}
+
 class VacinacaoPage extends StatefulWidget {
   const VacinacaoPage({required this.pet, super.key});
   final PetModel pet;
@@ -31,7 +62,7 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
 
   Future<void> _edit([Vacina? vaccine]) async {
     if (_saving) return;
-    await showModalBottomSheet<void>(
+    final successMessage = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: VetColors.pink,
@@ -40,10 +71,17 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
       ),
       builder: (_) => _VaccineEditor(
         vaccine: vaccine,
-        onSave: (value) =>
-            _persist(() => VetRepository.saveVaccine(widget.pet.id, value)),
+        onSave: (value) => _persist(
+          () => VetRepository.saveVaccine(widget.pet.id, value),
+          successMessage: vaccine == null
+              ? 'Vacina cadastrada.'
+              : 'Vacina atualizada.',
+        ),
       ),
     );
+    if (successMessage != null && mounted) {
+      _showPersistenceMessage(successMessage);
+    }
   }
 
   Future<void> _delete(Vacina vaccine) async {
@@ -67,10 +105,18 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
       ),
     );
     if (confirmed != true || !mounted || _saving) return;
+    final lastRealVaccine =
+        VetRepository.realVaccines(widget.pet.id).length == 1;
     try {
-      await _persist(
+      final successMessage = await _persist(
         () => VetRepository.removeVaccine(widget.pet.id, vaccine.id!),
+        successMessage: lastRealVaccine
+            ? 'Vacina removida. A carteira ficou sem vacinas cadastradas.'
+            : 'Vacina removida.',
       );
+      if (successMessage != null && mounted) {
+        _showPersistenceMessage(successMessage);
+      }
     } on PersistenceClearingException {
       if (!mounted) return;
       _showPersistenceMessage(_clearingVaccineMessage);
@@ -88,29 +134,29 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
       );
   }
 
-  Future<void> _persist(VoidCallback update) async {
+  Future<String?> _persist(
+    VoidCallback update, {
+    required String successMessage,
+  }) async {
     update();
     setState(() => _saving = true);
     final saved = await VetRepository.flush();
-    if (!mounted) return;
+    if (!mounted) return null;
     setState(() => _saving = false);
     if (!saved) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Alteração na carteira feita nesta sessão. Não foi possível salvar localmente.',
-            ),
-          ),
-        );
+      _showPersistenceMessage(
+        'Alteração na carteira feita nesta sessão. '
+        'Não foi possível salvar localmente.',
+      );
+      return null;
     }
+    return successMessage;
   }
 
   @override
   Widget build(BuildContext context) {
     final pet = VetRepository.petById(widget.pet.id) ?? widget.pet;
-    final vaccines = VetRepository.vacinas(pet.id);
+    final vaccines = _vaccinesByUrgency(VetRepository.vacinas(pet.id));
     final demo = VetRepository.usesDemoVaccines(pet.id);
     return VetPageScaffold(
       title: 'Carteira de vacinação',
@@ -168,6 +214,7 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
                     width: width,
                     child: _VacinaCard(
                       vaccine,
+                      isDemonstration: demo,
                       enabled: !_saving,
                       onEdit: demo ? null : () => _edit(vaccine),
                       onDelete: demo ? null : () => _delete(vaccine),
@@ -185,7 +232,7 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
 
 class _VaccineEditor extends StatefulWidget {
   const _VaccineEditor({required this.onSave, this.vaccine});
-  final Future<void> Function(Vacina) onSave;
+  final Future<String?> Function(Vacina) onSave;
   final Vacina? vaccine;
   @override
   State<_VaccineEditor> createState() => _VaccineEditorState();
@@ -221,7 +268,7 @@ class _VaccineEditorState extends State<_VaccineEditor> {
       _clearing = false;
     });
     try {
-      await widget.onSave(
+      final successMessage = await widget.onSave(
         Vacina(
           id: widget.vaccine?.id,
           nome: _name.text,
@@ -230,7 +277,7 @@ class _VaccineEditorState extends State<_VaccineEditor> {
         ),
       );
       if (mounted && ModalRoute.of(context)?.isCurrent == true) {
-        Navigator.pop(context);
+        Navigator.pop(context, successMessage);
       }
     } on PersistenceBlockedException {
       if (mounted) setState(() => _blocked = true);
@@ -350,11 +397,13 @@ class _VaccineEditorState extends State<_VaccineEditor> {
 class _VacinaCard extends StatelessWidget {
   const _VacinaCard(
     this.vaccine, {
+    required this.isDemonstration,
     required this.enabled,
     this.onEdit,
     this.onDelete,
   });
   final Vacina vaccine;
+  final bool isDemonstration;
   final bool enabled;
   final VoidCallback? onEdit, onDelete;
   @override
@@ -381,7 +430,7 @@ class _VacinaCard extends StatelessWidget {
         VetColors.brown,
       ),
     };
-    return VetCard(
+    final card = VetCard(
       flat: true,
       color: VetColors.rose.withValues(alpha: .17),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -438,6 +487,20 @@ class _VacinaCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+    if (!isDemonstration) return card;
+
+    final nextDose = vaccine.proxima == null
+        ? 'Próxima dose sem previsão.'
+        : 'Próxima dose: ${fmtData(vaccine.proxima!)}.';
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label:
+          'Vacina demonstrativa: ${vaccine.nome}. '
+          'Situação: $label. Aplicada: ${fmtData(vaccine.aplicada)}. '
+          '$nextDose',
+      child: card,
     );
   }
 }

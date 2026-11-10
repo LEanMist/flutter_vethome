@@ -63,6 +63,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  test('cores do estado vazio de Pets mantêm contraste AA', () {
+    final listSurface = Color.alphaBlend(
+      VetColors.roseOverlay25,
+      VetColors.pink,
+    );
+    final iconSurface = Color.alphaBlend(VetColors.pinkOverlay50, listSurface);
+
+    expect(
+      _contrastRatio(VetColors.brownOnRose, listSurface),
+      greaterThan(4.5),
+    );
+    expect(
+      _contrastRatio(VetColors.brownOnRose, iconSurface),
+      greaterThan(4.5),
+    );
+  });
+
   testWidgets(
     'texto secundário de PetSummary continua legível no cartão rosa',
     (tester) async {
