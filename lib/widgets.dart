@@ -979,6 +979,8 @@ class VHPage extends StatelessWidget {
     this.footer,
     this.showPetsTab = true,
     this.showBottomNav = true,
+    this.compactBottomNav = false,
+    this.onBeforeNavigate,
   });
 
   final String tab;
@@ -986,11 +988,17 @@ class VHPage extends StatelessWidget {
   final Widget? footer;
   final bool showPetsTab;
   final bool showBottomNav;
+  final bool compactBottomNav;
+  final Future<bool> Function(int destinationIndex)? onBeforeNavigate;
 
   static const _tabRoutes = ['/pets', '/perfil', '/chat', '/agenda', '/config'];
 
   @override
   Widget build(BuildContext context) {
+    final selectedIndex = _tabRoutes.indexOf(tab);
+    final compactNavigation =
+        compactBottomNav &&
+        MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
     return Scaffold(
       backgroundColor: VH.background,
       body: Center(
@@ -1011,9 +1019,16 @@ class VHPage extends StatelessWidget {
                 ?footer,
                 if (showBottomNav)
                   VetBottomNav(
-                    selectedIndex: _tabRoutes.indexOf(tab).clamp(0, 4),
+                    // Fluxos como Serviços, Convênio e Sobre não são abas
+                    // principais; mantenha todos os destinos disponíveis sem
+                    // destacar Pets por engano.
+                    selectedIndex: selectedIndex,
+                    compact: compactNavigation,
                     showPetsTab: showPetsTab,
-                    onSelected: (index) {
+                    onSelected: (index) async {
+                      final canNavigate =
+                          await onBeforeNavigate?.call(index) ?? true;
+                      if (!context.mounted || !canNavigate) return;
                       final route = _tabRoutes[index];
                       if (route != tab) {
                         Navigator.pushNamedAndRemoveUntil(

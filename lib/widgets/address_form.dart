@@ -23,6 +23,7 @@ class AddressForm extends StatefulWidget {
     this.figmaEditLayout = false,
     this.saveErrorMessage,
     this.pinSaveAction = false,
+    this.routeButton,
   });
   final String title;
   final FutureOr<void> Function(SavedAddress) onSaved;
@@ -34,6 +35,7 @@ class AddressForm extends StatefulWidget {
   final bool figmaEditLayout;
   final String Function(Object error)? saveErrorMessage;
   final bool pinSaveAction;
+  final Widget? routeButton;
   @override
   State<AddressForm> createState() => _AddressFormState();
 }
@@ -311,7 +313,13 @@ class _AddressFormState extends State<AddressForm> {
           )
         : null;
 
-    if (figmaEditing) return _figmaEditorContent(saveButton, deleteButton!);
+    if (figmaEditing) {
+      return _figmaEditorContent(
+        saveButton,
+        deleteButton!,
+        routeButton: widget.routeButton,
+      );
+    }
 
     return Align(
       alignment: registration ? Alignment.topCenter : Alignment.center,
@@ -608,7 +616,11 @@ class _AddressFormState extends State<AddressForm> {
     );
   }
 
-  Widget _figmaEditorContent(ElevatedButton saveButton, Widget deleteButton) {
+  Widget _figmaEditorContent(
+    ElevatedButton saveButton,
+    Widget deleteButton, {
+    Widget? routeButton,
+  }) {
     Widget field(
       String label,
       IconData icon,
@@ -711,6 +723,8 @@ class _AddressFormState extends State<AddressForm> {
                 child: SizedBox(width: 90, height: 34, child: saveButton),
               ),
             ),
+            if (routeButton != null)
+              Positioned(left: 121, top: 562, child: routeButton),
           ],
         ),
       ),

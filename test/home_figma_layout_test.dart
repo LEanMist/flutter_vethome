@@ -23,7 +23,13 @@ double _contrastRatio(Color first, Color second) {
 
 double _homeScaleFor(Size viewport) {
   final widthScale = (viewport.width / 390).clamp(0.0, 1.0).toDouble();
-  return math.min(widthScale, math.max(0.8, viewport.height / 844));
+  final navigationHeight = viewport.width >= 900
+      ? 88.0
+      : (50 * widthScale.clamp(0.8, 1.0)).clamp(48.0, 50.0);
+  final heightScale = ((viewport.height - navigationHeight) / 844)
+      .clamp(0.0, 1.0)
+      .toDouble();
+  return math.min(widthScale, heightScale);
 }
 
 void main() {

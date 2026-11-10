@@ -10,6 +10,7 @@ import 'package:flutter_vethome/pages/endereco_page.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/widgets/address_form.dart';
 import 'package:flutter_vethome/widgets.dart';
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
 List<String> _addressAssetNames(WidgetTester tester) => tester
     .widgetList<Image>(find.byType(Image))
@@ -548,6 +549,100 @@ void main() {
       _contrastRatio(skipStyle.color!, VH.background),
       greaterThanOrEqualTo(4.5),
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('editor de endereço oferece navegação e protege alterações', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const AddressEditorPage(address: address),
+        routes: {
+          '/config': (_) => const Scaffold(body: Text('Config destino')),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final settingsTab = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics && widget.properties.label == 'Configurações',
+    );
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    await tester.tap(settingsTab);
+    await tester.pumpAndSettle();
+    expect(find.text('Sair da edição?'), findsOneWidget);
+
+    await tester.tap(find.text('Continuar editando'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AddressEditorPage), findsOneWidget);
+
+    await tester.tap(settingsTab);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sair sem salvar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Config destino'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('edição compacta de endereço também oferece troca de tela', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) =>
+                    const AddressEditorPage(address: address, modal: true),
+              ),
+              child: const Text('Abrir edição'),
+            ),
+          ),
+        ),
+        routes: {
+          '/config': (_) => const Scaffold(body: Text('Config destino')),
+        },
+      ),
+    );
+    await tester.tap(find.text('Abrir edição'));
+    await tester.pumpAndSettle();
+
+    final routeMenu = find.byKey(
+      const ValueKey('address-editor-modal-route-menu'),
+    );
+    expect(routeMenu, findsOneWidget);
+    await tester.tap(routeMenu);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Configurações').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Sair da edição?'), findsOneWidget);
+
+    await tester.tap(find.text('Continuar editando'));
+    await tester.pumpAndSettle();
+    expect(routeMenu, findsOneWidget);
+
+    await tester.tap(routeMenu);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Configurações').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sair sem salvar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Config destino'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

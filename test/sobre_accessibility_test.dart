@@ -57,12 +57,35 @@ void main() {
     }
   });
 
-  testWidgets('Sobre não marca uma aba principal como selecionada', (
+  testWidgets('Sobre permite trocar de tela sem destacar uma aba', (
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: SobreScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.byType(VetBottomNav), findsNothing);
+    final navigation = find.byType(VetBottomNav);
+    expect(navigation, findsOneWidget);
+    for (final label in [
+      'Pets',
+      'Perfil',
+      'Conversa',
+      'Agenda',
+      'Configurações',
+    ]) {
+      final destination = find.descendant(
+        of: navigation,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label == label &&
+              widget.properties.selected == false,
+        ),
+      );
+      expect(
+        destination,
+        findsOneWidget,
+        reason: '$label não deve parecer ativa.',
+      );
+    }
   });
 }

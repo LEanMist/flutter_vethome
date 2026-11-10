@@ -37,8 +37,10 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
 
-    // O frame mobile do Figma não mostra a barra inferior do app.
-    expect(find.byType(VetBottomNav), findsNothing);
+    // Navegação global mantida por solicitação do usuário; o frame é usado
+    // para validar a geometria e o conteúdo específico de Serviços.
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    expect(tester.getSize(find.byType(VetBottomNav)).height, 50);
     // SERVICES_PAGE 2791:3113 não apresenta o resumo do pet no mobile.
     expect(find.byType(PetSummary), findsNothing);
     expect(find.text('Serviços'), findsOneWidget);
@@ -129,12 +131,18 @@ void main() {
     expect(continueRect.topLeft.dx, closeTo(116, 1));
     expect(continueRect.topLeft.dy, closeTo(718, 1));
     expect(continueRect.size, const Size(157, 57));
+    expect(
+      continueRect.bottom,
+      lessThanOrEqualTo(tester.getTopLeft(find.byType(VetBottomNav)).dy),
+      reason: 'A navegação global não pode cobrir Continuar.',
+    );
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.byType(VetBottomNav), findsNothing);
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    expect(tester.getSize(find.byType(VetBottomNav)).height, 50);
     final selectedPet = VetRepository.pets.first;
     expect(find.byType(PetSummary), findsNothing);
     expect(find.text(selectedPet.name), findsNothing);
@@ -162,6 +170,13 @@ void main() {
         Rect.fromLTWH(0, top, 254, 59),
       );
     }
+    expect(
+      tester
+          .getRect(find.byKey(const ValueKey('convenio-plan-pill-Particular')))
+          .bottom,
+      lessThanOrEqualTo(tester.getTopLeft(find.byType(VetBottomNav)).dy),
+      reason: 'A navegação global não pode cobrir o último plano.',
+    );
     expect(
       tester.getRect(find.byKey(const ValueKey('convenio-figma-unnamed-pill'))),
       const Rect.fromLTWH(0, 511, 254, 59),
@@ -532,7 +547,7 @@ void main() {
     }
   });
 
-  testWidgets('Serviços e Convênio não mostram abas fora do fluxo principal', (
+  testWidgets('Serviços e Convênio mantêm acesso à navegação global', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1024, 800);
@@ -545,11 +560,11 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
-    expect(find.byType(VetBottomNav), findsNothing);
+    expect(find.byType(VetBottomNav), findsOneWidget);
 
     await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
     await tester.pumpAndSettle();
-    expect(find.byType(VetBottomNav), findsNothing);
+    expect(find.byType(VetBottomNav), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

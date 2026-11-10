@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
+import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
 import '../pages/pets_page.dart';
 import '../theme.dart';
@@ -22,24 +23,43 @@ Future<void> openPetChoiceDialog(BuildContext context) async {
     return;
   }
 
-  final petId = await showDialog<String>(
+  final result = await showDialog<Object?>(
     context: context,
     builder: (dialogContext) => EscolhaPetScreen(
       compact: true,
       onPetSelected: (id) => Navigator.pop(dialogContext, id),
+      onRouteSelected: (index) =>
+          Navigator.pop(dialogContext, _PetChoiceNavigation(index)),
     ),
   );
-  if (!context.mounted || petId == null) return;
+  if (!context.mounted || result == null) return;
+  if (result is _PetChoiceNavigation) {
+    vetNavigate(context, result.destination, selected: 3, isTabRoot: true);
+    return;
+  }
+  if (result is! String) return;
 
-  VetRepository.selectedPetId = petId;
+  VetRepository.selectedPetId = result;
   Navigator.pushNamed(context, '/servicos');
 }
 
+class _PetChoiceNavigation {
+  const _PetChoiceNavigation(this.destination);
+
+  final int destination;
+}
+
 class EscolhaPetScreen extends StatefulWidget {
-  const EscolhaPetScreen({super.key, this.compact = false, this.onPetSelected});
+  const EscolhaPetScreen({
+    super.key,
+    this.compact = false,
+    this.onPetSelected,
+    this.onRouteSelected,
+  });
 
   final bool compact;
   final ValueChanged<String>? onPetSelected;
+  final ValueChanged<int>? onRouteSelected;
 
   @override
   State<EscolhaPetScreen> createState() => _EscolhaPetScreenState();
@@ -169,6 +189,22 @@ class _EscolhaPetScreenState extends State<EscolhaPetScreen> {
         color: VetColors.petChoicePanel,
         child: Stack(
           children: [
+            if (widget.compact)
+              Positioned(
+                right: 4 * scale,
+                top: 54 * scale,
+                child: VetRouteMenuButton(
+                  key: const ValueKey('pet-choice-route-menu'),
+                  onSelected: (index) {
+                    final onRouteSelected = widget.onRouteSelected;
+                    if (onRouteSelected != null) {
+                      onRouteSelected(index);
+                    } else {
+                      Navigator.pop(context, _PetChoiceNavigation(index));
+                    }
+                  },
+                ),
+              ),
             Positioned(
               top: 37 * scale,
               left: 37 * scale,
@@ -307,6 +343,17 @@ class _ServicosScreenState extends State<ServicosScreen> {
     );
   }
 
+  Future<bool> _confirmLeavingServices(int destinationIndex) async {
+    if (_selected.isEmpty) return true;
+    return vetConfirmLeavingForm(
+      context,
+      title: 'Descartar serviços?',
+      message:
+          'Os serviços ${_selected.join(', ')} ainda não foram enviados. '
+          'Se sair agora, você perderá essa seleção.',
+    );
+  }
+
   static const categories = <String, List<String>>{
     'Exames': ['Hemograma', 'Creatinina', 'Urina'],
     'Vacinas': ['V8', 'V10', 'Antirrábica'],
@@ -331,7 +378,8 @@ class _ServicosScreenState extends State<ServicosScreen> {
     };
     return VHPage(
       tab: '/servicos',
-      showBottomNav: false,
+      compactBottomNav: true,
+      onBeforeNavigate: _confirmLeavingServices,
       footer: shortViewport
           ? SafeArea(top: false, child: _continueButton(pet.id, topPadding: 8))
           : null,
@@ -1037,7 +1085,16 @@ class ConvenioScreen extends StatelessWidget {
     final selectedService = routeService is String ? routeService.trim() : '';
     return VHPage(
       tab: '/convenio',
-      showBottomNav: false,
+      compactBottomNav: true,
+      onBeforeNavigate: (destinationIndex) => selectedService.isEmpty
+          ? Future.value(true)
+          : vetConfirmLeavingForm(
+              context,
+              title: 'Sair do agendamento?',
+              message:
+                  'O serviço $selectedService ainda não foi enviado. '
+                  'Se sair agora, ele não seguirá para a consulta.',
+            ),
       children: [
         // Figma 4010:387: cabeçalho de 157 px com aba da espécie (somente mobile).
         VetResponsiveLayout(

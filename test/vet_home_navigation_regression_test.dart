@@ -4,10 +4,14 @@ import 'package:flutter_vethome/core/utils/vet_nav.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
+import 'package:flutter_vethome/pages/editar_pet_page.dart';
+import 'package:flutter_vethome/pages/home_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/pages/cadastroPet_page.dart';
 import 'package:flutter_vethome/pages/teste_page.dart';
 import 'package:flutter_vethome/screens/outros.dart';
-import 'package:flutter_vethome/screens/pets.dart' show ConvenioScreen;
+import 'package:flutter_vethome/screens/pets.dart'
+    show ConvenioScreen, ServicosScreen;
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
 Widget agendaRoute(BuildContext context) {
@@ -16,6 +20,72 @@ Widget agendaRoute(BuildContext context) {
 }
 
 void main() {
+  testWidgets('Home permite trocar para as abas principais', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const HomePage(),
+        routes: {
+          '/chat': (_) => const Scaffold(body: Text('Conversa destino')),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    final chatTab = find.byWidgetPredicate(
+      (widget) => widget is Semantics && widget.properties.label == 'Conversa',
+    );
+    expect(chatTab, findsOneWidget);
+    await tester.tap(chatTab);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Conversa destino'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cadastro interno de pet permite trocar de tela com proteção', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const CadastroPetScreen(initialData: {'flow': 'addPet'}),
+        routes: {
+          '/config': (_) => const Scaffold(body: Text('Config destino')),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    final settingsTab = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics && widget.properties.label == 'Configurações',
+    );
+    await tester.tap(settingsTab);
+    await tester.pumpAndSettle();
+    expect(find.text('Sair do cadastro?'), findsOneWidget);
+    await tester.tap(find.text('Continuar editando'));
+    await tester.pumpAndSettle();
+    expect(find.byType(CadastroPetScreen), findsOneWidget);
+
+    await tester.tap(settingsTab);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sair sem salvar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Config destino'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('novo agendamento abre Agenda na data marcada', (tester) async {
     final pet = VetRepository.pets.first;
     final tomorrow = DateTime.now().add(const Duration(days: 1));
@@ -148,42 +218,127 @@ void main() {
     );
   });
 
-  testWidgets('Convênio não mostra abas e retorna pela navegação do sistema', (
+  testWidgets('Convênio permite trocar de tela pela navegação global', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    final previousPetId = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previousPetId);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: TextButton(
-              onPressed: () => Navigator.push<void>(
-                context,
-                MaterialPageRoute<void>(builder: (_) => const ConvenioScreen()),
-              ),
-              child: const Text('Abrir Convênio'),
-            ),
-          ),
-        ),
+        home: const ConvenioScreen(service: 'Hemograma'),
+        routes: {'/pets': (_) => const Scaffold(body: Text('Pets destino'))},
       ),
     );
 
-    await tester.tap(find.text('Abrir Convênio'));
-    await tester.pumpAndSettle();
-
     expect(find.byType(ConvenioScreen), findsOneWidget);
-    expect(find.byType(VetBottomNav), findsNothing);
-    expect(find.byTooltip('Voltar'), findsNothing);
-    await tester.binding.handlePopRoute();
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    final petsTab = find.byWidgetPredicate(
+      (widget) => widget is Semantics && widget.properties.label == 'Pets',
+    );
+    expect(petsTab, findsOneWidget);
+    await tester.tap(petsTab);
     await tester.pumpAndSettle();
-    expect(find.text('Abrir Convênio'), findsOneWidget);
-    expect(find.byType(ConvenioScreen), findsNothing);
+    expect(find.text('Sair do agendamento?'), findsOneWidget);
+    await tester.tap(find.text('Continuar editando'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ConvenioScreen), findsOneWidget);
+
+    await tester.tap(petsTab);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sair sem salvar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pets destino'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Serviços permite trocar de tela sem salvar a seleção', (
+    tester,
+  ) async {
+    final previousPetId = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previousPetId);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const ServicosScreen(),
+        routes: {
+          '/config': (_) => const Scaffold(body: Text('Config destino')),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    final settingsTab = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics && widget.properties.label == 'Configurações',
+    );
+    expect(settingsTab, findsOneWidget);
+    await tester.tap(settingsTab);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Config destino'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'Serviços protege escolhas ainda não enviadas ao trocar de tela',
+    (tester) async {
+      final previousPetId = VetRepository.selectedPetId;
+      addTearDown(() => VetRepository.selectedPetId = previousPetId);
+      VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: const ServicosScreen(),
+          routes: {
+            '/config': (_) => const Scaffold(body: Text('Config destino')),
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final hemograma = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics && widget.properties.label == 'Hemograma',
+      );
+      await tester.tap(hemograma);
+      await tester.pumpAndSettle();
+      final settingsTab = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics && widget.properties.label == 'Configurações',
+      );
+      await tester.tap(settingsTab);
+      await tester.pumpAndSettle();
+      expect(find.text('Descartar serviços?'), findsOneWidget);
+
+      await tester.tap(find.text('Continuar editando'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ServicosScreen), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label == 'Hemograma' &&
+              widget.properties.checked == true,
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(settingsTab);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sair sem salvar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Config destino'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('menu de teste abre Pets e Agenda com rotas nomeadas', (
     tester,
@@ -242,5 +397,83 @@ void main() {
     await tester.tap(find.text('Abrir Pets'));
     await tester.pumpAndSettle();
     expect(find.text('/pets'), findsOneWidget);
+  });
+
+  testWidgets('edição de pet permite trocar de tela com proteção', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: EditarPetPage(pet: VetRepository.pets.first),
+        routes: {
+          '/config': (_) => const Scaffold(body: Text('Config destino')),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final settingsTab = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics && widget.properties.label == 'Configurações',
+    );
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    await tester.tap(settingsTab);
+    await tester.pumpAndSettle();
+    expect(find.text('Sair da edição?'), findsOneWidget);
+
+    await tester.tap(find.text('Continuar editando'));
+    await tester.pumpAndSettle();
+    expect(find.byType(EditarPetPage), findsOneWidget);
+
+    await tester.tap(settingsTab);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sair sem salvar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Config destino'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('editor modal de pet oferece troca de tela protegida', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) =>
+                    EditarPetPage(pet: VetRepository.pets.first, modal: true),
+              ),
+              child: const Text('Abrir edição'),
+            ),
+          ),
+        ),
+        routes: {
+          '/agenda': (_) => const Scaffold(body: Text('Agenda destino')),
+        },
+      ),
+    );
+    await tester.tap(find.text('Abrir edição'));
+    await tester.pumpAndSettle();
+
+    final routeMenu = find.byKey(const ValueKey('pet-edit-modal-route-menu'));
+    expect(routeMenu, findsOneWidget);
+    await tester.tap(routeMenu);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Agenda').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Sair da edição?'), findsOneWidget);
+    await tester.tap(find.text('Sair sem salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Agenda destino'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

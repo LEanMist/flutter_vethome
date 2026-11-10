@@ -2,11 +2,13 @@
 
 import 'package:flutter/material.dart';
 
+import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
 import '../core/utils/form_fields.dart';
 import '../widgets/pet_form.dart';
 import '../widgets/auth/local_profile_conflict_dialog.dart';
 import '../theme.dart';
+import '../widgets/vet/vet_bottom_nav.dart';
 
 class CadastroPetScreen extends StatelessWidget {
   const CadastroPetScreen({super.key, this.initialData = const {}});
@@ -69,6 +71,30 @@ class CadastroPetScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: VH.background,
+    bottomNavigationBar: initialData['flow'] == 'addPet'
+        ? SafeArea(
+            top: false,
+            child: VetBottomNav(
+              selectedIndex: 0,
+              compact: MediaQuery.sizeOf(context).width < VH.desktopBreakpoint,
+              onSelected: (index) async {
+                final canLeave = await vetConfirmLeavingForm(
+                  context,
+                  title: 'Sair do cadastro?',
+                  message:
+                      'Se ainda não salvou, os dados deste pet serão '
+                      'descartados ao trocar de tela.',
+                );
+                if (!canLeave || !context.mounted) return;
+                if (index == 0 && Navigator.of(context).canPop()) {
+                  Navigator.pop(context);
+                  return;
+                }
+                vetNavigate(context, index, selected: 0, isTabRoot: false);
+              },
+            ),
+          )
+        : null,
     body: SafeArea(
       child: Center(
         child: ConstrainedBox(

@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../data/vet_repository.dart';
+import '../core/utils/vet_nav.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/figma_action_target.dart';
+import '../widgets/vet/vet_bottom_nav.dart';
 
 double _measureTextHeight({
   required InlineSpan text,
@@ -36,6 +38,25 @@ class HomePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      bottomNavigationBar:
+          MediaQuery.sizeOf(context).width < VH.desktopBreakpoint
+          ? SafeArea(
+              top: false,
+              child: VetBottomNav(
+                selectedIndex: -1,
+                compact: true,
+                onSelected: (index) =>
+                    vetNavigate(context, index, selected: -1, isTabRoot: false),
+              ),
+            )
+          : SizedBox(
+              height: 88,
+              child: VetBottomNav(
+                selectedIndex: -1,
+                onSelected: (index) =>
+                    vetNavigate(context, index, selected: -1, isTabRoot: false),
+              ),
+            ),
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -50,10 +71,10 @@ class HomePage extends StatelessWidget {
             final widthScale = (constraints.maxWidth / 390)
                 .clamp(0.0, 1.0)
                 .toDouble();
-            final scale = math.min(
-              widthScale,
-              math.max(0.8, constraints.maxHeight / 844),
-            );
+            final heightScale = (constraints.maxHeight / 844)
+                .clamp(0.0, 1.0)
+                .toDouble();
+            final scale = math.min(widthScale, heightScale);
             final profileTargetHeight = math.max(48.0, 56 * scale);
             final textScaler = MediaQuery.textScalerOf(context);
             final textDirection = Directionality.of(context);

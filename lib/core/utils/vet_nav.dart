@@ -1,5 +1,51 @@
 import 'package:flutter/material.dart';
 
+class VetRouteMenuButton extends StatelessWidget {
+  const VetRouteMenuButton({super.key, required this.onSelected});
+
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<int>(
+    tooltip: 'Trocar de tela',
+    padding: EdgeInsets.zero,
+    icon: const Icon(Icons.apps_rounded),
+    onSelected: onSelected,
+    itemBuilder: (context) => const [
+      PopupMenuItem(value: 0, child: Text('Pets')),
+      PopupMenuItem(value: 1, child: Text('Perfil')),
+      PopupMenuItem(value: 2, child: Text('Conversa')),
+      PopupMenuItem(value: 3, child: Text('Agenda')),
+      PopupMenuItem(value: 4, child: Text('Configurações')),
+    ],
+  );
+}
+
+Future<bool> vetConfirmLeavingForm(
+  BuildContext context, {
+  required String title,
+  required String message,
+}) async {
+  final shouldLeave = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Continuar editando'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Sair sem salvar'),
+        ),
+      ],
+    ),
+  );
+  return context.mounted && shouldLeave == true;
+}
+
 /// Barra inferior (igual ao Figma):
 /// 0 Pets · 1 Perfil · 2 WhatsApp · 3 Agenda · 4 Configurações
 ///

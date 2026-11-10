@@ -430,10 +430,25 @@ class AddressEditorPage extends StatelessWidget {
   final SavedAddress? address;
   final bool modal;
 
+  Future<void> _navigateFromModal(BuildContext context, int index) async {
+    final canLeave = await vetConfirmLeavingForm(
+      context,
+      title: 'Sair da edição?',
+      message:
+          'Se você ainda não salvou, as alterações do endereço serão '
+          'descartadas ao trocar de tela.',
+    );
+    if (!canLeave || !context.mounted) return;
+    vetNavigate(context, index, selected: 4, isTabRoot: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final desktop = MediaQuery.sizeOf(context).width >= 900;
     final compactEditor = address != null && !desktop;
+    final mobileNavigationHeight = (50 - MediaQuery.paddingOf(context).bottom)
+        .clamp(0.0, 50.0)
+        .toDouble();
     final form = AddressForm(
       figmaEditLayout: compactEditor,
       pinSaveAction: address == null && !desktop,
@@ -456,6 +471,12 @@ class AddressEditorPage extends StatelessWidget {
         final saved = await VetRepository.flush();
         if (context.mounted) Navigator.pop(context, saved);
       },
+      routeButton: modal && compactEditor
+          ? VetRouteMenuButton(
+              key: const ValueKey('address-editor-modal-route-menu'),
+              onSelected: (index) => _navigateFromModal(context, index),
+            )
+          : null,
       onDelete: (value) async {
         final confirmed = await showDialog<bool>(
           context: context,
@@ -518,21 +539,42 @@ class AddressEditorPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: VetColors.pink,
       appBar: compactEditor ? null : AppBar(backgroundColor: VetColors.pink),
-      body: SafeArea(
-        child: compactEditor
-            ? LayoutBuilder(
-                builder: (context, constraints) => SingleChildScrollView(
-                  key: const ValueKey('address-editor-viewport'),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: constraints.maxWidth,
-                      minHeight: constraints.maxHeight,
+      bottomNavigationBar: VetBottomNav(
+        key: const ValueKey('address-editor-bottom-navigation'),
+        selectedIndex: 4,
+        compact: !desktop,
+        onSelected: (index) async {
+          final canLeave = await vetConfirmLeavingForm(
+            context,
+            title: 'Sair da edição?',
+            message:
+                'Se você ainda não salvou, as alterações deste formulário '
+                'serão descartadas ao trocar de tela.',
+          );
+          if (!canLeave || !context.mounted) return;
+          vetNavigate(context, index, selected: 4, isTabRoot: false);
+        },
+      ),
+      body: Padding(
+        padding: EdgeInsets.only(
+          top: compactEditor ? mobileNavigationHeight : 0,
+        ),
+        child: SafeArea(
+          child: compactEditor
+              ? LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    key: const ValueKey('address-editor-viewport'),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: constraints.maxWidth,
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(child: _editorPanel(form)),
                     ),
-                    child: Center(child: _editorPanel(form)),
                   ),
-                ),
-              )
-            : form,
+                )
+              : form,
+        ),
       ),
     );
   }

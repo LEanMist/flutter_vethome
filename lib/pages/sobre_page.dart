@@ -8,7 +8,6 @@ class SobreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => VHPage(
     tab: '/sobre',
-    showBottomNav: false,
     children: [
       const VHHeader('Sobre a veterinária'),
       Padding(
