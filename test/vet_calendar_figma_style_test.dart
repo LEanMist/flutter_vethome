@@ -553,6 +553,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Agenda vazia oculta as setas dos cartões', (tester) async {
+    await pumpAgenda(
+      tester,
+      const Size(390, 844),
+      initialDate: DateTime(2026, 2, 17),
+    );
+
+    expect(find.text('Não há consultas neste dia.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('agenda-chevron-up')), findsNothing);
+    expect(find.byKey(const ValueKey('agenda-chevron-down')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('agenda-new-appointment-target')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Agenda seis semanas não sobrepõe a data selecionada em 320 px', (
     tester,
   ) async {

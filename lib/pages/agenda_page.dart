@@ -252,48 +252,50 @@ class _AgendaScreenState extends State<AgendaScreen> {
             scale,
             topOffset: contentOffset,
           ),
-          Positioned(
-            left: 345 * scale,
-            top: 435 * scale + contentOffset,
-            width: 20 * scale,
-            height: 20 * scale,
-            child: SizedBox.expand(
-              key: const ValueKey('agenda-chevron-up'),
-              child: ExcludeSemantics(
-                child: Center(
-                  child: Transform.rotate(
-                    angle: -math.pi / 2,
-                    child: SvgPicture.asset(
-                      _agendaChevronUp,
-                      width: 11 * scale,
-                      height: 19.6299 * scale,
+          if (appointments.isNotEmpty) ...[
+            Positioned(
+              left: 345 * scale,
+              top: 435 * scale + contentOffset,
+              width: 20 * scale,
+              height: 20 * scale,
+              child: SizedBox.expand(
+                key: const ValueKey('agenda-chevron-up'),
+                child: ExcludeSemantics(
+                  child: Center(
+                    child: Transform.rotate(
+                      angle: -math.pi / 2,
+                      child: SvgPicture.asset(
+                        _agendaChevronUp,
+                        width: 11 * scale,
+                        height: 19.6299 * scale,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            left: 345 * scale,
-            top: 560 * scale + contentOffset,
-            width: 20 * scale,
-            height: 20 * scale,
-            child: SizedBox.expand(
-              key: const ValueKey('agenda-chevron-down'),
-              child: ExcludeSemantics(
-                child: Center(
-                  child: Transform.rotate(
-                    angle: math.pi / 2,
-                    child: SvgPicture.asset(
-                      _agendaChevronDown,
-                      width: 11 * scale,
-                      height: 19.6299 * scale,
+            Positioned(
+              left: 345 * scale,
+              top: 560 * scale + contentOffset,
+              width: 20 * scale,
+              height: 20 * scale,
+              child: SizedBox.expand(
+                key: const ValueKey('agenda-chevron-down'),
+                child: ExcludeSemantics(
+                  child: Center(
+                    child: Transform.rotate(
+                      angle: math.pi / 2,
+                      child: SvgPicture.asset(
+                        _agendaChevronDown,
+                        width: 11 * scale,
+                        height: 19.6299 * scale,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
