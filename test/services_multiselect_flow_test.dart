@@ -9,6 +9,7 @@ import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/screens/pets.dart'
     show ConvenioScreen, ServicosScreen;
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
 class _MemoryStorage extends LocalStorage {
   int writes = 0;
@@ -268,6 +269,23 @@ void main() {
     },
   );
 
+  testWidgets('Serviços fixa Continuar em alturas intermediárias', (
+    tester,
+  ) async {
+    for (final size in [const Size(390, 800), const Size(390, 760)]) {
+      await openServices(tester, size: size);
+
+      final continueButton = find.byKey(const ValueKey('services-continue'));
+      final navigationTop = tester.getTopLeft(find.byType(VetBottomNav)).dy;
+      expect(
+        tester.getRect(continueButton).bottom,
+        lessThanOrEqualTo(navigationTop),
+        reason: 'Continuar deve ficar visível em $size.',
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('Serviços fixa Continuar em desktop de altura reduzida', (
     tester,
   ) async {
@@ -381,6 +399,32 @@ void main() {
     } finally {
       semantics.dispose();
     }
+  });
+
+  testWidgets('Convênio mantém Particular visível em 320x640', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previousPet = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previousPet);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
+    await tester.pumpAndSettle();
+
+    final particular = find.byKey(
+      const ValueKey('convenio-plan-pill-Particular'),
+    );
+    final navigationTop = tester.getTopLeft(find.byType(VetBottomNav)).dy;
+    expect(
+      tester.getRect(particular).bottom,
+      lessThanOrEqualTo(navigationTop),
+      reason: 'A opção Particular precisa aparecer acima da navegação.',
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('dois serviços chegam ao agendamento e geram um registro', (

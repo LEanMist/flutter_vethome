@@ -614,7 +614,7 @@ class _LandingMobileServiceCard extends StatelessWidget {
               fontSize: 16,
               height: 1.245,
               fontWeight: FontWeight.w500,
-              color: VetColors.brown,
+              color: VetColors.calendarTextOnRose,
             ),
           ),
         ),

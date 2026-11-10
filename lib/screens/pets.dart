@@ -368,8 +368,12 @@ class _ServicosScreenState extends State<ServicosScreen> {
         ? VetRepository.petById(routePetId)
         : VetRepository.selectedPet;
     if (pet == null) return const PetsPage();
-    final desktop = MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint;
-    final shortViewport = MediaQuery.sizeOf(context).height < 760;
+    final media = MediaQuery.of(context);
+    final desktop = media.size.width >= VH.desktopBreakpoint;
+    final availableHeight =
+        media.size.height - media.padding.top - media.viewInsets.bottom;
+    // The Figma button ends at y=775 and the compact bottom navigation is 50 px.
+    final shortViewport = availableHeight < 825;
     final species = switch (pet.species?.trim().toLowerCase()) {
       'cachorro' || 'cão' => 'CÃO',
       'gato' => 'GATO',
@@ -1083,6 +1087,24 @@ class ConvenioScreen extends StatelessWidget {
     if (pet == null) return const PetsPage();
     final routeService = service ?? values['service'];
     final selectedService = routeService is String ? routeService.trim() : '';
+    final media = MediaQuery.of(context);
+    const planHeight = 59.0;
+    const navigationHeight = 50.0;
+    const headerHeight = 157.0;
+    const initialGap = 116.0;
+    const planGap = 60.0;
+    const finalPlanGap = 63.0;
+    final referenceGaps = initialGap + planGap + planGap + finalPlanGap;
+    final availableGaps =
+        media.size.height -
+        media.padding.top -
+        media.viewInsets.bottom -
+        navigationHeight -
+        headerHeight -
+        4 * planHeight;
+    final mobileSpacingScale = (availableGaps / referenceGaps)
+        .clamp(0.0, 1.0)
+        .toDouble();
     return VHPage(
       tab: '/convenio',
       compactBottomNav: true,
@@ -1114,13 +1136,13 @@ class ConvenioScreen extends StatelessWidget {
                   // FRAME 22 (4010:387): PetLove em y=273, Doglife em
                   // y=392 e Particular em y=633. O frame também mostra uma
                   // faixa sem rótulo em y=511; ela não vira opção selecionável.
-                  const SizedBox(height: 116),
+                  SizedBox(height: initialGap * mobileSpacingScale),
                   _figmaPlan(context, pet.id, selectedService, 'PetLove'),
-                  const SizedBox(height: 60),
+                  SizedBox(height: planGap * mobileSpacingScale),
                   _figmaPlan(context, pet.id, selectedService, 'DogLife'),
-                  const SizedBox(height: 60),
+                  SizedBox(height: planGap * mobileSpacingScale),
                   _figmaUnnamedPlan(),
-                  const SizedBox(height: 63),
+                  SizedBox(height: finalPlanGap * mobileSpacingScale),
                   _figmaPlan(context, pet.id, selectedService, 'Particular'),
                 ],
               ),

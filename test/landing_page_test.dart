@@ -46,6 +46,40 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Landing móvel: cartões de serviços mantêm contraste AA', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: LandingPage()));
+    await tester.pumpAndSettle();
+
+    final cardSurface = Color.alphaBlend(
+      VetColors.rose.withValues(alpha: .8),
+      VetColors.pink,
+    );
+    for (final (asset, label) in const [
+      ('landing-service-home.jpg', 'Atendimento a\ndomicílio'),
+      ('landing-service-exams.jpg', 'Exames'),
+      ('landing-service-vaccines.jpg', 'Vacinas'),
+    ]) {
+      final text = tester.widget<Text>(
+        find.byKey(ValueKey('landing-service-label-$asset')),
+      );
+      expect(text.data, label);
+      expect(text.style?.color, VetColors.calendarTextOnRose);
+      expect(
+        _contrastRatio(text.style!.color!, cardSurface),
+        greaterThanOrEqualTo(4.5),
+        reason: 'Rótulo $label no cartão móvel',
+      );
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Landing: seta de serviços mantém ícone e alvo de toque', (
     tester,
   ) async {
