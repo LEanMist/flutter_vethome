@@ -54,7 +54,7 @@ class VetHeader extends StatelessWidget {
                             onTap: () => Navigator.maybePop(context),
                             child: Icon(
                               Icons.arrow_back,
-                              color: Colors.white,
+                              color: VetColors.brown,
                               size: 22 * s,
                             ),
                           ),

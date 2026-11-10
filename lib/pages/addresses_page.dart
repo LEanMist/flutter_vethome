@@ -28,7 +28,7 @@ class _AddressesPageState extends State<AddressesPage> {
     fontFamily: PetsTheme.fontComfortaa,
     fontSize: 18,
     fontWeight: FontWeight.bold,
-    color: VetColors.brown,
+    color: VetColors.brownOnRoseCard,
   );
 
   static const _valueStyle = TextStyle(

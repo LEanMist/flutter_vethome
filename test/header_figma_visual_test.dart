@@ -5,6 +5,18 @@ import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/vet/vet_header.dart';
 
+double _contrastRatio(Color first, Color second) {
+  final firstLuminance = first.computeLuminance();
+  final secondLuminance = second.computeLuminance();
+  final lighter = firstLuminance > secondLuminance
+      ? firstLuminance
+      : secondLuminance;
+  final darker = firstLuminance > secondLuminance
+      ? secondLuminance
+      : firstLuminance;
+  return (lighter + .05) / (darker + .05);
+}
+
 void main() {
   const viewports = <Size>[Size(320, 640), Size(390, 844), Size(1280, 800)];
 
@@ -78,6 +90,16 @@ void main() {
       );
       expect(decoration.boxShadow, isNull);
       expect(find.text('Endereços'), findsOneWidget);
+      final backIcon = tester.widget<Icon>(find.byIcon(Icons.arrow_back));
+      expect(backIcon.color, VetColors.brown);
+      final backButtonSurface = Color.alphaBlend(
+        Colors.white.withValues(alpha: .2),
+        VetColors.rose,
+      );
+      expect(
+        _contrastRatio(backIcon.color!, backButtonSurface),
+        greaterThanOrEqualTo(3),
+      );
       expect(tester.takeException(), isNull);
     }
   });

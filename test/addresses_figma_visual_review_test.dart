@@ -123,7 +123,7 @@ void main() {
       expect(text.style?.fontFamily, PetsTheme.fontComfortaa);
       expect(text.style?.fontWeight, FontWeight.bold);
       expect(text.style?.fontSize, size);
-      expect(text.style?.color, VetColors.brown);
+      expect(text.style?.color, VetColors.brownOnRoseCard);
     }
     for (final valueFinder in [
       find.text('Casa da Irmã'),
@@ -145,6 +145,13 @@ void main() {
       _contrastRatio(cardTextColor, cardBackground),
       greaterThanOrEqualTo(4.5),
     );
+    for (final label in ['Nome:', 'Endereço:']) {
+      final text = tester.widget<Text>(find.text(label));
+      expect(
+        _contrastRatio(text.style!.color!, cardBackground),
+        greaterThanOrEqualTo(4.5),
+      );
+    }
 
     final newAddressButton = find.widgetWithText(
       ElevatedButton,
