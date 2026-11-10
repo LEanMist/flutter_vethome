@@ -39,6 +39,8 @@ void main() {
     expect(form.dataPrefix, 'client.');
     expect(form.fields, hasLength(7));
     expect(byName['Gênero/Sexo'], isNull);
+    expect(byName['Data de Nascimento']!.value, '05 / 02 / 2007');
+    expect(byName['CPF']!.value, '534.356.874 - 94');
 
     // O protótipo apresenta valores ilustrativos como dicas;
     // os controles reais devem iniciar vazios e as senhas ocultas.
