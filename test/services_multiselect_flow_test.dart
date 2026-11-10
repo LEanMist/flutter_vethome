@@ -1,7 +1,8 @@
 import 'dart:ui' show CheckedState;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
@@ -10,6 +11,12 @@ import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/screens/pets.dart'
     show ConvenioScreen, ServicosScreen;
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
+
+double _contrastRatio(Color first, Color second) {
+  final luminances = [first.computeLuminance(), second.computeLuminance()]
+    ..sort((a, b) => b.compareTo(a));
+  return (luminances.first + 0.05) / (luminances.last + 0.05);
+}
 
 class _MemoryStorage extends LocalStorage {
   int writes = 0;
@@ -35,6 +42,32 @@ void main() {
     storage = _MemoryStorage();
     await VetRepository.initialize(storage: storage);
   });
+
+  test(
+    'marcador selecionado mantém contraste gráfico de pelo menos 3:1',
+    () async {
+      const selectedAsset =
+          'assets/imagens/figma/services-checkbox-selected.svg';
+      final svg = await rootBundle.loadString(selectedAsset);
+      final fill = RegExp(
+        r'<path[^>]*fill="#68442E"[^>]*fill-opacity="([0-9.]+)"',
+      ).firstMatch(svg);
+
+      expect(fill, isNotNull, reason: 'O marcador deve manter a cor definida.');
+      final opacity = double.parse(fill!.group(1)!);
+      const surface = Color(0xFFECBEC0);
+      final visibleFill = Color.alphaBlend(
+        const Color(0xFF68442E).withValues(alpha: opacity),
+        surface,
+      );
+
+      expect(
+        _contrastRatio(visibleFill, surface),
+        greaterThanOrEqualTo(3),
+        reason: 'O preenchimento precisa se distinguir do fundo das opções.',
+      );
+    },
+  );
 
   Future<void> openServices(
     WidgetTester tester, {
@@ -401,9 +434,7 @@ void main() {
     }
   });
 
-  testWidgets('Convênio mantém Particular visível em 320x640', (
-    tester,
-  ) async {
+  testWidgets('Convênio mantém Particular visível em 320x640', (tester) async {
     tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -423,6 +454,58 @@ void main() {
       tester.getRect(particular).bottom,
       lessThanOrEqualTo(navigationTop),
       reason: 'A opção Particular precisa aparecer acima da navegação.',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Convênio não trunca os planos com texto ampliado a 200%', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previousPet = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previousPet);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const ConvenioScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (final plan in ['PetLove', 'Doglife', 'Particular']) {
+      final label = find.text(plan);
+      expect(label, findsOneWidget);
+      final textWidget = tester.widget<Text>(label);
+      expect(textWidget.data, plan);
+      expect(textWidget.maxLines, isNull);
+      expect(textWidget.overflow, isNull);
+      expect(
+        tester.renderObject<RenderParagraph>(label).didExceedMaxLines,
+        isFalse,
+        reason: '$plan deve continuar legível com texto a 200%.',
+      );
+    }
+    final particular = find.byKey(
+      const ValueKey('convenio-plan-pill-Particular'),
+    );
+    await tester.ensureVisible(particular);
+    await tester.pumpAndSettle();
+    final navigationTop = tester.getTopLeft(find.byType(VetBottomNav)).dy;
+    expect(
+      tester.getRect(particular).bottom,
+      lessThanOrEqualTo(navigationTop),
+      reason:
+          'Particular deve permanecer alcançável a 200% sem ficar sob a navegação.',
     );
     expect(tester.takeException(), isNull);
   });

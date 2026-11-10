@@ -1074,6 +1074,13 @@ class _ServiceCategoryVisual {
 class ConvenioScreen extends StatelessWidget {
   const ConvenioScreen({super.key, this.service});
 
+  static const _planTitleStyle = TextStyle(
+    fontFamily: VH.bodyFontFamily,
+    fontWeight: FontWeight.bold,
+    fontSize: 20,
+    color: VetColors.brownOnRose,
+  );
+
   /// Service received from the completed selection flow or an explicit caller.
   final String? service;
 
@@ -1088,20 +1095,56 @@ class ConvenioScreen extends StatelessWidget {
     final routeService = service ?? values['service'];
     final selectedService = routeService is String ? routeService.trim() : '';
     final media = MediaQuery.of(context);
-    const planHeight = 59.0;
     const navigationHeight = 50.0;
     const headerHeight = 157.0;
     const initialGap = 116.0;
     const planGap = 60.0;
     const finalPlanGap = 63.0;
     final referenceGaps = initialGap + planGap + planGap + finalPlanGap;
+    final compactLargeTextPlans =
+        media.size.height <= 640 && media.textScaler.scale(20) >= 36;
+    final allowPlanTitleWrap = media.textScaler.scale(20) > 20.5;
+    final planVerticalPadding = compactLargeTextPlans ? 5.0 : 10.0;
+    final effectivePlanTitleStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.merge(_planTitleStyle);
+    double planCardHeight(String label) {
+      final labelLayout = TextPainter(
+        text: TextSpan(text: label, style: effectivePlanTitleStyle),
+        textDirection: Directionality.of(context),
+        textScaler: media.textScaler,
+      );
+      const labelWidth = 254.0 - 15 - 12 - 30 - 18;
+      double measuredTextHeight;
+      if (allowPlanTitleWrap) {
+        labelLayout.layout(maxWidth: labelWidth);
+        measuredTextHeight = labelLayout.height;
+      } else {
+        labelLayout.layout();
+        final fitScale = math.min(1.0, labelWidth / labelLayout.width);
+        measuredTextHeight = labelLayout.height * fitScale;
+      }
+      final height = math.max(
+        59.0,
+        measuredTextHeight + planVerticalPadding * 2,
+      );
+      labelLayout.dispose();
+      return height;
+    }
+
+    final plansHeight = [
+      planCardHeight('PetLove'),
+      planCardHeight('Doglife'),
+      59.0,
+      planCardHeight('Particular'),
+    ].fold<double>(0, (total, height) => total + height);
     final availableGaps =
         media.size.height -
         media.padding.top -
         media.viewInsets.bottom -
         navigationHeight -
         headerHeight -
-        4 * planHeight;
+        plansHeight;
     final mobileSpacingScale = (availableGaps / referenceGaps)
         .clamp(0.0, 1.0)
         .toDouble();
@@ -1137,13 +1180,31 @@ class ConvenioScreen extends StatelessWidget {
                   // y=392 e Particular em y=633. O frame também mostra uma
                   // faixa sem rótulo em y=511; ela não vira opção selecionável.
                   SizedBox(height: initialGap * mobileSpacingScale),
-                  _figmaPlan(context, pet.id, selectedService, 'PetLove'),
+                  _figmaPlan(
+                    context,
+                    pet.id,
+                    selectedService,
+                    'PetLove',
+                    verticalPadding: planVerticalPadding,
+                  ),
                   SizedBox(height: planGap * mobileSpacingScale),
-                  _figmaPlan(context, pet.id, selectedService, 'DogLife'),
+                  _figmaPlan(
+                    context,
+                    pet.id,
+                    selectedService,
+                    'DogLife',
+                    verticalPadding: planVerticalPadding,
+                  ),
                   SizedBox(height: planGap * mobileSpacingScale),
                   _figmaUnnamedPlan(),
                   SizedBox(height: finalPlanGap * mobileSpacingScale),
-                  _figmaPlan(context, pet.id, selectedService, 'Particular'),
+                  _figmaPlan(
+                    context,
+                    pet.id,
+                    selectedService,
+                    'Particular',
+                    verticalPadding: planVerticalPadding,
+                  ),
                 ],
               ),
             ),
@@ -1299,9 +1360,12 @@ class ConvenioScreen extends StatelessWidget {
     BuildContext context,
     String petId,
     String service,
-    String plan,
-  ) {
+    String plan, {
+    required double verticalPadding,
+  }) {
     void open() => _openPlan(context, petId, service, plan);
+    final allowPlanTitleWrap =
+        MediaQuery.of(context).textScaler.scale(20) > 20.5;
     final radius = switch (plan) {
       'PetLove' => const BorderRadius.only(
         topRight: Radius.circular(800),
@@ -1347,7 +1411,12 @@ class ConvenioScreen extends StatelessWidget {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(minHeight: 59),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(15, 10, 12, 10),
+                      padding: EdgeInsets.fromLTRB(
+                        15,
+                        verticalPadding,
+                        12,
+                        verticalPadding,
+                      ),
                       child: Row(
                         children: [
                           SizedBox(
@@ -1357,17 +1426,19 @@ class ConvenioScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 18),
                           Expanded(
-                            child: Text(
-                              plan == 'DogLife' ? 'Doglife' : plan,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontFamily: VH.bodyFontFamily,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                color: VetColors.brownOnRose,
-                              ),
-                            ),
+                            child: allowPlanTitleWrap
+                                ? Text(
+                                    plan == 'DogLife' ? 'Doglife' : plan,
+                                    style: _planTitleStyle,
+                                  )
+                                : FittedBox(
+                                    alignment: Alignment.centerLeft,
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      plan == 'DogLife' ? 'Doglife' : plan,
+                                      style: _planTitleStyle,
+                                    ),
+                                  ),
                           ),
                         ],
                       ),

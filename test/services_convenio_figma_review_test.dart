@@ -185,6 +185,9 @@ void main() {
     // Montserrat Alternates Bold, 20 px.
     for (final label in ['PetLove', 'Doglife', 'Particular']) {
       final title = tester.widget<Text>(find.text(label));
+      expect(title.data, label);
+      expect(title.maxLines, isNull);
+      expect(title.overflow, isNull);
       expect(title.style?.fontFamily, 'MontserratAlternates');
       expect(title.style?.fontSize, 20);
       expect(title.style?.fontWeight, FontWeight.bold);

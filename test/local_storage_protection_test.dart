@@ -657,6 +657,45 @@ void main() {
     expect(find.byType(TextField), findsNothing);
   });
 
+  testWidgets('tela crítica mantém recuperação acessível com texto a 200%', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: CriticalStorageErrorPage(
+          status: LocalLoadStatus.invalid,
+          onClear: () async => true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final action = find.byKey(const ValueKey('critical-storage-clear'));
+    expect(action, findsOneWidget);
+    await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+
+    final safeArea = tester.getRect(find.byType(SafeArea));
+    expect(
+      tester.getRect(action).bottom,
+      lessThanOrEqualTo(safeArea.bottom),
+      reason: 'A ação de recuperação deve continuar alcançável na tela baixa.',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   for (final status in [LocalLoadStatus.invalid, LocalLoadStatus.unavailable]) {
     testWidgets('tela crítica representa $status sem expor rotas normais', (
       tester,
