@@ -644,3 +644,8 @@ O escopo inicial desta etapa é o visual das telas Pets e Perfil. Também foi au
 - O preenchimento do marcador de serviço selecionado passou de 50% para 75% de opacidade, mantendo cor-base e contorno. Sobre o fundo `#ECBEC0`, o contraste calculado sobe de 2,08:1 (`#AA8177`) para 3,19:1 (`#896353`). Um teste lê o SVG real e protege o mínimo gráfico de 3:1.
 - Validação final: suíte completa `flutter test --no-pub --reporter compact --concurrency=2` — **630 passaram e 3 foram ignorados**; `flutter analyze --no-pub` sem problemas; `flutter build web --release --no-pub` aprovado em 64,2 s com dry run Wasm aprovado; formatação e `git diff --check` aprovados.
 - A captura visual manual não foi executada nesta rodada; a correção de overflow e as geometrias Figma foram validadas pelos testes de widgets. A prévia em `http://127.0.0.1:7363` pode ser recarregada para inspeção.
+
+## Legibilidade de horários indisponíveis (10/11/2026)
+- Horários ocupados continuam desabilitados, mas o texto agora usa marrom opaco em vez de marrom com 35% de opacidade. Um teste cria conflito real de 13:00–14:00, confirma que 14:00 não pode ser selecionado e calcula o contraste composto do texto, verificando ao menos 4,5:1.
+- Validação: suíte completa `flutter test --no-pub --reporter compact --concurrency=2` — **631 passaram e 3 foram ignorados**; `flutter analyze --no-pub` sem problemas; `flutter build web --release --no-pub` aprovado em 62,3 s; formatação e `git diff --check` aprovados.
+- A verificação visual manual não foi executada nesta rodada; comportamento e legibilidade foram cobertos pelo teste de widget.

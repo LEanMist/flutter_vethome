@@ -783,7 +783,7 @@ class _TimeChoicesState extends State<_TimeChoices> {
                             ),
                             foregroundColor: WidgetStateProperty.resolveWith(
                               (states) => states.contains(WidgetState.disabled)
-                                  ? VetColors.brown.withValues(alpha: .35)
+                                  ? VetColors.brown
                                   : widget.selected?.hour == options[index]
                                   ? Colors.white
                                   : VetColors.calendarTextOnRose,

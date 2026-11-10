@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
+import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
@@ -249,6 +250,75 @@ void main() {
     } finally {
       semanticsHandle.dispose();
     }
+  });
+
+  testWidgets('horário ocupado permanece desabilitado e legível', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final pet = VetRepository.pets.first;
+    final conflict = Agendamento(
+      data: DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 13),
+      endDate: DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 14),
+      tipo: 'Conflito para teste',
+      veterinario: 'Dra. Ana Silva',
+      local: 'Teste',
+      status: StatusAgendamento.pendente,
+    );
+    VetRepository.addAgendamento(pet.id, conflict);
+    addTearDown(() => VetRepository.removeAgendamento(pet.id, conflict));
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: NovaConsultaPage(
+          pet: pet,
+          service: 'Hemograma',
+          plan: 'Particular',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final endControl = find.byKey(
+      const ValueKey('appointment-booking-end-time'),
+    );
+    await tester.ensureVisible(endControl);
+    await tester.tap(endControl);
+    await tester.pumpAndSettle();
+
+    final disabledButton = tester.widget<ElevatedButton>(
+      find.byKey(const ValueKey('time-choice-14')),
+    );
+    expect(disabledButton.onPressed, isNull);
+    final states = const <WidgetState>{WidgetState.disabled};
+    final disabledBackground = disabledButton.style!.backgroundColor!.resolve(
+      states,
+    )!;
+    final disabledForeground = disabledButton.style!.foregroundColor!.resolve(
+      states,
+    )!;
+    final visibleBackground = Color.alphaBlend(
+      disabledBackground,
+      VetColors.pink,
+    );
+    final visibleForeground = Color.alphaBlend(
+      disabledForeground,
+      visibleBackground,
+    );
+
+    expect(
+      _contrastRatio(visibleForeground, visibleBackground),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(tester.takeException(), isNull);
+    await tester.tapAt(const Offset(195, 100));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('time-choice-panel')), findsNothing);
   });
 }
 
