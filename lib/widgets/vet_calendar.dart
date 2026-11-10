@@ -765,11 +765,15 @@ class _CalendarDayState extends State<_CalendarDay> {
                         Positioned(
                           bottom: 2 * widget.scale,
                           child: CircleAvatar(
-                            radius: 2 * widget.scale,
-                            backgroundColor: widget.selected
-                                ? VH.onSecondary
-                                : widget.indicatorColor ??
-                                      VetColors.calendarTextOnRose,
+                            radius: 3 * widget.scale,
+                            backgroundColor: VetColors.calendarTextOnRose,
+                            child: CircleAvatar(
+                              radius: 2 * widget.scale,
+                              backgroundColor: widget.selected
+                                  ? VH.onSecondary
+                                  : widget.indicatorColor ??
+                                        VetColors.calendarTextOnRose,
+                            ),
                           ),
                         ),
                     ],

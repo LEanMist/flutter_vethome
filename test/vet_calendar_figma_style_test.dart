@@ -241,6 +241,52 @@ void main() {
     expect(outsideText.style?.fontWeight, FontWeight.w500);
   });
 
+  testWidgets('ponto branco de consulta mantém contorno com contraste', (
+    tester,
+  ) async {
+    await pumpCalendar(
+      tester,
+      viewport: const Size(390, 844),
+      month: DateTime(2026, 10),
+      selected: DateTime(2026, 10, 10),
+      agendaPageStyle: true,
+    );
+
+    final appointmentDay = find.byKey(
+      const ValueKey('calendar-2026-10-9-surface'),
+    );
+    final markerFinder = find.descendant(
+      of: appointmentDay,
+      matching: find.byType(CircleAvatar),
+    );
+    final markers = tester.widgetList<CircleAvatar>(markerFinder).toList();
+    expect(markers, hasLength(2));
+
+    final outlineFinder = markerFinder.first;
+    final centerFinder = markerFinder.last;
+    final outline = markers.first;
+    final center = markers.last;
+    final panelSurface = Color.alphaBlend(
+      VetColors.pink.withValues(alpha: .3),
+      VetColors.rose,
+    );
+
+    expect(outline.radius, 3);
+    expect(tester.getSize(outlineFinder), const Size.square(6));
+    expect(outline.backgroundColor, VetColors.calendarTextOnRose);
+    expect(center.radius, 2);
+    expect(tester.getSize(centerFinder), const Size.square(4));
+    expect(center.backgroundColor, Colors.white);
+    expect(
+      _contrastRatio(outline.backgroundColor!, panelSurface),
+      greaterThanOrEqualTo(3),
+    );
+    expect(
+      _contrastRatio(center.backgroundColor!, outline.backgroundColor!),
+      greaterThanOrEqualTo(3),
+    );
+  });
+
   testWidgets('calendário de consulta permite avançar o mês por gesto', (
     tester,
   ) async {
