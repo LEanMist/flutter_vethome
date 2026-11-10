@@ -29,12 +29,23 @@ class _PetSummaryState extends State<PetSummary> {
   Widget build(BuildContext context) {
     final pet = VetRepository.petById(widget.pet.id) ?? widget.pet;
     final detailed = widget.size == PetSummarySize.detailed;
-    final avatarSize = switch (widget.size) {
-      PetSummarySize.compact => 48.0,
-      PetSummarySize.medium => 64.0,
-      PetSummarySize.detailed => 116.0,
-    };
+    final compactDetailed = detailed && MediaQuery.sizeOf(context).width < 360;
+    final avatarSize = compactDetailed
+        ? 100.0
+        : switch (widget.size) {
+            PetSummarySize.compact => 48.0,
+            PetSummarySize.medium => 64.0,
+            PetSummarySize.detailed => 116.0,
+          };
+    final avatarGap = compactDetailed ? 8.0 : 20.0;
     final secondary = TextStyle(color: VetColors.brown, fontSize: 12);
+    final editAction = widget.onEdit == null
+        ? null
+        : IconButton(
+            tooltip: 'Editar',
+            onPressed: widget.onEdit,
+            icon: const Icon(Icons.edit_outlined, size: 20),
+          );
     final profile = VetRepository.perfil(pet.id);
     Widget datum(String label, String value) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -102,7 +113,7 @@ class _PetSummaryState extends State<PetSummary> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 20),
+                    SizedBox(width: avatarGap),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,11 +122,11 @@ class _PetSummaryState extends State<PetSummary> {
                             header: detailed,
                             child: Text(
                               pet.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: VetColors.brown,
                                 fontFamily: 'Comfortaa',
                                 fontWeight: FontWeight.bold,
-                                fontSize: 18,
+                                fontSize: compactDetailed ? 16 : 18,
                               ),
                             ),
                           ),
@@ -137,24 +148,25 @@ class _PetSummaryState extends State<PetSummary> {
                         ],
                       ),
                     ),
-                    if (widget.onEdit != null)
-                      IconButton(
-                        tooltip: 'Editar',
-                        onPressed: widget.onEdit,
-                        icon: const Icon(Icons.edit_outlined, size: 20),
-                      ),
+                    if (!compactDetailed && editAction != null) editAction,
                   ],
                 ),
                 if (detailed) ...[
                   Align(
                     alignment: Alignment.centerRight,
-                    child: AnimatedRotation(
-                      turns: expanded ? .5 : 0,
-                      duration: const Duration(milliseconds: 220),
-                      child: const Icon(
-                        Icons.expand_more,
-                        color: VetColors.brown,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (compactDetailed && editAction != null) editAction,
+                        AnimatedRotation(
+                          turns: expanded ? .5 : 0,
+                          duration: const Duration(milliseconds: 220),
+                          child: const Icon(
+                            Icons.expand_more,
+                            color: VetColors.brown,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   AnimatedSize(

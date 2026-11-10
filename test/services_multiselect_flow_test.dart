@@ -268,6 +268,17 @@ void main() {
     },
   );
 
+  testWidgets('Serviços fixa Continuar em desktop de altura reduzida', (
+    tester,
+  ) async {
+    await openServices(tester, size: const Size(1280, 720));
+
+    final continueButton = find.byKey(const ValueKey('services-continue'));
+    expect(continueButton, findsOneWidget);
+    expect(tester.getRect(continueButton).bottom, lessThanOrEqualTo(720));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('serviços mobile não adiciona seta e ainda pode voltar', (
     tester,
   ) async {

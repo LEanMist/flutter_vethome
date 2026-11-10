@@ -275,6 +275,105 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('novo endereço mantém Salvar visível com texto a 200%', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const AddressEditorPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final footer = find.byKey(
+      const ValueKey('address-form-pinned-save-footer'),
+    );
+    expect(footer, findsOneWidget);
+    expect(tester.getRect(footer).bottom, lessThanOrEqualTo(456));
+    expect(
+      tester.getRect(find.text('Salvar endereço')).bottom,
+      lessThanOrEqualTo(456),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('novo endereço mantém Salvar acima do teclado aberto', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.pumpWidget(const MaterialApp(home: AddressEditorPage()));
+    await tester.pumpAndSettle();
+
+    final footer = find.byKey(
+      const ValueKey('address-form-pinned-save-footer'),
+    );
+    expect(footer, findsOneWidget);
+    expect(tester.getRect(footer).bottom, lessThanOrEqualTo(360));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('novo endereço permite confirmar com teclado e texto a 200%', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const AddressEditorPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final footer = find.byKey(
+      const ValueKey('address-form-pinned-save-footer'),
+    );
+    final saveButton = find.widgetWithText(ElevatedButton, 'Salvar endereço');
+    expect(footer, findsOneWidget);
+    expect(tester.getRect(footer).bottom, lessThanOrEqualTo(200));
+    expect(tester.getRect(saveButton).bottom, lessThanOrEqualTo(200));
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Informe um CEP com 8 números'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('editor Figma mantém Salvar acessível em tela baixa', (
     tester,
   ) async {

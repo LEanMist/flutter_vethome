@@ -6,6 +6,47 @@ import 'package:flutter_vethome/models/pet_model.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
 
 void main() {
+  testWidgets('Detalhes mantém nome e raça legíveis em largura estreita', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final pet = PetModel(
+      id: 'pet-summary-narrow',
+      name: 'Fernando',
+      imagePath: '',
+      description: '',
+      species: 'Cachorro',
+      breed: 'Lulu-do-Pomerânia',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: PetSummary(
+              pet: pet,
+              size: PetSummarySize.detailed,
+              onEdit: () {},
+              onPhoto: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.getSize(find.text('Fernando')).height, lessThanOrEqualTo(24));
+    expect(
+      tester.getSize(find.text('Cachorro · Lulu-do-Pomerânia')).height,
+      lessThanOrEqualTo(54),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Detalhes do pet anuncia o estado expandido', (tester) async {
     final semantics = tester.ensureSemantics();
     try {
