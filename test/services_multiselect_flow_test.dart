@@ -339,6 +339,41 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Serviços desktop baixo mostra as categorias sem rolagem', (
+    tester,
+  ) async {
+    await openServices(tester, size: const Size(1280, 720));
+
+    final scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(SingleChildScrollView),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(
+      scrollable.position.maxScrollExtent,
+      0,
+      reason: 'As categorias de Serviços devem caber antes da navegação.',
+    );
+    expect(find.text('V8'), findsNothing);
+    expect(find.text('Antirrábica'), findsNothing);
+
+    await tester.tap(
+      find.byKey(const ValueKey('services-category-semantics-Vacinas')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('V8'), findsOneWidget);
+    expect(find.text('Antirrábica'), findsOneWidget);
+    expect(find.text('Hemograma'), findsNothing);
+    expect(
+      scrollable.position.maxScrollExtent,
+      0,
+      reason: 'Trocar de categoria não deve exigir rolagem.',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('serviços mobile não adiciona seta e ainda pode voltar', (
     tester,
   ) async {

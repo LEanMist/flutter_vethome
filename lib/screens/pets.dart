@@ -313,15 +313,37 @@ class _ServicosScreenState extends State<ServicosScreen> {
   final Set<String> _expanded = {'Exames', 'Vacinas'};
   final Set<String> _interactedCategories = <String>{};
   final Set<String> _selected = <String>{};
+  String? _desktopExpandedCategory = 'Exames';
 
   static const _selectedServiceMarker =
       'assets/imagens/figma/services-checkbox-selected.svg';
   static const _unselectedServiceMarker =
       'assets/imagens/figma/services-checkbox-unselected.svg';
 
+  bool _isCategoryExpanded(String name) {
+    if (MediaQuery.sizeOf(context).width < VH.desktopBreakpoint) {
+      return _expanded.contains(name);
+    }
+    return _desktopExpandedCategory == name && _expanded.contains(name);
+  }
+
   void _toggleCategory(String name) => setState(() {
     _interactedCategories.add(name);
-    if (!_expanded.remove(name)) _expanded.add(name);
+    final desktop = MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint;
+    if (desktop) {
+      if (_desktopExpandedCategory == name && _expanded.contains(name)) {
+        _desktopExpandedCategory = null;
+        _expanded.remove(name);
+      } else {
+        _desktopExpandedCategory = name;
+        _expanded.add(name);
+      }
+    } else if (!_expanded.remove(name)) {
+      _expanded.add(name);
+      _desktopExpandedCategory = name;
+    } else if (_desktopExpandedCategory == name) {
+      _desktopExpandedCategory = _expanded.isEmpty ? null : _expanded.first;
+    }
   });
 
   void _toggleService(String name) => setState(() {
@@ -565,7 +587,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
 
     final visual = _ServiceCategoryVisual.forName(name);
     final dynamicArrow = _interactedCategories.contains(name)
-        ? _expanded.contains(name)
+        ? _isCategoryExpanded(name)
               ? _ServiceCategoryArrow.down
               : _ServiceCategoryArrow.right
         : visual.arrow;
@@ -682,7 +704,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                   icon: RotatedBox(
                     quarterTurns:
                         _interactedCategories.contains(name) &&
-                            _expanded.contains(name)
+                            _isCategoryExpanded(name)
                         ? 1
                         : 0,
                     child: selected
@@ -773,7 +795,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
             onPressed: () => _toggleCategory(name),
             icon: Transform.translate(
               offset: const Offset(3, 0),
-              child: _expanded.contains(name)
+              child: _isCategoryExpanded(name)
                   ? const Icon(Icons.keyboard_arrow_down, color: VH.foreground)
                   : const VetChevron(),
             ),
@@ -802,6 +824,8 @@ class _ServicosScreenState extends State<ServicosScreen> {
                   'Microchipagem' => 22,
                   _ => 20,
                 }
+              : MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint
+              ? 4
               : 14,
         ),
         child: Column(
@@ -814,7 +838,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
               checked: directChoice
                   ? _selected.contains(entry.value.single)
                   : null,
-              expanded: directChoice ? null : _expanded.contains(entry.key),
+              expanded: directChoice ? null : _isCategoryExpanded(entry.key),
               onTap: categoryAction,
               child: ExcludeSemantics(
                 child: _servicePill(
@@ -831,7 +855,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
             AnimatedSize(
               duration: const Duration(milliseconds: 240),
               alignment: Alignment.topLeft,
-              child: directChoice || !_expanded.contains(entry.key)
+              child: directChoice || !_isCategoryExpanded(entry.key)
                   ? const SizedBox(width: 228)
                   : ClipRRect(
                       borderRadius: const BorderRadius.only(
@@ -866,6 +890,11 @@ class _ServicosScreenState extends State<ServicosScreen> {
                                                     ).width <
                                                     VH.compactBreakpoint
                                                 ? 101 / 3
+                                                : MediaQuery.sizeOf(
+                                                        context,
+                                                      ).width >=
+                                                      VH.desktopBreakpoint
+                                                ? 44
                                                 : 48,
                                           ),
                                           child: ExcludeSemantics(
