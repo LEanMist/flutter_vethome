@@ -186,6 +186,11 @@ void main() {
       final semantics = tester.ensureSemantics();
       try {
         expect(
+          find.bySemanticsLabel(RegExp(r'^Resumo demonstrativo:')),
+          findsOneWidget,
+        );
+        expect(find.text('Demonstração'), findsNWidgets(3));
+        expect(
           find.bySemanticsLabel(RegExp(r'^Vacina demonstrativa:')),
           findsNWidgets(3),
         );

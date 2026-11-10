@@ -172,11 +172,17 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                contagemVacinas(vaccines),
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              Semantics(
+                label: demo
+                    ? 'Resumo demonstrativo: ${contagemVacinas(vaccines)}'
+                    : null,
+                excludeSemantics: demo,
+                child: Text(
+                  contagemVacinas(vaccines),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               if (demo) ...[const SizedBox(height: 6), const DemoBadge()],
@@ -475,6 +481,10 @@ class _VacinaCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
+          if (isDemonstration) ...[
+            const DemoBadge(label: 'Demonstração'),
+            const SizedBox(height: 4),
+          ],
           Text(
             'Aplicada: ${fmtData(vaccine.aplicada)}',
             style: const TextStyle(fontSize: 12),
