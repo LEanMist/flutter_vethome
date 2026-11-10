@@ -188,6 +188,8 @@ class _PetsPageState extends State<PetsPage> {
 
   Widget _petCard(BuildContext context, int index) => PetCardWidget(
     pet: VetRepository.pets[index],
+    raised: true,
+    semanticLabel: 'Abrir detalhes de ${VetRepository.pets[index].name}',
     onTap: () async {
       VetRepository.selectedPetId = VetRepository.pets[index].id;
       await Navigator.pushNamed(

@@ -14,36 +14,56 @@ class PetCardWidget extends StatelessWidget {
   final PetModel pet;
   final VoidCallback? onTap;
   final Color nameColor;
+  final bool raised;
+  final String? semanticLabel;
 
   const PetCardWidget({
     super.key,
     required this.pet,
     this.onTap,
     this.nameColor = VetColors.brownOnRose,
+    this.raised = false,
+    this.semanticLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    return Container(
-      decoration: inset_shadow.BoxDecoration(
-        color: VetColors.roseOverlay50,
-        borderRadius: BorderRadius.circular(25 * s),
-        boxShadow: const [
-          inset_shadow.BoxShadow(
-            color: VetColors.shadowDark,
-            offset: Offset(2, 2),
-            blurRadius: 2,
-            inset: true,
-          ),
-        ],
-      ),
+    final Decoration decoration = raised
+        ? BoxDecoration(
+            color: VetColors.roseOverlay50,
+            borderRadius: BorderRadius.circular(25 * s),
+            boxShadow: [
+              BoxShadow(
+                color: VetColors.brown.withValues(alpha: .12),
+                offset: const Offset(0, 2),
+                blurRadius: 6,
+              ),
+            ],
+          )
+        : inset_shadow.BoxDecoration(
+            color: VetColors.roseOverlay50,
+            borderRadius: BorderRadius.circular(25 * s),
+            boxShadow: const [
+              inset_shadow.BoxShadow(
+                color: VetColors.shadowDark,
+                offset: Offset(2, 2),
+                blurRadius: 2,
+                inset: true,
+              ),
+            ],
+          );
+    final card = Container(
+      decoration: decoration,
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(25 * s),
         child: InkWell(
           borderRadius: BorderRadius.circular(25 * s),
           onTap: onTap,
+          mouseCursor: onTap == null
+              ? MouseCursor.defer
+              : SystemMouseCursors.click,
           overlayColor: WidgetStateProperty.resolveWith(VH.interactionOverlay),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: 52 * s),
@@ -82,6 +102,15 @@ class PetCardWidget extends StatelessWidget {
           ),
         ),
       ),
+    );
+    if (semanticLabel == null) return card;
+
+    return Semantics(
+      container: true,
+      button: onTap != null,
+      label: semanticLabel,
+      onTap: onTap,
+      child: ExcludeSemantics(child: card),
     );
   }
 }

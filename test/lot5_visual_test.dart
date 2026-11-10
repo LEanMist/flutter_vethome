@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show SemanticsAction;
 import 'package:flutter/services.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_test/flutter_test.dart';
@@ -29,7 +30,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
   }
 
-  testWidgets('D8 keeps the 390px panel and gives pet rows an inset shadow', (
+  testWidgets('D8 keeps the 390px panel and softly raises pet rows', (
     tester,
   ) async {
     viewport(tester, const Size(390, 844));
@@ -92,15 +93,14 @@ void main() {
           find.descendant(of: card, matching: find.byType(DecoratedBox)),
         )
         .map((widget) => widget.decoration)
-        .whereType<inset_shadow.BoxDecoration>()
+        .whereType<BoxDecoration>()
         .single;
     expect(decoration.color, VetColors.roseOverlay50);
     expect(decoration.borderRadius, BorderRadius.circular(25));
-    final shadow = decoration.boxShadow!.single as inset_shadow.BoxShadow;
-    expect(shadow.inset, isTrue);
-    expect(shadow.color, VetColors.shadowDark);
-    expect(shadow.offset, const Offset(2, 2));
-    expect(shadow.blurRadius, 2);
+    final shadow = decoration.boxShadow!.single;
+    expect(shadow.color, VetColors.brown.withValues(alpha: .12));
+    expect(shadow.offset, const Offset(0, 2));
+    expect(shadow.blurRadius, 6);
 
     final avatar = find.descendant(of: card, matching: find.byType(PetAvatar));
     final name = find.descendant(of: card, matching: find.text('Fernando'));
@@ -115,6 +115,24 @@ void main() {
     expect(chevron.color, VetColors.brownOnRose);
     expect(chevron.strokeWidth, 3);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cartão da lista tem um único rótulo acessível e acionável', (
+    tester,
+  ) async {
+    viewport(tester, const Size(390, 844));
+    final semantics = tester.ensureSemantics();
+    try {
+      await tester.pumpWidget(const MaterialApp(home: PetsPage()));
+
+      final card = find.byType(PetCardWidget).first;
+      final node = tester.getSemantics(card);
+      expect(node.label, 'Abrir detalhes de Fernando');
+      expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('D8 stays usable at 320px and in pet choice', (tester) async {
