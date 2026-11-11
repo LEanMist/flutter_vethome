@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../service/utils/formatters.dart';
 import '../../data/mock/vet_mock.dart';
 import '../../data/pet_repository.dart';
+import '../../data/session.dart';
+import '../../service/utils/formatters.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -14,8 +15,8 @@ class AgendaScreen extends StatefulWidget {
 }
 
 class _AgendaScreenState extends State<AgendaScreen> {
-  DateTime _mes = DateTime(2026, 1);
-  DateTime _selecionado = DateTime(2026, 1, 13);
+  DateTime _mes = DateTime.now();
+  DateTime _selecionado = DateTime.now();
 
   static const meses = [
     'Janeiro',
@@ -149,10 +150,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                 ),
                               ),
                             ),
-                            if (_isDemoDate(
-                                  DateTime(_mes.year, _mes.month, date),
-                                ) ||
-                                _hasAppointment(
+                            if (_hasAppointment(
                                   DateTime(_mes.year, _mes.month, date),
                                 ))
                               const Positioned(
@@ -194,66 +192,16 @@ class _AgendaScreenState extends State<AgendaScreen> {
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           child: Column(
             children: [
-              if (_isDemoDate(_selecionado))
-                for (final consulta in const [
-                  (hora: '10:00', tipo: 'Hemograma'),
-                  (hora: '13:00', tipo: 'Urina'),
-                  (hora: '16:00', tipo: 'Creatinina'),
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: VH.card,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: VH.raise,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            consulta.hora,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  consulta.tipo,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const Text(
-                                  'Fernando · VetHome',
-                                  style: TextStyle(fontSize: 11),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            '${(int.parse(consulta.hora.substring(0, 2)) + 1).toString().padLeft(2, '0')}:00',
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
               if (consultasDoDia.isEmpty)
-                if (!_isDemoDate(_selecionado))
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 22),
-                    child: Text('Não há consultas neste dia.'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 22),
+                  child: Text(
+                    Session.isLoggedIn
+                        ? 'Não há consultas para ${Session.clientName} neste dia.'
+                        : 'Não há consultas neste dia.',
+                    textAlign: TextAlign.center,
                   ),
+                ),
               for (final item in consultasDoDia)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 14),
@@ -289,7 +237,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                 ),
                               ),
                               Text(
-                                '${item.pet.name} · ${item.agendamento.local}',
+                                '${Session.isLoggedIn ? '${Session.clientName} · ' : ''}${item.pet.name} · ${item.agendamento.local}',
                                 style: const TextStyle(fontSize: 11),
                               ),
                             ],
@@ -326,9 +274,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
-
-  bool _isDemoDate(DateTime date) =>
-      date.year == 2026 && date.month == 1 && date.day == 13;
 
   bool _hasAppointment(DateTime date) => PetRepository.pets.any(
         (pet) => VetMock.agendamentos(

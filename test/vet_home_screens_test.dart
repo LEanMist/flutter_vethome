@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_vethome/data/mock/vet_mock.dart';
 import 'package:flutter_vethome/data/pet_repository.dart';
+import 'package:flutter_vethome/data/session.dart';
+import 'package:flutter_vethome/models/pet_model.dart';
+import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/pets/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/cliente/perfil_page.dart';
 import 'package:flutter_vethome/pages/consultas/agenda_page.dart';
@@ -115,15 +119,54 @@ testWidgets('formulario usa enums para tipo e sexo do animal', (tester) async {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('agenda mostra janeiro de 2026 e consultas de exemplo', (
+  testWidgets('agenda mostra o pet e o cliente ativos em vez do exemplo fixo', (
     tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: AgendaScreen()));
+    final originalPets = List<PetModel>.from(PetRepository.pets);
+    final originalClientName = Session.clientName;
+    final originalClientCpf = Session.clientCpf;
+    PetRepository.pets
+      ..clear()
+      ..add(
+        PetModel(
+          name: 'Luna',
+          imagePath: 'assets/imagens/pets/img_cachorroegato_png.png',
+          description: 'Cachorro • 2 anos • Fêmea',
+          species: 'Cachorro',
+          sex: 'Fêmea',
+          weightKg: 10.0,
+          birthDate: DateTime(2023, 4, 17),
+          breed: 'Shih Tzu',
+          neutered: true,
+        ),
+      );
+    Session.clientName = 'Maria Souza';
+    Session.clientCpf = '12345678909';
+    final hoje = DateTime.now();
+    VetMock.addAgendamento(
+      'Luna',
+      Agendamento(
+        data: DateTime(hoje.year, hoje.month, hoje.day, 10, 0),
+        tipo: 'Consulta Geral',
+        veterinario: 'Dra. Ana Silva',
+        local: 'VetHome',
+        status: StatusAgendamento.confirmado,
+      ),
+    );
+    addTearDown(() {
+      PetRepository.pets
+        ..clear()
+        ..addAll(originalPets);
+      Session.clientName = originalClientName;
+      Session.clientCpf = originalClientCpf;
+    });
 
-    expect(find.text('Janeiro 2026'), findsOneWidget);
-    expect(find.text('Hemograma'), findsOneWidget);
-    expect(find.text('Creatinina'), findsOneWidget);
-    expect(find.text('Urina'), findsOneWidget);
+    await tester.pumpWidget(const MaterialApp(home: AgendaScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Fernando'), findsNothing);
+    expect(find.textContaining('Luna'), findsWidgets);
+    expect(find.textContaining('Maria Souza'), findsWidgets);
   });
 
   testWidgets('configuracoes nao mostra voltar e mantem navegacao inferior', (

@@ -156,20 +156,6 @@ class VetMock {
   }
 
   static List<Agendamento> agendamentos(String pet) => [
-    Agendamento(
-      data: _hoje.add(const Duration(days: 5, hours: 14, minutes: 30)),
-      tipo: 'Consulta Geral',
-      veterinario: 'Dra. Ana Silva',
-      local: 'Clínica VetHome',
-      status: StatusAgendamento.confirmado,
-    ),
-    Agendamento(
-      data: _hoje.add(const Duration(days: 20, hours: 10)),
-      tipo: 'Vacinação',
-      veterinario: 'Dr. João Mendes',
-      local: 'Unidade Central',
-      status: StatusAgendamento.pendente,
-    ),
     ...?_novosAgendamentos[pet],
   ];
 }

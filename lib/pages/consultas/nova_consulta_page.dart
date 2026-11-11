@@ -31,9 +31,45 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   final _description = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _ajustarHorario();
+  }
+
+  @override
   void dispose() {
     _description.dispose();
     super.dispose();
+  }
+
+  void _mostrarMensagem(String texto) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
+  }
+
+  static TimeOfDay _parseHorario(String horario) {
+    final partes = horario.split(':');
+    return TimeOfDay(hour: int.parse(partes[0]), minute: int.parse(partes[1]));
+  }
+
+  /// Consulta no backend os horários livres da data escolhida e, se o horário
+  /// selecionado não estiver livre, troca pelo primeiro disponível.
+  Future<void> _ajustarHorario() async {
+    try {
+      final livres = await ConsultaService.horariosDisponiveis(_date);
+      if (!mounted) return;
+      if (livres.isEmpty) {
+        _mostrarMensagem('Não há horários disponíveis nesta data.');
+        return;
+      }
+      final atual =
+          '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}';
+      if (!livres.contains(atual)) {
+        setState(() => _time = _parseHorario(livres.first));
+      }
+    } catch (_) {
+      // Sem conexão agora: o backend valida de novo ao confirmar.
+    }
   }
 
   Future<void> _chooseDate() async {
@@ -44,11 +80,26 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       firstDate: DateTime(now.year, now.month, now.day),
       lastDate: DateTime(now.year + 2),
     );
-    if (date != null && mounted) setState(() => _date = date);
+    if (date != null && mounted) {
+      setState(() => _date = date);
+      await _ajustarHorario();
+    }
   }
 
   Future<void> _chooseTime() async {
-    const options = [12, 13, 14, 15, 16];
+    final List<String> livres;
+    try {
+      livres = await ConsultaService.horariosDisponiveis(_date);
+    } catch (e) {
+      _mostrarMensagem(e.toString().replaceFirst('Exception: ', ''));
+      return;
+    }
+    if (!mounted) return;
+    if (livres.isEmpty) {
+      _mostrarMensagem('Não há horários disponíveis nesta data.');
+      return;
+    }
+
     final time = await showDialog<TimeOfDay>(
       context: context,
       builder: (context) => AlertDialog(
@@ -58,18 +109,22 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (final hour in options)
-              ChoiceChip(
-                label: Text('${hour.toString().padLeft(2, '0')}:00'),
-                selected: _time.hour == hour && _time.minute == 0,
-                selectedColor: VetColors.roseDark,
-                labelStyle: TextStyle(
-                  color: _time.hour == hour && _time.minute == 0
-                      ? Colors.white
-                      : VetColors.brown,
-                ),
-                onSelected: (_) =>
-                    Navigator.pop(context, TimeOfDay(hour: hour, minute: 0)),
+            for (final horario in livres)
+              Builder(
+                builder: (context) {
+                  final opcao = _parseHorario(horario);
+                  final selecionado =
+                      _time.hour == opcao.hour && _time.minute == opcao.minute;
+                  return ChoiceChip(
+                    label: Text(horario),
+                    selected: selecionado,
+                    selectedColor: VetColors.roseDark,
+                    labelStyle: TextStyle(
+                      color: selecionado ? Colors.white : VetColors.brown,
+                    ),
+                    onSelected: (_) => Navigator.pop(context, opcao),
+                  );
+                },
               ),
           ],
         ),
@@ -136,7 +191,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Não foi possível criar a consulta: $e')),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     }
   }
