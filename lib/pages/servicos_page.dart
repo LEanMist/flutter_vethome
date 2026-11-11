@@ -25,6 +25,25 @@ class ServicosPage extends StatefulWidget {
 }
 
 class _ServicosPageState extends State<ServicosPage> {
+  static const _gradienteCategorias = LinearGradient(
+    begin:  Alignment(-1, -4),
+    end: Alignment(1, 4),
+    colors: [VetCores.rosaEscuro, VetCores.rosaFundo],
+    stops: [0, 1.0],
+  );
+  static const _bordaExames = BorderRadius.only(
+    topRight: Radius.circular(50),
+    bottomRight: Radius.circular(20),
+  );
+  static const _bordaCircular = BorderRadius.only(
+    topRight: Radius.circular(20),
+    bottomRight: Radius.circular(20),
+  );
+  static const _bordaAtestados = BorderRadius.only(
+    topRight: Radius.circular(20),
+    bottomRight: Radius.circular(50),
+  );
+
   static const _servicosPorCategoria =
       <CategoriaServico, List<ServicoAgendamento>>{
         CategoriaServico.exames: [
@@ -77,6 +96,9 @@ class _ServicosPageState extends State<ServicosPage> {
         ],
       };
 
+  final Set<CategoriaServico> _categoriasExpandidas = {
+    CategoriaServico.exames,
+  };
   final Map<String, ServicoAgendamento> _servicosSelecionados = {};
 
   AgendamentoRepository get _repository =>
@@ -146,6 +168,20 @@ class _ServicosPageState extends State<ServicosPage> {
     });
   }
 
+  BorderRadius _bordaDaCategoria(CategoriaServico categoria) {
+    if (categoria == CategoriaServico.exames) return _bordaExames;
+    if (categoria == CategoriaServico.atestados) return _bordaAtestados;
+    return _bordaCircular;
+  }
+
+  void _alternarCategoria(CategoriaServico categoria) {
+    setState(() {
+      if (!_categoriasExpandidas.remove(categoria)) {
+        _categoriasExpandidas.add(categoria);
+      }
+    });
+  }
+
   Widget _categoria(CategoriaServico categoria, IconData icone) {
     final servicos = _servicosPorCategoria[categoria]!;
     if (categoria == CategoriaServico.microchipagem ||
@@ -153,33 +189,82 @@ class _ServicosPageState extends State<ServicosPage> {
       return _categoriaSimples(categoria, icone, servicos.single);
     }
 
+    final expandida = _categoriasExpandidas.contains(categoria);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: VetCores.rosaEscuro.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(20),
-        clipBehavior: Clip.antiAlias,
-        child: Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            key: ValueKey('categoria-${categoria.name}'),
-            tilePadding: const EdgeInsets.symmetric(horizontal: 14),
-            childrenPadding: const EdgeInsets.only(bottom: 8),
-            leading: Icon(icone, color: VetCores.branco),
-            title: Text(
-              categoria.label,
-              style: GoogleFonts.comfortaa(
-                color: VetCores.branco,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: Colors.transparent,
+            borderRadius: _bordaDaCategoria(categoria),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              key: ValueKey('categoria-${categoria.name}'),
+              onTap: () => _alternarCategoria(categoria),
+              child: Ink(
+                decoration: const BoxDecoration(
+                  gradient: _gradienteCategorias,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 56),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Row(
+                      children: [
+                        Icon(icone, color: VetCores.branco),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            categoria.label,
+                            style: GoogleFonts.montserratAlternates(
+                              color: VetCores.branco,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        AnimatedRotation(
+                          turns: expandida ? 0.5 : 0,
+                          duration: const Duration(milliseconds: 180),
+                          child: const Icon(
+                            Icons.expand_more_rounded,
+                            color: VetCores.marrom,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-            iconColor: VetCores.marrom,
-            collapsedIconColor: VetCores.marrom,
-            initiallyExpanded: categoria == CategoriaServico.exames,
-            children: [for (final servico in servicos) _opcaoServico(servico)],
           ),
-        ),
+          if (expandida)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: 0.75,
+                  child: Material(
+                    color: VetCores.rosaEscuro.withValues(alpha: 0.25),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final servico in servicos)
+                          _opcaoServico(servico),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -193,34 +278,36 @@ class _ServicosPageState extends State<ServicosPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: VetCores.rosaEscuro.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.transparent,
+        borderRadius: _bordaDaCategoria(categoria),
         clipBehavior: Clip.antiAlias,
-        child: ListTile(
-          key: ValueKey('categoria-${categoria.name}'),
-          minTileHeight: 52,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-          leading: Icon(icone, color: VetCores.branco),
-          title: Text(
-            categoria.label,
-            style: GoogleFonts.comfortaa(
-              color: VetCores.branco,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+        child: DecoratedBox(
+          decoration: const BoxDecoration(gradient: _gradienteCategorias),
+          child: ListTile(
+            key: ValueKey('categoria-${categoria.name}'),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+            leading: Icon(icone, color: VetCores.branco),
+            title: Text(
+              categoria.label,
+              style: GoogleFonts.montserratAlternates(
+                color: VetCores.branco,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          trailing: Checkbox(
-            key: ValueKey('servico-${servico.id}'),
-            value: selecionado,
-            onChanged: (value) => _alternarServico(servico, value ?? false),
-            activeColor: VetCores.rosaEscuro,
-            checkColor: VetCores.branco,
-            visualDensity: VisualDensity.compact,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
+            trailing: Checkbox(
+              key: ValueKey('servico-${servico.id}'),
+              value: selecionado,
+              onChanged: (value) => _alternarServico(servico, value ?? false),
+              activeColor: VetCores.marrom50,
+              checkColor: VetCores.branco,
+              visualDensity: VisualDensity.compact,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
+            onTap: () => _alternarServico(servico, !selecionado),
           ),
-          onTap: () => _alternarServico(servico, !selecionado),
         ),
       ),
     );
@@ -239,40 +326,47 @@ class _ServicosPageState extends State<ServicosPage> {
       dense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 18),
       controlAffinity: ListTileControlAffinity.trailing,
-      activeColor: VetCores.rosaEscuro,
+      activeColor: VetCores.marrom50,
       checkboxShape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
       ),
     );
   }
 
-  Widget _categoriaAlinhada(CategoriaServico categoria, IconData icone) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Align(
-          alignment: Alignment.centerLeft,
-          child: SizedBox(
-            width: constraints.maxWidth * 0.86,
-            child: _categoria(categoria, icone),
-          ),
-        );
-      },
+  Widget _categoriaAlinhada(
+    CategoriaServico categoria,
+    IconData icone,
+    double largura,
+  ) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(width: largura, child: _categoria(categoria, icone)),
     );
   }
 
-  Widget _listaCategorias() {
+  Widget _listaCategorias(double larguraCategoria) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      padding: const EdgeInsets.fromLTRB(0, 16, 16, 12),
       children: [
-        _categoriaAlinhada(CategoriaServico.exames, Icons.biotech_rounded),
-        _categoriaAlinhada(CategoriaServico.vacinas, Icons.vaccines_rounded),
+        _categoriaAlinhada(
+          CategoriaServico.exames,
+          Icons.biotech_rounded,
+          larguraCategoria,
+        ),
+        _categoriaAlinhada(
+          CategoriaServico.vacinas,
+          Icons.vaccines_rounded,
+          larguraCategoria,
+        ),
         _categoriaAlinhada(
           CategoriaServico.microchipagem,
           Icons.memory_rounded,
+          larguraCategoria,
         ),
         _categoriaAlinhada(
           CategoriaServico.atestados,
           Icons.assignment_rounded,
+          larguraCategoria,
         ),
       ],
     );
@@ -287,82 +381,93 @@ class _ServicosPageState extends State<ServicosPage> {
 
     return Scaffold(
       backgroundColor: VetCores.rosaFundo,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-              decoration: const BoxDecoration(
-                color: VetCores.rosaEscuro,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(24),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool compacto =
+            constraints.maxWidth < 500 || constraints.maxHeight < 700;
+          final double alturaCabecalho = compacto ? 140 : 160;
+          final larguraCategoria = constraints.maxWidth * 0.86;
+          final double larguraBotao = compacto ? 150 : 250;
+          final double alturaBotao = compacto ? 50 : 60;
+
+          return Column(
+            children: [
+              Container(
+                width: double.infinity,
+                height: alturaCabecalho,
+                padding: const EdgeInsets.fromLTRB(2, 25, 8, 20),
+                decoration: BoxDecoration(
+                  color: VetCores.rosaEscuro,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(20),
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        tooltip: 'Voltar',
-                        onPressed: _confirmarSaida,
-                        icon: const Icon(Icons.arrow_back),
-                        color: VetCores.branco,
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Serviços',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.comfortaa(
-                            color: VetCores.branco,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Voltar',
+                          onPressed: _confirmarSaida,
+                          icon: const Icon(Icons.arrow_back),
+                          color: VetCores.branco,
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Serviços',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.comfortaa(
+                              color: VetCores.branco,
+                              fontSize: compacto ? 30 : 35,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
+                        SizedBox(width: compacto ? 47 : 80),
+                      ],
+                    ),
+                    SizedBox(height: compacto ? 16 : 20),
+                    Text(
+                      '${widget.petNome}  |  $dataFormatada  |  ${widget.rascunho.horario}',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.comfortaa(
+                        color: VetCores.branco,
+                        fontSize: compacto ? 17 : 25,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${widget.petNome}  |  $dataFormatada  |  ${widget.rascunho.horario}',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.comfortaa(
-                      color: VetCores.branco,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Expanded(child: _listaCategorias()),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _continuar,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VetCores.marrom,
-                    foregroundColor: VetCores.branco,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+              SizedBox(height: compacto ? 35 : 16),
+              Expanded(child: _listaCategorias(larguraCategoria)),
+              SafeArea(
+                top: false,
+                child: SizedBox(
+                  width: larguraBotao,
+                  height: alturaBotao,
+                  child: ElevatedButton(
+                    onPressed: _continuar,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VetCores.marrom,
+                      foregroundColor: VetCores.branco,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    'Continuar',
-                    style: GoogleFonts.comfortaa(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    child: Text(
+                      'Continuar',
+                      style: GoogleFonts.comfortaa(
+                        fontSize: compacto ? 18 : 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }

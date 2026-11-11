@@ -161,7 +161,7 @@ class _ContatoPageState extends State<ContatoPage> {
                                       child: DecoratedBox(
                                         decoration: BoxDecoration(
                                           gradient: const LinearGradient(
-                                            begin: Alignment(-1, -4),
+                                            begin:  Alignment(-1, -4),
                                             end: Alignment(1, 4),
                                             colors: [
                                               VetCores.rosaFundo,

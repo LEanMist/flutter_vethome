@@ -126,11 +126,24 @@ void main() {
     expect(find.text('Serviços'), findsOneWidget);
     expect(find.textContaining('Luna'), findsOneWidget);
     expect(find.textContaining('13:00'), findsOneWidget);
-    expect(find.byType(ExpansionTile), findsNWidgets(2));
+    final layoutException = tester.takeException();
+    if (layoutException is FlutterError) {
+      print(layoutException.diagnostics.map((item) => item.toString()).join('\n'));
+    }
+    expect(layoutException, isNull);
+    expect(find.byKey(const ValueKey('categoria-exames')), findsOneWidget);
+    expect(find.byKey(const ValueKey('categoria-vacinas')), findsOneWidget);
+    expect(find.text('Hemograma'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('categoria-exames')));
+    await tester.pumpAndSettle();
+    expect(find.text('Hemograma'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('categoria-exames')));
+    await tester.pumpAndSettle();
+    expect(find.text('Hemograma'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('servico-microchipagem')));
     await tester.pumpAndSettle();
-    expect(find.byType(ExpansionTile), findsNWidgets(2));
     expect(
       tester
           .widget<Checkbox>(find.byKey(const ValueKey('servico-microchipagem')))
