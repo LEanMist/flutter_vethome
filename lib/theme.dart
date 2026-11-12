@@ -7,6 +7,10 @@ class VH {
 
   static final ValueNotifier<Color> themeSeed = ValueNotifier(VetColors.brown);
 
+  static const double desktopBreakpoint = 900;
+  static const String headingFontFamily = 'Comfortaa';
+  static const String bodyFontFamily = 'MontserratAlternates';
+
   static const Color background = VetColors.pink;
   static const Color card = Color(0xFFFFEEEE);
   static const Color muted = Color(0xFFF4C4C6);

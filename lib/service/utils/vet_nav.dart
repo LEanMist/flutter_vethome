@@ -7,6 +7,45 @@ import '../../../pages/config_page.dart';
 import '../../../pages/cliente/perfil_page.dart';
 import '../../../pages/pets/pets_page.dart';
 
+class VetRouteMenuButton extends StatelessWidget {
+  const VetRouteMenuButton({super.key, required this.onSelected});
+
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.menu),
+      onPressed: () => onSelected(0),
+    );
+  }
+}
+
+Future<bool> vetConfirmLeavingForm(
+  BuildContext context, {
+  required String title,
+  required String message,
+}) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Sair'),
+        ),
+      ],
+    ),
+  );
+  return confirmed ?? false;
+}
+
 /// Barra inferior (igual ao Figma):
 /// 0 Pets · 1 Perfil · 2 WhatsApp · 3 Agenda · 4 Configurações
 ///

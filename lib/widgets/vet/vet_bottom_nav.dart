@@ -8,10 +8,12 @@ class VetBottomNav extends StatelessWidget {
     super.key,
     required this.selectedIndex,
     required this.onSelected,
+    this.compact = false,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final bool compact;
 
   static const List<String> _icons = [
     'assets/imagens/figma/pets.png',

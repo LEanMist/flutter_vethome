@@ -37,6 +37,13 @@ class VHField extends StatelessWidget {
     this.keyboardType,
     this.textCapitalization = TextCapitalization.none,
     this.options = const [],
+    this.compact = false,
+    this.figmaForm = false,
+    this.labelAbove = false,
+    this.labelHorizontalPadding,
+    this.labelBottomPadding,
+    this.fitSingleLine = false,
+    this.onChanged,
   });
 
   final String label;
@@ -48,6 +55,13 @@ class VHField extends StatelessWidget {
   final TextInputType? keyboardType;
   final TextCapitalization textCapitalization;
   final List<String> options;
+  final bool compact;
+  final bool figmaForm;
+  final bool labelAbove;
+  final double? labelHorizontalPadding;
+  final double? labelBottomPadding;
+  final bool fitSingleLine;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
