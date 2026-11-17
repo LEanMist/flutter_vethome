@@ -88,76 +88,38 @@ class _ConvenioPageState extends State<ConvenioPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: VetCores.rosaFundo,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
-              decoration: const BoxDecoration(
-                color: VetCores.rosaEscuro,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(24),
+      body: LayoutBuilder(
+        builder:(context, constraints) {
+          final bool compacto =
+            constraints.maxWidth < 500 || constraints.maxHeight < 700;
+          final double alturaCabecalho = compacto ? 140 : 160;
+          return Column(
+            children: [
+              Container(
+                width: double.infinity,
+                height: alturaCabecalho,
+                decoration: const BoxDecoration(
+                  color: VetCores.rosaEscuro,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(24),
+                  ),
+                ),
+                alignment: Alignment.topCenter,
+                padding: const EdgeInsets.only(top: 30),
+                child: Text(
+                  'Contato',
+                  style: GoogleFonts.comfortaa(
+                    color: VetCores.branco,
+                    fontSize: compacto ? 30 : 35,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        tooltip: 'Voltar para serviços',
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.arrow_back),
-                        color: VetCores.branco,
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Convênio',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.comfortaa(
-                            color: VetCores.branco,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: VetCores.rosaFundo.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Text(
-                      _tipoPet,
-                      style: GoogleFonts.comfortaa(
-                        color: VetCores.branco,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    widget.petNome,
-                    style: GoogleFonts.comfortaa(
-                      color: VetCores.branco,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
-                children: [
-                  for (final convenio in _convenios)
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
+                  children: [
+                    for (final convenio in _convenios)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: Material(
@@ -209,37 +171,38 @@ class _ConvenioPageState extends State<ConvenioPage> {
                         ),
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _selecionado == null || _salvando
-                      ? null
-                      : _concluirAgendamento,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VetCores.marrom,
-                    foregroundColor: VetCores.branco,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _selecionado == null || _salvando
+                        ? null
+                        : _concluirAgendamento,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VetCores.marrom,
+                      foregroundColor: VetCores.branco,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    _salvando ? 'Salvando...' : 'Concluir agendamento',
-                    style: GoogleFonts.comfortaa(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    child: Text(
+                      _salvando ? 'Salvando...' : 'Concluir agendamento',
+                      style: GoogleFonts.comfortaa(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }
       ),
     );
   }

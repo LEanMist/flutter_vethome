@@ -5,9 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 
 class ContatoPage extends StatefulWidget {
-  const ContatoPage({super.key, this.usuarioRepository});
+  const ContatoPage({super.key, this.usuarioRepository, this.usuarioId});
 
   final UsuarioRepository? usuarioRepository;
+  final String? usuarioId;
 
   @override
   State<ContatoPage> createState() => _ContatoPageState();
@@ -23,10 +24,13 @@ class _ContatoPageState extends State<ContatoPage> {
 
   String get _nomeUsuario {
     final usuarios = _repository.findAll();
-    if (usuarios.isEmpty || usuarios.first.nome.trim().isEmpty) {
+    final usuario = widget.usuarioId == null
+        ? (usuarios.isEmpty ? null : usuarios.first)
+        : _repository.findById(widget.usuarioId!);
+    if (usuario == null || usuario.nome.trim().isEmpty) {
       return 'Nome não cadastrado';
     }
-    return usuarios.first.nome.trim();
+    return usuario.nome.trim();
   }
 
   @override

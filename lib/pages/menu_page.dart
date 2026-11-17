@@ -3,6 +3,7 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/repositories/pet_repository.dart';
+import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/widgets/pet_card.dart';
 import 'agendamento_page.dart';
 import 'contato_page.dart';
@@ -12,7 +13,10 @@ import 'cadastro_pet_page.dart';
 import '../widgets/circulo_clicavel.dart';
 
 class MenuPage extends StatefulWidget {
-  const MenuPage({super.key});
+  const MenuPage({super.key, this.usuarioRepository, this.usuarioId});
+
+  final UsuarioRepository? usuarioRepository;
+  final String? usuarioId;
 
   @override
   State<MenuPage> createState() => _MenuPage();
@@ -20,6 +24,9 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPage extends State<MenuPage> {
   final repository = InMemoryPetRepository.instance;
+  late final UsuarioRepository _usuarioRepository;
+  late final String? _usuarioId;
+  late final List<Widget> telas;
   late List<Pet> _pets;
   int indiceAtual = 0;
 
@@ -27,6 +34,26 @@ class _MenuPage extends State<MenuPage> {
   void initState() {
     super.initState();
     _pets = repository.findAll();
+    _usuarioRepository =
+        widget.usuarioRepository ?? InMemoryUsuarioRepository.instance;
+    final usuarios = _usuarioRepository.findAll();
+    _usuarioId =
+        widget.usuarioId ?? (usuarios.isEmpty ? null : usuarios.first.id);
+    telas = [
+      PerfilPage(
+        usuarioRepository: _usuarioRepository,
+        usuarioId: _usuarioId,
+      ),
+      ContatoPage(
+        usuarioRepository: _usuarioRepository,
+        usuarioId: _usuarioId,
+      ),
+      AgendamentoPage(
+        usuarioRepository: _usuarioRepository,
+        usuarioId: _usuarioId,
+      ),
+      const ConfiguracoesPage(),
+    ];
   }
 
   void cadastropet() {
@@ -34,7 +61,10 @@ class _MenuPage extends State<MenuPage> {
       context,
       MaterialPageRoute(
         builder: (context) => CadastroPetPage(
-          destinoBuilder: (context) => const MenuPage(),
+          destinoBuilder: (context) => MenuPage(
+            usuarioRepository: _usuarioRepository,
+            usuarioId: _usuarioId,
+          ),
         ),
       ),
     ).then((_) => {
@@ -43,13 +73,6 @@ class _MenuPage extends State<MenuPage> {
       }
     });
   }
-
-  final List<Widget> telas = const [
-    PerfilPage(),
-    ContatoPage(),
-    AgendamentoPage(),
-    ConfiguracoesPage(),
-  ];
 
   Widget _buildPetsPage() {
     return LayoutBuilder(

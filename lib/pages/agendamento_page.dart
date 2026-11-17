@@ -17,11 +17,13 @@ class AgendamentoPage extends StatefulWidget {
     super.key,
     this.petRepository,
     this.usuarioRepository,
+    this.usuarioId,
     this.agendamentoRepository,
   });
 
   final PetRepository? petRepository;
   final UsuarioRepository? usuarioRepository;
+  final String? usuarioId;
   final AgendamentoRepository? agendamentoRepository;
 
   @override
@@ -100,7 +102,8 @@ class _AgendamentoPage extends State<AgendamentoPage> {
     }
 
     final usuarios = _usuarioRepository.findAll();
-    final usuarioId = usuarios.isEmpty ? null : usuarios.first.id;
+    final usuarioId =
+      widget.usuarioId ?? (usuarios.isEmpty ? null : usuarios.first.id);
     if (usuarioId == null || usuarioId.trim().isEmpty) {
       _mostrarMensagem('Cadastre um usuário antes de agendar consulta.');
       return;

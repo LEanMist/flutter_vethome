@@ -9,8 +9,10 @@ import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:image_picker/image_picker.dart';
 
 class PerfilPage extends StatefulWidget {
-  const PerfilPage({super.key, this.usuarioRepository});
+  const PerfilPage({super.key, this.usuarioRepository, this.usuarioId});
+
   final UsuarioRepository? usuarioRepository;
+  final String? usuarioId;
 
   @override
   State<PerfilPage> createState() => _PerfilPage();
@@ -22,6 +24,13 @@ class _PerfilPage extends State<PerfilPage> {
 
   UsuarioRepository get _repository =>
       widget.usuarioRepository ?? InMemoryUsuarioRepository.instance;
+
+  Usuario? get _usuarioAtual {
+    final id = widget.usuarioId;
+    if (id != null) return _repository.findById(id);
+    final usuarios = _repository.findAll();
+    return usuarios.isEmpty ? null : usuarios.first;
+  }
 
   Future<void> _selecionarFoto() async {
     final ImageSource? source = await showModalBottomSheet<ImageSource>(
@@ -58,8 +67,7 @@ class _PerfilPage extends State<PerfilPage> {
       );
       if (picked == null || !mounted) return;
 
-      final usuarios = _repository.findAll();
-      final usuario = usuarios.isEmpty ? null : usuarios.first;
+      final usuario = _usuarioAtual;
       final caminho = await armazenarFotoPerfil(
         picked,
         usuario?.id ?? usuario?.email ?? 'perfil',
@@ -101,13 +109,12 @@ class _PerfilPage extends State<PerfilPage> {
   }
 
   Future<void> _editarNome() async {
-    final usuarios = _repository.findAll();
-    if (usuarios.isEmpty) {
+    final usuario = _usuarioAtual;
+    if (usuario == null) {
       _mostrarMensagem('Cadastre um usuário antes de editar o perfil.');
       return;
     }
 
-    final usuario = usuarios.first;
     var nomeEditado = usuario.nome;
     final novoNome = await showDialog<String>(
       context: context,
@@ -144,13 +151,12 @@ class _PerfilPage extends State<PerfilPage> {
   }
 
   Future<void> _editarDataNascimento() async {
-    final usuarios = _repository.findAll();
-    if (usuarios.isEmpty) {
+    final usuario = _usuarioAtual;
+    if (usuario == null) {
       _mostrarMensagem('Cadastre um usuário antes de editar o perfil.');
       return;
     }
 
-    final usuario = usuarios.first;
     final hoje = DateTime.now();
     final data = await showDatePicker(
       context: context,
@@ -165,8 +171,7 @@ class _PerfilPage extends State<PerfilPage> {
 
   @override
   Widget build(BuildContext context) {
-    final usuarios = _repository.findAll();
-    final usuario = usuarios.isEmpty ? null : usuarios.first;
+    final usuario = _usuarioAtual;
     final fotoPerfilPath = usuario?.fotoPerfilPath ?? _fotoPerfilPath;
     final dataNascimento = usuario?.dataNascimento;
     final dataNascimentoFormatada = dataNascimento == null

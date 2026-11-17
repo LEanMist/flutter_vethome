@@ -25,6 +25,9 @@ class ServicosPage extends StatefulWidget {
 }
 
 class _ServicosPageState extends State<ServicosPage> {
+  static const _alturaOpcaoServico = 48.0;
+  static const _maxServicosVisiveis = 3;
+
   static const _gradienteCategorias = LinearGradient(
     begin:  Alignment(-1, -4),
     end: Alignment(1, 4),
@@ -44,61 +47,158 @@ class _ServicosPageState extends State<ServicosPage> {
     bottomRight: Radius.circular(50),
   );
 
-  static const _servicosPorCategoria =
-      <CategoriaServico, List<ServicoAgendamento>>{
-        CategoriaServico.exames: [
-          ServicoAgendamento(
-            id: 'hemograma',
-            categoria: CategoriaServico.exames,
-            nome: 'Hemograma',
-          ),
-          ServicoAgendamento(
-            id: 'creatinina',
-            categoria: CategoriaServico.exames,
-            nome: 'Creatinina',
-          ),
-          ServicoAgendamento(
-            id: 'urina',
-            categoria: CategoriaServico.exames,
-            nome: 'Urina',
-          ),
-        ],
-        CategoriaServico.vacinas: [
-          ServicoAgendamento(
-            id: 'antirrabica',
-            categoria: CategoriaServico.vacinas,
-            nome: 'Antirrábica',
-          ),
-          ServicoAgendamento(
-            id: 'v8-v10',
-            categoria: CategoriaServico.vacinas,
-            nome: 'V8 / V10',
-          ),
-          ServicoAgendamento(
-            id: 'gripe',
-            categoria: CategoriaServico.vacinas,
-            nome: 'Gripe',
-          ),
-        ],
-        CategoriaServico.microchipagem: [
-          ServicoAgendamento(
-            id: 'microchipagem',
-            categoria: CategoriaServico.microchipagem,
-            nome: 'Microchipagem',
-          ),
-        ],
-        CategoriaServico.atestados: [
-          ServicoAgendamento(
-            id: 'atestado-saude',
-            categoria: CategoriaServico.atestados,
-            nome: 'Atestado de saúde',
-          ),
-        ],
-      };
+  static const _examesComuns = <ServicoAgendamento>[
+    ServicoAgendamento(
+      id: 'hemograma',
+      categoria: CategoriaServico.exames,
+      nome: 'Hemograma',
+    ),
+    ServicoAgendamento(
+      id: 'ureia-creatinina',
+      categoria: CategoriaServico.exames,
+      nome: 'Ureia e creatinina',
+    ),
+    ServicoAgendamento(
+      id: 'alt-ggt',
+      categoria: CategoriaServico.exames,
+      nome: 'ALT e GGT',
+    ),
+    ServicoAgendamento(
+      id: 'fosfatase-alcalina',
+      categoria: CategoriaServico.exames,
+      nome: 'Fosfatase alcalina',
+    ),
+    ServicoAgendamento(
+      id: 'colesterol',
+      categoria: CategoriaServico.exames,
+      nome: 'Colesterol',
+    ),
+    ServicoAgendamento(
+      id: 'trigliceridios',
+      categoria: CategoriaServico.exames,
+      nome: 'Triglicerídios',
+    ),
+    ServicoAgendamento(
+      id: 'urina',
+      categoria: CategoriaServico.exames,
+      nome: 'Urina',
+    ),
+    ServicoAgendamento(
+      id: 'coproparasitologico',
+      categoria: CategoriaServico.exames,
+      nome: 'Coproparasitológico',
+    ),
+  ];
 
-  final Set<CategoriaServico> _categoriasExpandidas = {
-    CategoriaServico.exames,
-  };
+  static const _vacinasGato = <ServicoAgendamento>[
+    ServicoAgendamento(
+      id: 'v3',
+      categoria: CategoriaServico.vacinas,
+      nome: 'V3',
+    ),
+    ServicoAgendamento(
+      id: 'calicivirose',
+      categoria: CategoriaServico.vacinas,
+      nome: 'Calicivirose',
+    ),
+    ServicoAgendamento(
+      id: 'rinotraqueite',
+      categoria: CategoriaServico.vacinas,
+      nome: 'Rinotraqueíte',
+    ),
+    ServicoAgendamento(
+      id: 'v4',
+      categoria: CategoriaServico.vacinas,
+      nome: 'V4',
+    ),
+    ServicoAgendamento(
+      id: 'v5',
+      categoria: CategoriaServico.vacinas,
+      nome: 'V5',
+    ),
+    ServicoAgendamento(
+      id: 'antirrabica',
+      categoria: CategoriaServico.vacinas,
+      nome: 'Antirrábica',
+    ),
+  ];
+
+  static const _vacinasCachorro = <ServicoAgendamento>[
+    ServicoAgendamento(
+      id: 'v8-v10',
+      categoria: CategoriaServico.vacinas,
+      nome: 'V8 e V10',
+    ),
+    ServicoAgendamento(
+      id: 'cinomose',
+      categoria: CategoriaServico.vacinas,
+      nome: 'Cinomose',
+    ),
+    ServicoAgendamento(
+      id: 'parvovirose',
+      categoria: CategoriaServico.vacinas,
+      nome: 'Parvovirose',
+    ),
+    ServicoAgendamento(
+      id: 'adenovirose',
+      categoria: CategoriaServico.vacinas,
+      nome: 'Adenovirose',
+    ),
+    ServicoAgendamento(
+      id: 'leptospirose',
+      categoria: CategoriaServico.vacinas,
+      nome: 'Leptospirose',
+    ),
+    ServicoAgendamento(
+      id: 'antirrabica',
+      categoria: CategoriaServico.vacinas,
+      nome: 'Antirrábica',
+    ),
+    ServicoAgendamento(
+      id: 'giardia',
+      categoria: CategoriaServico.vacinas,
+      nome: 'Giárdia',
+    ),
+    ServicoAgendamento(
+      id: 'gripe-canina',
+      categoria: CategoriaServico.vacinas,
+      nome: 'Gripe dos canis',
+    ),
+  ];
+
+  Map<CategoriaServico, List<ServicoAgendamento>> get _servicosPorCategoria {
+    final gato = widget.petTipo == PetType.gato;
+    final exames = <ServicoAgendamento>[
+      ..._examesComuns,
+      if (gato)
+        const ServicoAgendamento(
+          id: 'fiv-felv',
+          categoria: CategoriaServico.exames,
+          nome: 'FIV e FeLV',
+        ),
+    ];
+
+    return {
+      CategoriaServico.exames: exames,
+      CategoriaServico.vacinas: gato ? _vacinasGato : _vacinasCachorro,
+      CategoriaServico.microchipagem: const [
+        ServicoAgendamento(
+          id: 'microchipagem',
+          categoria: CategoriaServico.microchipagem,
+          nome: 'Microchipagem',
+        ),
+      ],
+      CategoriaServico.atestados: const [
+        ServicoAgendamento(
+          id: 'atestado-saude',
+          categoria: CategoriaServico.atestados,
+          nome: 'Atestado de saúde',
+        ),
+      ],
+    };
+  }
+
+  final Set<CategoriaServico> _categoriasExpandidas = {};
   final Map<String, ServicoAgendamento> _servicosSelecionados = {};
 
   AgendamentoRepository get _repository =>
@@ -240,30 +340,36 @@ class _ServicosPageState extends State<ServicosPage> {
             ),
           ),
           if (expandida)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: FractionallySizedBox(
-                  widthFactor: 0.75,
-                  child: Material(
-                    color: VetCores.rosaEscuro.withValues(alpha: 0.25),
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(20),
-                      bottomRight: Radius.circular(20),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FractionallySizedBox(
+                widthFactor: 0.75,
+                child: Material(
+                  color: VetCores.rosaEscuro.withValues(alpha: 0.25),
+                  borderRadius: const BorderRadius.only(
+                    bottomRight: Radius.circular(20),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxHeight: _alturaOpcaoServico * _maxServicosVisiveis,
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (final servico in servicos)
-                          _opcaoServico(servico),
-                      ],
+                    child: ListView.builder(
+                      key: ValueKey('lista-servicos-${categoria.name}'),
+                      primary: false,
+                      shrinkWrap: true,
+                      itemExtent: _alturaOpcaoServico,
+                      physics: servicos.length > _maxServicosVisiveis
+                          ? const ClampingScrollPhysics()
+                          : const NeverScrollableScrollPhysics(),
+                      itemCount: servicos.length,
+                      itemBuilder: (context, index) =>
+                          _opcaoServico(servicos[index]),
                     ),
                   ),
                 ),
               ),
-            ),
+            )
         ],
       ),
     );
@@ -324,6 +430,7 @@ class _ServicosPageState extends State<ServicosPage> {
         style: GoogleFonts.comfortaa(color: VetCores.marrom, fontSize: 14),
       ),
       dense: true,
+      visualDensity: const VisualDensity(vertical: -1),
       contentPadding: const EdgeInsets.symmetric(horizontal: 18),
       controlAffinity: ListTileControlAffinity.trailing,
       activeColor: VetCores.marrom50,
@@ -345,39 +452,41 @@ class _ServicosPageState extends State<ServicosPage> {
   }
 
   Widget _listaCategorias(double larguraCategoria) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(0, 16, 16, 12),
-      children: [
-        _categoriaAlinhada(
-          CategoriaServico.exames,
-          Icons.biotech_rounded,
-          larguraCategoria,
-        ),
-        _categoriaAlinhada(
-          CategoriaServico.vacinas,
-          Icons.vaccines_rounded,
-          larguraCategoria,
-        ),
-        _categoriaAlinhada(
-          CategoriaServico.microchipagem,
-          Icons.memory_rounded,
-          larguraCategoria,
-        ),
-        _categoriaAlinhada(
-          CategoriaServico.atestados,
-          Icons.assignment_rounded,
-          larguraCategoria,
-        ),
-      ],
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(0, 16, 16, 12),
+        children: [
+          _categoriaAlinhada(
+            CategoriaServico.exames,
+            Icons.biotech_rounded,
+            larguraCategoria,
+          ),
+          _categoriaAlinhada(
+            CategoriaServico.vacinas,
+            Icons.vaccines_rounded,
+            larguraCategoria,
+          ),
+          _categoriaAlinhada(
+            CategoriaServico.microchipagem,
+            Icons.memory_rounded,
+            larguraCategoria,
+          ),
+          _categoriaAlinhada(
+            CategoriaServico.atestados,
+            Icons.assignment_rounded,
+            larguraCategoria,
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final data = widget.rascunho.data;
-    final dataFormatada =
-        '${data.day.toString().padLeft(2, '0')}/'
-        '${data.month.toString().padLeft(2, '0')}/${data.year}';
+    final imagemPet = widget.petTipo == PetType.gato
+      ? 'assets/imagens/gato.png'
+      : 'assets/imagens/cachorro.png';
 
     return Scaffold(
       backgroundColor: VetCores.rosaFundo,
@@ -385,7 +494,7 @@ class _ServicosPageState extends State<ServicosPage> {
         builder: (context, constraints) {
           final bool compacto =
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
-          final double alturaCabecalho = compacto ? 140 : 160;
+          final double alturaCabecalho = compacto ? 128 : 148;
           final larguraCategoria = constraints.maxWidth * 0.86;
           final double larguraBotao = compacto ? 150 : 250;
           final double alturaBotao = compacto ? 50 : 60;
@@ -395,7 +504,12 @@ class _ServicosPageState extends State<ServicosPage> {
               Container(
                 width: double.infinity,
                 height: alturaCabecalho,
-                padding: const EdgeInsets.fromLTRB(2, 25, 8, 20),
+                padding: EdgeInsets.fromLTRB(
+                  2,
+                  compacto ? 16 : 20,
+                  8,
+                  compacto ? 12 : 16,
+                ),
                 decoration: BoxDecoration(
                   color: VetCores.rosaEscuro,
                   borderRadius: BorderRadius.vertical(
@@ -426,20 +540,39 @@ class _ServicosPageState extends State<ServicosPage> {
                         SizedBox(width: compacto ? 47 : 80),
                       ],
                     ),
-                    SizedBox(height: compacto ? 16 : 20),
-                    Text(
-                      '${widget.petNome}  |  $dataFormatada  |  ${widget.rascunho.horario}',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.comfortaa(
-                        color: VetCores.branco,
-                        fontSize: compacto ? 17 : 25,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    SizedBox(height: compacto ? 8 : 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          imagemPet,
+                          key: ValueKey('icone-pet-${widget.petTipo.name}'),
+                          width: compacto ? 28 : 34,
+                          height: compacto ? 28 : 34,
+                          fit: BoxFit.contain,
+                        ),
+                        const SizedBox(width: 8),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: constraints.maxWidth * 0.62,
+                          ),
+                          child: Text(
+                            widget.petNome,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.comfortaa(
+                              color: VetCores.branco,
+                              fontSize: compacto ? 16 : 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: compacto ? 35 : 16),
+              SizedBox(height: compacto ? 18 : 12),
               Expanded(child: _listaCategorias(larguraCategoria)),
               SafeArea(
                 top: false,

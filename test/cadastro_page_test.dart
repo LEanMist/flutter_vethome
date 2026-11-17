@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/cadastro_page.dart';
+import 'package:flutter_vethome/pages/menu_page.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/services/cep_lookup_service.dart';
 
@@ -49,6 +50,8 @@ void main() {
   });
 
   testWidgets('saves a valid registration', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = InMemoryUsuarioRepository();
 
     await tester.pumpWidget(
@@ -121,6 +124,14 @@ void main() {
       repository.autenticar('Ana Souza', 'SenhaForte1')?.email,
       'ana@example.com',
     );
+
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(find.byType(MenuPage), findsOneWidget);
+    await tester.tap(find.byTooltip('Perfil'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ana Souza'), findsOneWidget);
   });
 }
 

@@ -264,13 +264,22 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
 
     try {
       _repository.save(usuario, senha: senha);
+      final usuarioSalvo = _repository.findByEmail(usuario.email);
+      if (usuarioSalvo?.id == null) {
+        _mostrarMensagem('Não foi possível identificar o usuário cadastrado.');
+        return;
+      }
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => Carregamento(
             titulo: 'Cadastro realizado!',
             mensagem: 'Seus dados foram salvos com sucesso.',
-            destinoBuilder: (context) => const MenuPage(),
+            destinoBuilder: (context) => MenuPage(
+              usuarioRepository: _repository,
+              usuarioId: usuarioSalvo!.id,
+            ),
           ),
         ),
       );
