@@ -9,6 +9,7 @@ import '../pages/editar_pet_page.dart';
 import '../pages/login_page.dart';
 import '../pages/nova_consulta_page.dart';
 import '../pages/perfil_page.dart';
+import '../pages/gabriela/gabriela_splash_screen.dart';
 import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
 import '../pages/sobre_page.dart';
@@ -31,6 +32,11 @@ class TestePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final telas = <({String titulo, IconData icone, WidgetBuilder pagina})>[
       (titulo: 'Login', icone: Icons.login, pagina: (_) => const LoginPage()),
+      (
+        titulo: 'Área da Gabriela',
+        icone: Icons.medical_services_outlined,
+        pagina: (_) => const GabrielaSplashScreen(),
+      ),
       (
         titulo: 'Cadastro',
         icone: Icons.person_add_alt_1,
@@ -145,6 +151,7 @@ class TestePage extends StatelessWidget {
                 final routeName = switch (tela.titulo) {
                   'Pets' => '/pets',
                   'Agenda' => '/agenda',
+                  'Área da Gabriela' => '/gabriela/splash',
                   _ => null,
                 };
                 if (routeName != null) {

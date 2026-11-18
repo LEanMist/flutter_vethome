@@ -10,6 +10,8 @@ import 'pages/agendamentos_page.dart';
 import 'pages/detalhes_pet_page.dart';
 import 'pages/editar_pet_page.dart';
 import 'pages/login_page.dart';
+import 'pages/gabriela/gabriela_area_page.dart';
+import 'pages/gabriela/gabriela_splash_screen.dart';
 import 'pages/perfil_page.dart';
 import 'pages/pets_page.dart';
 import 'pages/saude_page.dart';
@@ -74,6 +76,9 @@ class VetHomeApp extends StatelessWidget {
         routes: {
           '/': (_) => const SplashScreen(),
           '/login': (_) => const LoginPage(),
+          '/gabriela/splash': (_) => const GabrielaSplashScreen(),
+          '/gabriela/login': (_) => const LoginPage(successRoute: '/gabriela'),
+          '/gabriela': (_) => const GabrielaAreaPage(),
           '/cadastro': (_) => const CadastroScreen(),
           '/endereco': (context) =>
               EnderecoScreen(initialData: _formDataFromRoute(context)),

@@ -6,7 +6,9 @@ import '../theme/vet_colors.dart';
 import 'teste_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.successRoute = '/pets'});
+
+  final String successRoute;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -33,7 +35,7 @@ class _LoginPageState extends State<LoginPage> {
       mostrarMensagem('Informe um e-mail válido e uma senha com 6 caracteres.');
       return;
     }
-    Navigator.pushReplacementNamed(context, '/pets');
+    Navigator.pushReplacementNamed(context, widget.successRoute);
   }
 
   @override
