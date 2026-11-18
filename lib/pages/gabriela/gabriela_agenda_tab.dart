@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'gabriela_calendar_picker.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets/pets/pets_theme.dart';
 
@@ -11,7 +12,7 @@ class GabrielaAgendaTab extends StatefulWidget {
 }
 
 class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
-  DateTime _selectedDate = DateTime(2026, 11, 10);
+  DateTime _selectedDate = DateTime(2026, 3, 10);
 
   static const _appointments = [
     _AgendaAppointment(
@@ -54,15 +55,23 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
   ][day - 1];
 
   Future<void> _chooseDate() async {
-    final date = await showDatePicker(
+    final date = await showModalBottomSheet<DateTime>(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2035),
-      locale: const Locale('pt', 'BR'),
+      isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: 390),
+      backgroundColor: VetColors.pink,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) => GabrielaCalendarPicker(initialDate: _selectedDate),
     );
     if (date != null) setState(() => _selectedDate = date);
   }
+
+  List<_AgendaAppointment> get _visibleAppointments =>
+      DateUtils.isSameDay(_selectedDate, DateTime(2026, 3, 10))
+      ? _appointments
+      : const [];
 
   void _showAppointment(_AgendaAppointment appointment) {
     showModalBottomSheet<void>(
@@ -199,13 +208,29 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
                 flex: 8,
                 child: ListView.separated(
                   padding: EdgeInsets.fromLTRB(17 * s, 15 * s, 17 * s, 12 * s),
-                  itemCount: _appointments.length,
+                  itemCount: _visibleAppointments.isEmpty
+                      ? 1
+                      : _visibleAppointments.length,
                   separatorBuilder: (_, _) => SizedBox(height: 10 * s),
-                  itemBuilder: (context, index) => _AppointmentTile(
-                    appointment: _appointments[index],
-                    onTap: () => _showAppointment(_appointments[index]),
-                    scale: s,
-                  ),
+                  itemBuilder: (context, index) => _visibleAppointments.isEmpty
+                      ? Padding(
+                          padding: EdgeInsets.only(top: 34 * s),
+                          child: Text(
+                            'Nenhum agendamento para este dia.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: VetColors.brown.withValues(alpha: .75),
+                              fontSize: 14 * s,
+                              fontFamily: PetsTheme.fontComfortaa,
+                            ),
+                          ),
+                        )
+                      : _AppointmentTile(
+                          appointment: _visibleAppointments[index],
+                          onTap: () =>
+                              _showAppointment(_visibleAppointments[index]),
+                          scale: s,
+                        ),
                 ),
               ),
             ],
