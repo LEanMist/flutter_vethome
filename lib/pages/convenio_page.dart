@@ -24,25 +24,37 @@ class ConvenioPage extends StatefulWidget {
 }
 
 class _ConvenioPageState extends State<ConvenioPage> {
+  static const _gradienteCategorias = LinearGradient(
+    begin:  Alignment(-1, -4),
+    end: Alignment(1, 4),
+    colors: [VetCores.rosaEscuro, VetCores.rosaFundo],
+    stops: [0, 1.0],
+  );
+  static const _bordaExames = BorderRadius.only(
+    topRight: Radius.circular(50),
+    bottomRight: Radius.circular(20),
+  );
+  static const _bordaCircular = BorderRadius.only(
+    topRight: Radius.circular(20),
+    bottomRight: Radius.circular(20),
+  );
+  static const _bordaAtestados = BorderRadius.only(
+    topRight: Radius.circular(20),
+    bottomRight: Radius.circular(50),
+  );
+
   static const _convenios = [
     ConvenioAgendamento.petlove,
     ConvenioAgendamento.doglife,
     ConvenioAgendamento.particular,
   ];
 
-  ConvenioAgendamento? _selecionado;
   bool _salvando = false;
 
   AgendamentoRepository get _repository =>
       widget.agendamentoRepository ?? InMemoryAgendamentoRepository.instance;
 
-  Future<void> _concluirAgendamento() async {
-    final convenio = _selecionado;
-    if (convenio == null) {
-      _mostrarMensagem('Selecione um convênio.');
-      return;
-    }
-
+  Future<void> _concluirAgendamento(ConvenioAgendamento convenio) async {
     final agendamento = widget.rascunho.finalizar(convenio: convenio);
     if (agendamento.errors.isNotEmpty) {
       _mostrarMensagem(agendamento.errors.first);
@@ -60,17 +72,56 @@ class _ConvenioPageState extends State<ConvenioPage> {
     }
   }
 
+  Future<void> _confirmarConvenio(ConvenioAgendamento convenio) async {
+    if (_salvando) return;
+
+    final continuar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Confirmar convênio',
+          style: GoogleFonts.comfortaa(
+            color: VetCores.marrom,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Deseja continuar com ${_nomeConvenio(convenio)}?',
+          style: GoogleFonts.comfortaa(color: VetCores.marrom),
+        ),
+        backgroundColor: VetCores.rosaCard,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Voltar',
+              style: GoogleFonts.comfortaa(color: VetCores.marrom),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VetCores.marrom,
+              foregroundColor: VetCores.branco,
+            ),
+            child: Text(
+              'Continuar',
+              style: GoogleFonts.comfortaa(),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || continuar != true) return;
+    await _concluirAgendamento(convenio);
+  }
+
   void _mostrarMensagem(String mensagem) {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(mensagem)));
   }
-
-  String get _tipoPet => switch (widget.petTipo) {
-    PetType.cachorro => 'Cão',
-    PetType.gato => 'Gato',
-    PetType.outro => 'Pet',
-  };
 
   String _nomeConvenio(ConvenioAgendamento convenio) => switch (convenio) {
     ConvenioAgendamento.petlove => 'PetLove',
@@ -78,14 +129,24 @@ class _ConvenioPageState extends State<ConvenioPage> {
     ConvenioAgendamento.particular => 'Particular',
   };
 
-  IconData _iconeConvenio(ConvenioAgendamento convenio) => switch (convenio) {
-    ConvenioAgendamento.petlove => Icons.home_outlined,
-    ConvenioAgendamento.doglife => Icons.medical_services_outlined,
-    ConvenioAgendamento.particular => Icons.pets_outlined,
+  String _imagemConvenio(ConvenioAgendamento convenio) => switch (convenio) {
+    ConvenioAgendamento.petlove => 'assets/imagens/CasaVeterinario.png',
+    ConvenioAgendamento.doglife => 'assets/imagens/Estestoscopio.png',
+    ConvenioAgendamento.particular => 'assets/imagens/Pirulas.png',
   };
+
+  BorderRadius _bordaDaCategoria(ConvenioAgendamento categoria) {
+    if (categoria == ConvenioAgendamento.petlove) return _bordaExames;
+    if (categoria == ConvenioAgendamento.particular) return _bordaAtestados;
+    return _bordaCircular;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final imagemPet = widget.petTipo == PetType.gato
+      ? 'assets/imagens/gato.png'
+      : 'assets/imagens/cachorro.png';
+
     return Scaffold(
       backgroundColor: VetCores.rosaFundo,
       body: LayoutBuilder(
@@ -93,76 +154,163 @@ class _ConvenioPageState extends State<ConvenioPage> {
           final bool compacto =
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
           final double alturaCabecalho = compacto ? 140 : 160;
+          final double tamanhoImagemPet = compacto ? 37 : 34;
+          final double larguraLinhaConvenio = constraints.maxWidth * 0.85;
+          final double alturaLinhaConvenio = compacto ? 70 : 80;
+          final double tamanhoImagemConvenio = compacto ? 29 : 35;
           return Column(
             children: [
               Container(
                 width: double.infinity,
                 height: alturaCabecalho,
-                decoration: const BoxDecoration(
+                padding: EdgeInsets.fromLTRB(
+                  6,
+                  compacto ? 23 : 30,
+                  8,
+                  compacto ? 11 : 16,
+                ),
+                decoration: BoxDecoration(
                   color: VetCores.rosaEscuro,
                   borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(24),
+                    bottom: Radius.circular(20),
                   ),
                 ),
-                alignment: Alignment.topCenter,
-                padding: const EdgeInsets.only(top: 30),
-                child: Text(
-                  'Contato',
-                  style: GoogleFonts.comfortaa(
-                    color: VetCores.branco,
-                    fontSize: compacto ? 30 : 35,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Voltar para serviços',
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.arrow_back),
+                          color: VetCores.branco,
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Convênio',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.comfortaa(
+                              color: VetCores.branco,
+                              fontSize: compacto ? 30 : 35,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: compacto ? 47 : 80),
+                      ],
+                    ),
+                    SizedBox(height: compacto ? 20 : 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: constraints.maxWidth * 0.62,
+                          ),
+                          child: Text(
+                            widget.petNome,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.montserratAlternates(
+                              color: VetCores.branco,
+                              fontSize: compacto ? 20 : 30,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 13),
+                        Image.asset(
+                          imagemPet,
+                          key: ValueKey('icone-pet-${widget.petTipo.name}'),
+                          width: tamanhoImagemPet,
+                          height: tamanhoImagemPet,
+                          fit: BoxFit.contain,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
+              SizedBox(height: compacto ? 100 : 100),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
-                  children: [
-                    for (final convenio in _convenios)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Material(
-                        color: VetCores.rosaCard,
-                        borderRadius: BorderRadius.circular(28),
-                        child: InkWell(
-                          key: ValueKey('convenio-${convenio.name}'),
-                          borderRadius: BorderRadius.circular(28),
-                          onTap: () => setState(() => _selecionado = convenio),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 16,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(28),
-                              border: Border.all(
-                                color: _selecionado == convenio
-                                    ? VetCores.rosaEscuro
-                                    : Colors.transparent,
-                                width: 2,
-                              ),
-                            ),
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(0, 28, 16, 16),
+                    children: [
+                      for (final convenio in _convenios)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 40),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: SizedBox(
+                            width: larguraLinhaConvenio,
                             child: Row(
                               children: [
-                                Icon(
-                                  _iconeConvenio(convenio),
-                                  color: VetCores.branco,
-                                ),
-                                const SizedBox(width: 12),
                                 Expanded(
-                                  child: Text(
-                                    _nomeConvenio(convenio),
-                                    style: GoogleFonts.comfortaa(
-                                      color: VetCores.branco,
-                                      fontWeight: FontWeight.bold,
+                                  child: Material(         
+                                    borderRadius: _bordaDaCategoria(convenio),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: InkWell(
+                                      key: ValueKey('convenio-${convenio.name}'),
+                                      borderRadius: _bordaDaCategoria(convenio),
+                                      onTap: _salvando
+                                          ? null
+                                          : () => _confirmarConvenio(convenio),
+                                      child: Ink(
+                                        decoration: BoxDecoration(
+                                          gradient: _gradienteCategorias,
+                                          borderRadius: _bordaDaCategoria(convenio),
+                                        ),
+                                        child: SizedBox(
+                                          height: alturaLinhaConvenio,
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 12,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Image.asset(
+                                                  _imagemConvenio(convenio),
+                                                  width: tamanhoImagemConvenio,
+                                                  height: tamanhoImagemConvenio,
+                                                  fit: BoxFit.contain,
+                                                ),
+                                                const SizedBox(width: 20),
+                                                Expanded(
+                                                  child: Text(
+                                                    _nomeConvenio(convenio),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: GoogleFonts
+                                                        .montserratAlternates(
+                                                      color: VetCores.branco,
+                                                      fontSize: compacto ? 20 : 25,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                                Icon(
-                                  _selecionado == convenio
-                                      ? Icons.check_circle
-                                      : Icons.chevron_right_rounded,
+                                const SizedBox(width: 4),
+                                IconButton(
+                                  tooltip:
+                                      'Continuar com ${_nomeConvenio(convenio)}',
+                                  onPressed: _salvando
+                                      ? null
+                                      : () => _confirmarConvenio(convenio),
+                                  icon: const Icon(
+                                    Icons.keyboard_double_arrow_right_rounded,
+                                    size: 35,
+                                  ),
                                   color: VetCores.marrom,
                                 ),
                               ],
@@ -170,35 +318,9 @@ class _ConvenioPageState extends State<ConvenioPage> {
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _selecionado == null || _salvando
-                        ? null
-                        : _concluirAgendamento,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: VetCores.marrom,
-                      foregroundColor: VetCores.branco,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                    ),
-                    child: Text(
-                      _salvando ? 'Salvando...' : 'Concluir agendamento',
-                      style: GoogleFonts.comfortaa(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    ],
                   ),
-                ),
+                )
               ),
             ],
           );

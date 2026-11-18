@@ -115,8 +115,17 @@ Future<void> _abrirCategoria(
   expect(tester.takeException(), isNull, reason: 'initial render');
   await tester.tap(find.byKey(ValueKey('categoria-${categoria.name}')));
   await tester.pumpAndSettle();
+  final listaServicos = find.byKey(
+    ValueKey('lista-servicos-${categoria.name}'),
+  );
+  expect(tester.widget<ListView>(listaServicos).padding, EdgeInsets.zero);
+  final scrollbarFinder = find.ancestor(
+    of: listaServicos,
+    matching: find.byType(Scrollbar),
+  );
+  expect(tester.widget<Scrollbar>(scrollbarFinder).thumbVisibility, isTrue);
   expect(
-    tester.getSize(find.byKey(ValueKey('lista-servicos-${categoria.name}'))).height,
+    tester.getSize(listaServicos).height,
     lessThanOrEqualTo(_alturaPainelServicos),
   );
   expect(tester.takeException(), isNull, reason: 'expanded category render');

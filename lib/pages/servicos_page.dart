@@ -200,9 +200,25 @@ class _ServicosPageState extends State<ServicosPage> {
 
   final Set<CategoriaServico> _categoriasExpandidas = {};
   final Map<String, ServicoAgendamento> _servicosSelecionados = {};
+  final Map<CategoriaServico, ScrollController> _controladoresServico = {};
 
   AgendamentoRepository get _repository =>
       widget.agendamentoRepository ?? InMemoryAgendamentoRepository.instance;
+
+  ScrollController _controladorServico(CategoriaServico categoria) {
+    return _controladoresServico.putIfAbsent(
+      categoria,
+      ScrollController.new,
+    );
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controladoresServico.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   Future<void> _continuar() async {
     if (_servicosSelecionados.isEmpty) {
@@ -231,18 +247,41 @@ class _ServicosPageState extends State<ServicosPage> {
     final sair = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Deseja sair do agendamento?'),
-        content: const Text(
-          'Se sair agora, os dados deste agendamento serão descartados.',
+        title: Text(
+          'Deseja sair do agendamento?',
+          style: GoogleFonts.comfortaa(
+            color: VetCores.marrom,
+            fontWeight: FontWeight.bold,
+          ),
         ),
+        content: Text(
+          'Se sair agora, os dados deste agendamento serão descartados.',
+          style: GoogleFonts.comfortaa(
+            color: VetCores.marrom,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: VetCores.rosaCard,
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Não'),
+            child: Text(
+              'Não',
+              style: GoogleFonts.comfortaa(
+                color: VetCores.marrom,
+                fontWeight: FontWeight.w900,
+              ),
+            )
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Sim'),
+            child: Text(
+              'Sim',
+              style: GoogleFonts.comfortaa(
+                color: VetCores.marrom,
+                fontWeight: FontWeight.w900,
+              ),
+            )
           ),
         ],
       ),
@@ -296,7 +335,6 @@ class _ServicosPageState extends State<ServicosPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Material(
-            color: Colors.transparent,
             borderRadius: _bordaDaCategoria(categoria),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -307,7 +345,7 @@ class _ServicosPageState extends State<ServicosPage> {
                   gradient: _gradienteCategorias,
                 ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 56),
+                  constraints: const BoxConstraints(minHeight: 58),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: Row(
@@ -340,23 +378,31 @@ class _ServicosPageState extends State<ServicosPage> {
             ),
           ),
           if (expandida)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FractionallySizedBox(
-                widthFactor: 0.75,
-                child: Material(
-                  color: VetCores.rosaEscuro.withValues(alpha: 0.25),
-                  borderRadius: const BorderRadius.only(
-                    bottomRight: Radius.circular(20),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: 0.75,
+              child: Material(
+                color: VetCores.rosaEscuro.withValues(alpha: 0.25),
+                borderRadius: const BorderRadius.only(
+                  bottomRight: Radius.circular(20),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxHeight: _alturaOpcaoServico * _maxServicosVisiveis,
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxHeight: _alturaOpcaoServico * _maxServicosVisiveis,
-                    ),
+                  child: Scrollbar(
+                    controller: _controladorServico(categoria),
+                    thumbVisibility:
+                        servicos.length > _maxServicosVisiveis,
+                    thickness: 4,
+                    radius: const Radius.circular(4),
                     child: ListView.builder(
                       key: ValueKey('lista-servicos-${categoria.name}'),
+                      controller: _controladorServico(categoria),
                       primary: false,
+                      padding: EdgeInsets.zero,
                       shrinkWrap: true,
                       itemExtent: _alturaOpcaoServico,
                       physics: servicos.length > _maxServicosVisiveis
@@ -369,7 +415,8 @@ class _ServicosPageState extends State<ServicosPage> {
                   ),
                 ),
               ),
-            )
+            ),
+          )
         ],
       ),
     );
@@ -420,22 +467,45 @@ class _ServicosPageState extends State<ServicosPage> {
   }
 
   Widget _opcaoServico(ServicoAgendamento servico) {
-    return CheckboxListTile(
-      key: ValueKey('servico-${servico.id}'),
-      value: _servicosSelecionados.containsKey(servico.id),
-      onChanged: (selecionado) =>
-          _alternarServico(servico, selecionado ?? false),
-      title: Text(
-        servico.nome,
-        style: GoogleFonts.comfortaa(color: VetCores.marrom, fontSize: 14),
-      ),
-      dense: true,
-      visualDensity: const VisualDensity(vertical: -1),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18),
-      controlAffinity: ListTileControlAffinity.trailing,
-      activeColor: VetCores.marrom50,
-      checkboxShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4),
+    final selecionado = _servicosSelecionados.containsKey(servico.id);
+    return SizedBox(
+      height: _alturaOpcaoServico,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        child: Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InkWell(
+                  onTap: () => _alternarServico(servico, !selecionado),
+                  child: Text(
+                    servico.nome,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.montserratAlternates(
+                      color: VetCores.marrom,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Checkbox(
+              key: ValueKey('servico-${servico.id}'),
+              value: selecionado,
+              onChanged: (value) => _alternarServico(servico, value ?? false),
+              activeColor: VetCores.marrom50,
+              checkColor: VetCores.branco,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -494,21 +564,21 @@ class _ServicosPageState extends State<ServicosPage> {
         builder: (context, constraints) {
           final bool compacto =
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
-          final double alturaCabecalho = compacto ? 128 : 148;
+          final double alturaCabecalho = compacto ? 140 : 160;
           final larguraCategoria = constraints.maxWidth * 0.86;
+          final double tamanhoImagemPet = compacto ? 37 : 34;
           final double larguraBotao = compacto ? 150 : 250;
           final double alturaBotao = compacto ? 50 : 60;
-
           return Column(
             children: [
               Container(
                 width: double.infinity,
                 height: alturaCabecalho,
                 padding: EdgeInsets.fromLTRB(
-                  2,
-                  compacto ? 16 : 20,
+                  6,
+                  compacto ? 23 : 30,
                   8,
-                  compacto ? 12 : 16,
+                  compacto ? 11 : 16,
                 ),
                 decoration: BoxDecoration(
                   color: VetCores.rosaEscuro,
@@ -540,18 +610,10 @@ class _ServicosPageState extends State<ServicosPage> {
                         SizedBox(width: compacto ? 47 : 80),
                       ],
                     ),
-                    SizedBox(height: compacto ? 8 : 12),
+                    SizedBox(height: compacto ? 20 : 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset(
-                          imagemPet,
-                          key: ValueKey('icone-pet-${widget.petTipo.name}'),
-                          width: compacto ? 28 : 34,
-                          height: compacto ? 28 : 34,
-                          fit: BoxFit.contain,
-                        ),
-                        const SizedBox(width: 8),
                         ConstrainedBox(
                           constraints: BoxConstraints(
                             maxWidth: constraints.maxWidth * 0.62,
@@ -560,12 +622,20 @@ class _ServicosPageState extends State<ServicosPage> {
                             widget.petNome,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.comfortaa(
+                            style: GoogleFonts.montserratAlternates(
                               color: VetCores.branco,
-                              fontSize: compacto ? 16 : 20,
-                              fontWeight: FontWeight.w600,
+                              fontSize: compacto ? 20 : 30,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
+                        ),
+                        const SizedBox(width: 13),
+                        Image.asset(
+                          imagemPet,
+                          key: ValueKey('icone-pet-${widget.petTipo.name}'),
+                          width: tamanhoImagemPet,
+                          height: tamanhoImagemPet,
+                          fit: BoxFit.contain,
                         ),
                       ],
                     ),

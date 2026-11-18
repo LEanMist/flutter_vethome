@@ -15,7 +15,8 @@ class Usuario {
     required this.complemento,
     required this.cidade,
     required this.email,
-  });
+    List<EnderecoUsuario> enderecosAdicionais = const [],
+  }) : enderecosAdicionais = List.unmodifiable(enderecosAdicionais);
 
   final String? id;
   final String? fotoPerfilPath;
@@ -30,6 +31,7 @@ class Usuario {
   final String complemento;
   final String cidade;
   final String email;
+  final List<EnderecoUsuario> enderecosAdicionais;
 
   Map<String, String> get errors {
     final validationErrors = <String, String>{};
@@ -79,6 +81,7 @@ class Usuario {
     String? fotoPerfilPath,
     String? nome,
     DateTime? dataNascimento,
+    List<EnderecoUsuario>? enderecosAdicionais,
   }) {
     return Usuario(
       id: id ?? this.id,
@@ -94,6 +97,7 @@ class Usuario {
       complemento: complemento,
       cidade: cidade,
       email: email,
+      enderecosAdicionais: enderecosAdicionais ?? this.enderecosAdicionais,
     );
   }
 
@@ -122,4 +126,29 @@ class Usuario {
     return int.parse(digits[9]) == firstDigit &&
         int.parse(digits[10]) == secondDigit;
   }
+}
+
+class EnderecoUsuario {
+  const EnderecoUsuario({
+    required this.nome,
+    required this.cep,
+    required this.logradouro,
+    required this.numero,
+    required this.complemento,
+    required this.cidade,
+  });
+
+  final String nome;
+  final String cep;
+  final String logradouro;
+  final String numero;
+  final String complemento;
+  final String cidade;
+
+  String get enderecoCompleto => [
+    '$logradouro, $numero',
+    if (complemento.trim().isNotEmpty) complemento,
+    cidade,
+    'CEP $cep',
+  ].join(' - ');
 }

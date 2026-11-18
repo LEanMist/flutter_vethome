@@ -94,7 +94,11 @@ class AgendamentoRascunho {
     return List<String>.unmodifiable(validationErrors);
   }
 
-  Agendamento finalizar({required ConvenioAgendamento convenio}) {
+  Agendamento finalizar({
+    required ConvenioAgendamento convenio,
+    String endereco = '',
+    String descricao = '',
+  }) {
     return Agendamento(
       usuarioId: usuarioId,
       petId: petId,
@@ -102,6 +106,8 @@ class AgendamentoRascunho {
       horario: horario,
       servicos: servicos,
       convenio: convenio,
+      endereco: endereco,
+      descricao: descricao,
     );
   }
 }
@@ -115,6 +121,8 @@ class Agendamento {
     required this.horario,
     required List<ServicoAgendamento> servicos,
     required this.convenio,
+    this.endereco = '',
+    this.descricao = '',
     this.status = StatusAgendamento.solicitado,
     DateTime? criadoEm,
   }) : data = DateTime(data.year, data.month, data.day),
@@ -128,6 +136,8 @@ class Agendamento {
   final String horario;
   final List<ServicoAgendamento> servicos;
   final ConvenioAgendamento convenio;
+  final String endereco;
+  final String descricao;
   final StatusAgendamento status;
   final DateTime criadoEm;
 
@@ -158,7 +168,6 @@ class Agendamento {
         servicos.length) {
       validationErrors.add('Não repita o mesmo serviço.');
     }
-
     return List<String>.unmodifiable(validationErrors);
   }
 
@@ -170,6 +179,8 @@ class Agendamento {
     String? horario,
     List<ServicoAgendamento>? servicos,
     ConvenioAgendamento? convenio,
+    String? endereco,
+    String? descricao,
     StatusAgendamento? status,
     DateTime? criadoEm,
   }) {
@@ -181,6 +192,8 @@ class Agendamento {
       horario: horario ?? this.horario,
       servicos: servicos ?? this.servicos,
       convenio: convenio ?? this.convenio,
+      endereco: endereco ?? this.endereco,
+      descricao: descricao ?? this.descricao,
       status: status ?? this.status,
       criadoEm: criadoEm ?? this.criadoEm,
     );
@@ -194,6 +207,8 @@ class Agendamento {
     'horario': horario,
     'servicos': servicos.map((servico) => servico.toMap()).toList(),
     'convenio': convenio.name,
+    'endereco': endereco,
+    'descricao': descricao,
     'status': status.name,
     'criadoEm': criadoEm.toIso8601String(),
   };
@@ -215,6 +230,8 @@ class Agendamento {
       horario: map['horario'] as String,
       servicos: servicos,
       convenio: ConvenioAgendamento.values.byName(map['convenio'] as String),
+      endereco: map['endereco'] as String? ?? '',
+      descricao: map['descricao'] as String? ?? '',
       status: StatusAgendamento.values.byName(
         map['status'] as String? ?? StatusAgendamento.solicitado.name,
       ),
