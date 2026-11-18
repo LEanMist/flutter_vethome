@@ -34,19 +34,19 @@ class SaudePage extends StatelessWidget {
       title: 'Saúde',
       pet: pet,
       selectedIndex: 0,
-      headerBottom: Row(
+      headerBottom: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           PetAvatar(image: pet.imagePath, size: 72, radius: 18),
-          SizedBox(width: 16 * s),
-          Expanded(
-            child: Text(
-              pet.name,
-              style: TextStyle(
-                fontSize: 22 * s,
-                fontWeight: FontWeight.w700,
-                fontFamily: PetsTheme.fontComfortaa,
-                color: Colors.white,
-              ),
+          SizedBox(height: 8 * s),
+          Text(
+            pet.name,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 22 * s,
+              fontWeight: FontWeight.w700,
+              fontFamily: PetsTheme.fontComfortaa,
+              color: Colors.white,
             ),
           ),
         ],

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
-import '../data/cep_service.dart';
+import '../service/cep_service.dart';
 import '../models/saved_address.dart';
 import '../core/utils/form_fields.dart';
 import '../widgets/figma_action_target.dart';
@@ -54,6 +54,7 @@ class _AddressFormState extends State<AddressForm> {
   late final _complement = TextEditingController(
     text: widget.initial?.complement ?? '',
   );
+  late String _neighborhood = widget.initial?.neighborhood ?? '';
   CepResult? _result;
   String _status = '';
   int _request = 0;
@@ -71,7 +72,12 @@ class _AddressFormState extends State<AddressForm> {
   Future<void> _lookup(String text) async {
     final request = ++_request;
     _result = null;
-    if (text.replaceAll(RegExp(r'\D'), '').length != 8) {
+    final lookupDigits = text.replaceAll(RegExp(r'\D'), '');
+    final initialDigits =
+        widget.initial?.cep.replaceAll(RegExp(r'\D'), '') ?? '';
+    // CEP diferente do original: o bairro antigo não vale mais.
+    if (lookupDigits != initialDigits) _neighborhood = '';
+    if (lookupDigits.length != 8) {
       setState(() {
         _status = '';
         _loading = false;
@@ -95,6 +101,9 @@ class _AddressFormState extends State<AddressForm> {
         if (result != null) {
           if (_street.text == streetBefore) _street.text = result.street;
           if (_city.text == cityBefore) _city.text = result.city;
+          if (result.neighborhood.isNotEmpty) {
+            _neighborhood = result.neighborhood;
+          }
         }
       });
     } catch (_) {
@@ -122,10 +131,14 @@ class _AddressFormState extends State<AddressForm> {
       final initialCep = widget.initial?.cep.replaceAll(RegExp(r'\D'), '');
       final changedCepWithoutResult =
           widget.initial != null && initialCep != currentCep && result == null;
+      // CEPs gerais (da cidade) vêm sem logradouro: só compara o que o CEP informa.
       final addressDoesNotMatchResult =
           result != null &&
-          (normalizedText(_street.text) != normalizedText(result.street) ||
-              normalizedText(_city.text) != normalizedText(result.city));
+          ((result.street.isNotEmpty &&
+                  normalizedText(_street.text) !=
+                      normalizedText(result.street)) ||
+              (result.city.isNotEmpty &&
+                  normalizedText(_city.text) != normalizedText(result.city)));
       if (changedCepWithoutResult || addressDoesNotMatchResult) {
         final proceed = await showDialog<bool>(
           context: context,
@@ -152,6 +165,12 @@ class _AddressFormState extends State<AddressForm> {
         );
         if (!mounted || proceed != true) return;
       }
+      if (_neighborhood.trim().isEmpty) {
+        // O CEP não trouxe o bairro (ou a consulta falhou): o backend exige.
+        final informado = await _askNeighborhood();
+        if (!mounted || informado == null) return;
+        _neighborhood = informado;
+      }
       await widget.onSaved(
         SavedAddress(
           id:
@@ -163,6 +182,7 @@ class _AddressFormState extends State<AddressForm> {
           number: _number.text.trim(),
           complement: _complement.text.trim(),
           cep: _cep.text.trim(),
+          neighborhood: _neighborhood.trim(),
         ),
       );
     } catch (error) {
@@ -201,6 +221,37 @@ class _AddressFormState extends State<AddressForm> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<String?> _askNeighborhood() {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Bairro'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(hintText: 'Informe o bairro'),
+          onSubmitted: (value) =>
+              Navigator.pop(ctx, value.trim().isEmpty ? null : value.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              final value = controller.text.trim();
+              Navigator.pop(ctx, value.isEmpty ? null : value);
+            },
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _skip() async {

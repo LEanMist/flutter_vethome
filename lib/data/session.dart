@@ -1,17 +1,18 @@
+import 'dart:typed_data';
+
 import '../service/cliente_service.dart';
 
-/// Cliente logado: dados do perfil e login/cadastro.
-/// Não conhece pets nem consultas.
 class Session {
   Session._();
 
   static String clientName = 'Liminha';
-  static String clientCpf = ''; // vazio = ninguém logado (modo demonstração)
+  static String clientCpf = '';
   static DateTime clientBirthDate = DateTime(2007, 2, 5);
   static String clientEmail = '';
   static String clientAddress = '';
   static String clientPhone = '';
   static String? clientPhotoPath;
+  static Uint8List? clientPhotoBytes;
 
   static bool get isLoggedIn => clientCpf.trim().isNotEmpty;
 

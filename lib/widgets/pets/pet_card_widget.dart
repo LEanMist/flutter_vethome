@@ -17,8 +17,8 @@ class PetCardWidget extends StatelessWidget {
     final double s = PetsTheme.scaleOf(context);
     final bool isCat = pet.species?.toLowerCase().contains('gato') ?? false;
     final String petIllustration = isCat
-        ? 'assets/imagens/figma/cachorroegatopng-2.png'
-        : 'assets/imagens/figma/cachorroegatopng-3.png';
+        ? 'assets/imagens/figma/cachorroegatopng-3.png'
+        : 'assets/imagens/figma/cachorroegatopng-2.png';
 
     return GestureDetector(
       onTap: onTap,
@@ -38,19 +38,16 @@ class PetCardWidget extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
+            SizedBox(
               width: 34 * s,
               height: 34 * s,
-              decoration: const BoxDecoration(
-                color: VetColors.pink,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Image.asset(
-                petIllustration,
-                width: 22 * s,
-                height: 25 * s,
-                fit: BoxFit.contain,
+              child: Center(
+                child: Image.asset(
+                  petIllustration,
+                  width: 22 * s,
+                  height: 25 * s,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             SizedBox(width: 10 * s),

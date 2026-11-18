@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../data/cep_service.dart';
+import '../../service/cep_service.dart';
 import '../../models/saved_address.dart';
 import '../../service/endereco_service.dart';
 import '../../theme.dart';
@@ -49,6 +49,8 @@ class EnderecoScreen extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
+          saveErrorMessage: (error) =>
+              error.toString().replaceFirst('Exception: ', ''),
           onSaved: (address) {
             EnderecoService.saveAddress(address);
             _continue(context, _nextData(address));

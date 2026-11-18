@@ -3,6 +3,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -25,6 +26,7 @@ class _PerfilPageState extends State<PerfilPage> {
   String _nome = Session.clientName;
   DateTime _nascimento = Session.clientBirthDate;
   File? _foto;
+  Uint8List? _fotoBytes;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -32,7 +34,25 @@ class _PerfilPageState extends State<PerfilPage> {
   void initState() {
     super.initState();
     final path = Session.clientPhotoPath;
-    if (path != null) _foto = File(path);
+    if (kIsWeb) {
+      _fotoBytes = Session.clientPhotoBytes;
+      if (_fotoBytes == null && path != null) _carregarFotoWeb(path);
+    } else if (path != null) {
+      _foto = File(path);
+    }
+  }
+
+  Future<void> _carregarFotoWeb(String path) async {
+    try {
+      final bytes = await XFile(path).readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _fotoBytes = bytes;
+        Session.clientPhotoBytes = bytes;
+      });
+    } catch (_) {
+      // Caminhos blob expirados mantêm o avatar padrão, sem usar File no Web.
+    }
   }
 
   String get _nascimentoTexto => fmtData(_nascimento).replaceAll('/', ' / ');
@@ -70,8 +90,15 @@ class _PerfilPageState extends State<PerfilPage> {
         maxWidth: 800,
       );
       if (picked != null && mounted) {
+        final bytes = kIsWeb ? await picked.readAsBytes() : null;
+        if (!mounted) return;
         setState(() {
-          _foto = File(picked.path);
+          if (kIsWeb) {
+            _fotoBytes = bytes;
+            Session.clientPhotoBytes = bytes;
+          } else {
+            _foto = File(picked.path);
+          }
           Session.clientPhotoPath = picked.path;
         });
       }
@@ -106,6 +133,11 @@ class _PerfilPageState extends State<PerfilPage> {
         Session.updateClient(birthDate: data);
       });
     }
+  }
+
+  Future<void> _mudarEndereco() async {
+    await Navigator.pushNamed(context, '/enderecos');
+    if (mounted) setState(() {});
   }
 
   // Future<void> _mudarEndereco() async {
@@ -280,25 +312,8 @@ class _PerfilPageState extends State<PerfilPage> {
                     decoration: BoxDecoration(
                       color: VetColors.pink,
                       shape: BoxShape.circle,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: VetColors.shadowDark,
-                          offset: Offset(3, 3),
-                          blurRadius: 6,
-                        ),
-                        BoxShadow(
-                          color: VetColors.shadowLight,
-                          offset: Offset(-3, -3),
-                          blurRadius: 6,
-                        ),
-                      ],
                     ),
-                    child: _foto != null
-                        ? Image.file(_foto!, fit: BoxFit.cover, cacheWidth: 400)
-                        : Image.asset(
-                            'assets/imagens/figma/frame-53.png',
-                            fit: BoxFit.contain,
-                          ),
+                    child: _buildProfileImage(),
                   ),
                 ),
               ),
@@ -306,6 +321,19 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProfileImage() {
+    if (kIsWeb && _fotoBytes != null) {
+      return Image.memory(_fotoBytes!, fit: BoxFit.cover, cacheWidth: 400);
+    }
+    if (!kIsWeb && _foto != null) {
+      return Image.file(_foto!, fit: BoxFit.cover, cacheWidth: 400);
+    }
+    return Image.asset(
+      'assets/imagens/figma/frame-53-3.png',
+      fit: BoxFit.contain,
     );
   }
 
@@ -333,7 +361,7 @@ class _PerfilPageState extends State<PerfilPage> {
       MapEntry('Mudar Foto de Perfil', _mudarFoto),
       MapEntry('Mudar Nome de Perfil', _mudarNome),
       MapEntry('Mudar Data de Nascimento', _mudarNascimento),
-      // MapEntry('Alterar endereço', _mudarEndereco),
+      MapEntry('Alterar endereço', _mudarEndereco),
     ];
 
     return Padding(

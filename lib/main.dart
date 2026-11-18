@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'pages/sobre_page.dart';
@@ -13,7 +12,9 @@ import 'pages/cadastros/cadastro_page.dart';
 import 'pages/cadastros/cadastro_pet_page.dart';
 import 'pages/pets/detalhes_pet_page.dart';
 import 'pages/pets/editar_pet_page.dart';
-import 'pages/cadastros/cadastro_endereco_page.dart';
+import 'models/saved_address.dart';
+import 'pages/endereco/addresses_page.dart';
+import 'pages/endereco/endereco_page.dart';
 import 'pages/cliente/login_page.dart';
 import 'pages/consultas/nova_consulta_page.dart';
 import 'pages/cliente/perfil_page.dart';
@@ -76,18 +77,7 @@ class VetHomeApp extends StatelessWidget {
         locale: const Locale('pt', 'BR'),
         supportedLocales: const [Locale('pt', 'BR')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        theme: ThemeData(
-          scaffoldBackgroundColor: VH.background,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: themeSeed,
-            primary: themeSeed,
-          ),
-          textTheme: GoogleFonts.montserratAlternatesTextTheme().apply(
-            bodyColor: VH.foreground,
-            displayColor: VH.foreground,
-          ),
-          useMaterial3: true,
-        ),
+        theme: VetTheme.light(themeSeed),
         initialRoute: '/',
         routes: {
           '/': (_) => const SplashScreen(),
@@ -132,6 +122,11 @@ class VetHomeApp extends StatelessWidget {
           },
  
           '/config': (_) => const ConfigScreen(),
+          '/enderecos': (_) => const AddressesPage(),
+          '/editar-endereco': (context) => AddressEditorPage(
+            address:
+                ModalRoute.of(context)?.settings.arguments as SavedAddress?,
+          ),
         },
       ),
     );

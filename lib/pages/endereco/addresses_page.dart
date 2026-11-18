@@ -11,7 +11,7 @@ import '../../widgets/vet/vet_header.dart';
 import '../../widgets/vet/vet_bottom_nav.dart';
 import '../../service/utils/vet_nav.dart';
 
-enum _AddressDeleteFailure { clearing, blocked, unknown }
+enum _AddressDeleteFailure { unknown }
 
 class AddressesPage extends StatefulWidget {
   const AddressesPage({super.key});
@@ -22,7 +22,7 @@ class AddressesPage extends StatefulWidget {
 
 class _AddressesPageState extends State<AddressesPage> {
   static const _saveFailureMessage =
-      'Dados atualizados nesta sessão. Não foi possível salvar localmente.';
+      'Não foi possível salvar o endereço. Tente novamente.';
 
   static const _labelStyle = TextStyle(
     fontFamily: PetsTheme.fontComfortaa,
@@ -45,6 +45,22 @@ class _AddressesPageState extends State<AddressesPage> {
     radius: Radius.circular(1.5),
   );
 
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  /// Busca os endereços do cliente no backend e redesenha a lista.
+  Future<void> _load() async {
+    try {
+      await EnderecoService.carregar();
+    } catch (e) {
+      if (mounted) _showMessage(e.toString().replaceFirst('Exception: ', ''));
+    }
+    if (mounted) setState(() {});
+  }
+
   Future<void> _edit([SavedAddress? address]) async {
     final compactEditor =
         address != null && MediaQuery.sizeOf(context).width < 900;
@@ -63,10 +79,6 @@ class _AddressesPageState extends State<AddressesPage> {
     setState(() {});
     if (saved == false) {
       _showSaveFailure();
-    } else if (saved == _AddressDeleteFailure.clearing) {
-      _showDeleteBlocked(clearing: true);
-    } else if (saved == _AddressDeleteFailure.blocked) {
-      _showDeleteBlocked(clearing: false);
     } else if (saved == _AddressDeleteFailure.unknown) {
       _showDeleteFailure();
     }
@@ -92,31 +104,18 @@ class _AddressesPageState extends State<AddressesPage> {
     );
     if (confirmed == true && mounted) {
       try {
-        EnderecoService.removeAddress(address.id);
+        await EnderecoService.excluir(address.id);
         if (mounted) setState(() {});
-        final saved = await EnderecoService.flush();
-        if (!saved && mounted) _showSaveFailure();
-      } on PersistenceClearingException {
-        if (mounted) _showDeleteBlocked(clearing: true);
-      } on PersistenceBlockedException {
-        if (mounted) _showDeleteBlocked(clearing: false);
-      } catch (_) {
-        if (mounted) _showDeleteFailure();
+      } catch (e) {
+        if (mounted) {
+          _showMessage(e.toString().replaceFirst('Exception: ', ''));
+        }
       }
     }
   }
 
   void _showSaveFailure() {
     _showMessage(_saveFailureMessage);
-  }
-
-  void _showDeleteBlocked({required bool clearing}) {
-    _showMessage(
-      clearing
-          ? 'A exclusão individual foi bloqueada enquanto os dados estavam '
-                'sendo limpos.'
-          : 'O armazenamento está indisponível. O endereço não foi excluído.',
-    );
   }
 
   void _showDeleteFailure() {
@@ -454,22 +453,11 @@ class AddressEditorPage extends StatelessWidget {
       pinSaveAction: address == null && !desktop,
       title: address == null ? 'Novo endereço' : 'Editar endereço',
       initial: address,
-      saveErrorMessage: (error) {
-        if (error is PersistenceClearingException) {
-          return 'O endereço não foi salvo porque os dados locais estão sendo '
-              'limpos. Os dados digitados continuam no formulário.';
-        }
-        if (error is PersistenceBlockedException) {
-          return 'O endereço não foi salvo porque o armazenamento local está '
-              'bloqueado. Os dados digitados continuam no formulário.';
-        }
-        return 'Não foi possível confirmar o salvamento. Os dados digitados '
-            'continuam no formulário; confira a lista antes de tentar novamente.';
-      },
+      saveErrorMessage: (error) =>
+          error.toString().replaceFirst('Exception: ', ''),
       onSaved: (value) async {
-        EnderecoService.saveAddress(value);
-        final saved = await EnderecoService.flush();
-        if (context.mounted) Navigator.pop(context, saved);
+        await EnderecoService.salvar(value);
+        if (context.mounted) Navigator.pop(context, true);
       },
       routeButton: modal && compactEditor
           ? VetRouteMenuButton(
@@ -497,17 +485,8 @@ class AddressEditorPage extends StatelessWidget {
         );
         if (confirmed != true || !context.mounted) return;
         try {
-          EnderecoService.removeAddress(value.id);
-          final saved = await EnderecoService.flush();
-          if (context.mounted) Navigator.pop(context, saved ? null : false);
-        } on PersistenceClearingException {
-          if (context.mounted) {
-            Navigator.pop(context, _AddressDeleteFailure.clearing);
-          }
-        } on PersistenceBlockedException {
-          if (context.mounted) {
-            Navigator.pop(context, _AddressDeleteFailure.blocked);
-          }
+          await EnderecoService.excluir(value.id);
+          if (context.mounted) Navigator.pop(context);
         } catch (_) {
           if (context.mounted) {
             Navigator.pop(context, _AddressDeleteFailure.unknown);

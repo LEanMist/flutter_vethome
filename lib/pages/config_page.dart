@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../service/utils/formatters.dart';
-import '../data/mock/vet_mock.dart';
-import '../data/pet_repository.dart';
-import '../data/session.dart';
+
 import '../theme.dart';
 import '../widgets.dart';
-import '../widgets/dialog/address_dialog.dart';
 
 class ConfigScreen extends StatelessWidget {
   const ConfigScreen({super.key});
@@ -19,29 +15,27 @@ class ConfigScreen extends StatelessWidget {
         const VHHeader('Configurações', showBack: false),
         VHMenu(
           const [
-            'Tema do Aplicativo',
-            // 'Meus Endereços',
-            'Suporte',
-            // 'Histórico',
-            'Sair',
+             'Meus Endereços',
+             'Sobre a veterinária',
+             'Suporte',
+             'Sair',
           ],
           onTap: (index) {
             switch (index) {
               case 0:
-                _chooseTheme(context);
+                Navigator.pushNamed(context, '/enderecos');
                 break;
-              case 1:
-                _editAddress(context);
+                case 1:
+                Navigator.pushNamed(context, '/sobre');
                 break;
               case 2:
                 _showSupport(context);
                 break;
               case 3:
-                _showHistory(context);
-                break;
-              case 4:
                 _signOut(context);
                 break;
+           
+              
             }
           },
         ),
@@ -49,97 +43,6 @@ class ConfigScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _chooseTheme(BuildContext context) async {
-    const colors = [
-      Color(0xFF68442E),
-      Color(0xFFC08081),
-      Color(0xFF718B70),
-      Color(0xFF6B8FA3),
-      Color(0xFF9477A8),
-    ];
-    var selected = VH.themeSeed.value;
-    final color = await showDialog<Color>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: VH.background,
-          title: const Text('Tema do Aplicativo'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 132,
-                height: 132,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/imagens/figma/image-8.png',
-                      width: 132,
-                      height: 132,
-                    ),
-                    Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: selected,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 12,
-                children: [
-                  for (final color in colors)
-                    InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () => setDialogState(() => selected = color),
-                      child: CircleAvatar(
-                        radius: selected == color ? 19 : 16,
-                        backgroundColor: color,
-                        child: selected == color
-                            ? const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 18,
-                              )
-                            : null,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, selected),
-              child: const Text('Confirmar'),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (color != null) VH.themeSeed.value = color;
-  }
-
-  Future<void> _editAddress(BuildContext context) async {
-    final address = await showDialog<String>(
-      context: context,
-      builder: (_) =>
-          AddressDialog(initialAddress: Session.clientAddress),
-    );
-    if (address != null) {
-      Session.updateClient(address: address);
-    }
-  }
 
   void _showSupport(BuildContext context) {
     showDialog<void>(
@@ -148,9 +51,11 @@ class ConfigScreen extends StatelessWidget {
         backgroundColor: VH.background,
         title: const Text('Suporte VetHome'),
         content: const Text(
-          'Estamos aqui para ajudar.\n'
+          'Estamos aqui para ajudar!\n'
           'Telefone: 11 93244-4392\n'
-          'E-mail: Gabriela@gmail.com',
+          'E-mail: Gabriela@gmail.com\n'
+          'E-mail de suporte do aplicativo: service.vethome@gmail.com'
+          ,
         ),
         actions: [
           TextButton(
@@ -161,48 +66,7 @@ class ConfigScreen extends StatelessWidget {
       ),
     );
   }
-
-  void _showHistory(BuildContext context) {
-    final appointments = [
-      for (final pet in PetRepository.pets)
-        for (final appointment in VetMock.agendamentos(pet.name))
-          (pet: pet, appointment: appointment),
-    ]..sort((a, b) => b.appointment.data.compareTo(a.appointment.data));
-
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VH.background,
-        title: const Text('Histórico'),
-        content: SizedBox(
-          width: 320,
-          child: appointments.isEmpty
-              ? const Text('Nenhuma consulta registrada.')
-              : ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (final item in appointments)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(item.appointment.tipo),
-                        subtitle: Text(
-                          '${item.pet.name} · ${fmtData(item.appointment.data)}',
-                        ),
-                        trailing: Text(fmtHora(item.appointment.data)),
-                      ),
-                  ],
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
-          ),
-        ],
-      ),
-    );
-  }
-
+    
   Future<void> _signOut(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
