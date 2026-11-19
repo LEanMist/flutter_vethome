@@ -16,6 +16,7 @@ class PetAvatar extends StatelessWidget {
     this.species,
     this.listSilhouette = false,
     this.silhouetteColor,
+    this.silhouetteSurface = VetColors.rose,
   });
 
   final String image;
@@ -25,6 +26,7 @@ class PetAvatar extends StatelessWidget {
   final String? photoBase64;
   final bool listSilhouette;
   final Color? silhouetteColor;
+  final Color silhouetteSurface;
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +53,12 @@ class PetAvatar extends StatelessWidget {
               width: width,
               height: height,
               fit: BoxFit.contain,
-              color: listSilhouette
-                  ? silhouetteColor ?? VetColors.brownOnRose
+              color:
+                  silhouetteColor ??
+                  (listSilhouette ? VetColors.brownOnRose : null),
+              colorBlendMode: listSilhouette || silhouetteColor != null
+                  ? BlendMode.srcIn
                   : null,
-              colorBlendMode: listSilhouette ? BlendMode.srcIn : null,
               cacheWidth: (width * dpr).round(),
               excludeFromSemantics: true,
             );
@@ -65,7 +69,7 @@ class PetAvatar extends StatelessWidget {
       return ClipRRect(
         borderRadius: BorderRadius.circular(radius * s),
         child: ColoredBox(
-          color: VetColors.rose,
+          color: silhouetteSurface,
           child: SizedBox(
             width: px,
             height: px,

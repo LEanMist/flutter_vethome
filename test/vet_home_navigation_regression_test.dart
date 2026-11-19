@@ -129,11 +129,14 @@ void main() {
     final appointment = VetRepository.agendamentos(
       pet.id,
     ).singleWhere((item) => item.tipo == 'Consulta');
-    expect(find.text(pet.name), findsWidgets);
     final card = find.byKey(
       ValueKey(
         'agenda-appointment-${appointment.data.microsecondsSinceEpoch}-${appointment.tipo}',
       ),
+    );
+    expect(
+      find.descendant(of: card, matching: find.text('Consulta')),
+      findsOneWidget,
     );
     expect(
       find.ancestor(
@@ -141,7 +144,8 @@ void main() {
         matching: find.byWidgetPredicate(
           (widget) =>
               widget is Semantics &&
-              widget.properties.label?.contains('Consulta') == true,
+              widget.properties.label?.contains('Consulta') == true &&
+              widget.properties.label?.contains(pet.name) == true,
         ),
       ),
       findsOneWidget,
@@ -199,11 +203,14 @@ void main() {
     ];
     expect(find.text(months[date.month - 1]), findsOneWidget);
     expect(find.text('${date.year}'), findsOneWidget);
-    expect(find.text(pet.name), findsWidgets);
     final card = find.byKey(
       ValueKey(
         'agenda-appointment-${date.microsecondsSinceEpoch}-Retorno teste',
       ),
+    );
+    expect(
+      find.descendant(of: card, matching: find.text('Retorno teste')),
+      findsOneWidget,
     );
     expect(
       find.ancestor(
@@ -211,7 +218,8 @@ void main() {
         matching: find.byWidgetPredicate(
           (widget) =>
               widget is Semantics &&
-              widget.properties.label?.contains('Retorno teste') == true,
+              widget.properties.label?.contains('Retorno teste') == true &&
+              widget.properties.label?.contains(pet.name) == true,
         ),
       ),
       findsOneWidget,

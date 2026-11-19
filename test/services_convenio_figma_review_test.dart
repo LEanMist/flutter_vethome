@@ -85,26 +85,19 @@ void main() {
       );
     }
     for (final (name, rect) in const [
-      ('Microchipagem', Rect.fromLTWH(-1, 546, 263, 59)),
-      ('Atestados', Rect.fromLTWH(-5, 627, 267, 59)),
+      ('Microchipagem', Rect.fromLTWH(0, 546, 300, 59)),
+      ('Atestados', Rect.fromLTWH(-5, 627, 305, 59)),
     ]) {
       expect(
         tester.getRect(find.byKey(ValueKey('services-pill-$name'))),
         rect,
         reason: '$name deve manter a largura e posição de SERVICES_PAGE.',
       );
-      final arrow = tester.widget<Image>(
-        find.byKey(ValueKey('services-category-chevron-$name')),
+      final checkboxRect = tester.getRect(
+        find.byKey(ValueKey('services-category-checkbox-$name')),
       );
-      expect(
-        (arrow.image as AssetImage).assetName,
-        'assets/imagens/figma/convenio-chevron.png',
-      );
-      final arrowRect = tester.getRect(
-        find.byKey(ValueKey('services-category-chevron-$name')),
-      );
-      expect(arrowRect.left, closeTo(289.5, 1));
-      expect(arrowRect.top, closeTo(name == 'Microchipagem' ? 569 : 650, 1));
+      expect(checkboxRect.left, closeTo(259, 1));
+      expect(checkboxRect.top, closeTo(name == 'Microchipagem' ? 567 : 648, 1));
     }
     final examsPill = tester.widget<Ink>(
       find.ancestor(of: find.text('Exames'), matching: find.byType(Ink)).first,
@@ -135,12 +128,13 @@ void main() {
       );
     }
     final continueButton = find.byKey(const ValueKey('services-continue'));
-    final continueText = tester.widget<Text>(
+    final continueText = tester.element(
       find.descendant(of: continueButton, matching: find.text('Continuar')),
     );
-    expect(continueText.style?.fontFamily, 'Comfortaa');
-    expect(continueText.style?.fontSize, 18);
-    expect(continueText.style?.fontWeight, FontWeight.bold);
+    final continueStyle = DefaultTextStyle.of(continueText).style;
+    expect(continueStyle.fontFamily, 'Comfortaa');
+    expect(continueStyle.fontSize, 18);
+    expect(continueStyle.fontWeight, FontWeight.bold);
     expect(
       tester
           .widget<ElevatedButton>(continueButton)
@@ -179,17 +173,17 @@ void main() {
       ),
       findsOneWidget,
     );
-    // CONVENIO_PAGE 2783:840 em "Telas para Entregar", viewport de 390 × 844.
-    // Mantém o fluxo/rotas existentes enquanto alinha a posição dos planos.
+    // Quadro 4010:387 de "Telas para IA", viewport de 390 × 844.
     expect(tester.getTopLeft(find.text('Convênio')).dy, closeTo(37, 1));
-    for (final (plan, top) in const [
-      ('PetLove', 342.0),
-      ('DogLife', 461.0),
-      ('Particular', 580.0),
+    for (final (plan, top, width) in const [
+      ('PetLove', 273.0, 254.0),
+      ('DogLife', 392.0, 254.0),
+      ('WeVets', 511.0, 254.0),
+      ('Particular', 633.0, 255.0),
     ]) {
       expect(
         tester.getRect(find.byKey(ValueKey('convenio-plan-pill-$plan'))),
-        Rect.fromLTWH(0, top, 254, 59),
+        Rect.fromLTWH(0, top, width, 59),
       );
     }
     expect(
@@ -203,15 +197,13 @@ void main() {
       find.byKey(const ValueKey('convenio-figma-unnamed-pill')),
       findsNothing,
     );
-    // CONVENIO_PAGE 2783:840: planos 254 × 59 e títulos
-    // Montserrat Alternates Bold, 20 px.
-    for (final label in ['PetLove', 'Doglife', 'Particular']) {
+    for (final label in ['PetLove', 'Doglife', 'WeVets', 'Particular']) {
       final title = tester.widget<Text>(find.text(label));
       expect(title.data, label);
       expect(title.maxLines, isNull);
       expect(title.overflow, isNull);
       expect(title.style?.fontFamily, 'MontserratAlternates');
-      expect(title.style?.fontSize, 20);
+      expect(title.style?.fontSize, 25);
       expect(title.style?.fontWeight, FontWeight.bold);
       expect(title.style?.color, VetColors.brownOnRose);
       final gradientContrasts = [
@@ -227,35 +219,33 @@ void main() {
         of: find.text(label),
         matching: find.byWidgetPredicate(
           (widget) =>
-              widget is ConstrainedBox && widget.constraints.maxWidth == 254,
+              widget is ConstrainedBox &&
+              widget.constraints.maxWidth ==
+                  (label == 'Particular' ? 255 : 254),
         ),
       );
       expect(pill, findsOneWidget);
-      expect(tester.getSize(pill).width, closeTo(254, 1));
+      expect(tester.getSize(pill).width, label == 'Particular' ? 255 : 254);
       expect(tester.getSize(pill).height, closeTo(59, 1));
     }
     expect(
       find.image(const AssetImage('assets/imagens/figma/convenio-petlove.png')),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.image(const AssetImage('assets/imagens/figma/coisademedico-1.png')),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.image(
         const AssetImage('assets/imagens/figma/convenio-particular.png'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.image(const AssetImage('assets/imagens/figma/convenio-chevron.png')),
-      findsNWidgets(3),
+      findsNWidgets(4),
     );
-    for (final label in ['Convênio', 'PetLove', 'Doglife', 'Particular']) {
-      // ignore: avoid_print
-      print('CONVENIO pos $label: ${tester.getTopLeft(find.text(label)).dy}');
-    }
     expect(tester.takeException(), isNull);
   });
 
@@ -322,13 +312,21 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Doglife'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Consulta de teste'), findsOneWidget);
-    expect(received?['petId'], pet.id);
-    expect(received?['plan'], 'DogLife');
-    expect(received?['service'], isNotEmpty);
+    for (final (label, plan) in [
+      ('PetLove', 'PetLove'),
+      ('Doglife', 'DogLife'),
+      ('WeVets', 'WeVets'),
+      ('Particular', 'Particular'),
+    ]) {
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+      expect(find.text('Consulta de teste'), findsOneWidget);
+      expect(received?['petId'], pet.id);
+      expect(received?['plan'], plan);
+      expect(received?['service'], 'Consulta Geral');
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+    }
     expect(tester.takeException(), isNull);
   });
 
@@ -419,7 +417,8 @@ void main() {
         .semanticsOwner!
         .rootSemanticsNode!;
     final counts = <String, int>{
-      for (final name in ['PetLove', 'Doglife', 'Particular']) name: 0,
+      for (final name in ['PetLove', 'Doglife', 'WeVets', 'Particular'])
+        name: 0,
     };
 
     void inspect(SemanticsNode node) {
@@ -504,7 +503,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('plans-desktop-layout')), findsOneWidget);
-    for (final label in ['PetLove', 'DogLife', 'Particular']) {
+    for (final label in ['PetLove', 'DogLife', 'WeVets', 'Particular']) {
       final titleFinder = find.text(label);
       final title = tester.widget<Text>(titleFinder);
       expect(title.style?.fontSize, 16);

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme.dart';
 import '../theme/vet_colors.dart';
@@ -19,6 +20,8 @@ class VetCalendar extends StatelessWidget {
     this.lastDate,
     this.hasIndicator,
     this.agendaPageStyle = false,
+    this.datePickerStyle = false,
+    this.canGoToPreviousMonth = true,
   });
 
   final DateTime month;
@@ -30,6 +33,8 @@ class VetCalendar extends StatelessWidget {
   final DateTime? lastDate;
   final bool Function(DateTime date)? hasIndicator;
   final bool agendaPageStyle;
+  final bool datePickerStyle;
+  final bool canGoToPreviousMonth;
 
   static const monthNames = [
     'Janeiro',
@@ -137,7 +142,8 @@ class VetCalendar extends StatelessWidget {
           hint:
               'Deslize para mudar o mês. Use Page Up para o mês anterior e Page Down para o próximo mês.',
           customSemanticsActions: {
-            CustomSemanticsAction(label: 'Mês anterior'): onPreviousMonth,
+            if (canGoToPreviousMonth)
+              CustomSemanticsAction(label: 'Mês anterior'): onPreviousMonth,
             CustomSemanticsAction(label: 'Próximo mês'): onNextMonth,
           },
           child: Listener(
@@ -154,7 +160,7 @@ class VetCalendar extends StatelessWidget {
               }
               if (delta.dx < 0) {
                 onNextMonth();
-              } else {
+              } else if (canGoToPreviousMonth) {
                 onPreviousMonth();
               }
             },
@@ -170,9 +176,16 @@ class VetCalendar extends StatelessWidget {
               ),
               child: Stack(
                 children: [
+                  if (datePickerStyle)
+                    _monthInset(
+                      scale,
+                      top: 28,
+                      bottom: 28,
+                      key: const ValueKey('appointment-date-calendar-inset'),
+                    ),
                   Positioned(
-                    left: 128 * scale,
-                    top: 22 * scale,
+                    left: (datePickerStyle ? 133 : 128) * scale,
+                    top: (datePickerStyle ? 34 : 22) * scale,
                     width: 71 * scale,
                     height: 35 * scale,
                     child: SizedBox(
@@ -201,8 +214,8 @@ class VetCalendar extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    left: 226 * scale,
-                    top: 22 * scale,
+                    left: (datePickerStyle ? 214 : 226) * scale,
+                    top: (datePickerStyle ? 34 : 22) * scale,
                     width: 35 * scale,
                     height: 35 * scale,
                     child: SizedBox(
@@ -211,15 +224,18 @@ class VetCalendar extends StatelessWidget {
                         label: 'Ano ${month.year}',
                         child: ExcludeSemantics(
                           child: Center(
-                            child: Text(
-                              '${month.year}',
-                              maxLines: 1,
-                              softWrap: false,
-                              style: TextStyle(
-                                color: VetColors.calendarTextOnRose,
-                                fontSize: 15 * scale,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: VH.headingFontFamily,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                '${month.year}',
+                                maxLines: 1,
+                                softWrap: false,
+                                style: TextStyle(
+                                  color: VetColors.calendarTextOnRose,
+                                  fontSize: 15 * scale,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: VH.headingFontFamily,
+                                ),
                               ),
                             ),
                           ),
@@ -227,9 +243,23 @@ class VetCalendar extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (datePickerStyle) ...[
+                    _monthButton(
+                      scale,
+                      previous: true,
+                      centerX: 121,
+                      centerY: 51.5,
+                    ),
+                    _monthButton(
+                      scale,
+                      previous: false,
+                      centerX: 268,
+                      centerY: 51.5,
+                    ),
+                  ],
                   Positioned(
                     left: 42 * scale,
-                    top: 75 * scale,
+                    top: (datePickerStyle ? 81 : 75) * scale,
                     width: 305 * scale,
                     height: gridHeight,
                     child: SizedBox(
@@ -250,23 +280,26 @@ class VetCalendar extends StatelessWidget {
                                 label: weekdayNames[index],
                                 child: ExcludeSemantics(
                                   child: Center(
-                                    child: Text(
-                                      const [
-                                        'Dom',
-                                        'Seg',
-                                        'Ter',
-                                        'Qua',
-                                        'Qui',
-                                        'Sex',
-                                        'Sáb',
-                                      ][index],
-                                      maxLines: 1,
-                                      softWrap: false,
-                                      style: TextStyle(
-                                        color: VetColors.calendarTextOnRose,
-                                        fontSize: 15 * scale,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: VH.headingFontFamily,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        const [
+                                          'Dom',
+                                          'Seg',
+                                          'Ter',
+                                          'Qua',
+                                          'Qui',
+                                          'Sex',
+                                          'Sáb',
+                                        ][index],
+                                        maxLines: 1,
+                                        softWrap: false,
+                                        style: TextStyle(
+                                          color: VetColors.calendarTextOnRose,
+                                          fontSize: 15 * scale,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: VH.headingFontFamily,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -319,6 +352,72 @@ class VetCalendar extends StatelessWidget {
     );
   }
 
+  Widget _monthInset(
+    double scale, {
+    required double top,
+    required double bottom,
+    required Key key,
+  }) => Positioned(
+    key: key,
+    left: 22 * scale,
+    right: 21 * scale,
+    top: top * scale,
+    bottom: bottom * scale,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: VetColors.pink.withValues(alpha: .3),
+        borderRadius: BorderRadius.circular(30 * scale),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: .6),
+          width: .8 * scale,
+        ),
+      ),
+    ),
+  );
+
+  Widget _monthButton(
+    double scale, {
+    required bool previous,
+    required double centerX,
+    required double centerY,
+  }) {
+    final onPressed = previous
+        ? (canGoToPreviousMonth ? onPreviousMonth : null)
+        : onNextMonth;
+    return Positioned(
+      left: centerX * scale - 24,
+      top: centerY * scale - 24,
+      width: 48,
+      height: 48,
+      child: CallbackShortcuts(
+        bindings: {
+          if (canGoToPreviousMonth)
+            const SingleActivator(LogicalKeyboardKey.pageUp): onPreviousMonth,
+          const SingleActivator(LogicalKeyboardKey.pageDown): onNextMonth,
+        },
+        child: IconButton(
+          key: ValueKey(
+            '${agendaPageStyle ? 'agenda' : 'date-picker'}-${previous ? 'previous' : 'next'}-month',
+          ),
+          tooltip: previous ? 'Mês anterior' : 'Próximo mês',
+          padding: EdgeInsets.zero,
+          onPressed: onPressed,
+          icon: Opacity(
+            opacity: onPressed == null ? .4 : 1,
+            child: Transform.rotate(
+              angle: previous ? math.pi : 0,
+              child: SvgPicture.asset(
+                previous
+                    ? 'assets/imagens/figma/appointment-month-previous.svg'
+                    : 'assets/imagens/figma/appointment-month-next.svg',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAgendaPageCalendar(BuildContext context, DateTime today) {
     final scale = (MediaQuery.sizeOf(context).width / 390)
         .clamp(0.8, 1.0)
@@ -332,11 +431,11 @@ class VetCalendar extends StatelessWidget {
     final compactWeekLabels = const ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     final cellDimension = 35 * scale;
     final columnGap = 10 * scale;
-    // A referência atual tem 40 px entre linhas. Meses com seis semanas
-    // comprimem o intervalo para 36 px para manter a faixa selecionada livre.
-    final rowStep = (weekCount > 5 ? 36.0 : 40.0) * scale;
-    final gridWidth = 327 * scale;
-    final gridHeight = (weekCount > 5 ? 251.0 : 230.0) * scale;
+    // A referência tem 45 px entre linhas. A sexta semana usa o espaço
+    // da moldura sem ocupar a faixa da data selecionada.
+    final rowStep = (weekCount > 5 ? 39.0 : 45.0) * scale;
+    final gridWidth = 305 * scale;
+    final gridHeight = cellDimension + rowStep * weekCount;
     final columnWidth = (gridWidth - columnGap * 6) / 7;
     final calendarRows = <Widget>[
       _agendaCalendarRow(
@@ -407,7 +506,7 @@ class VetCalendar extends StatelessWidget {
         child: Container(
           key: const ValueKey('vet-calendar'),
           width: 390 * scale,
-          height: 344 * scale,
+          height: 378 * scale,
           clipBehavior: Clip.none,
           decoration: BoxDecoration(
             color: VH.secondary,
@@ -418,30 +517,41 @@ class VetCalendar extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
+              _monthInset(
+                scale,
+                top: 17,
+                bottom: 34,
+                key: const ValueKey('agenda-calendar-inner-panel'),
+              ),
               if (compactText)
                 Positioned(
-                  left: 0,
-                  top: 16 * scale,
-                  width: 390 * scale,
-                  height: 44 * scale,
+                  left: 78 * scale,
+                  top: 23 * scale,
+                  width: 234 * scale,
+                  height: 35 * scale,
                   child: Semantics(
                     label: 'Mês ${monthNames[month.month - 1]}, ${month.year}',
                     child: ExcludeSemantics(
                       child: Center(
-                        child: Text.rich(
-                          TextSpan(
-                            text: monthNames[month.month - 1],
-                            children: [TextSpan(text: ' ${month.year}')],
-                          ),
-                          key: const ValueKey('agenda-calendar-month-heading'),
-                          maxLines: 1,
-                          softWrap: false,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: VetColors.calendarTextOnRose,
-                            fontSize: 15 * scale,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: VH.headingFontFamily,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text.rich(
+                            TextSpan(
+                              text: monthNames[month.month - 1],
+                              children: [TextSpan(text: ' ${month.year}')],
+                            ),
+                            key: const ValueKey(
+                              'agenda-calendar-month-heading',
+                            ),
+                            maxLines: 1,
+                            softWrap: false,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: VetColors.calendarTextOnRose,
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: VH.headingFontFamily,
+                            ),
                           ),
                         ),
                       ),
@@ -450,8 +560,8 @@ class VetCalendar extends StatelessWidget {
                 )
               else ...[
                 Positioned(
-                  left: 126 * scale,
-                  top: 17 * scale,
+                  left: 133 * scale,
+                  top: 23 * scale,
                   width: 71 * scale,
                   height: 35 * scale,
                   child: SizedBox.expand(
@@ -459,16 +569,21 @@ class VetCalendar extends StatelessWidget {
                     child: Semantics(
                       label: 'Mês ${monthNames[month.month - 1]}',
                       child: Center(
-                        child: Text(
-                          monthNames[month.month - 1],
-                          key: const ValueKey('agenda-calendar-month-heading'),
-                          maxLines: 1,
-                          softWrap: false,
-                          style: TextStyle(
-                            color: VetColors.calendarTextOnRose,
-                            fontSize: 15 * scale,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: VH.headingFontFamily,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            monthNames[month.month - 1],
+                            key: const ValueKey(
+                              'agenda-calendar-month-heading',
+                            ),
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              color: VetColors.calendarTextOnRose,
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: VH.headingFontFamily,
+                            ),
                           ),
                         ),
                       ),
@@ -476,8 +591,8 @@ class VetCalendar extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  left: 207 * scale,
-                  top: 17 * scale,
+                  left: 214 * scale,
+                  top: 23 * scale,
                   width: 35 * scale,
                   height: 35 * scale,
                   child: SizedBox.expand(
@@ -502,9 +617,21 @@ class VetCalendar extends StatelessWidget {
                   ),
                 ),
               ],
+              _monthButton(
+                scale,
+                previous: true,
+                centerX: compactText ? 48 : 121,
+                centerY: 40.5,
+              ),
+              _monthButton(
+                scale,
+                previous: false,
+                centerX: compactText ? 342 : 268,
+                centerY: 40.5,
+              ),
               Positioned(
-                left: 31 * scale,
-                top: 65 * scale,
+                left: 42 * scale,
+                top: 69 * scale,
                 width: gridWidth,
                 height: gridHeight,
                 child: SizedBox(

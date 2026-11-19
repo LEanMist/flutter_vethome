@@ -210,11 +210,14 @@ void main() {
 
     expect(find.byType(AgendaScreen), findsOneWidget);
     expect(agendaDate, appointment.data);
-    expect(find.text(pet.name), findsWidgets);
     final card = find.byKey(
       ValueKey(
         'agenda-appointment-${appointment.data.microsecondsSinceEpoch}-${appointment.tipo}',
       ),
+    );
+    expect(
+      find.descendant(of: card, matching: find.text(service)),
+      findsOneWidget,
     );
     expect(
       find.ancestor(
@@ -222,7 +225,8 @@ void main() {
         matching: find.byWidgetPredicate(
           (widget) =>
               widget is Semantics &&
-              widget.properties.label?.contains(service) == true,
+              widget.properties.label?.contains(service) == true &&
+              widget.properties.label?.contains(pet.name) == true,
         ),
       ),
       findsOneWidget,

@@ -94,6 +94,11 @@ class AppointmentCard extends StatelessWidget {
                 'Veterinário: ${event.veterinario}',
                 style: TextStyle(fontSize: 12, color: VetColors.brown),
               ),
+              if (event.address != null)
+                Text(
+                  'Endereço: ${event.locationLabel}',
+                  style: const TextStyle(fontSize: 12, color: VetColors.brown),
+                ),
               Text(
                 'Local/convênio: ${event.local}',
                 style: TextStyle(fontSize: 12, color: VetColors.brown),

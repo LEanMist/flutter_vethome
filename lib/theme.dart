@@ -85,6 +85,15 @@ class VH {
     color: onSecondary,
   );
 
+  static final ButtonStyle continueButtonStyle = ElevatedButton.styleFrom(
+    backgroundColor: primary,
+    foregroundColor: onSecondary,
+    disabledBackgroundColor: primary.withValues(alpha: .45),
+    minimumSize: const Size.fromHeight(48),
+    shape: const StadiumBorder(),
+    textStyle: figmaButtonTextStyle,
+  );
+
   static const List<BoxShadow> raise = [
     BoxShadow(color: shadowSoft, offset: Offset(2, 2), blurRadius: 2),
   ];

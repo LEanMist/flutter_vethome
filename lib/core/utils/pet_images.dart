@@ -1,3 +1,5 @@
+import '../../models/pet_model.dart';
+
 /// Identidade visual dos pets; caminhos antigos são placeholders, não fotos.
 class PetImages {
   PetImages._();
@@ -6,10 +8,10 @@ class PetImages {
   static const cat = 'assets/imagens/figma/cachorroegatopng-3.png';
 
   static String? forSpecies(String? species) =>
-      switch (species?.trim().toLowerCase()) {
-        'cachorro' || 'cão' || 'cao' || 'dog' || 'canino' => dog,
-        'gato' || 'cat' || 'felino' => cat,
-        _ => null,
+      switch (PetSpecies.parse(species)) {
+        PetSpecies.dog => dog,
+        PetSpecies.cat => cat,
+        null => null,
       };
 
   // Inclui exports duplicados antigos que podem existir em snapshots salvos.

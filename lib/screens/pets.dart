@@ -6,6 +6,8 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
 import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
+import '../models/pet_model.dart';
+import '../models/service_catalog.dart';
 import '../pages/pets_page.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
@@ -314,6 +316,18 @@ class _ServicosScreenState extends State<ServicosScreen> {
   final Set<String> _interactedCategories = <String>{};
   final Set<String> _selected = <String>{};
   String? _desktopExpandedCategory = 'Exames';
+  final _optionControllers = <String, ScrollController>{
+    'Exames': ScrollController(),
+    'Vacinas': ScrollController(),
+  };
+
+  @override
+  void dispose() {
+    for (final controller in _optionControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   static const _selectedServiceMarker =
       'assets/imagens/figma/services-checkbox-selected.svg';
@@ -350,18 +364,11 @@ class _ServicosScreenState extends State<ServicosScreen> {
     if (!_selected.remove(name)) _selected.add(name);
   });
 
-  void _continueToPlan(String petId) {
-    if (_selected.isEmpty) return;
-    final ordered = [
-      for (final group in categories.values)
-        for (final service in group)
-          if (_selected.contains(service)) service,
-    ];
-    final combined = ordered.join(' + ');
+  void _continueToPlan(String petId, List<String> selection) {
     Navigator.pushNamed(
       context,
       '/convenio',
-      arguments: {'petId': petId, 'service': combined},
+      arguments: {'petId': petId, 'service': selection.join(' + ')},
     );
   }
 
@@ -376,12 +383,6 @@ class _ServicosScreenState extends State<ServicosScreen> {
     );
   }
 
-  static const categories = <String, List<String>>{
-    'Exames': ['Hemograma', 'Creatinina', 'Urina'],
-    'Vacinas': ['V8', 'V10', 'Antirrábica'],
-    'Microchipagem': ['Microchipagem'],
-    'Atestados': ['Atestado'],
-  };
   @override
   Widget build(BuildContext context) {
     final routeArguments = ModalRoute.of(context)?.settings.arguments;
@@ -396,18 +397,28 @@ class _ServicosScreenState extends State<ServicosScreen> {
         media.size.height - media.padding.top - media.viewInsets.bottom;
     // The Figma button ends at y=775 and the compact bottom navigation is 50 px.
     final shortViewport = availableHeight < 825;
-    final species = switch (pet.species?.trim().toLowerCase()) {
-      'cachorro' || 'cão' => 'CÃO',
-      'gato' => 'GATO',
-      final value when value != null && value.isNotEmpty => value.toUpperCase(),
-      _ => 'PET',
+    final petSpecies = PetSpecies.parse(pet.species);
+    final categories = ServiceCatalog.categoriesFor(petSpecies);
+    final orderedSelection = [
+      for (final group in categories.values) ...group.where(_selected.contains),
+    ];
+    final species = switch (petSpecies) {
+      PetSpecies.dog => 'CÃO',
+      PetSpecies.cat => 'GATO',
+      null => switch (pet.species?.trim()) {
+        null || '' => 'PET',
+        final label => label.toUpperCase(),
+      },
     };
     return VHPage(
       tab: '/servicos',
       compactBottomNav: true,
       onBeforeNavigate: _confirmLeavingServices,
       footer: shortViewport
-          ? SafeArea(top: false, child: _continueButton(pet.id, topPadding: 8))
+          ? SafeArea(
+              top: false,
+              child: _continueButton(pet.id, orderedSelection, topPadding: 8),
+            )
           : null,
       children: [
         desktop ? const VHHeader('Serviços') : _servicesHeader(pet, species),
@@ -431,11 +442,13 @@ class _ServicosScreenState extends State<ServicosScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ...categories.entries.map(
-                          (entry) => _category(pet, entry),
-                        ),
+                        ...categories.entries.map(_category),
                         if (!shortViewport)
-                          _continueButton(pet.id, topPadding: 12),
+                          _continueButton(
+                            pet.id,
+                            orderedSelection,
+                            topPadding: 12,
+                          ),
                       ],
                     ),
                   ),
@@ -451,10 +464,9 @@ class _ServicosScreenState extends State<ServicosScreen> {
                 Expanded(
                   child: Column(
                     children: [
-                      ...categories.entries.map(
-                        (entry) => _category(pet, entry),
-                      ),
-                      if (!shortViewport) _continueButton(pet.id),
+                      ...categories.entries.map(_category),
+                      if (!shortViewport)
+                        _continueButton(pet.id, orderedSelection),
                     ],
                   ),
                 ),
@@ -545,7 +557,11 @@ class _ServicosScreenState extends State<ServicosScreen> {
     ),
   );
 
-  Widget _continueButton(String petId, {double topPadding = 16}) => Padding(
+  Widget _continueButton(
+    String petId,
+    List<String> selection, {
+    double topPadding = 16,
+  }) => Padding(
     padding: EdgeInsets.only(top: topPadding, bottom: 16),
     child: Center(
       child: SizedBox(
@@ -553,21 +569,11 @@ class _ServicosScreenState extends State<ServicosScreen> {
         height: 57,
         child: ElevatedButton(
           key: const ValueKey('services-continue'),
-          onPressed: _selected.isEmpty ? null : () => _continueToPlan(petId),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: VH.primary,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: VH.primary.withValues(alpha: .45),
-            shape: const StadiumBorder(),
-          ),
-          child: const Text(
-            'Continuar',
-            style: TextStyle(
-              fontFamily: VH.headingFontFamily,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
+          onPressed: selection.isEmpty
+              ? null
+              : () => _continueToPlan(petId, selection),
+          style: VH.continueButtonStyle,
+          child: const Text('Continuar'),
         ),
       ),
     ),
@@ -578,11 +584,10 @@ class _ServicosScreenState extends State<ServicosScreen> {
   Widget _servicePill(
     String name, {
     required VoidCallback onTap,
-    VoidCallback? arrowOnTap,
     bool selected = false,
   }) {
     if (MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint) {
-      return _desktopServicePill(name);
+      return _desktopServicePill(name, selected);
     }
 
     final visual = _ServiceCategoryVisual.forName(name);
@@ -642,6 +647,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                         Positioned(
                           left: visual.labelLeft,
                           top: 18,
+                          right: visual.width - visual.arrowLeft + 8,
                           child: Text(
                             name,
                             key: ValueKey('services-category-label-$name'),
@@ -655,7 +661,20 @@ class _ServicosScreenState extends State<ServicosScreen> {
                             ),
                           ),
                         ),
-                        if (visual.arrow != _ServiceCategoryArrow.doubleRight)
+                        if (visual.arrow == _ServiceCategoryArrow.checkbox)
+                          Positioned(
+                            left: visual.arrowLeft,
+                            top: 21,
+                            width: 16,
+                            height: 16,
+                            child: SvgPicture.asset(
+                              selected
+                                  ? _selectedServiceMarker
+                                  : _unselectedServiceMarker,
+                              key: ValueKey('services-category-checkbox-$name'),
+                            ),
+                          )
+                        else
                           Positioned(
                             left: visual.arrowLeft,
                             top: visual.arrowTop,
@@ -689,50 +708,13 @@ class _ServicosScreenState extends State<ServicosScreen> {
               ),
             ),
           ),
-          if (visual.arrow == _ServiceCategoryArrow.doubleRight)
-            Positioned(
-              left: 274,
-              top: 8.5,
-              width: 48,
-              height: 48,
-              child: ExcludeFocus(
-                child: IconButton(
-                  key: ValueKey('services-category-arrow-$name'),
-                  tooltip: name,
-                  onPressed: arrowOnTap ?? () => _toggleCategory(name),
-                  padding: EdgeInsets.zero,
-                  icon: RotatedBox(
-                    quarterTurns:
-                        _interactedCategories.contains(name) &&
-                            _isCategoryExpanded(name)
-                        ? 1
-                        : 0,
-                    child: selected
-                        ? SvgPicture.asset(
-                            _selectedServiceMarker,
-                            key: ValueKey('services-category-checkbox-$name'),
-                            width: 16,
-                            height: 16,
-                          )
-                        : Image.asset(
-                            'assets/imagens/figma/convenio-chevron.png',
-                            key: ValueKey('services-category-chevron-$name'),
-                            width: 17,
-                            height: 19,
-                            excludeFromSemantics: true,
-                          ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Widget _desktopServicePill(String name) => LayoutBuilder(
+  Widget _desktopServicePill(String name, bool selected) => LayoutBuilder(
     builder: (context, constraints) {
-      final selected = _categoryHasSelection(name);
       final textScaler = MediaQuery.textScalerOf(context);
       final scaledFontSize = textScaler.scale(20);
       const labelStyle = TextStyle(
@@ -855,10 +837,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
     },
   );
 
-  bool _categoryHasSelection(String name) =>
-      categories[name]?.any(_selected.contains) ?? false;
-
-  Widget _category(dynamic pet, MapEntry<String, List<String>> entry) {
+  Widget _category(MapEntry<String, List<String>> entry) {
     final mobile = MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
     final directChoice =
         mobile && (entry.key == 'Microchipagem' || entry.key == 'Atestados');
@@ -903,11 +882,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
                 child: _servicePill(
                   entry.key,
                   onTap: categoryAction,
-                  arrowOnTap: directChoice
-                      ? categoryAction
-                      : () => _toggleCategory(entry.key),
-                  selected:
-                      directChoice && _selected.contains(entry.value.single),
+                  selected: selectedServices.isNotEmpty,
                 ),
               ),
             ),
@@ -916,130 +891,120 @@ class _ServicosScreenState extends State<ServicosScreen> {
               alignment: Alignment.topLeft,
               child: directChoice || !_isCategoryExpanded(entry.key)
                   ? const SizedBox(width: 228)
-                  : ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        bottomRight: Radius.circular(25),
-                      ),
-                      child: Material(
-                        color: VH.secondary.withValues(alpha: .25),
-                        child: Stack(
-                          key: ValueKey('services-options-${entry.key}'),
-                          children: [
-                            SizedBox(
-                              width: 228,
-                              child: Column(
-                                children: [
-                                  for (final option in entry.value)
-                                    Semantics(
-                                      label: option,
-                                      checked: _selected.contains(option),
-                                      onTap: () => _toggleService(option),
-                                      child: InkWell(
-                                        excludeFromSemantics: true,
-                                        onTap: () => _toggleService(option),
-                                        overlayColor:
-                                            WidgetStateProperty.resolveWith(
-                                              VH.interactionOverlay,
-                                            ),
-                                        child: ConstrainedBox(
-                                          constraints: BoxConstraints(
-                                            minHeight:
-                                                MediaQuery.sizeOf(
-                                                      context,
-                                                    ).width <
-                                                    VH.compactBreakpoint
-                                                ? 101 / 3
-                                                : MediaQuery.sizeOf(
-                                                        context,
-                                                      ).width >=
-                                                      VH.desktopBreakpoint
-                                                ? 44
-                                                : 48,
-                                          ),
-                                          child: ExcludeSemantics(
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 14,
-                                                  ),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      option,
-                                                      style: const TextStyle(
-                                                        color: VH.foreground,
-                                                        fontFamily:
-                                                            VH.bodyFontFamily,
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Transform.translate(
-                                                    offset:
-                                                        MediaQuery.sizeOf(
-                                                              context,
-                                                            ).width <
-                                                            VH.desktopBreakpoint
-                                                        ? const Offset(-18, 0)
-                                                        : Offset.zero,
-                                                    child: SvgPicture.asset(
-                                                      _selected.contains(option)
-                                                          ? _selectedServiceMarker
-                                                          : _unselectedServiceMarker,
-                                                      key: ValueKey(
-                                                        'services-checkbox-$option',
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            if (MediaQuery.sizeOf(context).width <
-                                VH.desktopBreakpoint)
-                              Positioned(
-                                key: ValueKey(
-                                  'services-options-indicator-${entry.key}',
-                                ),
-                                right: 11.3,
-                                top: 25.5,
-                                width: 3,
-                                height: 28,
-                                child: ExcludeSemantics(
-                                  child: IgnorePointer(
-                                    child: RotatedBox(
-                                      quarterTurns: 1,
-                                      child: SvgPicture.asset(
-                                        'assets/imagens/figma/services-options-indicator.svg',
-                                        width: 28,
-                                        height: 3,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  : _serviceOptions(entry, mobile),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _serviceOptions(MapEntry<String, List<String>> entry, bool mobile) {
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width < VH.compactBreakpoint;
+    final baseRowHeight = compact
+        ? 101 / 3
+        : mobile
+        ? 48.0
+        : 44.0;
+    final rowHeight = math.max(
+      baseRowHeight,
+      MediaQuery.textScalerOf(context).scale(15) * 1.25 + 8,
+    );
+    final controller = _optionControllers[entry.key];
+    final options = Column(
+      children: [
+        for (final option in entry.value)
+          Semantics(
+            label: option,
+            checked: _selected.contains(option),
+            onTap: () => _toggleService(option),
+            child: InkWell(
+              excludeFromSemantics: true,
+              onTap: () => _toggleService(option),
+              overlayColor: WidgetStateProperty.resolveWith(
+                VH.interactionOverlay,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: rowHeight),
+                child: ExcludeSemantics(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(14, 4, mobile ? 32 : 14, 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            option,
+                            style: const TextStyle(
+                              color: VH.foreground,
+                              fontFamily: VH.bodyFontFamily,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SvgPicture.asset(
+                          _selected.contains(option)
+                              ? _selectedServiceMarker
+                              : _unselectedServiceMarker,
+                          key: ValueKey('services-checkbox-$option'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(bottomRight: Radius.circular(25)),
+      child: Material(
+        key: ValueKey('services-options-${entry.key}'),
+        color: VH.secondary.withValues(alpha: .25),
+        child: SizedBox(
+          width: 228,
+          child: entry.value.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(14),
+                  child: Text('Opções cadastradas para cães e gatos.'),
+                )
+              : controller == null
+              ? options
+              : SizedBox(
+                  height: rowHeight * math.min(3, entry.value.length),
+                  child: RawScrollbar(
+                    key: ValueKey('services-options-indicator-${entry.key}'),
+                    controller: controller,
+                    thumbVisibility: true,
+                    thumbColor: VH.foreground,
+                    thickness: 3,
+                    radius: const Radius.circular(2),
+                    minThumbLength: 28,
+                    mainAxisMargin: 8,
+                    crossAxisMargin: mobile ? 10 : 4,
+                    child: ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(
+                        context,
+                      ).copyWith(scrollbars: false),
+                      child: SingleChildScrollView(
+                        key: PageStorageKey('services-scroll-${entry.key}'),
+                        controller: controller,
+                        primary: false,
+                        child: options,
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
 }
 
-enum _ServiceCategoryArrow { down, right, doubleRight }
+enum _ServiceCategoryArrow { down, right, checkbox }
 
 class _ServiceCategoryVisual {
   const _ServiceCategoryVisual({
@@ -1091,7 +1056,7 @@ class _ServiceCategoryVisual {
         bottomRight: Radius.circular(400),
       ),
       arrow: _ServiceCategoryArrow.down,
-      arrowLeft: 240.075,
+      arrowLeft: 220.45,
       arrowTop: 25.996,
       arrowWidth: 19.698,
       arrowHeight: 11.124,
@@ -1117,9 +1082,9 @@ class _ServiceCategoryVisual {
       arrowHeight: 16.63,
     ),
     'Microchipagem' => const _ServiceCategoryVisual(
-      left: -1,
-      width: 263,
-      iconLeft: 14,
+      left: 0,
+      width: 300,
+      iconLeft: 16,
       iconTop: 14,
       iconWidth: 30,
       iconHeight: 30,
@@ -1130,26 +1095,36 @@ class _ServiceCategoryVisual {
         topRight: Radius.circular(25),
         bottomRight: Radius.circular(25),
       ),
-      arrow: _ServiceCategoryArrow.doubleRight,
+      arrow: _ServiceCategoryArrow.checkbox,
+      arrowLeft: 259,
     ),
     'Atestados' => const _ServiceCategoryVisual(
       left: -5,
-      width: 267,
-      iconLeft: 13,
-      iconTop: 14,
-      iconWidth: 32,
-      iconHeight: 32,
+      width: 305,
+      iconLeft: 23,
+      iconTop: 15,
+      iconWidth: 26,
+      iconHeight: 29,
       labelLeft: 61,
       gradientAlignmentY: -0.8813,
       borderRadius: BorderRadius.only(
         topRight: Radius.circular(400),
         bottomRight: Radius.circular(800),
       ),
-      arrow: _ServiceCategoryArrow.doubleRight,
+      arrow: _ServiceCategoryArrow.checkbox,
+      arrowLeft: 264,
     ),
     _ => throw ArgumentError.value(name, 'name', 'Categoria desconhecida'),
   };
 }
+
+typedef _PlanOption = ({
+  String id,
+  String label,
+  double gap,
+  double left,
+  double width,
+});
 
 class ConvenioScreen extends StatelessWidget {
   const ConvenioScreen({super.key, this.service});
@@ -1157,9 +1132,15 @@ class ConvenioScreen extends StatelessWidget {
   static const _planTitleStyle = TextStyle(
     fontFamily: VH.bodyFontFamily,
     fontWeight: FontWeight.bold,
-    fontSize: 20,
+    fontSize: 25,
     color: VetColors.brownOnRose,
   );
+  static const _options = <_PlanOption>[
+    (id: 'PetLove', label: 'PetLove', gap: 116, left: 31, width: 254),
+    (id: 'DogLife', label: 'Doglife', gap: 60, left: 32, width: 254),
+    (id: 'WeVets', label: 'WeVets', gap: 60, left: 32, width: 254),
+    (id: 'Particular', label: 'Particular', gap: 63, left: 29, width: 255),
+  ];
 
   /// Service received from the completed selection flow or an explicit caller.
   final String? service;
@@ -1177,23 +1158,21 @@ class ConvenioScreen extends StatelessWidget {
     final media = MediaQuery.of(context);
     const navigationHeight = 50.0;
     const headerHeight = 157.0;
-    const initialGap = 185.0;
-    const planGap = 60.0;
-    final referenceGaps = initialGap + planGap + planGap;
+    final referenceGaps = _options.fold(0.0, (total, plan) => total + plan.gap);
     final compactLargeTextPlans =
         media.size.height <= 640 && media.textScaler.scale(20) >= 36;
-    final allowPlanTitleWrap = media.textScaler.scale(20) > 20.5;
+    final allowPlanTitleWrap = media.textScaler.scale(25) > 25.5;
     final planVerticalPadding = compactLargeTextPlans ? 5.0 : 10.0;
     final effectivePlanTitleStyle = Theme.of(
       context,
     ).textTheme.bodyMedium?.merge(_planTitleStyle);
-    double planCardHeight(String label) {
+    double planCardHeight(_PlanOption plan) {
       final labelLayout = TextPainter(
-        text: TextSpan(text: label, style: effectivePlanTitleStyle),
+        text: TextSpan(text: plan.label, style: effectivePlanTitleStyle),
         textDirection: Directionality.of(context),
         textScaler: media.textScaler,
       );
-      const labelWidth = 254.0 - 15 - 12 - 30 - 18;
+      final labelWidth = plan.width - plan.left - 12;
       double measuredTextHeight;
       if (allowPlanTitleWrap) {
         labelLayout.layout(maxWidth: labelWidth);
@@ -1211,11 +1190,10 @@ class ConvenioScreen extends StatelessWidget {
       return height;
     }
 
-    final plansHeight = [
-      planCardHeight('PetLove'),
-      planCardHeight('Doglife'),
-      planCardHeight('Particular'),
-    ].fold<double>(0, (total, height) => total + height);
+    final plansHeight = _options.fold(
+      0.0,
+      (total, plan) => total + planCardHeight(plan),
+    );
     final availableGaps =
         media.size.height -
         media.padding.top -
@@ -1239,7 +1217,6 @@ class ConvenioScreen extends StatelessWidget {
                   'Se sair agora, ele não seguirá para a consulta.',
             ),
       children: [
-        // Figma 2783:840: cabeçalho de 157 px com aba da espécie (mobile).
         VetResponsiveLayout(
           breakpoint: VH.compactBreakpoint,
           mobile: _figmaHeader(pet),
@@ -1254,32 +1231,16 @@ class ConvenioScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // CONVENIO_PAGE (2783:840), em "Telas para Entregar":
-                  // três opções em y=342, 461 e 580, sem opção sem rótulo.
-                  SizedBox(height: initialGap * mobileSpacingScale),
-                  _figmaPlan(
-                    context,
-                    pet.id,
-                    selectedService,
-                    'PetLove',
-                    verticalPadding: planVerticalPadding,
-                  ),
-                  SizedBox(height: planGap * mobileSpacingScale),
-                  _figmaPlan(
-                    context,
-                    pet.id,
-                    selectedService,
-                    'DogLife',
-                    verticalPadding: planVerticalPadding,
-                  ),
-                  SizedBox(height: planGap * mobileSpacingScale),
-                  _figmaPlan(
-                    context,
-                    pet.id,
-                    selectedService,
-                    'Particular',
-                    verticalPadding: planVerticalPadding,
-                  ),
+                  for (final plan in _options) ...[
+                    SizedBox(height: plan.gap * mobileSpacingScale),
+                    _figmaPlan(
+                      context,
+                      pet.id,
+                      selectedService,
+                      plan,
+                      verticalPadding: planVerticalPadding,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1318,12 +1279,14 @@ class ConvenioScreen extends StatelessWidget {
     );
   }
 
-  Widget _figmaHeader(dynamic pet) {
-    final species = switch (pet.species?.trim().toLowerCase()) {
-      'cachorro' || 'cão' => 'CÃO',
-      'gato' => 'GATO',
-      final value when value != null && value.isNotEmpty => value.toUpperCase(),
-      _ => 'PET',
+  Widget _figmaHeader(PetModel pet) {
+    final species = switch (PetSpecies.parse(pet.species)) {
+      PetSpecies.dog => 'CÃO',
+      PetSpecies.cat => 'GATO',
+      null => switch (pet.species?.trim()) {
+        null || '' => 'PET',
+        final label => label.toUpperCase(),
+      },
     };
     return SizedBox(
       height: 157,
@@ -1413,6 +1376,7 @@ class ConvenioScreen extends StatelessWidget {
                                 species: pet.species,
                                 size: 32,
                                 listSilhouette: true,
+                                silhouetteColor: Colors.white,
                               ),
                             ),
                           ],
@@ -1429,19 +1393,19 @@ class ConvenioScreen extends StatelessWidget {
     );
   }
 
-  /// Pílula do Figma: 254×59 colada à borda esquerda, gradiente rosa→fundo e
+  /// Pílula do Figma colada à borda esquerda, gradiente rosa→fundo e
   /// setas duplas fora da pílula. Mesma rota/argumentos de [_plans].
   Widget _figmaPlan(
     BuildContext context,
     String petId,
     String service,
-    String plan, {
+    _PlanOption plan, {
     required double verticalPadding,
   }) {
-    void open() => _openPlan(context, petId, service, plan);
+    void open() => _openPlan(context, petId, service, plan.id);
     final allowPlanTitleWrap =
-        MediaQuery.of(context).textScaler.scale(20) > 20.5;
-    final radius = switch (plan) {
+        MediaQuery.textScalerOf(context).scale(25) > 25.5;
+    final radius = switch (plan.id) {
       'PetLove' => const BorderRadius.only(
         topRight: Radius.circular(800),
         bottomRight: Radius.circular(400),
@@ -1450,10 +1414,9 @@ class ConvenioScreen extends StatelessWidget {
         topRight: Radius.circular(400),
         bottomRight: Radius.circular(800),
       ),
-      'DogLife' => const BorderRadius.horizontal(right: Radius.circular(25)),
-      _ => const BorderRadius.horizontal(right: Radius.circular(29.5)),
+      _ => const BorderRadius.horizontal(right: Radius.circular(25)),
     };
-    final (begin, end) = switch (plan) {
+    final (begin, end) = switch (plan.id) {
       'PetLove' => (const Alignment(-1, -.995), const Alignment(1, .995)),
       'Particular' => (const Alignment(-1, .995), const Alignment(1, -.995)),
       _ => (Alignment.centerLeft, Alignment.centerRight),
@@ -1462,11 +1425,11 @@ class ConvenioScreen extends StatelessWidget {
       children: [
         Flexible(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 254),
+            constraints: BoxConstraints.tightFor(width: plan.width),
             child: Material(
               color: Colors.transparent,
               child: Ink(
-                key: ValueKey('convenio-plan-pill-$plan'),
+                key: ValueKey('convenio-plan-pill-${plan.id}'),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: begin,
@@ -1487,35 +1450,20 @@ class ConvenioScreen extends StatelessWidget {
                     constraints: const BoxConstraints(minHeight: 59),
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                        15,
+                        plan.left,
                         verticalPadding,
                         12,
                         verticalPadding,
                       ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 30,
-                            height: 30,
-                            child: VetPictogram(plan),
-                          ),
-                          const SizedBox(width: 18),
-                          Expanded(
-                            child: allowPlanTitleWrap
-                                ? Text(
-                                    plan == 'DogLife' ? 'Doglife' : plan,
-                                    style: _planTitleStyle,
-                                  )
-                                : FittedBox(
-                                    alignment: Alignment.centerLeft,
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      plan == 'DogLife' ? 'Doglife' : plan,
-                                      style: _planTitleStyle,
-                                    ),
-                                  ),
-                          ),
-                        ],
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: allowPlanTitleWrap
+                            ? Text(plan.label, style: _planTitleStyle)
+                            : FittedBox(
+                                alignment: Alignment.centerLeft,
+                                fit: BoxFit.scaleDown,
+                                child: Text(plan.label, style: _planTitleStyle),
+                              ),
                       ),
                     ),
                   ),
@@ -1531,7 +1479,7 @@ class ConvenioScreen extends StatelessWidget {
           child: ExcludeFocus(
             child: ExcludeSemantics(
               child: IconButton(
-                tooltip: plan,
+                tooltip: plan.label,
                 padding: EdgeInsets.zero,
                 onPressed: open,
                 icon: SizedBox(
@@ -1589,13 +1537,15 @@ class ConvenioScreen extends StatelessWidget {
   }
 
   List<Widget> _plans(BuildContext context, String petId, String service) => [
-    for (final plan in ['PetLove', 'DogLife', 'Particular'])
+    for (final plan in _options)
       Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: VetChoicePill(
-          label: plan,
-          icon: VetPictogram(plan),
-          onTap: () => _openPlan(context, petId, service, plan),
+          label: plan.id,
+          icon: plan.id == 'WeVets'
+              ? const Icon(Icons.local_hospital_outlined, color: Colors.white)
+              : VetPictogram(plan.id),
+          onTap: () => _openPlan(context, petId, service, plan.id),
         ),
       ),
   ];

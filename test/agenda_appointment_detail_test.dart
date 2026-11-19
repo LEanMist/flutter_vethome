@@ -63,7 +63,7 @@ void main() {
         final pet = VetRepository.pets.first;
         final appointment = Agendamento(
           data: DateTime(2026, 2, 18, 10),
-          tipo: 'Consulta real de fevereiro',
+          tipo: 'Hemograma + Ureia + V8',
           veterinario: 'Dra. Exemplo',
           local: 'Clínica VetHome',
           status: StatusAgendamento.confirmado,
@@ -79,6 +79,13 @@ void main() {
           MaterialApp(home: AgendaScreen(initialDate: appointment.data)),
         );
         await tester.pumpAndSettle();
+        expect(find.text('Hemograma + 2'), findsOneWidget);
+        expect(
+          find.bySemanticsLabel(
+            RegExp('Hemograma \\+ Ureia \\+ V8.*${pet.name}'),
+          ),
+          findsOneWidget,
+        );
 
         final date = find.byKey(
           const ValueKey('calendar-date-semantics-2026-2-18'),
@@ -227,15 +234,16 @@ void main() {
 
     await showAtTextScale(1);
     expect(tester.getSize(card).height, 50);
-    expect(find.text(pet.name), findsOneWidget);
+    expect(find.text(appointment.tipo), findsOneWidget);
 
     await showAtTextScale(2);
     expect(tester.getSize(card).height, greaterThan(50));
-    expect(tester.getSize(find.text(pet.name)).height, greaterThan(50));
+    expect(tester.getSize(find.text(appointment.tipo)).height, greaterThan(50));
     final accessibleCard = find.byWidgetPredicate(
       (widget) =>
           widget is Semantics &&
-          widget.properties.label?.contains(appointment.tipo) == true,
+          widget.properties.label?.contains(appointment.tipo) == true &&
+          widget.properties.label?.contains(pet.name) == true,
     );
     expect(accessibleCard, findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -278,13 +286,13 @@ void main() {
     final detail = find.byKey(const ValueKey('appointment-detail-dialog'));
     expect(detail, findsOneWidget);
     final surface = find.byKey(const ValueKey('appointment-detail-surface'));
-    expect(tester.getSize(surface), const Size(390, 346));
+    expect(tester.getSize(surface), const Size(390, 381));
     final surfaceRect = tester.getRect(surface);
     final ring = find.byKey(const ValueKey('appointment-detail-ring'));
     expect(ring, findsOneWidget);
     expect(
       tester.getRect(ring),
-      Rect.fromLTWH(surfaceRect.left + 29.5, surfaceRect.top + 106.5, 141, 141),
+      Rect.fromLTWH(surfaceRect.left + 29.5, surfaceRect.top + 120.5, 141, 141),
     );
     final ringWidget = tester.widget<SvgPicture>(ring);
     expect(ringWidget.width, 141);
@@ -298,7 +306,7 @@ void main() {
     expect(tester.getSize(deleteTarget), const Size(109, 48));
     final deleteVisualRect = tester.getRect(deleteVisual);
     expect(deleteVisualRect.left, closeTo(surfaceRect.left + 140, .01));
-    expect(deleteVisualRect.top, closeTo(surfaceRect.top + 283, .01));
+    expect(deleteVisualRect.top, closeTo(surfaceRect.top + 307, .01));
     expect(deleteVisualRect.width, closeTo(109, .01));
     expect(deleteVisualRect.height, closeTo(41, .01));
     expect(
@@ -380,7 +388,7 @@ void main() {
       tester.getRect(ring),
       Rect.fromLTWH(
         narrowSurface.left + 29.5 * narrowScale,
-        narrowSurface.top + 106.5 * narrowScale,
+        narrowSurface.top + 120.5 * narrowScale,
         141 * narrowScale,
         141 * narrowScale,
       ),
@@ -395,7 +403,10 @@ void main() {
     );
     expect(
       narrowVisualRect.top,
-      closeTo(narrowSurface.top + 283 * narrowScale, .01),
+      closeTo(
+        narrowSurface.top + 307 * narrowScale + 188 * (1 - narrowScale),
+        .01,
+      ),
     );
     final narrowHitPoint = Offset(
       narrowTargetRect.center.dx,

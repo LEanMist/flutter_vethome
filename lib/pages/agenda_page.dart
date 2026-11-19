@@ -18,6 +18,7 @@ List<DateTime> calendarMonthDays(DateTime month) =>
 
 const _agendaChevronUp = 'assets/imagens/figma/agenda-chevron-up.svg';
 const _agendaChevronDown = 'assets/imagens/figma/agenda-chevron-down.svg';
+const _firstMobileCardTop = 430.0;
 
 typedef _AgendaItem = ({
   String petId,
@@ -92,7 +93,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
               child: Container(
                 key: const ValueKey('agenda-sticky-action-footer'),
                 color: VH.background,
-                alignment: Alignment.topCenter,
+                alignment: const Alignment(0, .32),
                 child: _mobileNewAppointmentAction(mobileScale),
               ),
             )
@@ -128,7 +129,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final scale = (width / 390).clamp(0.8, 1.0).toDouble();
     final textScaler = MediaQuery.textScalerOf(context);
-    const selectedDateTop = 323.0;
+    const selectedDateTop = 350.0;
     final weekdays = const [
       'Domingo',
       'Segunda Feira',
@@ -151,19 +152,19 @@ class _AgendaScreenState extends State<AgendaScreen> {
       textAlign: TextAlign.center,
       textDirection: Directionality.of(context),
       textScaler: textScaler,
-    )..layout(maxWidth: 248 * scale);
+    )..layout(maxWidth: 258 * scale);
     final dateTextIsEnlarged = textScaler.scale(22 * scale) > 22 * scale;
     final selectedDateHeight = dateTextIsEnlarged
-        ? math.max(41 * scale, selectedDateTextPainter.height + 12 * scale)
-        : 41 * scale;
+        ? math.max(55 * scale, selectedDateTextPainter.height + 12 * scale)
+        : 55 * scale;
     selectedDateTextPainter.dispose();
     final selectedDateBottom = selectedDateTop * scale + selectedDateHeight;
     final contentOffset = math.max(
       0.0,
-      selectedDateBottom + 35 * scale - 399 * scale,
+      selectedDateBottom + 25 * scale - _firstMobileCardTop * scale,
     );
     final emptyMessageTop = math.max(
-      399 * scale,
+      _firstMobileCardTop * scale,
       selectedDateBottom + 10 * scale,
     );
     var precedingCardExpansion = 0.0;
@@ -175,11 +176,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
     }
     final lastCardBottom = appointments.isEmpty
         ? 0.0
-        : (399 + 84 * (appointments.length - 1)) * scale +
+        : (_firstMobileCardTop + 84 * (appointments.length - 1)) * scale +
               precedingCardExpansion +
               _mobileAppointmentHeight(appointments.last, scale);
     final contentHeight = math.max(
-      414 * scale,
+      445 * scale,
       appointments.isEmpty
           ? emptyMessageTop + 36 * scale
           : lastCardBottom + contentOffset,
@@ -209,9 +210,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           Positioned(
-            left: 67 * scale,
+            left: 62 * scale,
             top: selectedDateTop * scale,
-            width: 258 * scale,
+            width: 268 * scale,
             height: selectedDateHeight,
             child: Container(
               key: const ValueKey('agenda-selected-date'),
@@ -254,8 +255,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
           if (appointments.isNotEmpty) ...[
             Positioned(
-              left: 345 * scale,
-              top: 435 * scale + contentOffset,
+              left: 343 * scale,
+              top: 466 * scale + contentOffset,
               width: 20 * scale,
               height: 20 * scale,
               child: SizedBox.expand(
@@ -275,8 +276,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
               ),
             ),
             Positioned(
-              left: 345 * scale,
-              top: 560 * scale + contentOffset,
+              left: 343 * scale,
+              top: 592 * scale + contentOffset,
               width: 20 * scale,
               height: 20 * scale,
               child: SizedBox.expand(
@@ -360,7 +361,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
     for (var index = 0; index < appointments.length; index++) {
       final item = appointments[index];
-      final top = (399 + 84 * index) * scale + topOffset + accumulatedExpansion;
+      final top =
+          (_firstMobileCardTop + 84 * index) * scale +
+          topOffset +
+          accumulatedExpansion;
       final cardHeight = _mobileAppointmentHeight(item, scale);
       final expansion = cardHeight - 50 * scale;
       children.add(
@@ -375,9 +379,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
       if (index < appointments.length - 1) {
         children.add(
           Positioned(
-            left: 88 * scale,
+            left: 83 * scale,
             top:
-                (465 + 84 * index + (index > 0 ? 1 : 0)) * scale +
+                (496 + 84 * index + (index > 0 ? 1 : 0)) * scale +
                 topOffset +
                 accumulatedExpansion +
                 expansion,
@@ -394,6 +398,15 @@ class _AgendaScreenState extends State<AgendaScreen> {
     return children;
   }
 
+  String _mobileAppointmentTitle(Agendamento appointment) {
+    final services = appointment.tipo.split(' + ');
+    if (services.length == 1 ||
+        (services.length == 2 && int.tryParse(services.last) != null)) {
+      return appointment.tipo;
+    }
+    return '${services.first} + ${services.length - 1}';
+  }
+
   double _mobileAppointmentHeight(_AgendaItem item, double scale) {
     final standardHeight = 50 * scale;
     final textScaler = MediaQuery.textScalerOf(context);
@@ -408,7 +421,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
     final titlePainter = TextPainter(
       text: TextSpan(
-        text: item.name,
+        text: _mobileAppointmentTitle(item.agendamento),
         style: TextStyle(
           color: VetColors.calendarTextOnRose,
           fontSize: fontSize,
@@ -433,17 +446,18 @@ class _AgendaScreenState extends State<AgendaScreen> {
     required double cardHeight,
   }) {
     final end = item.agendamento.endDate;
+    final title = _mobileAppointmentTitle(item.agendamento);
     final label = [
       if (item.demo) 'Demonstração',
       item.agendamento.tipo,
       fmtHorario(item.agendamento.data, end),
       item.name,
-      item.agendamento.local,
+      item.agendamento.locationLabel,
     ].join(', ');
     return Stack(
       children: [
         Positioned(
-          left: 46 * scale,
+          left: 41 * scale,
           top: top,
           width: 39 * scale,
           height: cardHeight,
@@ -480,7 +494,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
         ),
         Positioned(
-          left: 102 * scale,
+          left: 97 * scale,
           top: top,
           width: 195 * scale,
           height: cardHeight,
@@ -521,7 +535,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                item.agendamento.tipo,
+                                title,
                                 maxLines: 1,
                                 style: TextStyle(
                                   color: VetColors.calendarTextOnRose,
@@ -536,7 +550,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       : MediaQuery.textScalerOf(context).scale(15 * scale) >
                             15 * scale
                       ? Text(
-                          item.name,
+                          title,
                           textAlign: TextAlign.center,
                           softWrap: true,
                           style: TextStyle(
@@ -549,7 +563,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       : FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            item.name,
+                            title,
                             maxLines: 1,
                             style: TextStyle(
                               color: VetColors.calendarTextOnRose,
@@ -645,7 +659,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   fmtData(item.agendamento.data),
                   fmtHorario(item.agendamento.data, item.agendamento.endDate),
                   item.name,
-                  item.agendamento.local,
+                  item.agendamento.locationLabel,
                 ].join(', '),
                 onTap: item.demo ? null : () => _showAppointmentDetails(item),
                 child: Material(
@@ -705,7 +719,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '${item.demo ? 'Demonstração · ' : ''}${item.name} · ${item.agendamento.local}',
+                                  '${item.demo ? 'Demonstração · ' : ''}${item.name} · ${item.agendamento.locationLabel}',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: VetColors.calendarTextOnRose,
