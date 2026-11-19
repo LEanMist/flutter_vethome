@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_vethome/data/theme_preferences.dart';
@@ -7,6 +8,17 @@ import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    final headingFont = FontLoader(VH.headingFontFamily)
+      ..addFont(rootBundle.load('assets/fonts/ComfortaaRegular.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/ComfortaaBold.ttf'));
+    final bodyFont = FontLoader(
+      VH.bodyFontFamily,
+    )..addFont(rootBundle.load('assets/fonts/MontserratAlternatesRegular.ttf'));
+    await headingFont.load();
+    await bodyFont.load();
+  });
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   testWidgets('tema escolhido em Configurações persiste após reinicialização', (
@@ -227,6 +239,72 @@ void main() {
         expect(visualRect.center, rect.center);
       }
       expect(bounds.map((rect) => rect.top).toSet(), hasLength(1));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final textScale in [1.0, 2.0]) {
+    testWidgets('seletor de tema cabe em janela baixa com texto ${textScale}x', (
+      tester,
+    ) async {
+      final previousSeed = VH.themeSeed.value;
+      addTearDown(() => VH.themeSeed.value = previousSeed);
+      tester.view.physicalSize = const Size(320, 460);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: VetTheme.light(previousSeed),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
+          home: const ConfigScreen(),
+        ),
+      );
+      final themeOption = find.text('Tema do Aplicativo');
+      await tester.ensureVisible(themeOption);
+      await tester.pumpAndSettle();
+      await tester.tap(themeOption.hitTestable());
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      final confirm = find.widgetWithText(ElevatedButton, 'Confirmar');
+      final cancel = find.widgetWithText(TextButton, 'Cancelar');
+      final confirmPosition = tester.getRect(confirm);
+      expect(confirm.hitTestable(), findsOneWidget);
+      expect(cancel.hitTestable(), findsOneWidget);
+
+      final swatch = find.byKey(const ValueKey('theme-swatch-target-Azul'));
+      if (textScale == 1) {
+        expect(
+          swatch.hitTestable(),
+          findsOneWidget,
+          reason:
+              'Amostra ${tester.getRect(swatch)}, ação ${tester.getRect(cancel)}',
+        );
+      }
+      await tester.ensureVisible(swatch);
+      await tester.pumpAndSettle();
+      expect(swatch.hitTestable(), findsOneWidget);
+      expect(
+        tester.getRect(swatch).bottom,
+        lessThanOrEqualTo(tester.getRect(cancel).top),
+      );
+      expect(tester.getRect(confirm), confirmPosition);
+
+      await tester.tap(swatch);
+      await tester.pumpAndSettle();
+      await tester.tap(confirm);
+      await tester.pumpAndSettle();
+      final blue = ThemePreferences.options.singleWhere(
+        (palette) => palette.name == 'Azul',
+      );
+      expect(VH.themeSeed.value, blue.color);
+      expect(find.byType(AlertDialog), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }

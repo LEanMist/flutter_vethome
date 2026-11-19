@@ -151,6 +151,7 @@ class ConfigScreen extends StatelessWidget {
         builder: (context, setDialogState) => _withBrownDialogActions(
           AlertDialog(
             backgroundColor: VH.background,
+            scrollable: true,
             insetPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 24,
@@ -160,7 +161,16 @@ class ConfigScreen extends StatelessWidget {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _ThemeColorWheel(selectedColor: selected),
+                ConstrainedBox(
+                  // Reserve espaço para a paleta quando a janela for baixa.
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(context).height * .44,
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: _ThemeColorWheel(selectedColor: selected),
+                  ),
+                ),
                 const SizedBox(height: 18),
                 Wrap(
                   spacing: 0,
