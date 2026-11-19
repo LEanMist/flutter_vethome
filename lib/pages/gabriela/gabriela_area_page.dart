@@ -14,14 +14,20 @@ import 'gabriela_agenda_tab.dart';
 import 'gabriela_messages_tab.dart';
 
 class GabrielaAreaPage extends StatefulWidget {
-  const GabrielaAreaPage({super.key});
+  const GabrielaAreaPage({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
 
   @override
   State<GabrielaAreaPage> createState() => _GabrielaAreaPageState();
 }
 
 class _GabrielaAreaPageState extends State<GabrielaAreaPage> {
-  int _selectedIndex = 0;
+  late int _selectedIndex = widget.initialIndex < 0
+      ? 0
+      : widget.initialIndex > 3
+      ? 3
+      : widget.initialIndex;
 
   @override
   Widget build(BuildContext context) {

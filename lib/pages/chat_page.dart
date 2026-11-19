@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
 import '../theme.dart';
-<<<<<<< HEAD
-=======
 import '../theme/vet_colors.dart';
->>>>>>> a658fe7b8454f46a55c393dcb650b45f2aa58185
 import '../widgets.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -35,34 +32,6 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return VHPage(
       tab: '/chat',
-<<<<<<< HEAD
-      footer: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: insetBox(color: VH.card, radius: 999),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: TextField(
-                    controller: ctrl,
-                    onSubmitted: (_) => enviar(),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Mensagem',
-                    ),
-                  ),
-                ),
-              ),
-              IconButton(
-                tooltip: 'Enviar mensagem',
-                onPressed: enviar,
-                icon: const Icon(Icons.send, color: VH.foreground),
-              ),
-            ],
-=======
       footer: ColoredBox(
         color: VetColors.chatComposerBackground,
         child: SafeArea(
@@ -108,7 +77,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ],
             ),
->>>>>>> a658fe7b8454f46a55c393dcb650b45f2aa58185
           ),
         ),
       ),
@@ -150,12 +118,8 @@ class _ChatScreenState extends State<ChatScreen> {
                             GestureDetector(
                               onTap: message.fromClient
                                   ? null
-<<<<<<< HEAD
-                                  : () => Navigator.pushNamed(context, '/sobre'),
-=======
                                   : () =>
                                         Navigator.pushNamed(context, '/sobre'),
->>>>>>> a658fe7b8454f46a55c393dcb650b45f2aa58185
                               child: Text(
                                 message.fromClient
                                     ? VetRepository.clientName
@@ -163,10 +127,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-<<<<<<< HEAD
-=======
                                   color: VetColors.brownSecondary,
->>>>>>> a658fe7b8454f46a55c393dcb650b45f2aa58185
                                 ),
                               ),
                             ),
@@ -179,27 +140,14 @@ class _ChatScreenState extends State<ChatScreen> {
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: message.fromClient
-<<<<<<< HEAD
-                                    ? VH.secondary
-=======
                                     ? VH.foreground.withValues(alpha: .5)
->>>>>>> a658fe7b8454f46a55c393dcb650b45f2aa58185
                                     : VH.card,
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: VH.raise,
                               ),
                               child: Text(
                                 message.text,
-<<<<<<< HEAD
-                                style: TextStyle(
-                                  color: message.fromClient
-                                      ? VH.onSecondary
-                                      : VH.foreground,
-=======
-                                style: const TextStyle(
-                                  color: VH.onSecondary,
->>>>>>> a658fe7b8454f46a55c393dcb650b45f2aa58185
-                                ),
+                                style: const TextStyle(color: VH.onSecondary),
                               ),
                             ),
                           ],
@@ -226,8 +174,4 @@ class _ChatScreenState extends State<ChatScreen> {
       ],
     );
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> a658fe7b8454f46a55c393dcb650b45f2aa58185

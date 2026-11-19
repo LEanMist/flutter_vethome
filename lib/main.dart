@@ -81,6 +81,11 @@ class VetHomeApp extends StatelessWidget {
           '/gabriela/splash': (_) => const GabrielaSplashScreen(),
           '/gabriela/login': (_) => const LoginPage(successRoute: '/gabriela'),
           '/gabriela': (_) => const GabrielaAreaPage(),
+          '/gabriela/perfil': (_) => const GabrielaAreaPage(initialIndex: 0),
+          '/gabriela/mensagens': (_) => const GabrielaAreaPage(initialIndex: 1),
+          '/gabriela/agenda': (_) => const GabrielaAreaPage(initialIndex: 2),
+          '/gabriela/configuracoes': (_) =>
+              const GabrielaAreaPage(initialIndex: 3),
           '/cadastro': (_) => const CadastroScreen(),
           '/endereco': (context) =>
               EnderecoScreen(initialData: _formDataFromRoute(context)),

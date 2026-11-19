@@ -13,6 +13,38 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('atalhos da Gabriela abrem as rotas correspondentes', (
+    tester,
+  ) async {
+    const destinations = {
+      'Gabriela - Login': '/gabriela/login',
+      'Gabriela - Perfil': '/gabriela/perfil',
+      'Gabriela - WhatsApp': '/gabriela/mensagens',
+      'Gabriela - Agenda': '/gabriela/agenda',
+      'Gabriela - Configurações': '/gabriela/configuracoes',
+    };
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const TestePage(),
+        routes: {
+          for (final route in destinations.values)
+            route: (_) => Scaffold(body: Text(route)),
+        },
+      ),
+    );
+
+    for (final entry in destinations.entries) {
+      final button = find.widgetWithText(OutlinedButton, entry.key);
+      await tester.scrollUntilVisible(button, 300);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(find.text(entry.value), findsOneWidget);
+      Navigator.of(tester.element(find.text(entry.value))).pop();
+      await tester.pumpAndSettle();
+    }
+  });
+
   testWidgets('nova consulta abre servicos sem escolher pet', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

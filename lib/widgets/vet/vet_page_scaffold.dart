@@ -18,11 +18,8 @@ class VetPageScaffold extends StatelessWidget {
     this.isTabRoot = false,
     this.showBack = true,
     this.headerBottom,
-<<<<<<< HEAD
-=======
     this.footer,
     this.titleSize = 30,
->>>>>>> a658fe7b8454f46a55c393dcb650b45f2aa58185
   });
 
   final String title;
@@ -34,11 +31,8 @@ class VetPageScaffold extends StatelessWidget {
   final bool isTabRoot;
   final bool showBack;
   final Widget? headerBottom;
-<<<<<<< HEAD
-=======
   final Widget? footer;
   final double titleSize;
->>>>>>> a658fe7b8454f46a55c393dcb650b45f2aa58185
 
   @override
   Widget build(BuildContext context) {
@@ -46,38 +40,6 @@ class VetPageScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: VetColors.pink,
-<<<<<<< HEAD
-      body: Column(
-        children: [
-          VetHeader(title: title, showBack: showBack, bottom: headerBottom),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16 * s),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (int i = 0; i < children.length; i++) ...[
-                    if (i > 0) SizedBox(height: 12 * s),
-                    children[i],
-                  ],
-                ],
-              ),
-            ),
-          ),
-          SafeArea(
-            top: false,
-            child: VetBottomNav(
-              selectedIndex: selectedIndex,
-              onSelected: (i) => vetNavigate(
-                context,
-                i,
-                selected: selectedIndex,
-                isTabRoot: isTabRoot,
-              ),
-            ),
-          ),
-        ],
-=======
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
@@ -126,7 +88,6 @@ class VetPageScaffold extends StatelessWidget {
             ],
           ),
         ),
->>>>>>> a658fe7b8454f46a55c393dcb650b45f2aa58185
       ),
     );
   }

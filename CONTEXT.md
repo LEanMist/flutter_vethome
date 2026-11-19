@@ -1,7 +1,10 @@
 # VetHome — contexto para continuar o projeto
 
-## Estado atual — acabamento local de 04/10/2026
+> Registro histórico de 04/10/2026. Branch, status de publicação e instruções
+> abaixo refletem aquele momento; consulte `git status --short --branch` para
+> confirmar o estado atual do repositório.
 
+## Estado naquela época — acabamento local
 - Branch `kelvin`; Passo 4B publicado em `e75ea44e099efa0764072016b9fc4d9f2b8e90a9`. O lote acumulado posterior, incluindo este acabamento, continua **NÃO publicado e NÃO staged**, aguardando revisão do usuário. Não iniciar nova etapa automaticamente.
 - As seções anteriores registram o estado de cada época. Em particular, as antigas limitações de foto de pet apenas na sessão e de editor sem avatar foram substituídas pelo acabamento descrito ao final. A foto do usuário continua limitada à sessão.
 - `.gitignore` contém a alteração preexistente do usuário e foi preservado. Nenhum commit, push, merge, configuração ou teste de aplicativo Android/Windows foi feito neste acabamento.

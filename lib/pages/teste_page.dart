@@ -9,6 +9,7 @@ import '../pages/editar_pet_page.dart';
 import '../pages/login_page.dart';
 import '../pages/nova_consulta_page.dart';
 import '../pages/perfil_page.dart';
+import '../pages/gabriela/gabriela_area_page.dart';
 import '../pages/gabriela/gabriela_splash_screen.dart';
 import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
@@ -134,6 +135,31 @@ class TestePage extends StatelessWidget {
         icone: Icons.settings_outlined,
         pagina: (_) => const ConfigScreen(),
       ),
+      (
+        titulo: 'Gabriela - Login',
+        icone: Icons.lock_outline,
+        pagina: (_) => const LoginPage(successRoute: '/gabriela'),
+      ),
+      (
+        titulo: 'Gabriela - Perfil',
+        icone: Icons.person_outline,
+        pagina: (_) => const GabrielaAreaPage(initialIndex: 0),
+      ),
+      (
+        titulo: 'Gabriela - WhatsApp',
+        icone: Icons.chat_bubble_outline,
+        pagina: (_) => const GabrielaAreaPage(initialIndex: 1),
+      ),
+      (
+        titulo: 'Gabriela - Agenda',
+        icone: Icons.calendar_month_outlined,
+        pagina: (_) => const GabrielaAreaPage(initialIndex: 2),
+      ),
+      (
+        titulo: 'Gabriela - Configurações',
+        icone: Icons.settings_outlined,
+        pagina: (_) => const GabrielaAreaPage(initialIndex: 3),
+      ),
     ];
 
     return Scaffold(
@@ -152,6 +178,11 @@ class TestePage extends StatelessWidget {
                   'Pets' => '/pets',
                   'Agenda' => '/agenda',
                   'Área da Gabriela' => '/gabriela/splash',
+                  'Gabriela - Login' => '/gabriela/login',
+                  'Gabriela - Perfil' => '/gabriela/perfil',
+                  'Gabriela - WhatsApp' => '/gabriela/mensagens',
+                  'Gabriela - Agenda' => '/gabriela/agenda',
+                  'Gabriela - Configurações' => '/gabriela/configuracoes',
                   _ => null,
                 };
                 if (routeName != null) {

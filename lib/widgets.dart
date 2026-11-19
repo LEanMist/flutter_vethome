@@ -648,7 +648,7 @@ class VHPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                ?footer,
+                if (footer != null) footer!,
                 VetBottomNav(
                   selectedIndex: _tabRoutes.indexOf(tab).clamp(0, 4),
                   onSelected: (index) {
