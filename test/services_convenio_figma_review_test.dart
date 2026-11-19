@@ -1,0 +1,589 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_vethome/data/vet_repository.dart';
+import 'package:flutter_vethome/screens/pets.dart'
+    show ServicosScreen, ConvenioScreen;
+import 'package:flutter_vethome/theme/vet_colors.dart';
+import 'package:flutter_vethome/widgets/pet_summary.dart';
+import 'package:flutter_vethome/widgets/pets/pet_avatar.dart';
+import 'package:flutter_vethome/widgets/vet_choice_pill.dart' show VetChevron;
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
+
+double _contrastRatio(Color first, Color second) {
+  final firstLuminance = first.computeLuminance();
+  final secondLuminance = second.computeLuminance();
+  final lighter = firstLuminance > secondLuminance
+      ? firstLuminance
+      : secondLuminance;
+  final darker = firstLuminance > secondLuminance
+      ? secondLuminance
+      : firstLuminance;
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+void main() {
+  testWidgets('Serviços e Convênio: posições e textos no mobile Figma', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final before = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = before);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
+    await tester.pumpAndSettle();
+
+    // Navegação global mantida por solicitação do usuário; o frame é usado
+    // para validar a geometria e o conteúdo específico de Serviços.
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    expect(tester.getSize(find.byType(VetBottomNav)).height, 50);
+    // SERVICES_PAGE 2791:3113 não apresenta o resumo do pet no mobile.
+    expect(find.byType(PetSummary), findsNothing);
+    expect(find.text('Serviços'), findsOneWidget);
+    final title = tester.widget<Text>(find.text('Serviços'));
+    expect(title.style?.fontFamily, 'Comfortaa');
+    expect(title.style?.fontSize, 30);
+    expect(title.style?.fontWeight, FontWeight.bold);
+    expect(title.style?.color, Colors.white);
+    final petAvatar = find.byType(PetAvatar);
+    expect(petAvatar, findsOneWidget);
+    final avatarImage = tester.widget<Image>(
+      find.descendant(of: petAvatar, matching: find.byType(Image)),
+    );
+    expect(avatarImage.color, Colors.white);
+    expect(
+      _contrastRatio(Colors.white, VetColors.rose),
+      greaterThanOrEqualTo(3),
+      reason: 'A silhueta branca deve continuar visível no cabeçalho rosa.',
+    );
+    for (final label in [
+      'Serviços',
+      'Exames',
+      'Vacinas',
+      'Microchipagem',
+      'Atestados',
+    ]) {
+      // ignore: avoid_print
+      print('SERVICOS pos $label: ${tester.getTopLeft(find.text(label)).dy}');
+    }
+    // SERVICES_PAGE 2791:3113, TELA_CLIENTE: posições na escala 1 (390x844).
+    for (final expected in const [
+      ('Serviços', 37.0),
+      ('Exames', 208.0),
+      ('Vacinas', 386.0),
+      ('Microchipagem', 564.0),
+      ('Atestados', 645.0),
+    ]) {
+      expect(
+        tester.getTopLeft(find.text(expected.$1)).dy,
+        closeTo(expected.$2, 1),
+        reason: 'Desvio do Figma no texto ${expected.$1}',
+      );
+    }
+    for (final (name, rect) in const [
+      ('Microchipagem', Rect.fromLTWH(-1, 546, 263, 59)),
+      ('Atestados', Rect.fromLTWH(-5, 627, 267, 59)),
+    ]) {
+      expect(
+        tester.getRect(find.byKey(ValueKey('services-pill-$name'))),
+        rect,
+        reason: '$name deve manter a largura e posição de SERVICES_PAGE.',
+      );
+      final arrow = tester.widget<Image>(
+        find.byKey(ValueKey('services-category-chevron-$name')),
+      );
+      expect(
+        (arrow.image as AssetImage).assetName,
+        'assets/imagens/figma/convenio-chevron.png',
+      );
+      final arrowRect = tester.getRect(
+        find.byKey(ValueKey('services-category-chevron-$name')),
+      );
+      expect(arrowRect.left, closeTo(289.5, 1));
+      expect(arrowRect.top, closeTo(name == 'Microchipagem' ? 569 : 650, 1));
+    }
+    final examsPill = tester.widget<Ink>(
+      find.ancestor(of: find.text('Exames'), matching: find.byType(Ink)).first,
+    );
+    final examsGradient =
+        (examsPill.decoration! as BoxDecoration).gradient! as LinearGradient;
+    final gradientBegin = examsGradient.begin as Alignment;
+    final gradientEnd = examsGradient.end as Alignment;
+    expect(examsGradient.colors, [VetColors.rose, VetColors.pink]);
+    expect(gradientBegin.x, closeTo(-1, 0.01));
+    expect(gradientBegin.y, closeTo(-1.07212, 0.01));
+    expect(gradientEnd.x, closeTo(1, 0.01));
+    expect(gradientEnd.y, closeTo(1.07212, 0.01));
+    for (final label in ['Exames', 'Vacinas', 'Microchipagem', 'Atestados']) {
+      final category = tester.widget<Text>(find.text(label));
+      expect(category.style?.fontFamily, 'MontserratAlternates');
+      expect(category.style?.fontSize, 20);
+      expect(category.style?.fontWeight, FontWeight.bold);
+      expect(category.style?.color, VetColors.brownOnRose);
+      final endpointContrasts = [
+        _contrastRatio(category.style!.color!, VetColors.rose),
+        _contrastRatio(category.style!.color!, VetColors.pink),
+      ];
+      expect(
+        endpointContrasts.reduce((a, b) => a < b ? a : b),
+        greaterThanOrEqualTo(3),
+        reason: 'Rótulos de categoria devem ter contraste de texto grande.',
+      );
+    }
+    final continueButton = find.byKey(const ValueKey('services-continue'));
+    final continueText = tester.widget<Text>(
+      find.descendant(of: continueButton, matching: find.text('Continuar')),
+    );
+    expect(continueText.style?.fontFamily, 'Comfortaa');
+    expect(continueText.style?.fontSize, 18);
+    expect(continueText.style?.fontWeight, FontWeight.bold);
+    expect(
+      tester
+          .widget<ElevatedButton>(continueButton)
+          .style
+          ?.foregroundColor
+          ?.resolve(<WidgetState>{}),
+      Colors.white,
+    );
+    final continueRect = tester.getRect(continueButton);
+    expect(continueRect.topLeft.dx, closeTo(116, 1));
+    expect(continueRect.topLeft.dy, closeTo(718, 1));
+    expect(continueRect.size, const Size(157, 57));
+    expect(
+      continueRect.bottom,
+      lessThanOrEqualTo(tester.getTopLeft(find.byType(VetBottomNav)).dy),
+      reason: 'A navegação global não pode cobrir Continuar.',
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    expect(tester.getSize(find.byType(VetBottomNav)).height, 50);
+    final selectedPet = VetRepository.pets.first;
+    expect(find.byType(PetSummary), findsNothing);
+    expect(find.text(selectedPet.name), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label?.startsWith(
+                  'Pet selecionado: ${selectedPet.name}, espécie ',
+                ) ==
+                true,
+      ),
+      findsOneWidget,
+    );
+    // CONVENIO_PAGE 2783:840 em "Telas para Entregar", viewport de 390 × 844.
+    // Mantém o fluxo/rotas existentes enquanto alinha a posição dos planos.
+    expect(tester.getTopLeft(find.text('Convênio')).dy, closeTo(37, 1));
+    for (final (plan, top) in const [
+      ('PetLove', 342.0),
+      ('DogLife', 461.0),
+      ('Particular', 580.0),
+    ]) {
+      expect(
+        tester.getRect(find.byKey(ValueKey('convenio-plan-pill-$plan'))),
+        Rect.fromLTWH(0, top, 254, 59),
+      );
+    }
+    expect(
+      tester
+          .getRect(find.byKey(const ValueKey('convenio-plan-pill-Particular')))
+          .bottom,
+      lessThanOrEqualTo(tester.getTopLeft(find.byType(VetBottomNav)).dy),
+      reason: 'A navegação global não pode cobrir o último plano.',
+    );
+    expect(
+      find.byKey(const ValueKey('convenio-figma-unnamed-pill')),
+      findsNothing,
+    );
+    // CONVENIO_PAGE 2783:840: planos 254 × 59 e títulos
+    // Montserrat Alternates Bold, 20 px.
+    for (final label in ['PetLove', 'Doglife', 'Particular']) {
+      final title = tester.widget<Text>(find.text(label));
+      expect(title.data, label);
+      expect(title.maxLines, isNull);
+      expect(title.overflow, isNull);
+      expect(title.style?.fontFamily, 'MontserratAlternates');
+      expect(title.style?.fontSize, 20);
+      expect(title.style?.fontWeight, FontWeight.bold);
+      expect(title.style?.color, VetColors.brownOnRose);
+      final gradientContrasts = [
+        _contrastRatio(title.style!.color!, VetColors.rose),
+        _contrastRatio(title.style!.color!, VetColors.pink),
+      ];
+      expect(
+        gradientContrasts.reduce((a, b) => a < b ? a : b),
+        greaterThanOrEqualTo(3),
+        reason: 'Títulos grandes de plano devem manter contraste acessível.',
+      );
+      final pill = find.ancestor(
+        of: find.text(label),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is ConstrainedBox && widget.constraints.maxWidth == 254,
+        ),
+      );
+      expect(pill, findsOneWidget);
+      expect(tester.getSize(pill).width, closeTo(254, 1));
+      expect(tester.getSize(pill).height, closeTo(59, 1));
+    }
+    expect(
+      find.image(const AssetImage('assets/imagens/figma/convenio-petlove.png')),
+      findsOneWidget,
+    );
+    expect(
+      find.image(const AssetImage('assets/imagens/figma/coisademedico-1.png')),
+      findsOneWidget,
+    );
+    expect(
+      find.image(
+        const AssetImage('assets/imagens/figma/convenio-particular.png'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.image(const AssetImage('assets/imagens/figma/convenio-chevron.png')),
+      findsNWidgets(3),
+    );
+    for (final label in ['Convênio', 'PetLove', 'Doglife', 'Particular']) {
+      // ignore: avoid_print
+      print('CONVENIO pos $label: ${tester.getTopLeft(find.text(label)).dy}');
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('CONVENIO_PAGE mantém os raios distintos do Figma', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
+    await tester.pumpAndSettle();
+
+    BoxDecoration decorationFor(String label) {
+      final ink = find.ancestor(
+        of: find.text(label),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Ink && widget.decoration is BoxDecoration,
+        ),
+      );
+      expect(ink, findsOneWidget);
+      return tester.widget<Ink>(ink).decoration! as BoxDecoration;
+    }
+
+    expect(
+      decorationFor('PetLove').borderRadius,
+      const BorderRadius.only(
+        topRight: Radius.circular(800),
+        bottomRight: Radius.circular(400),
+      ),
+    );
+    expect(
+      decorationFor('Particular').borderRadius,
+      const BorderRadius.only(
+        topRight: Radius.circular(400),
+        bottomRight: Radius.circular(800),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Convênio preserva plano, serviço e pet ao continuar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    final pet = VetRepository.pets.first;
+    VetRepository.selectedPetId = pet.id;
+    Map<dynamic, dynamic>? received;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const ConvenioScreen(service: 'Consulta Geral'),
+        routes: {
+          '/nova-consulta': (context) {
+            received = ModalRoute.of(context)!.settings.arguments as Map;
+            return const Scaffold(body: Text('Consulta de teste'));
+          },
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Doglife'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Consulta de teste'), findsOneWidget);
+    expect(received?['petId'], pet.id);
+    expect(received?['plan'], 'DogLife');
+    expect(received?['service'], isNotEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('acesso direto ao Convênio exige serviço antes de continuar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    final globallySelectedPet = VetRepository.pets.first;
+    final routePet = VetRepository.pets[1];
+    VetRepository.selectedPetId = globallySelectedPet.id;
+    Map<dynamic, dynamic>? received;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: ElevatedButton(
+              onPressed: () => Navigator.pushNamed(
+                context,
+                '/convenio',
+                arguments: {'petId': routePet.id},
+              ),
+              child: const Text('Abrir convênio'),
+            ),
+          ),
+        ),
+        routes: {
+          '/servicos': (_) => const ServicosScreen(),
+          '/convenio': (_) => const ConvenioScreen(),
+          '/nova-consulta': (context) {
+            received = ModalRoute.of(context)!.settings.arguments as Map;
+            return const Scaffold(body: Text('Consulta aberta'));
+          },
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Abrir convênio'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('PetLove'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Selecione pelo menos um serviço antes de continuar.'),
+      findsOneWidget,
+    );
+    expect(received, isNull);
+
+    await tester.tap(find.text('Selecionar serviços'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ServicosScreen), findsOneWidget);
+    expect(find.text('GATO'), findsOneWidget);
+    expect(VetRepository.selectedPetId, globallySelectedPet.id);
+    expect(received, isNull);
+
+    Navigator.of(tester.element(find.byType(ServicosScreen))).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Abrir convênio'), findsOneWidget);
+    expect(find.byType(ConvenioScreen), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Convênio móvel oferece só uma ação acessível por plano', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
+    await tester.pumpAndSettle();
+
+    final root = tester
+        .binding
+        .renderViews
+        .first
+        .owner!
+        .semanticsOwner!
+        .rootSemanticsNode!;
+    final counts = <String, int>{
+      for (final name in ['PetLove', 'Doglife', 'Particular']) name: 0,
+    };
+
+    void inspect(SemanticsNode node) {
+      final data = node.getSemanticsData();
+      if (data.hasAction(SemanticsAction.tap)) {
+        for (final name in counts.keys) {
+          if (data.label.toLowerCase() == name.toLowerCase() ||
+              data.tooltip.toLowerCase() == name.toLowerCase()) {
+            counts[name] = counts[name]! + 1;
+          }
+        }
+      }
+      node.visitChildren((child) {
+        inspect(child);
+        return true;
+      });
+    }
+
+    inspect(root);
+    handle.dispose();
+    for (final name in counts.keys) {
+      expect(
+        counts[name],
+        1,
+        reason: '$name não deve aparecer como dois controles de navegação',
+      );
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Seta de Convênio mantém a navegação por toque', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    final pet = VetRepository.pets.first;
+    VetRepository.selectedPetId = pet.id;
+    Map<dynamic, dynamic>? received;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const ConvenioScreen(service: 'Consulta Geral'),
+        routes: {
+          '/nova-consulta': (context) {
+            received = ModalRoute.of(context)!.settings.arguments as Map;
+            return const Scaffold(body: Text('Consulta aberta'));
+          },
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final arrow = find.byWidgetPredicate(
+      (widget) => widget is IconButton && widget.tooltip == 'PetLove',
+    );
+    expect(arrow, findsOneWidget);
+    expect(tester.widget<IconButton>(arrow).onPressed, isNotNull);
+
+    await tester.tap(arrow);
+    await tester.pumpAndSettle();
+    expect(find.text('Consulta aberta'), findsOneWidget);
+    expect(received?['plan'], 'PetLove');
+    expect(received?['petId'], pet.id);
+    expect(received?['service'], isNotEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Convênio desktop mantém contraste legível nos planos', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('plans-desktop-layout')), findsOneWidget);
+    for (final label in ['PetLove', 'DogLife', 'Particular']) {
+      final titleFinder = find.text(label);
+      final title = tester.widget<Text>(titleFinder);
+      expect(title.style?.fontSize, 16);
+      expect(title.style?.fontWeight, FontWeight.bold);
+      expect(title.style?.color, VetColors.calendarTextOnRose);
+
+      final pill = tester.widget<Ink>(
+        find.ancestor(of: titleFinder, matching: find.byType(Ink)).first,
+      );
+      final gradient = pill.decoration! as BoxDecoration;
+      final colors = (gradient.gradient! as LinearGradient).colors;
+      final minimumContrast = colors
+          .map((background) => _contrastRatio(title.style!.color!, background))
+          .reduce((a, b) => a < b ? a : b);
+      expect(
+        minimumContrast,
+        greaterThanOrEqualTo(4.5),
+        reason: 'Texto desktop de 16 px exige contraste AA de 4,5:1.',
+      );
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('setas desktop têm alvo de 48 px com o ícone na posição antiga', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final previous = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = previous);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    for (final screen in [const ServicosScreen(), const ConvenioScreen()]) {
+      await tester.pumpWidget(MaterialApp(home: screen));
+      await tester.pumpAndSettle();
+
+      final tooltip = screen is ServicosScreen ? 'Exames' : 'PetLove';
+      final target = find.byWidgetPredicate(
+        (widget) => widget is IconButton && widget.tooltip == tooltip,
+      );
+      expect(target, findsOneWidget);
+      final targetRect = tester.getRect(target);
+      expect(targetRect.size, const Size(48, 48));
+
+      final arrow = find.descendant(
+        of: target,
+        matching: screen is ServicosScreen
+            ? find.byType(Icon)
+            : find.byType(VetChevron),
+      );
+      expect(arrow, findsOneWidget);
+      expect(
+        tester.getRect(arrow).center.dx,
+        closeTo(targetRect.center.dx + 3, .01),
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('Serviços e Convênio mantêm acesso à navegação global', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1024, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final before = VetRepository.selectedPetId;
+    addTearDown(() => VetRepository.selectedPetId = before);
+    VetRepository.selectedPetId = VetRepository.pets.first.id;
+
+    await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
+    await tester.pumpAndSettle();
+    expect(find.byType(VetBottomNav), findsOneWidget);
+
+    await tester.pumpWidget(const MaterialApp(home: ConvenioScreen()));
+    await tester.pumpAndSettle();
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}

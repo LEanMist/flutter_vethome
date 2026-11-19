@@ -20,69 +20,144 @@ class SaudePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double s = PetsTheme.scaleOf(context);
     final currentPet = VetRepository.petById(pet.id) ?? pet;
     final historico = VetRepository.consultas(pet.id);
     final vacinas = VetRepository.vacinas(pet.id);
 
-    final vermif = historico
-        .where((c) => c.tipo == 'Vermifugação')
-        .map((c) => fmtDiaMes(c.data))
-        .firstOrNull;
+    final vermif = historico.where((c) => c.tipo == 'Vermifugação').firstOrNull;
     final emDia = vacinasEmDia(vacinas);
 
     return VetPageScaffold(
       title: 'Saúde',
       pet: currentPet,
       selectedIndex: 0,
+      contentMaxWidth: 1120,
       children: [
-        PetSummary(pet: currentPet, size: PetSummarySize.medium),
-        const VetSectionTitle('Resumo de saúde'),
-        const DemoBadge(),
-        Text(
-          VetRepository.realVaccines(pet.id).isNotEmpty
-              ? 'Vermifugação e histórico.'
-              : 'Vacinação, vermifugação e histórico.',
-          style: const TextStyle(fontSize: 12),
+        VetResponsiveLayout(
+          mobile: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: _sections(currentPet, historico, vacinas, emDia, vermif),
+          ),
+          desktop: Row(
+            key: const ValueKey('health-desktop-layout'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _summary(currentPet, vacinas, emDia, vermif),
+                ),
+              ),
+              const SizedBox(width: 28),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _healthSectionHeading(
+                      'appointments-history-heading',
+                      'Histórico de atendimentos',
+                    ),
+                    for (final c in historico) _ConsultaCard(c),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        Row(
-          children: [
-            Expanded(
-              child: _MiniStatus(
-                icon: emDia ? Icons.check_circle : Icons.warning_amber,
-                title: 'Vacinação',
-                value:
-                    '${vacinas.where((v) => v.status == VacinaStatus.emDia).length}/${vacinas.length} em dia',
-                color: emDia ? VetTones.success : VetTones.warning,
-              ),
-            ),
-            SizedBox(width: 12 * s),
-            Expanded(
-              child: _MiniStatus(
-                icon: Icons.monitor_weight,
-                title: 'Peso',
-                value: currentPet.weightKg == null
-                    ? 'Não informado'
-                    : fmtPeso(currentPet.weightKg!),
-                color: VetTones.warning,
-              ),
-            ),
-            SizedBox(width: 12 * s),
-            Expanded(
-              child: _MiniStatus(
-                icon: Icons.medical_services,
-                title: 'Vermifugação',
-                value: vermif ?? '—',
-                color: VetTones.info,
-              ),
-            ),
-          ],
-        ),
-        const VetSectionTitle('Histórico de atendimentos'),
-        for (final c in historico) _ConsultaCard(c),
       ],
     );
   }
+
+  List<Widget> _sections(
+    PetModel pet,
+    List<Consulta> history,
+    List<Vacina> vaccines,
+    bool upToDate,
+    Consulta? deworming,
+  ) => [
+    ..._summary(pet, vaccines, upToDate, deworming),
+    _healthSectionHeading(
+      'appointments-history-heading',
+      'Histórico de atendimentos',
+    ),
+    for (final consultation in history) _ConsultaCard(consultation),
+  ];
+
+  List<Widget> _summary(
+    PetModel pet,
+    List<Vacina> vaccines,
+    bool upToDate,
+    Consulta? deworming,
+  ) => [
+    PetSummary(pet: pet, size: PetSummarySize.medium),
+    const SizedBox(height: 12),
+    _healthSectionHeading('health-summary-heading', 'Resumo de saúde'),
+    const DemoBadge(),
+    const SizedBox(height: 8),
+    Text(
+      VetRepository.realVaccines(pet.id).isNotEmpty
+          ? 'Vermifugação e histórico.'
+          : 'Vacinação, vermifugação e histórico.',
+      style: const TextStyle(fontSize: 12),
+    ),
+    const SizedBox(height: 12),
+    Row(
+      children: [
+        Expanded(
+          child: _MiniStatus(
+            icon: upToDate ? Icons.check_circle : Icons.warning_amber,
+            title: 'Vacinação',
+            value: vaccines.isEmpty
+                ? 'Nenhuma cadastrada'
+                : '${vaccines.where((v) => v.status == VacinaStatus.emDia).length}/${vaccines.length} em dia',
+            semanticsLabel: VetRepository.usesDemoVaccines(pet.id)
+                ? 'Vacinação: dados demonstrativos; '
+                      '${vaccines.where((v) => v.status == VacinaStatus.emDia).length} '
+                      'de ${vaccines.length} exemplos em dia. '
+                      'Nenhuma vacina real cadastrada.'
+                : null,
+            color: upToDate
+                ? VetTones.successForeground
+                : VetTones.warningForeground,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _MiniStatus(
+            icon: Icons.monitor_weight,
+            title: 'Peso',
+            value: pet.weightKg == null
+                ? 'Não informado'
+                : fmtPeso(pet.weightKg!),
+            color: VetTones.warning,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _MiniStatus(
+            icon: Icons.medical_services,
+            title: 'Vermifugação',
+            value: deworming == null
+                ? '—'
+                : deworming.isDemonstration
+                ? 'Demonstração'
+                : fmtDiaMes(deworming.data),
+            semanticsLabel: deworming?.isDemonstration == true
+                ? 'Vermifugação: dado demonstrativo; não há data real cadastrada.'
+                : null,
+            color: VetTones.infoForeground,
+          ),
+        ),
+      ],
+    ),
+    const SizedBox(height: 12),
+  ];
+
+  Widget _healthSectionHeading(String key, String title) => Semantics(
+    key: ValueKey(key),
+    header: true,
+    child: VetSectionTitle(title),
+  );
 }
 
 class _MiniStatus extends StatelessWidget {
@@ -91,41 +166,53 @@ class _MiniStatus extends StatelessWidget {
     required this.title,
     required this.value,
     required this.color,
+    this.semanticsLabel,
   });
 
   final IconData icon;
   final String title;
   final String value;
   final Color color;
+  final String? semanticsLabel;
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    return VetCard(
-      flat: true,
-      color: VetColors.rose.withValues(alpha: .2),
-      padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 6 * s),
-      child: Column(
-        children: [
-          Icon(icon, color: VetColors.brown, size: 18 * s),
-          SizedBox(height: 6 * s),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11 * s, color: VetColors.brown),
-          ),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 12 * s,
-                fontWeight: FontWeight.w700,
-                color: VetColors.brown,
-              ),
+    final textIsEnlarged = MediaQuery.textScalerOf(context).scale(12) > 12.01;
+    final valueText = Text(
+      value,
+      textAlign: textIsEnlarged ? TextAlign.center : null,
+      style: TextStyle(
+        fontSize: 12 * s,
+        fontWeight: FontWeight.w700,
+        color: VetColors.brown,
+      ),
+    );
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label: semanticsLabel ?? '$title: $value',
+      child: VetCard(
+        flat: true,
+        color: VetColors.rose.withValues(alpha: .2),
+        padding: EdgeInsets.symmetric(vertical: 10 * s, horizontal: 6 * s),
+        child: Column(
+          children: [
+            Icon(icon, color: VetColors.brown, size: 18 * s),
+            SizedBox(height: 6 * s),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11 * s, color: VetColors.brown),
             ),
-          ),
-        ],
+            // A composição padrão em 1x conserva o scaleDown original.
+            // Com texto ampliado, permitir quebra de linha evita encolhimento.
+            if (textIsEnlarged)
+              valueText
+            else
+              FittedBox(fit: BoxFit.scaleDown, child: valueText),
+          ],
+        ),
       ),
     );
   }
@@ -138,49 +225,70 @@ class _ConsultaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    return VetCard(
-      flat: true,
-      color: VetColors.rose.withValues(alpha: .16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                fmtData(c.data),
-                style: TextStyle(
-                  fontSize: 13 * s,
-                  fontWeight: FontWeight.w700,
-                  color: VetColors.brown,
-                ),
+    final textIsEnlarged = MediaQuery.textScalerOf(context).scale(12) > 12.01;
+    final dateText = Text(
+      fmtData(c.data),
+      style: TextStyle(
+        fontSize: 13 * s,
+        fontWeight: FontWeight.w700,
+        color: VetColors.brown,
+      ),
+    );
+    final status = c.isDemonstration
+        ? const StatusChip('Demonstração', VetColors.brown, dense: true)
+        : const StatusChip(
+            'Concluído',
+            VetTones.success,
+            dense: true,
+            textColor: VetTones.successForeground,
+          );
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label: c.isDemonstration
+          ? 'Atendimento demonstrativo; não representa um registro clínico real. '
+                'Data ilustrativa: ${fmtData(c.data)}. ${c.tipo}. '
+                'Veterinário de exemplo: ${c.veterinario}. '
+                'Descrição de exemplo: ${c.descricao}'
+          : 'Atendimento em ${fmtData(c.data)}. Concluído. '
+                '${c.tipo}. Veterinário: ${c.veterinario}. ${c.descricao}',
+      child: VetCard(
+        flat: true,
+        color: VetColors.rose.withValues(alpha: .16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (textIsEnlarged)
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 12,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [dateText, status],
+              )
+            else
+              Row(children: [dateText, const Spacer(), status]),
+            SizedBox(height: 8 * s),
+            Text(
+              c.tipo,
+              style: TextStyle(
+                fontSize: 16 * s,
+                fontWeight: FontWeight.w700,
+                color: VetColors.brown,
               ),
-              const Spacer(),
-              const StatusChip('Concluído', VetTones.success, dense: true),
-            ],
-          ),
-          SizedBox(height: 8 * s),
-          Text(
-            c.tipo,
-            style: TextStyle(
-              fontSize: 16 * s,
-              fontWeight: FontWeight.w700,
-              color: VetColors.brown,
             ),
-          ),
-          SizedBox(height: 4 * s),
-          Text(
-            'Veterinário: ${c.veterinario}',
-            style: TextStyle(fontSize: 12 * s, color: VetColors.brown),
-          ),
-          SizedBox(height: 8 * s),
-          Text(
-            c.descricao,
-            style: TextStyle(
-              fontSize: 12 * s,
-              color: VetColors.brown.withValues(alpha: 0.8),
+            SizedBox(height: 4 * s),
+            Text(
+              'Veterinário: ${c.veterinario}',
+              style: TextStyle(fontSize: 12 * s, color: VetColors.brown),
             ),
-          ),
-        ],
+            SizedBox(height: 8 * s),
+            Text(
+              c.descricao,
+              style: TextStyle(fontSize: 12 * s, color: VetColors.brown),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -10,7 +10,9 @@ import 'package:flutter_vethome/models/saved_address.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
+import 'package:flutter_vethome/pages/home_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/widgets/vet_calendar.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/pages/perfil_page.dart';
 import 'package:flutter_vethome/screens/auth.dart';
@@ -188,25 +190,23 @@ void main() {
     expect(VetRepository.addresses.single.street, 'Rua A editada');
     expect(VetRepository.addresses.single.id, 'a');
   });
-  testWidgets('gênero é seleção e Outro revela campo opcional', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: CadastroScreen()));
-    expect(
-      tester
-          .widget<TextField>(
-            find.descendant(
-              of: field('Gênero/Sexo'),
-              matching: find.byType(TextField),
-            ),
-          )
-          .readOnly,
-      isTrue,
-    );
-    await choose(tester, 'Gênero/Sexo', 'Outro');
-    expect(find.text('Como deseja informar? (opcional)'), findsOneWidget);
-    await choose(tester, 'Gênero/Sexo', 'Prefiro não informar');
-    expect(find.text('Como deseja informar? (opcional)'), findsNothing);
+  testWidgets('perfil oculta edição de gênero e preserva o dado legado', (
+    tester,
+  ) async {
+    final genderBefore = VetRepository.clientGender;
+    final genderCustomBefore = VetRepository.clientGenderCustom;
+    await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
+    expect(find.text('Mudar gênero'), findsNothing);
+    expect(find.text('Mudar Foto de Perfil'), findsOneWidget);
+    expect(find.text('Mudar Nome de Perfil'), findsOneWidget);
+    expect(find.text('Mudar Data de Nascimento'), findsOneWidget);
+    expect(find.text('Alterar endereço'), findsNothing);
+    expect(VetRepository.clientGender, genderBefore);
+    expect(VetRepository.clientGenderCustom, genderCustomBefore);
   });
-  testWidgets('pular endereço não cria registro vazio', (tester) async {
+  testWidgets('pular endereço sem identidade do tutor permanece bloqueado', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: const EnderecoScreen(),
@@ -215,10 +215,15 @@ void main() {
         },
       ),
     );
-    await tester.ensureVisible(find.text('Pular por enquanto'));
-    await tester.tap(find.text('Pular por enquanto'));
-    await tester.pumpAndSettle();
-    expect(find.text('Etapa pet'), findsOneWidget);
+    await tester.ensureVisible(find.text('Pular'));
+    await tester.tap(find.text('Pular'));
+    await tester.pump();
+    expect(find.text('Etapa pet'), findsNothing);
+    expect(
+      find.text('Conclua os dados obrigatórios do tutor antes de avançar.'),
+      findsOneWidget,
+    );
+    expect(VetRepository.clientEmail, isEmpty);
     expect(VetRepository.addresses, isEmpty);
   });
   testWidgets('pular pet funciona com zero pets', (tester) async {
@@ -228,14 +233,16 @@ void main() {
       }
       await VetRepository.flush();
     });
+    VetRepository.clientName = 'Tutor Teste';
+    VetRepository.clientEmail = 'tutor@example.test';
     await tester.pumpWidget(
       MaterialApp(
         home: const CadastroPetScreen(),
         routes: {'/sucesso': (_) => const Scaffold(body: Text('Concluído'))},
       ),
     );
-    await tester.ensureVisible(find.text('Pular por enquanto'));
-    await tester.tap(find.text('Pular por enquanto'));
+    await tester.ensureVisible(find.text('Pular'));
+    await tester.tap(find.text('Pular'));
     await tester.pumpAndSettle();
     expect(VetRepository.pets, isEmpty);
     expect(find.text('Concluído'), findsOneWidget);
@@ -277,7 +284,8 @@ void main() {
         'São Paulo',
       );
       await fill(tester, 'Endereço', 'Rua editada');
-      await fill(tester, 'Número', '15');
+      await fill(tester, 'Numero', '15');
+      await fill(tester, 'Nome', 'Casa da Irmã');
       await tester.ensureVisible(find.text('Salvar endereço'));
       await tester.tap(find.text('Salvar endereço'));
       await tester.pumpAndSettle();
@@ -287,6 +295,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(saved?.street, 'Rua editada');
       expect(saved?.complement, '');
+      expect(saved?.name, 'Casa da Irmã');
     },
   );
   for (final mode in ['inexistente', 'rede']) {
@@ -345,16 +354,34 @@ void main() {
       'Novembro',
       'Dezembro',
     ];
-    expect(find.text('${months[now.month - 1]} ${now.year}'), findsOneWidget);
+    var monthHeading = tester.widget<Text>(
+      find.byKey(const ValueKey('agenda-calendar-month-heading')),
+    );
+    expect(
+      monthHeading.data ?? monthHeading.textSpan?.toPlainText(),
+      anyOf(months[now.month - 1], '${months[now.month - 1]} ${now.year}'),
+    );
+    if (monthHeading.data != null) {
+      expect(find.text('${now.year}'), findsOneWidget);
+    }
     await tester.pumpWidget(
       MaterialApp(
         key: UniqueKey(),
         home: AgendaScreen(initialDate: DateTime(now.year + 1, 7, 8)),
       ),
     );
-    expect(find.text('Julho ${now.year + 1}'), findsOneWidget);
+    monthHeading = tester.widget<Text>(
+      find.byKey(const ValueKey('agenda-calendar-month-heading')),
+    );
+    expect(
+      monthHeading.data ?? monthHeading.textSpan?.toPlainText(),
+      anyOf('Julho', 'Julho ${now.year + 1}'),
+    );
+    if (monthHeading.data != null) {
+      expect(find.text('${now.year + 1}'), findsOneWidget);
+    }
   });
-  testWidgets('Novo agendamento exibe nome atual por ID e avatar canônico', (
+  testWidgets('Novo agendamento conserva o pet atual sem exibi-lo no cartão', (
     tester,
   ) async {
     final original = VetRepository.pets.first;
@@ -374,12 +401,10 @@ void main() {
         ),
       ),
     );
-    expect(find.text('Pet renomeado'), findsOneWidget);
-    expect(
-      tester.widget<PetAvatar>(find.byType(PetAvatar)).image,
-      original.imagePath,
-    );
-    expect(find.text('Vacina: V10'), findsOneWidget);
+    expect(VetRepository.petById(original.id)?.name, 'Pet renomeado');
+    expect(VetRepository.petById(original.id)?.imagePath, original.imagePath);
+    expect(find.byType(PetAvatar), findsNothing);
+    expect(find.text('V10'), findsOneWidget);
   });
   test(
     'início passado ou fim inválido não cria evento; fim válido persiste',
@@ -439,32 +464,38 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.text('Data'));
+    await tester.tap(find.byKey(const ValueKey('appointment-booking-date')));
     await tester.pumpAndSettle();
     final now = DateTime.now(), today = DateTime(now.year, now.month, now.day);
-    tester
-        .widget<CalendarDatePicker>(find.byType(CalendarDatePicker))
-        .onDateChanged(today);
+    tester.widget<VetCalendar>(find.byType(VetCalendar)).onSelected(today);
     await tester.pump();
-    await tester.tap(find.text('OK'));
+    await tester.tap(find.text('Confirmar'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Início'));
-    await tester.tap(find.text('Início'));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('appointment-booking-start-time')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('appointment-booking-start-time')),
+    );
     await tester.pumpAndSettle();
     for (final hour in [12, 13, 14, 15, 16]) {
-      final chip = tester.widget<ChoiceChip>(
-        find.widgetWithText(ChoiceChip, '$hour:00'),
+      final button = tester.widget<ElevatedButton>(
+        find.ancestor(
+          of: find.text('$hour:00'),
+          matching: find.byType(ElevatedButton),
+        ),
       );
       expect(
-        chip.onSelected != null,
+        button.onPressed != null,
         isFutureAppointmentTime(
           DateTime(today.year, today.month, today.day, hour),
           DateTime.now(),
         ),
       );
     }
-    await tester.tap(find.text('Cancelar'));
+    await tester.tapAt(const Offset(195, 100));
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('time-choice-semantics')), findsNothing);
   });
   testWidgets('Detalhes não apresenta agendamento mock como futuro real', (
     tester,
@@ -480,7 +511,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const MaterialApp(home: AddressesPage()));
     expect(find.text('Nenhum endereço cadastrado'), findsOneWidget);
-    expect(find.text('Novo endereço'), findsOneWidget);
+    expect(find.text('Novo Endereço'), findsOneWidget);
   });
   testWidgets('Serviços e Convênio preservam pet, vacina e plano na rota', (
     tester,
@@ -500,13 +531,18 @@ void main() {
         },
       ),
     );
-    await tester.tap(find.text('Vacinas'));
-    await tester.pumpAndSettle();
+    // Vacinas começa expandida; tocar no item apenas seleciona.
     await tester.ensureVisible(find.text('V10'));
     await tester.tap(find.text('V10'));
     await tester.pumpAndSettle();
+    expect(find.byType(ConvenioScreen), findsNothing);
+    final continueButton = find.byKey(const ValueKey('services-continue'));
+    expect(tester.widget<ElevatedButton>(continueButton).onPressed, isNotNull);
+    await tester.ensureVisible(continueButton);
+    await tester.tap(continueButton);
+    await tester.pumpAndSettle();
     expect(find.byType(ConvenioScreen), findsOneWidget);
-    expect(find.text('Continuar'), findsNothing);
+    await tester.ensureVisible(find.text('Particular'));
     await tester.tap(find.text('Particular'));
     await tester.pumpAndSettle();
     expect(received, {'petId': pet.id, 'service': 'V10', 'plan': 'Particular'});
@@ -547,20 +583,17 @@ void main() {
       });
       await tester.pumpWidget(
         MaterialApp(
-          home: const SucessoScreen(),
-          routes: {'/pets': (_) => const PetsPage()},
+          home: const SucessoScreen(saved: true),
+          routes: {'/home': (_) => const HomePage()},
         ),
       );
-      expect(find.text('Bem-vindo!'), findsOneWidget);
+      expect(find.textContaining(VetRepository.clientName), findsOneWidget);
       expect(find.text('Continuar'), findsNothing);
       await tester.pump(const Duration(milliseconds: 950));
-      expect(
-        find.text('Você pode cadastrar seu pet quando quiser.'),
-        findsOneWidget,
-      );
+      expect(find.text('Usuário\nCadastrado!'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
-      expect(find.byType(PetsPage), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-figma-frame')), findsOneWidget);
       expect(VetRepository.pets, isEmpty);
     },
   );
@@ -596,5 +629,18 @@ void main() {
         reason: page.runtimeType.toString(),
       );
     }
+  });
+
+  testWidgets('Sobre usa os contatos fictícios alinhados a Suporte', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: SobreScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('11 9793-8918'), findsOneWidget);
+    expect(find.text('Kelvinpro@gmail.com'), findsOneWidget);
+    expect(find.text('11 93244-4392'), findsNothing);
+    expect(find.text('Gabriela@gmail.com'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }

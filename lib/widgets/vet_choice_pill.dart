@@ -1,25 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme.dart';
+import '../theme/vet_colors.dart';
 
 /// Setas duplas usadas nas listas do protótipo.
 class VetChevron extends StatelessWidget {
-  const VetChevron({super.key, this.color = VH.foreground});
+  const VetChevron({
+    super.key,
+    this.color = VH.foreground,
+    this.strokeWidth = 2,
+  });
   final Color color;
+  final double strokeWidth;
   @override
-  Widget build(BuildContext context) =>
-      CustomPaint(size: const Size(18, 24), painter: _ChevronPainter(color));
+  Widget build(BuildContext context) => CustomPaint(
+    size: const Size(18, 24),
+    painter: _ChevronPainter(color, strokeWidth),
+  );
 }
 
 class _ChevronPainter extends CustomPainter {
-  const _ChevronPainter(this.color);
+  const _ChevronPainter(this.color, this.strokeWidth);
   final Color color;
+  final double strokeWidth;
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
+      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
     for (final x in [2.0, 9.0]) {
@@ -34,7 +44,8 @@ class _ChevronPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ChevronPainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(_ChevronPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
 }
 
 class VetChoicePill extends StatelessWidget {
@@ -62,10 +73,15 @@ class VetChoicePill extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: VH.softGradient,
                   borderRadius: BorderRadius.circular(100),
+                  boxShadow: VH.controlShadow,
                 ),
                 child: InkWell(
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(100),
+                  mouseCursor: SystemMouseCursors.click,
+                  overlayColor: WidgetStateProperty.resolveWith(
+                    VH.interactionOverlay,
+                  ),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(minHeight: 59),
                     child: Padding(
@@ -84,7 +100,7 @@ class VetChoicePill extends StatelessWidget {
                                 fontFamily: VH.headingFontFamily,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Colors.white,
+                                color: VetColors.calendarTextOnRose,
                               ),
                             ),
                           ),
@@ -97,15 +113,18 @@ class VetChoicePill extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 42,
+            width: 48,
             height: 48,
             child: IconButton(
               tooltip: label,
               onPressed: onTap,
-              icon: AnimatedRotation(
-                turns: expanded ? .25 : 0,
-                duration: const Duration(milliseconds: 240),
-                child: const VetChevron(),
+              icon: Transform.translate(
+                offset: const Offset(3, 0),
+                child: AnimatedRotation(
+                  turns: expanded ? .25 : 0,
+                  duration: const Duration(milliseconds: 240),
+                  child: const VetChevron(),
+                ),
               ),
             ),
           ),
@@ -115,7 +134,7 @@ class VetChoicePill extends StatelessWidget {
   );
 }
 
-/// Reutiliza exports disponíveis; casa/cruz e cápsulas são desenhos simples.
+/// Ícones dos planos usam os assets visuais do Figma.
 class VetPictogram extends StatelessWidget {
   const VetPictogram(this.kind, {super.key});
   final String kind;
@@ -124,16 +143,18 @@ class VetPictogram extends StatelessWidget {
     final asset = switch (kind) {
       'Exames' || 'DogLife' => 'coisademedico-1.png',
       'Atestados' => 'atestado-1.png',
+      'Vacinas' => 'services-vaccine.svg',
+      'Microchipagem' => 'services-microchip.svg',
+      'PetLove' => 'convenio-petlove.png',
+      'Particular' => 'convenio-particular.png',
       _ => null,
     };
     if (asset != null) {
-      return Image.asset(
-        'assets/imagens/figma/$asset',
-        excludeFromSemantics: true,
-      );
-    }
-    if (kind == 'PetLove' || kind == 'Particular') {
-      return CustomPaint(painter: _PlanPainter(kind));
+      final assetPath = 'assets/imagens/figma/$asset';
+      if (asset.endsWith('.svg')) {
+        return SvgPicture.asset(assetPath);
+      }
+      return Image.asset(assetPath, excludeFromSemantics: true);
     }
     return Icon(
       kind == 'Vacinas' ? Icons.vaccines_outlined : Icons.memory_outlined,
@@ -141,52 +162,4 @@ class VetPictogram extends StatelessWidget {
       size: 30,
     );
   }
-}
-
-class _PlanPainter extends CustomPainter {
-  const _PlanPainter(this.kind);
-  final String kind;
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 30, size.height / 30);
-    final p = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    if (kind == 'PetLove') {
-      canvas.drawPath(
-        Path()
-          ..moveTo(2, 13)
-          ..lineTo(15, 3)
-          ..lineTo(28, 13)
-          ..moveTo(6, 11)
-          ..lineTo(6, 27)
-          ..lineTo(24, 27)
-          ..lineTo(24, 11),
-        p,
-      );
-      canvas.drawLine(const Offset(15, 14), const Offset(15, 23), p);
-      canvas.drawLine(const Offset(10.5, 18.5), const Offset(19.5, 18.5), p);
-    } else {
-      for (final center in [const Offset(10, 12), const Offset(21, 19)]) {
-        canvas.save();
-        canvas.translate(center.dx, center.dy);
-        canvas.rotate(.65);
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            const Rect.fromLTWH(-4, -10, 8, 20),
-            const Radius.circular(4),
-          ),
-          p,
-        );
-        canvas.drawLine(const Offset(-4, 0), const Offset(4, 0), p);
-        canvas.restore();
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_PlanPainter oldDelegate) => oldDelegate.kind != kind;
 }

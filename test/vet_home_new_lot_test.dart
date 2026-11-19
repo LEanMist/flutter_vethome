@@ -30,7 +30,9 @@ import 'package:flutter_vethome/widgets/pet_summary.dart';
 class _WidgetStorage extends LocalStorage {
   LocalState? state;
   @override
-  Future<LocalState?> load() async => state;
+  Future<LocalLoadResult> load() async => state == null
+      ? const LocalLoadResult.empty()
+      : LocalLoadResult.valid(state!);
   @override
   Future<void> save(LocalState value) async {
     state = LocalState.fromJson(value.toJson());
@@ -187,14 +189,27 @@ void main() {
         1,
       );
       VetRepository.removeVaccine(pet.id, real.id!);
+      await VetRepository.flush();
+      final savedAfterDeletion = jsonDecode(
+        (await SharedPreferences.getInstance()).getString(
+          LocalStorage.stateKey,
+        )!,
+      );
+      expect(savedAfterDeletion['vaccinationDemoDismissedPetIds'], [pet.id]);
       await VetRepository.initialize();
       expect(VetRepository.realVaccines(pet.id), isEmpty);
-      expect(VetRepository.vacinas(pet.id).length, 3);
+      expect(VetRepository.vacinas(pet.id), isEmpty);
+      expect(VetRepository.usesDemoVaccines(pet.id), isFalse);
       VetRepository.saveVaccine(pet.id, vaccine('Outra dose'));
       VetRepository.removePet(VetRepository.petById(pet.id)!);
       await VetRepository.initialize();
       expect(VetRepository.petById(pet.id), isNull);
       expect(VetRepository.realVaccines(pet.id), isEmpty);
+      expect(await VetRepository.clearLocalData(), isTrue);
+      expect(
+        VetRepository.usesDemoVaccines(VetRepository.pets.first.id),
+        isTrue,
+      );
     },
   );
   test(
@@ -286,6 +301,8 @@ void main() {
         throwsFormatException,
       );
       expect(VetRepository.realVaccines(id), isEmpty);
+      expect(vacinasEmDia(const []), isFalse);
+      expect(contagemVacinas(const []), 'Nenhuma vacina cadastrada');
       expect(vaccine('Sem dose').status, VacinaStatus.semPrevisao);
       expect(
         contagemVacinas([vaccine('Sem dose')]),
@@ -297,10 +314,53 @@ void main() {
       );
     },
   );
+  test('idade só aumenta na data do aniversário', () {
+    final birthDate = DateTime(2024, 11, 5);
+    expect(ageInYears(birthDate, DateTime(2026, 10, 31)), 1);
+    expect(ageInYears(birthDate, DateTime(2026, 11, 4)), 1);
+    expect(ageInYears(birthDate, DateTime(2026, 11, 5)), 2);
+  });
+
+  testWidgets('detalhe do pet mostra idade calculada pelo nascimento', (
+    tester,
+  ) async {
+    final today = DateTime.now();
+    final pet = PetModel(
+      id: 'pet-age-regression',
+      name: 'Pet aniversário',
+      imagePath: '',
+      description: 'Idade antiga',
+      birthDate: DateTime(today.year - 3, today.month, today.day + 1),
+      species: 'Cachorro',
+    );
+    final originalPets = List<PetModel>.of(VetRepository.pets);
+    VetRepository.pets
+      ..clear()
+      ..add(pet);
+    addTearDown(() {
+      VetRepository.pets
+        ..clear()
+        ..addAll(originalPets);
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PetSummary(pet: pet, size: PetSummarySize.detailed),
+        ),
+      ),
+    );
+
+    expect(find.text('2 anos · Peso não informado'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('calendário completa semanas sem vazio e sem lacunas', () {
     final days = calendarMonthDays(DateTime(2026, 10));
     expect(days.first, DateTime(2026, 9, 27));
-    expect(days.last, DateTime(2026, 11, 7));
+    expect(days.last, DateTime(2026, 10, 31));
+    expect(calendarMonthDays(DateTime(2026, 8)), hasLength(42));
+    expect(calendarMonthDays(DateTime(2026, 8)).last, DateTime(2026, 9, 5));
     expect(days.length % 7, 0);
     for (var i = 1; i < days.length; i++) {
       expect(
@@ -336,7 +396,13 @@ void main() {
           },
         ),
       );
-      await t.tap(find.byTooltip('Adicionar pet'));
+      final addPetAction = find
+          .descendant(
+            of: find.byKey(const ValueKey('pets-add-target')),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await t.tap(addPetAction);
       await t.pumpAndSettle();
       await fill(t, 'Nome do Pet', 'Novo do app');
       await fill(t, 'Tipo de Animal', 'Gato');
@@ -357,54 +423,29 @@ void main() {
       expect(VetRepository.pets.last.name, 'Novo do app');
     },
   );
-  realWidgetTest('Outro aparece, salva, reabre na edição e some na troca', (
-    t,
-  ) async {
+  realWidgetTest('Perfil oculta gênero sem apagar valores legados', (t) async {
     await VetRepository.initialize(storage: widgetStorage);
-    await t.pumpWidget(const MaterialApp(home: PerfilPage()));
-    await t.ensureVisible(find.text('Mudar gênero'));
-    await t.tap(find.text('Mudar gênero'));
-    await t.pumpAndSettle();
-    await t.ensureVisible(field('Gênero/Sexo'));
-    await t.tap(field('Gênero/Sexo'));
-    await t.pumpAndSettle();
-    await t.tap(find.widgetWithText(ListTile, 'Outro'));
-    await t.pumpAndSettle();
-    await fill(t, 'Como deseja informar? (opcional)', 'Identificação Teste');
-    await t.ensureVisible(find.text('Salvar gênero'));
-    await t.tap(find.text('Salvar gênero'));
-    await t.pump();
+    VetRepository.registerClient({
+      'client.Gênero/Sexo': 'Outro',
+      'client.Gênero personalizado': 'Identificação Teste',
+    });
     await VetRepository.flush();
-    await t.pumpAndSettle();
-    await t.pumpAndSettle();
     await VetRepository.initialize(storage: widgetStorage);
     await t.pumpWidget(
       const MaterialApp(key: ValueKey('reopen'), home: PerfilPage()),
     );
     await t.pumpAndSettle();
-    await t.ensureVisible(find.text('Mudar gênero'));
-    await t.tap(find.text('Mudar gênero'));
-    await t.pumpAndSettle();
-    expect(
-      t
-          .widget<TextFormField>(field('Como deseja informar? (opcional)'))
-          .controller!
-          .text,
-      'Identificação Teste',
-    );
-    await t.ensureVisible(field('Gênero/Sexo'));
-    await t.tap(field('Gênero/Sexo'));
-    await t.pumpAndSettle();
-    await t.tap(find.widgetWithText(ListTile, 'Feminino'));
-    await t.pumpAndSettle();
-    expect(field('Como deseja informar? (opcional)'), findsNothing);
-    await t.ensureVisible(find.text('Salvar gênero'));
-    await t.tap(find.text('Salvar gênero'));
-    await t.pump();
+    expect(find.text('Mudar gênero'), findsNothing);
+    expect(find.text('Salvar gênero'), findsNothing);
+    expect(VetRepository.clientGender, 'Outro');
+    expect(VetRepository.clientGenderCustom, 'Identificação Teste');
+
+    VetRepository.updateClient(name: 'Cliente atualizado');
     await VetRepository.flush();
-    await t.pumpAndSettle();
-    await t.pumpAndSettle();
-    expect(VetRepository.clientGenderCustom, isEmpty);
+    await VetRepository.initialize(storage: widgetStorage);
+    expect(VetRepository.clientName, 'Cliente atualizado');
+    expect(VetRepository.clientGender, 'Outro');
+    expect(VetRepository.clientGenderCustom, 'Identificação Teste');
   });
   realWidgetTest(
     'vacinação CRUD pela interface confirma exclusão e não mistura mocks',
@@ -458,7 +499,14 @@ void main() {
       await t.pumpAndSettle();
       await t.pumpAndSettle();
       expect(find.text('Dose editada'), findsNothing);
-      expect(find.text('Dados demonstrativos'), findsOneWidget);
+      expect(find.text('Dados demonstrativos'), findsNothing);
+      expect(find.text('Nenhuma vacina cadastrada'), findsOneWidget);
+      await t.pumpWidget(
+        MaterialApp(home: SaudePage(pet: VetRepository.pets.first)),
+      );
+      await t.pumpAndSettle();
+      expect(find.text('Nenhuma cadastrada'), findsOneWidget);
+      expect(find.textContaining('0/3 em dia'), findsNothing);
     },
   );
   for (final size in [const Size(390, 844), const Size(320, 640)]) {
@@ -494,7 +542,7 @@ void main() {
         t.getBottomRight(find.text('Salvar endereço')).dy,
         lessThan(size.height),
       );
-      for (final label in ['Endereço', 'Complemento (opcional)', 'Cidade']) {
+      for (final label in ['Endereço', 'Complemento', 'Cidade', 'Nome']) {
         final editable = find.descendant(
           of: field(label),
           matching: find.byType(EditableText),
@@ -515,7 +563,7 @@ void main() {
       expect(t.takeException(), isNull);
     });
     realWidgetTest(
-      'castração inline conectada e badge 26 com toque40 em $size',
+      'castração inline conectada e badge 26 com alvo48 em $size',
       (t) async {
         await VetRepository.initialize(storage: widgetStorage);
         viewport(t, size);
@@ -547,7 +595,11 @@ void main() {
           t.getSize(find.byKey(const ValueKey('pet-camera-badge'))),
           const Size(26, 26),
         );
-        expect(t.getSize(find.byType(PetPhotoButton)), const Size(40, 40));
+        expect(t.getSize(find.byType(PetPhotoButton)), const Size(48, 48));
+        expect(
+          t.getRect(find.byKey(const ValueKey('pet-camera-badge'))).center,
+          t.getRect(find.byType(PetPhotoButton)).center + const Offset(6, 6),
+        );
         expect(
           t.widget<TextFormField>(field('Peso (kg)')).controller!.text,
           '4.2',
@@ -602,7 +654,7 @@ void main() {
       },
     );
     realWidgetTest(
-      'Agenda adjacentes clicáveis e horários reais e legados em $size',
+      'Agenda mantém grade Figma e horários reais e legados em $size',
       (t) async {
         await VetRepository.initialize(storage: widgetStorage);
         viewport(t, size);
@@ -631,18 +683,26 @@ void main() {
         );
         await t.pumpAndSettle();
         expect(
-          find.byKey(const ValueKey('calendar-2026-9-27')),
+          find.byKey(const ValueKey('calendar-2026-10-1')),
           findsOneWidget,
         );
         expect(
-          find.byKey(const ValueKey('calendar-2026-11-7')),
+          find.byKey(const ValueKey('calendar-2026-10-31')),
           findsOneWidget,
         );
-        expect(find.text('14:30 — 15:30'), findsOneWidget);
-        await t.tap(find.byKey(const ValueKey('calendar-2026-9-27')));
+        expect(
+          find.byKey(const ValueKey('calendar-2026-9-27')),
+          findsOneWidget,
+          reason: 'A grade atual da Agenda mostra os dias do mês anterior.',
+        );
+        expect(find.byKey(const ValueKey('calendar-2026-11-7')), findsNothing);
+        expect(find.text('14:30'), findsOneWidget);
+        expect(find.text('15:30'), findsOneWidget);
+        await t.tap(find.byKey(const ValueKey('calendar-2026-10-31')));
         await t.pumpAndSettle();
-        expect(find.text('Setembro 2026'), findsOneWidget);
-        expect(find.text('27 - Domingo'), findsOneWidget);
+        expect(find.text('Outubro'), findsOneWidget);
+        expect(find.text('2026'), findsOneWidget);
+        expect(find.text('31 - Sábado'), findsOneWidget);
         await t.pumpWidget(
           MaterialApp(
             home: Scaffold(

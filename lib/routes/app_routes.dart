@@ -1,172 +1,164 @@
-﻿import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+
+import '../data/vet_repository.dart';
+import '../pages/addresses_page.dart';
+import '../pages/agenda_page.dart';
+import '../pages/chat_page.dart';
+import '../pages/config_page.dart';
+import '../pages/gabriela/gabriela_area_page.dart';
+import '../pages/gabriela/gabriela_splash_screen.dart';
+import '../models/saved_address.dart';
 import '../models/pet_model.dart';
+import '../pages/home_page.dart';
 import '../pages/agendamentos_page.dart';
 import '../pages/detalhes_pet_page.dart';
+import '../pages/editar_pet_page.dart';
 import '../pages/login_page.dart';
 import '../pages/perfil_page.dart';
 import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
+import '../pages/sobre_page.dart';
+import '../pages/start_page.dart';
+import '../pages/landing_page.dart';
+import '../pages/sucessoScreen.dart';
 import '../pages/vacinacao_page.dart';
+import '../pages/nova_consulta_page.dart';
+import '../pages/cadastro_page.dart';
+import '../pages/endereco_page.dart';
+import '../pages/cadastroPet_page.dart';
+import '../screens/pets.dart'
+    show ConvenioScreen, EscolhaPetScreen, ServicosScreen, openPetChoiceDialog;
 
-class AppRoutes {
-  static const String login = '/login';
-  static const String pets = '/pets';
-  static const String perfil = '/perfil';
-  static const String detalhesPet = '/detalhes-pet';
-  static const String saude = '/saude';
-  static const String vacinacao = '/vacinacao';
-  static const String agendamentos = '/agendamentos';
-
-  static PetModel _petFromArguments(Object? arguments) {
-    if (arguments is PetModel) return arguments;
-
-    final args = arguments is Map ? arguments : const <String, dynamic>{};
-    return PetModel(
-      name: args['petName'] as String? ?? 'Pet',
-      imagePath:
-          args['petImage'] as String? ?? 'assets/imagens/pets/dog.png',
-      description: args['description'] as String? ?? '',
-    );
-  }
-
-  static Map<String, WidgetBuilder> get routes => {
-    login: (_) => const LoginPage(),
-    pets: (_) => const PetsPage(),
-    perfil: (_) => const PerfilPage(),
-    detalhesPet: (context) {
-      final pet = _petFromArguments(
-        ModalRoute.of(context)?.settings.arguments,
-      );
-      return DetalhesPetPage(pet: pet);
-    },
-    saude: (context) {
-      final pet = _petFromArguments(
-        ModalRoute.of(context)?.settings.arguments,
-      );
-      return SaudePage(pet: pet);
-    },
-    vacinacao: (context) {
-      final pet = _petFromArguments(
-        ModalRoute.of(context)?.settings.arguments,
-      );
-      return VacinacaoPage(pet: pet);
-    },
-    agendamentos: (context) {
-      final pet = _petFromArguments(
-        ModalRoute.of(context)?.settings.arguments,
-      );
-      return AgendamentosPage(pet: pet);
-    },
-  };
-
-  static Route<dynamic> generateRoute(RouteSettings settings) {
-    switch (settings.name) {
-      case login:
-        return _buildRoute(const LoginPage());
-      case pets:
-        return _buildRoute(const PetsPage());
-      case perfil:
-        return _buildRoute(const PerfilPage());
-      case detalhesPet:
-        return _buildRoute(
-          DetalhesPetPage(pet: _petFromArguments(settings.arguments)),
-        );
-      case saude:
-        return _buildRoute(
-          SaudePage(pet: _petFromArguments(settings.arguments)),
-        );
-      case vacinacao:
-        return _buildRoute(
-          VacinacaoPage(pet: _petFromArguments(settings.arguments)),
-        );
-      case agendamentos:
-        return _buildRoute(
-          AgendamentosPage(pet: _petFromArguments(settings.arguments)),
-        );
-      default:
-        return _buildRoute(_notFoundScreen());
-    }
-  }
-
-  static Widget _notFoundScreen() {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.error_outline, size: 64, color: Colors.red),
-            SizedBox(height: 16),
-            Text('Rota não encontrada'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static Route<dynamic> _buildRoute(Widget page) {
-    return MaterialPageRoute(builder: (_) => page);
-  }
+Map<String, String> _formDataFromRoute(BuildContext context) {
+  final arguments = ModalRoute.of(context)?.settings.arguments;
+  if (arguments is! Map) return const {};
+  return arguments.map<String, String>(
+    (key, value) => MapEntry(key.toString(), value.toString()),
+  );
 }
 
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+PetModel? _petFromRoute(BuildContext context) {
+  final arguments = ModalRoute.of(context)?.settings.arguments;
+  if (arguments is PetModel) return VetRepository.petById(arguments.id);
 
-class Nav {
-  static Future<void> toLogin() => _push(AppRoutes.login);
-  static Future<void> toPets() => _push(AppRoutes.pets);
-  static Future<void> toPerfil() => _push(AppRoutes.perfil);
+  final args = arguments is Map ? arguments : const <String, dynamic>{};
+  final name = args['petName'];
+  final id = args['petId'];
+  if (id is String) return VetRepository.petById(id);
+  // Compatibilidade de entrada com argumentos antigos, sem criar outro pet.
+  if (name is String) {
+    return VetRepository.pets.where((pet) => pet.name == name).firstOrNull;
+  }
+  return VetRepository.selectedPet;
+}
 
-  static Future<void> toDetalhesPet({
-    required String petName,
-    String? petImage,
-  }) => _push(
-    AppRoutes.detalhesPet,
-    arguments: {
-      'petName': petName,
-      'petImage': petImage ?? 'assets/imagens/pets/dog.png',
-    },
-  );
+Widget _petPage(BuildContext context, Widget Function(PetModel) builder) {
+  final pet = _petFromRoute(context);
+  return pet == null ? const PetsPage() : builder(pet);
+}
 
-  static Future<void> toSaude({required String petName, String? petImage}) =>
-      _push(
-        AppRoutes.saude,
-        arguments: {
-          'petName': petName,
-          'petImage': petImage ?? 'assets/imagens/pets/dog.png',
-        },
+class AppRoutes {
+  AppRoutes._();
+
+  static Map<String, WidgetBuilder> get routes => {
+    '/': (_) => const StartPage(),
+    '/landing': (_) => const LandingPage(),
+    '/home': (_) => const HomePage(),
+    '/login': (_) => const LoginPage(),
+    '/gabriela/splash': (_) => const GabrielaSplashScreen(),
+    '/gabriela/login': (_) => const LoginPage(successRoute: '/gabriela'),
+    '/gabriela': (_) => const GabrielaAreaPage(),
+    '/gabriela/perfil': (_) => const GabrielaAreaPage(initialIndex: 0),
+    '/gabriela/mensagens': (_) => const GabrielaAreaPage(initialIndex: 1),
+    '/gabriela/agenda': (_) => const GabrielaAreaPage(initialIndex: 2),
+    '/gabriela/configuracoes': (_) => const GabrielaAreaPage(initialIndex: 3),
+    '/cadastro': (_) => const CadastroScreen(),
+    '/endereco': (context) =>
+        EnderecoScreen(initialData: _formDataFromRoute(context)),
+    '/cadastroPet': (context) =>
+        CadastroPetScreen(initialData: _formDataFromRoute(context)),
+    '/sucesso': (context) => SucessoScreen(
+      saved: ModalRoute.of(context)?.settings.arguments == true,
+    ),
+    '/pets': (_) => const PetsPage(),
+    '/pet': (context) => _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
+    '/editPet': (context) =>
+        _petPage(context, (pet) => EditarPetPage(pet: pet)),
+    '/escolhaPet': (_) => const _PetChoiceFlowRoute(),
+    '/servicos': (_) => const ServicosScreen(),
+    '/convenio': (_) => const ConvenioScreen(),
+    '/perfil': (_) => const PerfilPage(),
+    '/chat': (_) => const ChatScreen(),
+    '/chat/lista': (_) => const ChatListScreen(),
+    '/chat/conversa': (_) => const ChatScreen(),
+    '/sobre': (_) => const SobreScreen(),
+    '/agenda': (context) => AgendaScreen(
+      initialDate: ModalRoute.of(context)?.settings.arguments is DateTime
+          ? ModalRoute.of(context)!.settings.arguments as DateTime
+          : null,
+    ),
+    '/detalhes-pet': (context) =>
+        _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
+    '/saude': (context) => _petPage(context, (pet) => SaudePage(pet: pet)),
+    '/vacinacao': (context) =>
+        _petPage(context, (pet) => VacinacaoPage(pet: pet)),
+    '/agendamentos': (context) =>
+        _petPage(context, (pet) => AgendamentosPage(pet: pet)),
+    '/nova-consulta': (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      final values = args is Map ? args : const <String, dynamic>{};
+      final pet = values['petId'] is String
+          ? VetRepository.petById(values['petId'] as String)
+          : values['pet'] is PetModel
+          ? VetRepository.petById((values['pet'] as PetModel).id)
+          : VetRepository.selectedPet;
+      if (pet == null) return const PetsPage();
+      final service = values['service'];
+      final plan = values['plan'];
+      return NovaConsultaPage(
+        pet: pet,
+        service: service is String ? service : 'Consulta Geral',
+        plan: plan is String ? plan : 'Particular',
       );
-
-  static Future<void> toVacinacao({
-    required String petName,
-    String? petImage,
-  }) => _push(
-    AppRoutes.vacinacao,
-    arguments: {
-      'petName': petName,
-      'petImage': petImage ?? 'assets/imagens/pets/dog.png',
     },
-  );
+    '/config': (_) => const ConfigScreen(),
+    '/enderecos': (_) => const AddressesPage(),
+    '/editar-endereco': (context) => AddressEditorPage(
+      address: ModalRoute.of(context)?.settings.arguments as SavedAddress?,
+    ),
+  };
+}
 
-  static Future<void> toAgendamentos({
-    required String petName,
-    String? petImage,
-  }) => _push(
-    AppRoutes.agendamentos,
-    arguments: {
-      'petName': petName,
-      'petImage': petImage ?? 'assets/imagens/pets/dog.png',
-    },
-  );
+/// A rota móvel mantém a Agenda ao fundo e abre o painel CHOICE_PET_WIDGET.
+/// Em telas largas, a página original de seleção continua disponível.
+class _PetChoiceFlowRoute extends StatefulWidget {
+  const _PetChoiceFlowRoute();
 
-  static void pop() {
-    if (navigatorKey.currentState?.canPop() ?? false) {
-      navigatorKey.currentState?.pop();
+  @override
+  State<_PetChoiceFlowRoute> createState() => _PetChoiceFlowRouteState();
+}
+
+class _PetChoiceFlowRouteState extends State<_PetChoiceFlowRoute> {
+  bool _dialogScheduled = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.sizeOf(context).width >= 900 || _dialogScheduled) return;
+
+    _dialogScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(openPetChoiceDialog(context));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.sizeOf(context).width >= 900) {
+      return const EscolhaPetScreen();
     }
+    return AgendaScreen();
   }
-
-  static Future<void> _push(String route, {Object? arguments}) {
-    return navigatorKey.currentState?.pushNamed(route, arguments: arguments) ??
-        Future.value();
-  }
-
 }

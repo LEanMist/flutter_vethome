@@ -59,14 +59,8 @@ void main() {
     }.entries) {
       await fill(tester, entry.key, entry.value);
     }
-    await tester.ensureVisible(field('Gênero/Sexo'));
-    await tester.pumpAndSettle();
-    await tester.tap(field('Gênero/Sexo'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Prefiro não informar').last);
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Cadastrar'));
-    await tester.tap(find.text('Cadastrar'));
+    await tester.ensureVisible(find.text('Continuar'));
+    await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
   }
 
@@ -81,80 +75,195 @@ void main() {
   testWidgets('telefone curto é bloqueado independentemente do CPF válido', (
     tester,
   ) async {
-    await signup(tester, '12345678901', '119');
+    await signup(tester, '52998224725', '119');
     expect(
       find.text('Informe um telefone com 10 ou 11 dígitos'),
       findsOneWidget,
     );
-    expect(find.text('Informe um CPF com 11 dígitos'), findsNothing);
+    expect(find.text('Informe um CPF válido'), findsNothing);
+    expect(find.text('Etapa endereço'), findsNothing);
+  });
+  testWidgets('CPF com dígitos verificadores inválidos é bloqueado', (
+    tester,
+  ) async {
+    await signup(tester, '52998224724', '11999999999');
+    expect(find.text('Informe um CPF válido'), findsOneWidget);
     expect(find.text('Etapa endereço'), findsNothing);
   });
   for (final phone in ['1133334444', '11999999999']) {
     testWidgets('CPF completo e telefone ${phone.length} dígitos continuam', (
       tester,
     ) async {
-      await signup(tester, '12345678901', phone);
+      await signup(tester, '52998224725', phone);
       expect(find.text('Etapa endereço'), findsOneWidget);
     });
   }
-  testWidgets(
-    'Histórico ordena outubro antes de novembro sem mudar os registros',
-    (tester) async {
-      final pet = VetRepository.pets.first;
-      final year = DateTime.now().year + 1;
-      final dates = [DateTime(year, 11, 10, 12), DateTime(year, 10, 5, 12)];
-      await tester.runAsync(() async {
-        for (var i = 0; i < dates.length; i++) {
-          VetRepository.addAgendamento(
-            pet.id,
-            Agendamento(
-              data: dates[i],
-              tipo: i == 0 ? 'Consulta novembro' : 'Consulta outubro',
-              veterinario: 'Teste',
-              local: 'Teste',
-              status: StatusAgendamento.pendente,
-            ),
-          );
+  testWidgets('Histórico separa próximos agendamentos e registros anteriores', (
+    tester,
+  ) async {
+    final pet = VetRepository.pets.first;
+    final now = DateTime.now();
+    final dates = [
+      DateTime(now.year + 1, 11, 10, 12),
+      DateTime(now.year + 1, 10, 5, 12),
+      DateTime(now.year - 1, 11, 10, 12),
+      DateTime(now.year - 1, 10, 5, 12),
+    ];
+    await tester.runAsync(() async {
+      for (var i = 0; i < dates.length; i++) {
+        VetRepository.addAgendamento(
+          pet.id,
+          Agendamento(
+            data: dates[i],
+            tipo: switch (i) {
+              0 => 'Consulta novembro futura',
+              1 => 'Consulta outubro futura',
+              2 => 'Consulta novembro passada',
+              _ => 'Consulta outubro passada',
+            },
+            veterinario: 'Teste',
+            local: 'Teste',
+            status: StatusAgendamento.pendente,
+          ),
+        );
+      }
+      await VetRepository.flush();
+    });
+    final before = VetRepository.realAppointments(
+      pet.id,
+    ).map((a) => a.data).toList();
+    await tester.pumpWidget(const MaterialApp(home: ConfigScreen()));
+    await tester.ensureVisible(find.text('Histórico'));
+    await tester.tap(find.text('Histórico'));
+    await tester.pumpAndSettle();
+    final history = find.byType(BottomSheet);
+    expect(find.text('Outros agendamentos futuros'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Histórico de agendamentos'),
+      100,
+      scrollable: find.descendant(
+        of: history,
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.text('Histórico de agendamentos'), findsOneWidget);
+    final list = tester.widget<ListView>(
+      find.descendant(of: history, matching: find.byType(ListView)),
+    );
+    final children =
+        (list.childrenDelegate as SliverChildListDelegate).children;
+    final cards = <(int, AppointmentCard)>[];
+    for (final (index, child) in children.indexed) {
+      if (child is AppointmentCard) cards.add((index, child));
+      if (child is Padding) {
+        if (child.child is AppointmentCard) {
+          cards.add((index, child.child as AppointmentCard));
+        } else if (child.child is Column) {
+          for (final nested
+              in (child.child as Column).children
+                  .whereType<AppointmentCard>()) {
+            cards.add((index, nested));
+          }
         }
-        await VetRepository.flush();
-      });
-      final before = VetRepository.realAppointments(
+      }
+    }
+    expect(cards.map((entry) => entry.$2.event.tipo).toList(), [
+      'Consulta outubro futura',
+      'Consulta novembro futura',
+      'Consulta outubro passada',
+      'Consulta novembro passada',
+    ]);
+    final otherFutureHeading = children.indexWhere(
+      (child) =>
+          child is Semantics &&
+          child.key == const ValueKey('settings-other-future-heading'),
+    );
+    final historyHeading = children.indexWhere(
+      (child) =>
+          child is Semantics &&
+          child.key == const ValueKey('settings-history-heading'),
+    );
+    expect(cards[0].$1, lessThan(otherFutureHeading));
+    expect(cards[1].$1, greaterThan(otherFutureHeading));
+    expect(cards[1].$1, lessThan(historyHeading));
+    expect(cards[2].$1, greaterThan(historyHeading));
+    expect(cards[3].$1, greaterThan(cards[2].$1));
+    await tester.scrollUntilVisible(
+      find.text('Consulta novembro passada'),
+      100,
+      scrollable: find.descendant(
+        of: history,
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.text('Consulta novembro passada'), findsOneWidget);
+    expect(
+      VetRepository.realAppointments(pet.id).map((a) => a.data).toList(),
+      before,
+    );
+  });
+  testWidgets('Histórico diferencia carteira vazia de consultas futuras', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: ConfigScreen()));
+    await tester.tap(find.text('Histórico'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nenhuma consulta registrada.'), findsOneWidget);
+    expect(find.text('Nenhuma consulta anterior registrada.'), findsNothing);
+    expect(find.text('Nenhum agendamento futuro'), findsNothing);
+
+    await tester.tap(find.text('Fechar'));
+    await tester.pumpAndSettle();
+    final pet = VetRepository.pets.first;
+    await tester.runAsync(() async {
+      VetRepository.addAgendamento(
         pet.id,
-      ).map((a) => a.data).toList();
-      await tester.pumpWidget(const MaterialApp(home: ConfigScreen()));
-      await tester.ensureVisible(find.text('Histórico'));
-      await tester.tap(find.text('Histórico'));
-      await tester.pumpAndSettle();
-      final history = find.byType(BottomSheet);
-      final list = tester.widget<ListView>(
-        find.descendant(of: history, matching: find.byType(ListView)),
-      );
-      final children =
-          (list.childrenDelegate as SliverChildListDelegate).children;
-      final cards = children
-          .whereType<Padding>()
-          .map((p) => (p.child as Column).children.first)
-          .whereType<AppointmentCard>()
-          .toList();
-      expect(cards.map((c) => c.event.tipo).toList(), [
-        'Consulta outubro',
-        'Consulta novembro',
-      ]);
-      await tester.scrollUntilVisible(
-        find.text('Consulta novembro'),
-        100,
-        scrollable: find.descendant(
-          of: history,
-          matching: find.byType(Scrollable),
+        Agendamento(
+          data: DateTime(DateTime.now().year + 1, 5, 10, 12),
+          tipo: 'Consulta futura',
+          veterinario: 'Teste',
+          local: 'Teste',
+          status: StatusAgendamento.pendente,
         ),
       );
-      expect(find.text('Consulta novembro'), findsOneWidget);
-      expect(
-        VetRepository.realAppointments(pet.id).map((a) => a.data).toList(),
-        before,
+      await VetRepository.flush();
+    });
+
+    await tester.pumpWidget(const MaterialApp(home: ConfigScreen()));
+    await tester.tap(find.text('Histórico'));
+    await tester.pumpAndSettle();
+    expect(find.text('Consulta futura'), findsOneWidget);
+    expect(find.text('Nenhuma consulta anterior registrada.'), findsOneWidget);
+    expect(find.text('Nenhuma consulta registrada.'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('Histórico mantém consultas passadas sem próximos agendamentos', (
+    tester,
+  ) async {
+    final pet = VetRepository.pets.first;
+    await tester.runAsync(() async {
+      VetRepository.addAgendamento(
+        pet.id,
+        Agendamento(
+          data: DateTime(DateTime.now().year - 1, 5, 10, 12),
+          tipo: 'Consulta anterior',
+          veterinario: 'Teste',
+          local: 'Teste',
+          status: StatusAgendamento.confirmado,
+        ),
       );
-    },
-  );
+      await VetRepository.flush();
+    });
+
+    await tester.pumpWidget(const MaterialApp(home: ConfigScreen()));
+    await tester.tap(find.text('Histórico'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nenhum agendamento futuro'), findsOneWidget);
+    expect(find.text('Consulta anterior'), findsOneWidget);
+    expect(find.text('Nenhuma consulta anterior registrada.'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('Saúde identifica o conteúdo clínico demonstrativo', (
     tester,
   ) async {
@@ -232,15 +341,25 @@ void main() {
     expect(find.byType(ClipRRect), findsOneWidget);
   });
   testWidgets(
-    'Agenda desktop mantém células compactas e a ação inicial visível',
+    'Agenda desktop mantém semanas completas e a ação inicial visível',
     (tester) async {
       viewport(tester, const Size(1280, 800));
       await tester.pumpWidget(
         MaterialApp(home: AgendaScreen(initialDate: DateTime(2026, 10, 5))),
       );
+      final calendar = find.byKey(const ValueKey('agenda-calendar'));
+      final dayCells = find.byWidgetPredicate(
+        (widget) =>
+            widget is InkWell &&
+            widget.key is ValueKey<String> &&
+            (widget.key! as ValueKey<String>).value.startsWith('calendar-'),
+      );
+      expect(dayCells, findsNWidgets(35));
       expect(
-        tester.getSize(find.byKey(const ValueKey('agenda-calendar'))).height,
-        lessThanOrEqualTo(344),
+        tester
+            .getRect(find.byKey(const ValueKey('calendar-2026-10-31-surface')))
+            .bottom,
+        lessThan(tester.getRect(calendar).bottom),
       );
       expect(
         tester.getBottomRight(find.text('Nova Consulta')).dy,
@@ -256,6 +375,7 @@ void main() {
     final pet = VetRepository.pets.first;
     for (final screen in [
       const LoginPage(),
+      const CadastroScreen(),
       const CadastroPetScreen(),
       const PetsPage(),
       const EscolhaPetScreen(),

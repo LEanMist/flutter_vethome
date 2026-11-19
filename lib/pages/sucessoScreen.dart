@@ -1,65 +1,209 @@
+// ignore_for_file: file_names
+
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
 import '../theme.dart';
-import '../widgets.dart';
 
-class SucessoScreen extends StatelessWidget {
-  const SucessoScreen({super.key});
+class SucessoScreen extends StatefulWidget {
+  const SucessoScreen({super.key, this.saved = false});
+  final bool saved;
+  @override
+  State<SucessoScreen> createState() => _SucessoScreenState();
+}
+
+class _SucessoScreenState extends State<SucessoScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+  bool _arrived = false;
+  @override
+  void initState() {
+    super.initState();
+    _controller.forward().then((_) async {
+      if (!mounted) return;
+      setState(() => _arrived = true);
+      if (MediaQuery.of(context).accessibleNavigation) return;
+      await Future<void>.delayed(const Duration(milliseconds: 1400));
+      if (mounted) _goHome();
+    });
+  }
+
+  void _goHome() =>
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VH.background,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: VH.background,
+    body: LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = math
+            .min(constraints.maxWidth / 390, constraints.maxHeight / 844)
+            .clamp(0.0, 1.0)
+            .toDouble();
+        final name = VetRepository.clientName.trim().isEmpty
+            ? 'usuário'
+            : VetRepository.clientName.trim();
+        return Center(
+          child: SizedBox(
+            key: const ValueKey('registration-success-figma-frame'),
+            width: 390 * scale,
+            height: 844 * scale,
+            child: Stack(
+              alignment: Alignment.topCenter,
               children: [
-                Text(
-                  'É um prazer tê-lo(a) conosco, senhor(a) '
-                  '${VetRepository.clientName}.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'MontserratAlternates',
+                Positioned(
+                  top: 133 * scale,
+                  width: 332 * scale,
+                  child: Text(
+                    'É um prazer tê-lo(a) conosco,\n$name.',
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    style: TextStyle(
+                      fontFamily: VH.headingFontFamily,
+                      fontSize: 25 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: VH.foreground,
+                    ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Image.asset(
-                    'assets/imagens/figma/vethomepng-1.png',
-                    width: 226,
-                    height: 226,
-                    fit: BoxFit.contain,
+                Positioned(
+                  top: 250 * scale,
+                  child: SlideTransition(
+                    position:
+                        Tween<Offset>(
+                          begin: const Offset(0, .5),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: _controller,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ),
+                    child: SizedBox(
+                      width: 350 * scale,
+                      height: 350 * scale,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Positioned(
+                            left: 24.37 * scale,
+                            top: 24.37 * scale,
+                            width: 300.158 * scale,
+                            height: 300.158 * scale,
+                            child: Image.asset(
+                              'assets/imagens/figma/success-logo-ring.png',
+                              key: const ValueKey('success-logo-ring'),
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          ClipRRect(
+                            key: const ValueKey(
+                              'registration-success-logo-clip',
+                            ),
+                            borderRadius: BorderRadius.circular(200 * scale),
+                            child: Image.asset(
+                              'assets/imagens/figma/vethomepng-2.png',
+                              key: const ValueKey('registration-success-logo'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const Text(
-                  'Usuário e Pets Cadastrados!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Comfortaa',
+                Positioned(
+                  top: 627 * scale,
+                  width: 300 * scale,
+                  child: AnimatedOpacity(
+                    opacity: _arrived ? 1 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    child: Semantics(
+                      key: const ValueKey('registration-success-announcement'),
+                      label: _arrived
+                          ? widget.saved
+                                ? 'Cadastro demonstrativo concluído. Os dados foram salvos neste dispositivo; nenhuma conta on-line foi criada.'
+                                : 'Cadastro demonstrativo concluído nesta sessão. Os dados não foram salvos neste dispositivo; nenhuma conta on-line foi criada.'
+                          : null,
+                      liveRegion: _arrived,
+                      child: ExcludeSemantics(
+                        child: Text(
+                          widget.saved
+                              ? 'Usuário\nCadastrado!'
+                              : 'Cadastro\nconcluído!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: VH.headingFontFamily,
+                            fontSize: 40 * scale,
+                            fontWeight: FontWeight.bold,
+                            color: VH.foreground,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 28),
-                PillButton(
-                  label: 'Continuar',
-                  onTap: () => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/pets',
-                    (_) => false,
+                Positioned(
+                  top:
+                      (MediaQuery.of(context).accessibleNavigation
+                          ? 782
+                          : 735) *
+                      scale,
+                  width: 326 * scale,
+                  child: ExcludeSemantics(
+                    child: Text(
+                      widget.saved
+                          ? 'Perfil salvo neste dispositivo. Esta demonstração não cria contas on-line.'
+                          : 'Dados disponíveis somente nesta sessão. Não foi possível salvar no dispositivo.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: VH.bodyFontFamily,
+                        fontSize: 12,
+                        height: 1.35,
+                        color: VH.foreground,
+                      ),
+                    ),
                   ),
                 ),
+                if (_arrived && MediaQuery.of(context).accessibleNavigation)
+                  Positioned(
+                    top: 721 * scale,
+                    child: SizedBox(
+                      width: 181 * scale,
+                      height: 48 * scale,
+                      child: ElevatedButton(
+                        key: const ValueKey('registration-success-continue'),
+                        onPressed: _goHome,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VH.primary,
+                          foregroundColor: Colors.white,
+                          shape: const StadiumBorder(),
+                          textStyle: TextStyle(
+                            fontFamily: VH.headingFontFamily,
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        child: const Text('Ir para o início'),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
 }

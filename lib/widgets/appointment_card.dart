@@ -5,7 +5,7 @@ import '../models/vet_models.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
 import '../theme/vet_tones.dart';
-import 'pet_avatar.dart';
+import 'pets/pet_avatar.dart';
 import 'status_chip.dart';
 import 'demo_badge.dart';
 
@@ -71,6 +71,9 @@ class AppointmentCard extends StatelessWidget {
                     confirmed ? 'Confirmado' : 'Pendente',
                     confirmed ? VetTones.success : VetTones.warning,
                     dense: true,
+                    textColor: confirmed
+                        ? VetTones.successForeground
+                        : VetTones.warningForeground,
                   ),
                 ],
               ),
@@ -89,17 +92,11 @@ class AppointmentCard extends StatelessWidget {
               const SizedBox(height: 5),
               Text(
                 'Veterinário: ${event.veterinario}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: VetColors.brown.withValues(alpha: .8),
-                ),
+                style: TextStyle(fontSize: 12, color: VetColors.brown),
               ),
               Text(
                 'Local/convênio: ${event.local}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: VetColors.brown.withValues(alpha: .8),
-                ),
+                style: TextStyle(fontSize: 12, color: VetColors.brown),
               ),
               if (demo) ...[
                 const SizedBox(height: 6),

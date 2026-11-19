@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../data/vet_repository.dart';
+import '../../core/utils/form_fields.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
+import 'demo_mode_notice.dart';
+
+const _registerScrollIndicatorAsset =
+    'assets/imagens/figma/register-scroll-indicator.svg';
 
 class VHForm extends StatefulWidget {
   const VHForm({
@@ -11,14 +17,14 @@ class VHForm extends StatefulWidget {
     required this.fields,
     required this.next,
     this.initialData = const {},
-    this.onSubmit,
+    this.dataPrefix = '',
   });
 
   final String title;
   final List<VHField> fields;
   final String next;
   final Map<String, String> initialData;
-  final ValueChanged<Map<String, String>>? onSubmit;
+  final String dataPrefix;
 
   @override
   State<VHForm> createState() => _VHFormState();
@@ -26,34 +32,62 @@ class VHForm extends StatefulWidget {
 
 class _VHFormState extends State<VHForm> {
   final _formKey = GlobalKey<FormState>();
+  bool _hasAttemptedSubmit = false;
   late List<TextEditingController> _controllers;
+  late List<FocusNode> _focusNodes;
+  late List<GlobalKey<State<StatefulWidget>>> _fieldKeys;
 
   @override
   void initState() {
     super.initState();
     _controllers = _makeControllers();
+    _focusNodes = _makeFocusNodes();
+    _fieldKeys = _makeFieldKeys();
   }
 
   @override
   void didUpdateWidget(covariant VHForm oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialData != widget.initialData ||
-        oldWidget.fields != widget.fields) {
+    if (!mapEquals(oldWidget.initialData, widget.initialData) ||
+        !listEquals(
+          oldWidget.fields.map((f) => f.label).toList(),
+          widget.fields.map((f) => f.label).toList(),
+        )) {
       for (final controller in _controllers) {
         controller.dispose();
       }
+      for (final focusNode in _focusNodes) {
+        focusNode.dispose();
+      }
       _controllers = _makeControllers();
+      _focusNodes = _makeFocusNodes();
+      _fieldKeys = _makeFieldKeys();
     }
   }
+
   List<TextEditingController> _makeControllers() => [
-        for (final field in widget.fields)
-          TextEditingController(text: widget.initialData[field.label] ?? ''),
-      ];
+    for (final field in widget.fields)
+      TextEditingController(
+        text: widget.initialData['${widget.dataPrefix}${field.label}'] ?? '',
+      ),
+  ];
+
+  List<FocusNode> _makeFocusNodes() => [
+    for (final field in widget.fields) FocusNode(debugLabel: field.label),
+  ];
+
+  List<GlobalKey<State<StatefulWidget>>> _makeFieldKeys() => [
+    for (var i = 0; i < widget.fields.length; i++)
+      GlobalKey<State<StatefulWidget>>(),
+  ];
 
   @override
   void dispose() {
     for (final controller in _controllers) {
       controller.dispose();
+    }
+    for (final focusNode in _focusNodes) {
+      focusNode.dispose();
     }
     super.dispose();
   }
@@ -67,24 +101,27 @@ class _VHFormState extends State<VHForm> {
         !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
       return 'Informe um e-mail válido';
     }
-    if (field.label == 'Senha' && value.length < 6) {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (field.label == 'CPF') {
+      if (digits.length != 11) return 'Informe um CPF com 11 dígitos';
+      if (!isValidCpf(value)) return 'Informe um CPF válido';
+    }
+    if (field.label == 'Telefone/Celular' &&
+        digits.length != 10 &&
+        digits.length != 11) {
+      return 'Informe um telefone com 10 ou 11 dígitos';
+    }
+    if (field.label == 'Senha' && (rawValue ?? '').length < 6) {
       return 'Use ao menos 6 caracteres';
     }
     if (field.label == 'Confirmar Senha' &&
         widget.fields.any((item) => item.label == 'Senha') &&
-        value !=
+        (rawValue ?? '') !=
             _controllers[widget.fields.indexWhere(
                   (item) => item.label == 'Senha',
                 )]
                 .text) {
       return 'As senhas não coincidem';
-    }
-    if (field.label == 'Nome do Pet' && VetRepository.petNameExists(value)) {
-      return 'Já existe um pet com esse nome';
-    }
-    if (field.label == 'Peso') {
-      final weight = double.tryParse(value.replaceAll(',', '.'));
-      if (weight == null || weight <= 0) return 'Informe um peso válido';
     }
     if (field.label.contains('Nascimento') && !_isValidDate(value)) {
       return 'Use uma data válida (DD/MM/AAAA)';
@@ -92,98 +129,239 @@ class _VHFormState extends State<VHForm> {
     return null;
   }
 
-  bool _isValidDate(String value) {
-    final parts = value.split(RegExp(r'[/.-]'));
-    if (parts.length != 3) return false;
-    final first = int.tryParse(parts[0]);
-    final month = int.tryParse(parts[1]);
-    final last = int.tryParse(parts[2]);
-    if (first == null || month == null || last == null) return false;
+  bool _isValidDate(String value) => parseBirthDate(value) != null;
 
-    final date = first > 31 ? DateTime(first, month, last) : DateTime(last, month, first);
-    return date.year >= 1900 &&
-        date.month == month &&
-        date.day == (first > 31 ? last : first) &&
-        !date.isAfter(DateTime.now());
+  void _focusFirstInvalidField() {
+    for (var i = 0; i < widget.fields.length; i++) {
+      if (_validate(widget.fields[i], _controllers[i].text) == null) continue;
+
+      final focusNode = _focusNodes[i];
+      final fieldContext = _fieldKeys[i].currentContext;
+      focusNode.requestFocus();
+      if (fieldContext != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !fieldContext.mounted) return;
+          Scrollable.ensureVisible(
+            fieldContext,
+            duration: const Duration(milliseconds: 250),
+            alignment: .2,
+            curve: Curves.easeOut,
+          );
+        });
+      }
+      return;
+    }
   }
 
   void _continue() {
-    if (!_formKey.currentState!.validate()) return;
-    final data = <String, String>{
+    if (!_hasAttemptedSubmit) {
+      setState(() => _hasAttemptedSubmit = true);
+    }
+    if (!_formKey.currentState!.validate()) {
+      _focusFirstInvalidField();
+      return;
+    }
+    final data = withoutRegistrationPasswords(<String, String>{
       ...widget.initialData,
       for (var i = 0; i < widget.fields.length; i++)
-        widget.fields[i].label: _controllers[i].text.trim(),
-    };
-    widget.onSubmit?.call(data);
+        if (!widget.fields[i].password)
+          '${widget.dataPrefix}${widget.fields[i].label}': _controllers[i].text
+              .trim(),
+    });
     Navigator.pushNamed(context, widget.next, arguments: data);
+  }
+
+  Widget _buildField(int i) {
+    final field = widget.fields[i];
+    final mobileRegistration =
+        widget.dataPrefix == 'client.' &&
+        MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
+    return VHField(
+      field.label,
+      field.icon,
+      key: _fieldKeys[i],
+      focusNode: _focusNodes[i],
+      password: field.password,
+      figmaForm: true,
+      labelHorizontalPadding: mobileRegistration ? 28 : null,
+      labelBottomPadding: mobileRegistration ? 0 : null,
+      controller: _controllers[i],
+      value: field.value,
+      keyboardType: field.keyboardType,
+      textInputAction: widget.dataPrefix == 'client.'
+          ? i == widget.fields.length - 1
+                ? TextInputAction.done
+                : TextInputAction.next
+          : null,
+      onFieldSubmitted: widget.dataPrefix != 'client.'
+          ? null
+          : (_) {
+              if (i + 1 < _focusNodes.length) {
+                _focusNodes[i + 1].requestFocus();
+              } else {
+                _continue();
+              }
+            },
+      choices: field.choices,
+      onChanged: (value) {
+        setState(() {});
+      },
+      validator: (value) => _validate(field, value),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final viewport = MediaQuery.sizeOf(context);
+    final desktop = viewport.width >= VH.desktopBreakpoint;
+    final mobileRegistration = widget.dataPrefix == 'client.' && !desktop;
+    final showRegisterScrollIndicator =
+        mobileRegistration && viewport.width <= 430 && viewport.height >= 700;
+    final centeredFormOffset = ((viewport.width - 390) / 2)
+        .clamp(0.0, double.infinity)
+        .toDouble();
     return Scaffold(
       backgroundColor: VH.background,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Stack(
           children: [
-            Text(
-              widget.title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Comfortaa',
-                color: VH.foreground,
-              ),
-            ),
-            const SizedBox(height: 18),
-            if (widget.title == 'Cadastro Pet') ...[
-              Image.asset(
-                'assets/imagens/figma/cachorroegatopng-3.png',
-                width: 58,
-                height: 66,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 10),
-            ],
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-              decoration: BoxDecoration(
-                color: VH.background.withValues(alpha: 0.46),
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: VH.secondary, width: 1.5),
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    for (var i = 0; i < widget.fields.length; i++) ...[
-                      VHField(
-                        widget.fields[i].label,
-                        widget.fields[i].icon,
-                        password: widget.fields[i].password,
-                        controller: _controllers[i],
-                        keyboardType: widget.fields[i].keyboardType,
-                        validator: (value) => _validate(widget.fields[i], value),
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: desktop ? 900 : 390),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    desktop
+                        ? 32
+                        : 39 *
+                              (MediaQuery.sizeOf(context).width / 390).clamp(
+                                .8,
+                                1.0,
+                              ),
+                    widget.dataPrefix == 'client.' ? 8 : 38,
+                    desktop
+                        ? 32
+                        : 39 *
+                              (MediaQuery.sizeOf(context).width / 390).clamp(
+                                .8,
+                                1.0,
+                              ),
+                    24,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (widget.dataPrefix == 'client.') ...[
+                        const Center(
+                          child: DemoModeNotice(
+                            compact: true,
+                            message: 'Demonstração · dados fictícios',
+                            semanticLabel:
+                                'Protótipo demonstrativo. Não há contas individuais. As informações ficam neste dispositivo; use apenas dados fictícios.',
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                      Text(
+                        widget.title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Comfortaa',
+                          color: VH.foreground,
+                        ),
                       ),
-                      const SizedBox(height: 7),
+                      SizedBox(height: mobileRegistration ? 14 : 25),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: mobileRegistration ? 7 : 10,
+                          vertical: mobileRegistration ? 11 : 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .2),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: VH.secondary, width: 3),
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          autovalidateMode: _hasAttemptedSubmit
+                              ? AutovalidateMode.onUserInteraction
+                              : AutovalidateMode.disabled,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final fieldWidth = desktop
+                                  ? (constraints.maxWidth - 14) / 2
+                                  : constraints.maxWidth;
+                              return Wrap(
+                                key: ValueKey(
+                                  desktop
+                                      ? 'vh-form-desktop-grid'
+                                      : 'vh-form-mobile-grid',
+                                ),
+                                spacing: 14,
+                                runSpacing: mobileRegistration ? 16 : 14,
+                                children: [
+                                  for (var i = 0; i < widget.fields.length; i++)
+                                    SizedBox(
+                                      width: fieldWidth,
+                                      child: _buildField(i),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Center(
+                        child: PillButton(
+                          color: VH.primary,
+                          padding: EdgeInsets.zero,
+                          onTap: _continue,
+                          child: SizedBox(
+                            width: 181,
+                            height: 71,
+                            child: const Center(
+                              child: Text(
+                                'Continuar',
+                                style: TextStyle(
+                                  fontFamily: VH.headingFontFamily,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            Center(
-              child: PillButton(
-                label: 'Cadastrar',
-                color: VH.secondary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 11,
+            if (showRegisterScrollIndicator)
+              Positioned(
+                right: centeredFormOffset + 15.5,
+                top: 369,
+                child: IgnorePointer(
+                  child: ExcludeSemantics(
+                    child: RotatedBox(
+                      key: const ValueKey('register-scroll-indicator'),
+                      quarterTurns: 1,
+                      child: SizedBox(
+                        width: 328.001,
+                        height: 3,
+                        child: SvgPicture.asset(
+                          _registerScrollIndicatorAsset,
+                          fit: BoxFit.fill,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                onTap: _continue,
               ),
-            ),
           ],
         ),
       ),

@@ -4,6 +4,8 @@
 
 import 'package:flutter/material.dart';
 
+import '../../theme/vet_colors.dart';
+
 /// Cores, fontes, escala e caminhos de assets usados pela PETS_PAGE.
 class PetsTheme {
   PetsTheme._();
@@ -30,6 +32,19 @@ class PetsTheme {
   static double scaleOf(BuildContext context) {
     final double width = MediaQuery.sizeOf(context).width;
     return (width / designWidth).clamp(0.8, 1.0).toDouble();
+  }
+
+  /// Realces claros mantêm o texto escuro legível nos cartões da lista Pets.
+  static Color? listInteractionOverlay(Set<WidgetState> states) {
+    if (states.contains(WidgetState.disabled)) return Colors.transparent;
+    if (states.contains(WidgetState.pressed) ||
+        states.contains(WidgetState.focused)) {
+      return VetColors.pink.withValues(alpha: .18);
+    }
+    if (states.contains(WidgetState.hovered)) {
+      return VetColors.pink.withValues(alpha: .12);
+    }
+    return null;
   }
 
   // ── Caminhos de assets ──────────────────────────────────────────────────

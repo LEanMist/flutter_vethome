@@ -42,14 +42,12 @@ void main() {
     );
 
     final editable = tester.widget<EditableText>(find.byType(EditableText));
-    expect(editable.style.fontFamily, 'Comfortaa_500');
-    expect(editable.style.fontFamilyFallback, const ['Comfortaa']);
+    expect(editable.style.fontFamily, 'Comfortaa');
     expect(editable.style.fontSize, 15);
     expect(editable.style.fontWeight, FontWeight.w500);
 
     final label = tester.widget<Text>(find.text('Nome Completo'));
-    expect(label.style?.fontFamily, 'MontserratAlternates_500');
-    expect(label.style?.fontFamilyFallback, const ['MontserratAlternates']);
+    expect(label.style?.fontFamily, 'MontserratAlternates');
     expect(label.style?.fontSize, 14);
     expect(label.style?.fontWeight, FontWeight.w500);
 
@@ -124,23 +122,28 @@ void main() {
     for (final label in const [
       'Pets',
       'Perfil',
-      'Whatsapp',
+      'Conversa',
       'Agenda',
       'Configurações',
     ]) {
       expect(find.bySemanticsLabel(label), findsOneWidget);
     }
 
-    final decoration = tester
-        .widgetList<Container>(
-          find.descendant(
-            of: find.byType(VetBottomNav),
-            matching: find.byType(Container),
-          ),
-        )
-        .map((widget) => widget.decoration)
-        .whereType<inset_shadow.BoxDecoration>()
-        .single;
+    final decoration =
+        tester
+                .widgetList<Container>(
+                  find.descendant(
+                    of: find.byType(VetBottomNav),
+                    matching: find.byType(Container),
+                  ),
+                )
+                .singleWhere(
+                  (widget) =>
+                      widget.margin != null &&
+                      widget.decoration is inset_shadow.BoxDecoration,
+                )
+                .decoration!
+            as inset_shadow.BoxDecoration;
     final shadow = decoration.boxShadow!.single as inset_shadow.BoxShadow;
     expect(shadow.inset, isTrue);
     expect(shadow.color, VetColors.shadowDark);
@@ -186,10 +189,35 @@ void main() {
       MaterialApp(home: AgendaScreen(initialDate: DateTime(2026, 1, 13))),
     );
 
-    expect(find.text('Janeiro 2026'), findsOneWidget);
-    expect(find.text('Hemograma'), findsOneWidget);
-    expect(find.text('Creatinina'), findsOneWidget);
-    expect(find.text('Urina'), findsOneWidget);
+    expect(find.text('Janeiro'), findsOneWidget);
+    expect(find.text('2026'), findsOneWidget);
+    for (final service in ['Hemograma', 'Urina', 'Creatinina']) {
+      expect(find.text(service), findsOneWidget);
+    }
+    for (final petName in [
+      'Rambo Augusto',
+      'Nicolly Santos',
+      'Olivia Palito',
+    ]) {
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label?.contains(petName) == true,
+        ),
+        findsOneWidget,
+      );
+    }
+    for (final service in ['Hemograma', 'Creatinina', 'Urina']) {
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label?.contains(service) == true,
+        ),
+        findsOneWidget,
+      );
+    }
   });
 
   testWidgets('configuracoes nao mostra voltar e mantem navegacao inferior', (
@@ -214,16 +242,23 @@ void main() {
     await tester.tap(find.byTooltip('Editar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Editar pet'), findsOneWidget);
-    expect(find.text('Nome do pet'), findsOneWidget);
-    expect(find.text('Nascimento'), findsOneWidget);
+    expect(find.text('Editar pet'), findsNothing);
+    expect(find.bySemanticsLabel('Editar pet'), findsOneWidget);
+    expect(find.text('Gênero/Sexo'), findsOneWidget);
+    expect(find.text('Data de Nascimento'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('edit-pet-extra-fields-toggle')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Espécie'), findsOneWidget);
+    expect(find.text('Castração'), findsOneWidget);
     expect(find.text('Excluir'), findsOneWidget);
   });
 
   testWidgets('convênio avança imediatamente ao tocar no card', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: const ConvenioScreen(),
+        home: const ConvenioScreen(service: 'Consulta Geral'),
         routes: {
           '/nova-consulta': (context) {
             final args =

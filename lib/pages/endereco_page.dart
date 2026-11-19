@@ -1,38 +1,103 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+import '../data/vet_repository.dart';
+import '../data/cep_service.dart';
+import '../core/utils/form_fields.dart';
+import '../widgets/address_form.dart';
+import '../widgets/auth/local_profile_conflict_dialog.dart';
 import '../theme.dart';
-import '../widgets.dart';
-import '../widgets/auth/vh_form.dart';
 
 class EnderecoScreen extends StatelessWidget {
-  const EnderecoScreen({super.key, this.initialData = const {}});
-
+  const EnderecoScreen({
+    super.key,
+    this.initialData = const {},
+    this.cepService = const CepService(),
+  });
   final Map<String, String> initialData;
+  final CepService cepService;
+
+  Future<void> _continue(BuildContext context, Map<String, String> data) async {
+    if (VetRepository.hasLocalClientIdentityConflict(
+      email: data['client.E-mail'],
+      name: data['client.Nome Completo'],
+    )) {
+      await showLocalProfileConflictDialog(context);
+      return;
+    }
+    final hasSavedTutor =
+        VetRepository.clientName.trim().isNotEmpty &&
+        RegExp(
+          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+        ).hasMatch(VetRepository.clientEmail.trim());
+    if (!hasSavedTutor && !hasCompleteTutorRegistrationData(data)) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Conclua os dados obrigatórios do tutor antes de avançar.',
+            ),
+          ),
+        );
+      return;
+    }
+    VetRepository.registerClient(data);
+    final saved = await VetRepository.flush();
+    if (!context.mounted) return;
+    if (!saved) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Dados atualizados nesta sessão. Não foi possível salvar localmente.',
+            ),
+          ),
+        );
+    }
+    final nextData = <String, String>{
+      if (saved)
+        for (final entry in data.entries)
+          if (!entry.key.startsWith('client.')) entry.key: entry.value,
+      if (!saved) ...data,
+      '_registrationSaved': saved.toString(),
+    };
+    Navigator.pushNamed(context, '/cadastroPet', arguments: nextData);
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: VH.background,
-        body: VHForm(
-          title: 'Endereço',
-          next: '/cadastroPet',
-          initialData: initialData,
-          fields: const [
-            VHField(
-              'CEP',
-              Icons.home,
-              value: '34556-234',
-              keyboardType: TextInputType.number,
-            ),
-            VHField('Endereço', Icons.home, value: 'R. Carcino'),
-            VHField(
-              'Número',
-              Icons.tag,
-              value: '73',
-              keyboardType: TextInputType.number,
-            ),
-            VHField('Complemento', Icons.home),
-            VHField('Cidade', Icons.location_city),
-          ],
+    backgroundColor: VH.background,
+    body: SafeArea(
+      top: MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint,
+      child: AddressForm(
+        cepService: cepService,
+        title: 'Endereço',
+        skipButtonStyle: TextButton.styleFrom(
+          foregroundColor: VH.foreground,
+          textStyle: const TextStyle(
+            fontFamily: VH.bodyFontFamily,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      );
+        onSaved: (address) async {
+          final data = withoutRegistrationPasswords({
+            ...initialData,
+            'client.CEP': address.cep,
+            'client.Endereço': address.street,
+            'client.Nome do Endereço': address.name,
+            'client.Cidade': address.city,
+            'client.Número': address.number,
+            'client.Complemento': address.complement,
+          });
+          await _continue(context, data);
+        },
+        onSkip: () async {
+          final data = withoutRegistrationPasswords(initialData);
+          await _continue(context, data);
+        },
+      ),
+    ),
+  );
 }

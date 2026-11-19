@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../pages/teste_page.dart';
 import '../../theme/vet_colors.dart';
 import '../pets/pets_theme.dart';
 
 /// Cabeçalho padrão: botão voltar + título centralizado + curva inferior.
-/// Respeita o notch/status bar. `bottom` permite pendurar conteúdo extra.
+/// Mantém a geometria do Figma com insets de status bar. `bottom` permite
+/// pendurar conteúdo extra.
 class VetHeader extends StatelessWidget {
   const VetHeader({
     super.key,
@@ -24,23 +24,19 @@ class VetHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
     final double top = MediaQuery.paddingOf(context).top;
+    final double topPadding = top > 14 * s ? top : 14 * s;
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(18 * s, top + 14 * s, 18 * s, 22 * s),
+      constraints: const BoxConstraints(minHeight: 125),
+      padding: EdgeInsets.fromLTRB(18 * s, topPadding, 18 * s, 22 * s),
       decoration: BoxDecoration(
         color: VetColors.rose,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28 * s)),
-        boxShadow: const [
-          BoxShadow(
-            color: VetColors.shadowDark,
-            offset: Offset(0, 3),
-            blurRadius: 6,
-          ),
-        ],
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
             children: [
@@ -58,7 +54,7 @@ class VetHeader extends StatelessWidget {
                             onTap: () => Navigator.maybePop(context),
                             child: Icon(
                               Icons.arrow_back,
-                              color: Colors.white,
+                              color: VetColors.brown,
                               size: 22 * s,
                             ),
                           ),
@@ -83,28 +79,7 @@ class VetHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(
-                width: 48 * s,
-                child: IconButton(
-                  tooltip: 'Telas de teste',
-                  constraints: BoxConstraints.tightFor(
-                    width: 48 * s,
-                    height: 48 * s,
-                  ),
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TestePage()),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.dashboard_outlined,
-                    color: Colors.white,
-                    size: 22 * s,
-                  ),
-                ),
-              ),
+              SizedBox(width: 48 * s),
             ],
           ),
           if (bottom != null)

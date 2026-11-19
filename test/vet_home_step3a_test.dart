@@ -17,7 +17,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
   }
 
-  testWidgets('VetHeader sem bottom não reserva a caixa inferior', (
+  testWidgets('VetHeader sem bottom preserva a altura aprovada do Figma', (
     tester,
   ) async {
     mobile(tester);
@@ -26,7 +26,7 @@ void main() {
         home: Scaffold(body: VetHeader(title: 'Detalhes')),
       ),
     );
-    expect(tester.getSize(find.byType(VetHeader)).height, 84);
+    expect(tester.getSize(find.byType(VetHeader)).height, 125);
     expect(
       find.byWidgetPredicate(
         (widget) => widget is Container && widget.constraints?.minWidth == 202,

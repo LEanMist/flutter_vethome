@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
+import '../pages/addresses_page.dart';
 import '../pages/agendamentos_page.dart';
+import '../pages/agenda_page.dart';
 import '../pages/chat_page.dart';
+import '../pages/config_page.dart';
 import '../pages/detalhes_pet_page.dart';
 import '../pages/editar_pet_page.dart';
 import '../pages/login_page.dart';
@@ -14,15 +17,21 @@ import '../pages/gabriela/gabriela_splash_screen.dart';
 import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
 import '../pages/sobre_page.dart';
+import '../pages/start_page.dart';
+import '../pages/landing_page.dart';
+import '../pages/home_page.dart';
+import '../pages/sucessoScreen.dart';
 import '../pages/vacinacao_page.dart';
-import '../screens/auth.dart'
-    show CadastroPetScreen, CadastroScreen, EnderecoScreen, SucessoScreen;
-import '../screens/outros.dart' show AgendaScreen, ConfigScreen;
+import 'cadastro_page.dart';
+import 'endereco_page.dart';
+import 'cadastroPet_page.dart';
 import '../screens/pets.dart'
     show ConvenioScreen, EscolhaPetScreen, ServicosScreen;
 
 class TestePage extends StatelessWidget {
-  const TestePage({super.key});
+  const TestePage({super.key, this.selectionMode = false});
+
+  final bool selectionMode;
 
   Widget _withSelectedPet(Widget Function(PetModel) builder) {
     final pet = VetRepository.selectedPet;
@@ -32,6 +41,21 @@ class TestePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final telas = <({String titulo, IconData icone, WidgetBuilder pagina})>[
+      (
+        titulo: 'Início',
+        icone: Icons.play_arrow_outlined,
+        pagina: (_) => const StartPage(),
+      ),
+      (
+        titulo: 'Apresentação',
+        icone: Icons.web_asset_outlined,
+        pagina: (_) => const LandingPage(),
+      ),
+      (
+        titulo: 'Home',
+        icone: Icons.home_outlined,
+        pagina: (_) => const HomePage(),
+      ),
       (titulo: 'Login', icone: Icons.login, pagina: (_) => const LoginPage()),
       (
         titulo: 'Área da Gabriela',
@@ -57,6 +81,16 @@ class TestePage extends StatelessWidget {
         titulo: 'Sucesso no cadastro',
         icone: Icons.check_circle_outline,
         pagina: (_) => const SucessoScreen(),
+      ),
+      (
+        titulo: 'Endereços',
+        icone: Icons.location_city_outlined,
+        pagina: (_) => const AddressesPage(),
+      ),
+      (
+        titulo: 'Editar endereço',
+        icone: Icons.edit_location_alt_outlined,
+        pagina: (_) => const AddressEditorPage(),
       ),
       (titulo: 'Pets', icone: Icons.pets, pagina: (_) => const PetsPage()),
       (
@@ -90,7 +124,12 @@ class TestePage extends StatelessWidget {
         pagina: (_) => const PerfilPage(),
       ),
       (
-        titulo: 'Chat',
+        titulo: 'Lista de conversas',
+        icone: Icons.forum_outlined,
+        pagina: (_) => const ChatListScreen(),
+      ),
+      (
+        titulo: 'Conversa',
         icone: Icons.chat_bubble_outline,
         pagina: (_) => const ChatScreen(),
       ),
@@ -174,6 +213,11 @@ class TestePage extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
+                if (selectionMode) {
+                  Navigator.pop<WidgetBuilder>(context, tela.pagina);
+                  return;
+                }
+
                 final routeName = switch (tela.titulo) {
                   'Pets' => '/pets',
                   'Agenda' => '/agenda',

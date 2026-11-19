@@ -1,41 +1,61 @@
 # VetHome
 
-Aplicativo Flutter para gerenciamento de informações de pets e acompanhamento
-veterinário. O projeto inclui áreas para clientes e para a veterinária Gabriela,
-com telas de perfil, mensagens, agenda e configurações.
+Aplicativo Flutter para organizar o atendimento veterinário em domicílio e os dados dos pets.
 
-## Requisitos
+## O que já existe
 
-- Flutter SDK compatível com a restrição de Dart em `pubspec.yaml`.
-- Um dispositivo ou destino disponível, como Windows, Android ou navegador.
+- Cadastro e perfil do cliente, com endereços salvos.
+- Cadastro, edição, detalhes e fotos de pets.
+- Saúde, carteira de vacinação e agendamentos.
+- Agenda com seleção de data, histórico e resumo dos próximos atendimentos.
+- Persistência local em um snapshot versionado (`vethome.state.v1`). Pets, cliente, endereços, consultas e vacinas são restaurados ao reabrir o app. Fotos são guardadas como miniaturas locais.
+- A preferência de tema fica salva no dispositivo ou navegador.
+- A aba de conversa é uma demonstração local. As mensagens não são enviadas à veterinária.
+- A área veterinária da Gabriela oferece perfil, mensagens, agenda e configurações; ela é independente da área do cliente.
+- Fontes Comfortaa e Montserrat Alternates incluídas no app, para manter a tipografia sem baixar arquivos de fonte em tempo de execução.
+- Modo Web responsivo, com layouts ajustados para celular e desktop.
+
+O projeto ainda não usa autenticação real nem sincroniza dados com um servidor. Alguns atendimentos e dados clínicos são exemplos de demonstração. Existe uma camada HTTP experimental, mas os contratos observados ainda não foram confirmados e nenhuma tela depende dela.
 
 ## Executar
 
+Instale o Flutter e as dependências do projeto. Na pasta do projeto:
+
 ```powershell
 flutter pub get
-flutter run -d windows
+flutter run -d chrome
 ```
 
-Para executar no navegador, use `flutter run -d chrome`.
+Para iniciar em outro dispositivo, consulte os destinos disponíveis com `flutter devices` e troque `chrome` pelo destino desejado.
 
-## Verificar
+## Verificar alterações
 
 ```powershell
-flutter analyze
-flutter test
+flutter analyze --no-pub
+flutter test --no-pub
+flutter test --no-pub -d chrome
+flutter build web --no-pub
 ```
 
-## Organização
+O teste nativo ignora deliberadamente um caso exclusivo do navegador; a execução com `-d chrome` cobre esse caso. Na validação desta integração, `flutter test --no-pub` e `flutter test --no-pub -d chrome` passaram **653 testes cada**, com **3 ignorados em cada execução**. `flutter build web --no-pub` também foi concluído. A análise estática não encontrou erros nem warnings; restam 31 sugestões informativas de lint.
 
-- `lib/pages/`: páginas e fluxos principais do aplicativo.
-- `lib/pages/gabriela/`: telas e componentes específicos da área veterinária.
-- `lib/screens/`: telas de fluxos existentes do app.
-- `lib/data/`: repositórios e acesso a dados locais/serviços.
-- `lib/models/`: modelos de domínio.
-- `lib/theme/`: cores e configuração visual.
-- `lib/widgets/`: componentes reutilizáveis.
-- `test/`: testes de widgets, navegação e regras dos fluxos.
-- `assets/`: imagens, ícones e fontes.
+## Estado das plataformas
 
-No aplicativo em execução, o ícone de painel no cabeçalho abre o catálogo
-provisório de telas, útil para desenvolvimento e validação.
+- Web: build aprovado nesta integração; os testes específicos do navegador não foram executados nesta validação.
+- Android e Windows: builds não foram revalidados nesta integração.
+
+## Estrutura útil
+
+- `lib/pages/`: telas do aplicativo.
+- `lib/data/`: repositório local, persistência e transporte HTTP experimental.
+- `lib/models/`: modelos e serialização dos dados.
+- `lib/widgets/`: componentes reutilizados.
+- `assets/imagens/`: imagens e exports usados pela interface.
+- `test/`: testes de persistência, regras, navegação e interface.
+- `CONTEXT.md`: histórico técnico detalhado, decisões, validações e pendências das retomadas.
+
+## Cuidados com dados
+
+Os dados atuais ficam no armazenamento local do dispositivo/navegador, sem sincronização ou backup automático. A camada de persistência valida snapshots antes de gravá-los e bloqueia alterações quando encontra dados inválidos, preservando o conteúdo original para evitar sobrescrita acidental.
+
+Se uma alteração ficar apenas na sessão por falha na gravação, abra **Configurações** e use **Tentar salvar novamente** antes de fechar o app.

@@ -99,19 +99,92 @@ void main() {
       await tester.pumpAndSettle();
     } else {
       await tester.enterText(field, value);
-      await tester.testTextInput.receiveAction(TextInputAction.done);
+      if (definition.textInputAction != TextInputAction.done) {
+        await tester.testTextInput.receiveAction(
+          definition.textInputAction ?? TextInputAction.done,
+        );
+      }
       await tester.pumpAndSettle();
     }
   }
 
   Future<void> submit(WidgetTester tester) async {
-    await tester.ensureVisible(find.text('Cadastrar'));
+    final continueButton = find.text('Continuar');
+    final button = continueButton.evaluate().isNotEmpty
+        ? continueButton
+        : find.text('Cadastrar');
+    await tester.ensureVisible(button);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Cadastrar'));
+    await tester.tap(button);
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Cadastro completo separa nascimento e gênero de usuário e pet', (
+  testWidgets('cadastro do cliente não pede gênero e preserva dado antigo', (
+    tester,
+  ) async {
+    largeViewport(tester);
+    final previousGender = VetRepository.clientGender;
+    final previousCustomGender = VetRepository.clientGenderCustom;
+    VetRepository.clientGender = 'Outro';
+    VetRepository.clientGenderCustom = 'Identidade preservada';
+    addTearDown(() {
+      VetRepository.clientGender = previousGender;
+      VetRepository.clientGenderCustom = previousCustomGender;
+    });
+    late Map<String, String> submitted;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const CadastroScreen(),
+        routes: {
+          '/endereco': (context) {
+            submitted =
+                ModalRoute.of(context)!.settings.arguments
+                    as Map<String, String>;
+            VetRepository.registerClient(submitted);
+            return const Scaffold(body: Text('Cadastro sem gênero aceito'));
+          },
+        },
+      ),
+    );
+
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Gênero/Sexo',
+      ),
+      findsNothing,
+    );
+    for (final entry in {
+      'Nome Completo': 'Cliente sem gênero',
+      'Data de Nascimento': '05/02/1995',
+      'CPF': '52998224725',
+      'Telefone/Celular': '11999999999',
+      'E-mail': 'sem-genero@example.com',
+      'Senha': '123456',
+      'Confirmar Senha': '123456',
+    }.entries) {
+      await fill(tester, entry.key, entry.value);
+    }
+    await submit(tester);
+
+    expect(find.text('Cadastro sem gênero aceito'), findsOneWidget);
+    expect(submitted, isNot(contains('client.Gênero/Sexo')));
+    expect(submitted, isNot(contains('client.Gênero personalizado')));
+    expect(VetRepository.clientGender, 'Outro');
+    expect(VetRepository.clientGenderCustom, 'Identidade preservada');
+  });
+
+  testWidgets('cadastro do pet mantém o campo de sexo', (tester) async {
+    largeViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: CadastroPetScreen()));
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == 'Gênero/Sexo',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Cadastro completo separa cliente e dados do pet', (
     tester,
   ) async {
     largeViewport(tester);
@@ -137,8 +210,7 @@ void main() {
     for (final entry in {
       'Nome Completo': 'Cliente Teste',
       'Data de Nascimento': '05/02/1995',
-      'Gênero/Sexo': 'Feminino',
-      'CPF': '12345678900',
+      'CPF': '52998224725',
       'Telefone/Celular': '11999999999',
       'E-mail': 'cliente@example.com',
       'Senha': '123456',
@@ -150,7 +222,7 @@ void main() {
     for (final entry in {
       'CEP': '12345678',
       'Endereço': 'Rua Teste',
-      'Número': '10',
+      'Numero': '10',
       'Cidade': 'Cidade Teste',
     }.entries) {
       await fill(tester, entry.key, entry.value);
@@ -169,7 +241,7 @@ void main() {
     }
     for (final entry in {
       'Tipo de Animal': 'Gato',
-      'Nome do Pet': 'Pet Cadastro 4A',
+      'Nome do Gato(a)': 'Pet Cadastro 4A',
       'Gênero/Sexo': 'Macho',
       'Peso': '4,5',
       'Data de Nascimento': '02/04/2020',
@@ -180,7 +252,7 @@ void main() {
     await submit(tester);
     expect(find.text('Cadastro concluído'), findsOneWidget);
     expect(VetRepository.clientBirthDate, DateTime(1995, 2, 5));
-    expect(VetRepository.clientGender, 'Feminino');
+    expect(VetRepository.clientGender, savedClient['gender']);
     expect(VetRepository.clientName, 'Cliente Teste');
     expect(VetRepository.clientEmail, 'cliente@example.com');
     expect(VetRepository.clientPhone, '11999999999');
@@ -265,14 +337,28 @@ void main() {
     await tester.pumpAndSettle();
     final nameField = find.descendant(
       of: find.byWidgetPredicate(
-        (w) => w is VHField && w.label == 'Nome do pet',
+        (w) => w is VHField && w.label.startsWith('Nome do '),
       ),
       matching: find.byType(TextFormField),
     );
     await tester.enterText(nameField, 'Pet modal renomeado 4A');
-    await tester.ensureVisible(find.text('Salvar'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Salvar'));
+    await tester.scrollUntilVisible(
+      find.text('Salvar'),
+      100,
+      scrollable: find
+          .descendant(
+            of: find.byType(Dialog),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    final saveAction = find
+        .descendant(
+          of: find.byKey(const ValueKey('pet-edit-save-target')),
+          matching: find.byType(InkWell),
+        )
+        .first;
+    await tester.tap(saveAction);
     await tester.pumpAndSettle();
     expect(VetRepository.petById(pet.id)?.name, 'Pet modal renomeado 4A');
     expect(VetRepository.selectedPet?.id, pet.id);
@@ -338,6 +424,7 @@ void main() {
     (tester) async {
       largeViewport(tester);
       await tester.pumpWidget(const MaterialApp(home: TestePage()));
+      await tester.scrollUntilVisible(find.text('Nova consulta'), 250);
       await tester.ensureVisible(find.text('Nova consulta'));
       await tester.pumpAndSettle();
       for (final pet in [...VetRepository.pets]) {

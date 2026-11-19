@@ -1,146 +1,95 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'data/local_data_manager.dart';
+import 'data/theme_preferences.dart';
 import 'data/vet_repository.dart';
 import 'data/gabriela_profile_repository.dart';
-import 'pages/addresses_page.dart';
-import 'pages/chat_page.dart';
-import 'models/saved_address.dart';
-import 'models/pet_model.dart';
-import 'pages/agendamentos_page.dart';
-import 'pages/detalhes_pet_page.dart';
-import 'pages/editar_pet_page.dart';
-import 'pages/login_page.dart';
-import 'pages/gabriela/gabriela_area_page.dart';
-import 'pages/gabriela/gabriela_splash_screen.dart';
-import 'pages/perfil_page.dart';
-import 'pages/pets_page.dart';
-import 'pages/saude_page.dart';
-import 'pages/sobre_page.dart';
-import 'pages/vacinacao_page.dart';
-import 'pages/nova_consulta_page.dart';
-import 'screens/auth.dart';
-import 'screens/outros.dart' show AgendaScreen, ConfigScreen;
-import 'screens/pets.dart'
-    show ConvenioScreen, EscolhaPetScreen, ServicosScreen;
+import 'pages/critical_storage_error_page.dart';
+import 'routes/app_routes.dart';
 import 'theme.dart';
+import 'widgets/debug_screen_switcher.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await VetRepository.initialize();
   await GabrielaProfileRepository.initialize();
+  await ThemePreferences.load();
   runApp(const VetHomeApp());
 }
 
-Map<String, String> _formDataFromRoute(BuildContext context) {
-  final arguments = ModalRoute.of(context)?.settings.arguments;
-  if (arguments is! Map) return const {};
-  return arguments.map<String, String>(
-    (key, value) => MapEntry(key.toString(), value.toString()),
-  );
-}
-
-PetModel? _petFromRoute(BuildContext context) {
-  final arguments = ModalRoute.of(context)?.settings.arguments;
-  if (arguments is PetModel) return VetRepository.petById(arguments.id);
-
-  final args = arguments is Map ? arguments : const <String, dynamic>{};
-  final name = args['petName'];
-  final id = args['petId'];
-  if (id is String) return VetRepository.petById(id);
-  // Compatibilidade de entrada com argumentos antigos, sem criar outro pet.
-  if (name is String) {
-    return VetRepository.pets.where((pet) => pet.name == name).firstOrNull;
-  }
-  return VetRepository.selectedPet;
-}
-
-Widget _petPage(BuildContext context, Widget Function(PetModel) builder) {
-  final pet = _petFromRoute(context);
-  return pet == null ? const PetsPage() : builder(pet);
-}
-
-class VetHomeApp extends StatelessWidget {
+class VetHomeApp extends StatefulWidget {
   const VetHomeApp({super.key});
+
+  @override
+  State<VetHomeApp> createState() => _VetHomeAppState();
+}
+
+class _VetHomeAppState extends State<VetHomeApp> {
+  final _criticalNavigatorKey = GlobalKey<NavigatorState>();
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  // Nova leitura (sem gravação); reconstrói o app para refletir o novo status.
+  Future<void> _retryStorage() async {
+    await VetRepository.retryInitialization();
+    if (mounted) setState(() {});
+  }
+
+  Future<bool> _clearLocalData() async {
+    final cleared = await LocalDataManager.clearUserData();
+    if (cleared && mounted) setState(() {});
+    return cleared;
+  }
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<Color>(
       valueListenable: VH.themeSeed,
-      builder: (context, themeSeed, _) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Vet Home',
-        locale: const Locale('pt', 'BR'),
-        supportedLocales: const [Locale('pt', 'BR')],
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        theme: VetTheme.light(themeSeed),
-        initialRoute: '/',
-        routes: {
-          '/': (_) => const SplashScreen(),
-          '/login': (_) => const LoginPage(),
-          '/gabriela/splash': (_) => const GabrielaSplashScreen(),
-          '/gabriela/login': (_) => const LoginPage(successRoute: '/gabriela'),
-          '/gabriela': (_) => const GabrielaAreaPage(),
-          '/gabriela/perfil': (_) => const GabrielaAreaPage(initialIndex: 0),
-          '/gabriela/mensagens': (_) => const GabrielaAreaPage(initialIndex: 1),
-          '/gabriela/agenda': (_) => const GabrielaAreaPage(initialIndex: 2),
-          '/gabriela/configuracoes': (_) =>
-              const GabrielaAreaPage(initialIndex: 3),
-          '/cadastro': (_) => const CadastroScreen(),
-          '/endereco': (context) =>
-              EnderecoScreen(initialData: _formDataFromRoute(context)),
-          '/cadastroPet': (context) =>
-              CadastroPetScreen(initialData: _formDataFromRoute(context)),
-          '/sucesso': (_) => const SucessoScreen(),
-          '/pets': (_) => const PetsPage(),
-          '/pet': (context) =>
-              _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
-          '/editPet': (context) =>
-              _petPage(context, (pet) => EditarPetPage(pet: pet)),
-          '/escolhaPet': (_) => const EscolhaPetScreen(),
-          '/servicos': (_) => const ServicosScreen(),
-          '/convenio': (_) => const ConvenioScreen(),
-          '/perfil': (_) => const PerfilPage(),
-          '/chat': (_) => const ChatScreen(),
-          '/sobre': (_) => const SobreScreen(),
-          '/agenda': (context) => AgendaScreen(
-            initialDate: ModalRoute.of(context)?.settings.arguments is DateTime
-                ? ModalRoute.of(context)!.settings.arguments as DateTime
-                : null,
-          ),
-          '/detalhes-pet': (context) =>
-              _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
-          '/saude': (context) =>
-              _petPage(context, (pet) => SaudePage(pet: pet)),
-          '/vacinacao': (context) =>
-              _petPage(context, (pet) => VacinacaoPage(pet: pet)),
-          '/agendamentos': (context) =>
-              _petPage(context, (pet) => AgendamentosPage(pet: pet)),
-          '/nova-consulta': (context) {
-            final args = ModalRoute.of(context)?.settings.arguments;
-            final values = args is Map ? args : const <String, dynamic>{};
-            final pet = values['petId'] is String
-                ? VetRepository.petById(values['petId'] as String)
-                : values['pet'] is PetModel
-                ? VetRepository.petById((values['pet'] as PetModel).id)
-                : VetRepository.selectedPet;
-            if (pet == null) return const PetsPage();
-            final service = values['service'];
-            final plan = values['plan'];
-            return NovaConsultaPage(
-              pet: pet,
-              service: service is String ? service : 'Consulta Geral',
-              plan: plan is String ? plan : 'Particular',
-            );
-          },
-          '/config': (_) => const ConfigScreen(),
-          '/enderecos': (_) => const AddressesPage(),
-          '/editar-endereco': (context) => AddressEditorPage(
-            address:
-                ModalRoute.of(context)?.settings.arguments as SavedAddress?,
-          ),
-        },
-      ),
+      builder: (context, themeSeed, _) {
+        if (VetRepository.persistenceBlocked) {
+          return MaterialApp(
+            // Chaves distintas recriam o Navigator ao sair do bloqueio.
+            key: const ValueKey('vethome-blocked-app'),
+            debugShowCheckedModeBanner: false,
+            title: 'Vet Home',
+            locale: const Locale('pt', 'BR'),
+            supportedLocales: const [Locale('pt', 'BR')],
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
+            theme: VetTheme.light(themeSeed),
+            navigatorKey: _criticalNavigatorKey,
+            builder: (context, child) => kDebugMode
+                ? DebugScreenSwitcher(
+                    navigatorKey: _criticalNavigatorKey,
+                    child: child ?? const SizedBox.shrink(),
+                  )
+                : child ?? const SizedBox.shrink(),
+            home: CriticalStorageErrorPage(
+              status: VetRepository.persistenceStatus,
+              onRetry: _retryStorage,
+              onClear: _clearLocalData,
+            ),
+          );
+        }
+        return MaterialApp(
+          key: const ValueKey('vethome-app'),
+          debugShowCheckedModeBanner: false,
+          title: 'Vet Home',
+          locale: const Locale('pt', 'BR'),
+          supportedLocales: const [Locale('pt', 'BR')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          theme: VetTheme.light(themeSeed),
+          navigatorKey: _navigatorKey,
+          builder: (context, child) => kDebugMode
+              ? DebugScreenSwitcher(
+                  navigatorKey: _navigatorKey,
+                  child: child ?? const SizedBox.shrink(),
+                )
+              : child ?? const SizedBox.shrink(),
+          initialRoute: '/',
+          routes: AppRoutes.routes,
+        );
+      },
     );
   }
 }

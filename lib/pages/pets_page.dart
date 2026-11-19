@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
+import '../widgets/figma_action_target.dart';
 import '../widgets/pets/pet_card_widget.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/vet/vet_bottom_nav.dart';
-import 'teste_page.dart';
 
 class PetsPage extends StatefulWidget {
   const PetsPage({super.key});
@@ -33,7 +33,7 @@ class _PetsPageState extends State<PetsPage> {
       backgroundColor: VetColors.pink,
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
               _buildHeader(s, top),
@@ -56,137 +56,204 @@ class _PetsPageState extends State<PetsPage> {
   Widget _buildHeader(double s, double topInset) {
     return Container(
       width: double.infinity,
-      height: 125 * s + topInset,
+      height: 125 + topInset,
       alignment: Alignment.center,
-      padding: EdgeInsets.fromLTRB(12 * s, topInset + 8 * s, 12 * s, 12 * s),
       decoration: BoxDecoration(
         color: VetColors.rose,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28 * s)),
-        boxShadow: const [
-          BoxShadow(
-            color: VetColors.shadowDark,
-            offset: Offset(0, 3),
-            blurRadius: 6,
-          ),
-        ],
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              SizedBox(width: 42 * s),
-              const Spacer(),
-              Text(
-                'Pets',
-                style: TextStyle(
-                  fontSize: 30 * s,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: PetsTheme.fontComfortaa,
-                  color: Colors.white,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                tooltip: 'Telas de teste',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TestePage()),
-                  );
-                },
-                icon: Icon(
-                  Icons.dashboard_outlined,
-                  color: Colors.white,
-                  size: 23 * s,
-                ),
-              ),
-            ],
+      padding: EdgeInsets.only(top: topInset),
+      child: SizedBox(
+        width: 134 * s,
+        child: Semantics(
+          key: const ValueKey('pets-page-heading'),
+          header: true,
+          child: Text(
+            'Pets',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 30 * s,
+              fontWeight: FontWeight.w700,
+              fontFamily: PetsTheme.fontComfortaa,
+              color: Colors.white,
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildPetListSection(BuildContext context, double s) => LayoutBuilder(
     builder: (context, constraints) {
+      final desktop = MediaQuery.sizeOf(context).width >= 900;
       final top = 57 * s;
       final gap = 33 * s;
       // A lista rola internamente; o botão permanece fora dela em telas pequenas.
-      final height = (constraints.maxHeight - top - gap - 47 - 24)
+      // O alvo do botão tem 48 px; os 23 px finais preservam o espaço da navegação.
+      final height = (constraints.maxHeight - top - gap - 48 - 23)
           .clamp(0.0, 428 * s)
           .toDouble();
+      Future<void> addPet() async {
+        final created = await Navigator.pushNamed(
+          context,
+          '/cadastroPet',
+          arguments: {'flow': 'addPet'},
+        );
+        if (!mounted) return;
+        setState(() {});
+        if (created != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _listScroll.hasClients) {
+              _listScroll.animateTo(
+                _listScroll.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+          ScaffoldMessenger.of(
+            this.context,
+          ).showSnackBar(const SnackBar(content: Text('Pet cadastrado.')));
+        }
+      }
+
       return Column(
         children: [
           SizedBox(height: top),
-          Container(
+          SizedBox(
             height: height,
-            margin: EdgeInsets.symmetric(horizontal: 22 * s),
-            padding: EdgeInsets.all(12 * s),
-            decoration: BoxDecoration(
-              color: VetColors.rose.withValues(alpha: .25),
-              borderRadius: BorderRadius.circular(25 * s),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: desktop ? 34 : 22 * s),
+              child: Container(
+                key: const ValueKey('pets-list-panel'),
+                padding: desktop
+                    ? EdgeInsets.symmetric(horizontal: 20, vertical: 21 * s)
+                    : EdgeInsets.fromLTRB(12 * s, 21 * s, 13 * s, 21 * s),
+                decoration: BoxDecoration(
+                  color: VetColors.roseOverlay25,
+                  borderRadius: BorderRadius.circular(25 * s),
+                ),
+                child: VetRepository.pets.isEmpty
+                    ? _emptyPetsState(s)
+                    : desktop
+                    ? GridView.builder(
+                        key: const ValueKey('pets-desktop-grid'),
+                        controller: _listScroll,
+                        padding: EdgeInsets.zero,
+                        itemCount: VetRepository.pets.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 22,
+                              mainAxisSpacing: 18,
+                              childAspectRatio: 5.2,
+                            ),
+                        itemBuilder: (context, i) => _petCard(context, i),
+                      )
+                    : ListView.separated(
+                        key: const ValueKey('pets-mobile-list'),
+                        controller: _listScroll,
+                        padding: EdgeInsets.zero,
+                        itemCount: VetRepository.pets.length,
+                        separatorBuilder: (_, _) => SizedBox(height: 18 * s),
+                        itemBuilder: (context, i) => _petCard(context, i),
+                      ),
+              ),
             ),
-            child: VetRepository.pets.isEmpty
-                ? const Center(child: Text('Nenhum pet cadastrado'))
-                : ListView.separated(
-                    controller: _listScroll,
-                    padding: EdgeInsets.zero,
-                    itemCount: VetRepository.pets.length,
-                    separatorBuilder: (_, _) => SizedBox(height: 18 * s),
-                    itemBuilder: (context, i) => PetCardWidget(
-                      pet: VetRepository.pets[i],
-                      onTap: () async {
-                        VetRepository.selectedPetId = VetRepository.pets[i].id;
-                        await Navigator.pushNamed(
-                          context,
-                          '/pet',
-                          arguments: VetRepository.pets[i],
-                        );
-                        if (mounted) setState(() {});
-                      },
-                    ),
-                  ),
           ),
           SizedBox(height: gap),
-          SizedBox(
+          FigmaActionTarget(
+            key: const ValueKey('pets-add-target'),
             width: 107,
-            height: 47,
-            child: IconButton.filled(
-              tooltip: 'Adicionar pet',
-              onPressed: () async {
-                final created = await Navigator.pushNamed(
-                  context,
-                  '/cadastroPet',
-                  arguments: {'flow': 'addPet'},
-                );
-                if (!mounted) return;
-                setState(() {});
-                if (created != null) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted && _listScroll.hasClients) {
-                      _listScroll.animateTo(
-                        _listScroll.position.maxScrollExtent,
-                        duration: const Duration(milliseconds: 240),
-                        curve: Curves.easeOut,
-                      );
-                    }
-                  });
-                  ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(content: Text('Pet cadastrado.')),
-                  );
-                }
-              },
-              style: IconButton.styleFrom(
-                backgroundColor: VetColors.brown,
-                foregroundColor: Colors.white,
-                shape: const StadiumBorder(),
+            label: 'Adicionar pet',
+            onPressed: addPet,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: 107,
+                height: 47,
+                child: IconButton.filled(
+                  tooltip: 'Adicionar pet',
+                  onPressed: addPet,
+                  style: IconButton.styleFrom(
+                    backgroundColor: VetColors.brown,
+                    foregroundColor: Colors.white,
+                    shape: const StadiumBorder(),
+                  ),
+                  icon: const Icon(Icons.add, size: 30),
+                ),
               ),
-              icon: const Icon(Icons.add, size: 30),
             ),
           ),
         ],
       );
+    },
+  );
+
+  Widget _emptyPetsState(double scale) => Center(
+    key: const ValueKey('pets-empty-state'),
+    child: Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 62 * scale,
+            height: 62 * scale,
+            decoration: const BoxDecoration(
+              color: VetColors.pinkOverlay50,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.pets_outlined,
+              size: 31 * scale,
+              color: VetColors.brownOnRose,
+            ),
+          ),
+          SizedBox(height: 14 * scale),
+          Text(
+            'Nenhum pet cadastrado',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: VetColors.brownOnRose,
+              fontSize: 17 * scale,
+              fontWeight: FontWeight.w700,
+              fontFamily: PetsTheme.fontComfortaa,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          Text(
+            'Cadastre seu primeiro pet pelo botão + abaixo.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: VetColors.brownOnRose,
+              fontSize: 13 * scale,
+              height: 1.35,
+              fontFamily: PetsTheme.fontMontserratAlternates,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _petCard(BuildContext context, int index) => PetCardWidget(
+    pet: VetRepository.pets[index],
+    raised: true,
+    maxNameLines: 2,
+    overlayColor: WidgetStateProperty.resolveWith(
+      PetsTheme.listInteractionOverlay,
+    ),
+    semanticLabel: 'Abrir detalhes de ${VetRepository.pets[index].name}',
+    onTap: () async {
+      VetRepository.selectedPetId = VetRepository.pets[index].id;
+      await Navigator.pushNamed(
+        context,
+        '/pet',
+        arguments: VetRepository.pets[index],
+      );
+      if (mounted) setState(() {});
     },
   );
 }

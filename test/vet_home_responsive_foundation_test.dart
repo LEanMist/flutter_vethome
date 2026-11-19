@@ -1,0 +1,205 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_vethome/theme.dart';
+import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
+import 'package:flutter_vethome/widgets/vet/vet_page_scaffold.dart';
+
+void main() {
+  void useViewport(WidgetTester tester, Size size) {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
+
+  test('fundação centraliza os limites responsivos aprovados', () {
+    expect(VH.compactBreakpoint, 600);
+    expect(VH.desktopBreakpoint, 900);
+    expect(VH.mobileContentMaxWidth, 600);
+    expect(VH.desktopContentMaxWidth, 1120);
+    expect(VH.desktopShellMaxWidth, 1200);
+  });
+
+  for (final size in [const Size(320, 640), const Size(390, 844)]) {
+    testWidgets('${size.width.toInt()} px usa a composição mobile', (
+      tester,
+    ) async {
+      useViewport(tester, size);
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: VetResponsiveLayout(
+              mobile: Text('mobile'),
+              desktop: Text('desktop'),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('mobile'), findsOneWidget);
+      expect(find.text('desktop'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('desktop usa composição ampla sem esticar o conteúdo', (
+    tester,
+  ) async {
+    useViewport(tester, const Size(1440, 900));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: VetPageScaffold(
+          title: 'Fundação responsiva',
+          showBack: false,
+          contentMaxWidth: VH.desktopContentMaxWidth,
+          children: [
+            VetResponsiveLayout(
+              mobile: Text('mobile'),
+              desktop: Text('desktop'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(find.text('desktop'), findsOneWidget);
+    expect(find.text('mobile'), findsNothing);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('vet-page-shell'))).width,
+      VH.desktopShellMaxWidth,
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('vet-page-content'))).width,
+      VH.desktopContentMaxWidth,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('scaffold permite rolar quando o viewport vertical é curto', (
+    tester,
+  ) async {
+    useViewport(tester, const Size(390, 200));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: VetPageScaffold(
+          title: 'Viewport curto',
+          children: [SizedBox(height: 240, child: Text('Conteúdo'))],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.text('Conteúdo'));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.text('Conteúdo')).top, greaterThanOrEqualTo(0));
+    expect(tester.takeException(), isNull);
+
+    await tester.ensureVisible(find.byType(VetBottomNav));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(find.byType(VetBottomNav)).bottom,
+      lessThanOrEqualTo(200),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('barra inferior respeita o recuo Figma com e sem safe area', (
+    tester,
+  ) async {
+    useViewport(tester, const Size(390, 844));
+
+    for (final paddingBottom in [0.0, 36.0]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: EdgeInsets.only(bottom: paddingBottom),
+              viewPadding: const EdgeInsets.only(bottom: 36),
+            ),
+            child: child!,
+          ),
+          home: const VetPageScaffold(
+            title: 'Navegação',
+            children: [SizedBox.shrink()],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getRect(find.byTooltip('Configurações')),
+        const Rect.fromLTWH(310, 734, 50, 50),
+        reason: 'padding.bottom=$paddingBottom',
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets(
+    'barra inferior tolera arredondamento subpixel da largura Figma',
+    (tester) async {
+      useViewport(tester, const Size(390.4, 844));
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: VetPageScaffold(
+            title: 'Navegação',
+            showBack: false,
+            children: [SizedBox.shrink()],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getRect(find.byTooltip('Configurações')),
+        const Rect.fromLTWH(310.2, 734, 50, 50),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final size in [
+    const Size(320, 640),
+    const Size(390, 844),
+    const Size(1440, 900),
+  ]) {
+    testWidgets(
+      'navegação mantém cinco destinos e alvos acessíveis em ${size.width.toInt()} px',
+      (tester) async {
+        useViewport(tester, size);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: const SizedBox.expand(),
+              bottomNavigationBar: VetBottomNav(
+                selectedIndex: 0,
+                onSelected: (_) {},
+              ),
+            ),
+          ),
+        );
+
+        for (final label in const [
+          'Pets',
+          'Perfil',
+          'Conversa',
+          'Agenda',
+          'Configurações',
+        ]) {
+          final destination = find.bySemanticsLabel(label);
+          expect(destination, findsOneWidget);
+          expect(
+            tester.getSemantics(destination).getSemanticsData().tooltip,
+            isEmpty,
+            reason: '$label não deve repetir o mesmo nome em label e tooltip',
+          );
+          final size = tester.getSize(destination);
+          expect(size.width, greaterThanOrEqualTo(48));
+          expect(size.height, greaterThanOrEqualTo(48));
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+}

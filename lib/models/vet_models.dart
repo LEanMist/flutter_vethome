@@ -30,11 +30,13 @@ class Consulta {
     required this.tipo,
     required this.veterinario,
     required this.descricao,
+    this.isDemonstration = false,
   });
   final DateTime data;
   final String tipo;
   final String veterinario;
   final String descricao;
+  final bool isDemonstration;
 }
 
 enum VacinaStatus { emDia, vencendo, atrasada, semPrevisao }
@@ -143,9 +145,10 @@ class ChatMessage {
 // ── Cálculos derivados (nada de texto fixo nas telas) ───────────────────────
 
 bool vacinasEmDia(List<Vacina> v) =>
-    v.every((e) => e.status == VacinaStatus.emDia);
+    v.isNotEmpty && v.every((e) => e.status == VacinaStatus.emDia);
 
 String contagemVacinas(List<Vacina> vaccines) {
+  if (vaccines.isEmpty) return 'Nenhuma vacina cadastrada';
   final good = vaccines.where((v) => v.status == VacinaStatus.emDia).length;
   final attention = vaccines.length - good;
   return '$good em dia · $attention ${attention == 1 ? 'precisa' : 'precisam'} de atenção';

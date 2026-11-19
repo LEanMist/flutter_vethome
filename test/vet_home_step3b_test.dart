@@ -31,21 +31,24 @@ void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
   final savedPath = VetRepository.clientPhotoPath;
   final savedBytes = VetRepository.clientPhotoBytes;
+  final savedPhoto = VetRepository.clientPhotoBase64;
 
   setUp(() {
     VetRepository.clientPhotoPath = null;
     VetRepository.clientPhotoBytes = null;
+    VetRepository.clientPhotoBase64 = null;
   });
   tearDown(() {
     VetRepository.clientPhotoPath = savedPath;
     VetRepository.clientPhotoBytes = savedBytes;
+    VetRepository.clientPhotoBase64 = savedPhoto;
     binding.defaultBinaryMessenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/image_picker'),
       null,
     );
   });
 
-  testWidgets('VetHeader mostra títulos completos e preserva os botões', (
+  testWidgets('VetHeader mostra títulos completos sem atalho duplicado', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -73,7 +76,7 @@ void main() {
         expect(text.overflow, isNot(TextOverflow.ellipsis));
         expect(paragraph.didExceedMaxLines, isFalse);
         expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-        expect(find.byTooltip('Telas de teste'), findsOneWidget);
+        expect(find.byTooltip('Telas de teste'), findsNothing);
         expect(tester.takeException(), isNull);
       }
     }
@@ -82,12 +85,11 @@ void main() {
   testWidgets('Perfil sem foto preserva o avatar padrão', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: PerfilPage()));
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('profile-empty-photo')), findsOneWidget);
     expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Image &&
-            widget.image is AssetImage &&
-            (widget.image as AssetImage).assetName == photoAsset,
+      find.descendant(
+        of: find.byKey(const ValueKey('profile-empty-photo')),
+        matching: find.byType(Image),
       ),
       findsOneWidget,
     );
@@ -137,7 +139,7 @@ void main() {
     expect(tester.takeException(), isNull);
   }, skip: kIsWeb);
 
-  testWidgets('Selecionar foto nativa mantém o picker e o caminho', (
+  testWidgets('Selecionar foto nativa salva miniatura e mantém o picker', (
     tester,
   ) async {
     final path = File(photoAsset).absolute.path;
@@ -157,7 +159,22 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Escolher da galeria'));
     await tester.pumpAndSettle();
-    expect(VetRepository.clientPhotoPath, path);
+    await tester.runAsync(() async {
+      for (var attempt = 0; attempt < 50; attempt++) {
+        if (VetRepository.clientPhotoBase64 != null) break;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+    await tester.pumpAndSettle();
+    expect(VetRepository.clientPhotoBase64, isNotNull);
+    expect(VetRepository.clientPhotoPath, isNull);
+    final image = tester.widget<Image>(
+      find
+          .descendant(of: find.byType(PerfilPage), matching: find.byType(Image))
+          .first,
+    );
+    expect((image.image as ResizeImage).imageProvider, isA<MemoryImage>());
     expect(tester.takeException(), isNull);
   }, skip: kIsWeb);
 }

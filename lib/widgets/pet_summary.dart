@@ -3,7 +3,7 @@ import '../core/utils/formatters.dart';
 import '../models/pet_model.dart';
 import '../data/vet_repository.dart';
 import '../theme/vet_colors.dart';
-import 'pet_avatar.dart';
+import 'pets/pet_avatar.dart';
 import 'pet_photo_button.dart';
 
 enum PetSummarySize { compact, medium, detailed }
@@ -29,15 +29,23 @@ class _PetSummaryState extends State<PetSummary> {
   Widget build(BuildContext context) {
     final pet = VetRepository.petById(widget.pet.id) ?? widget.pet;
     final detailed = widget.size == PetSummarySize.detailed;
-    final avatarSize = switch (widget.size) {
-      PetSummarySize.compact => 48.0,
-      PetSummarySize.medium => 64.0,
-      PetSummarySize.detailed => 76.0,
-    };
-    final secondary = TextStyle(
-      color: VetColors.brown.withValues(alpha: .75),
-      fontSize: 12,
-    );
+    final compactDetailed = detailed && MediaQuery.sizeOf(context).width < 360;
+    final avatarSize = compactDetailed
+        ? 100.0
+        : switch (widget.size) {
+            PetSummarySize.compact => 48.0,
+            PetSummarySize.medium => 64.0,
+            PetSummarySize.detailed => 116.0,
+          };
+    final avatarGap = compactDetailed ? 8.0 : 20.0;
+    final secondary = TextStyle(color: VetColors.brown, fontSize: 12);
+    final editAction = widget.onEdit == null
+        ? null
+        : IconButton(
+            tooltip: 'Editar',
+            onPressed: widget.onEdit,
+            icon: const Icon(Icons.edit_outlined, size: 20),
+          );
     final profile = VetRepository.perfil(pet.id);
     Widget datum(String label, String value) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -61,122 +69,143 @@ class _PetSummaryState extends State<PetSummary> {
       ),
     );
     return Material(
-      color: VetColors.rose.withValues(alpha: .3),
-      borderRadius: BorderRadius.circular(22),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: detailed ? () => setState(() => expanded = !expanded) : null,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: avatarSize + (widget.onPhoto == null ? 0 : 8),
-                    height: avatarSize,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        PetAvatar(
-                          image: pet.imagePath,
-                          photoBase64: pet.photoBase64,
-                          species: pet.species,
-                          size: avatarSize,
-                        ),
-                        if (widget.onPhoto != null)
-                          Positioned(
-                            right: -10,
-                            bottom: -10,
-                            child: PetPhotoButton(onPressed: widget.onPhoto),
+      color: VetColors.rose.withValues(alpha: .25),
+      borderRadius: BorderRadius.circular(25),
+      child: Semantics(
+        key: detailed ? const ValueKey('pet-summary-details-toggle') : null,
+        expanded: detailed ? expanded : null,
+        hint: detailed
+            ? expanded
+                  ? 'Ocultar informações adicionais do pet'
+                  : 'Mostrar informações adicionais do pet'
+            : null,
+        explicitChildNodes: detailed,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(25),
+          onTap: detailed ? () => setState(() => expanded = !expanded) : null,
+          child: Padding(
+            padding: EdgeInsets.all(detailed ? 20 : 14),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    SizedBox(
+                      width: avatarSize + (widget.onPhoto == null ? 0 : 8),
+                      height: avatarSize,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          PetAvatar(
+                            image: pet.imagePath,
+                            photoBase64: pet.photoBase64,
+                            species: pet.species,
+                            size: avatarSize,
                           ),
-                      ],
+                          if (widget.onPhoto != null)
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: PetPhotoButton(
+                                onPressed: widget.onPhoto,
+                                visualOffset: const Offset(14, 14),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          pet.name,
-                          style: const TextStyle(
-                            color: VetColors.brown,
-                            fontFamily: 'Comfortaa',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                    SizedBox(width: avatarGap),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Semantics(
+                            header: detailed,
+                            child: Text(
+                              pet.name,
+                              style: TextStyle(
+                                color: VetColors.brown,
+                                fontFamily: 'Comfortaa',
+                                fontWeight: FontWeight.bold,
+                                fontSize: compactDetailed ? 16 : 18,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          [pet.species, pet.breed]
-                              .whereType<String>()
-                              .where((v) => v.isNotEmpty)
-                              .join(' · '),
-                          style: secondary,
-                        ),
-                        if (detailed) ...[
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Text(
-                            '${profile.idadeAnos} ${profile.idadeAnos == 1 ? 'ano' : 'anos'} · ${pet.weightKg == null ? 'Peso não informado' : fmtPeso(pet.weightKg!)}',
+                            [pet.species, pet.breed]
+                                .whereType<String>()
+                                .where((v) => v.isNotEmpty)
+                                .join(' · '),
                             style: secondary,
                           ),
+                          if (detailed) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              '${profile.idadeAnos} ${profile.idadeAnos == 1 ? 'ano' : 'anos'} · ${pet.weightKg == null ? 'Peso não informado' : fmtPeso(pet.weightKg!)}',
+                              style: secondary,
+                            ),
+                          ],
                         ],
+                      ),
+                    ),
+                    if (!compactDetailed && editAction != null) editAction,
+                  ],
+                ),
+                if (detailed) ...[
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (compactDetailed && editAction != null) editAction,
+                        AnimatedRotation(
+                          turns: expanded ? .5 : 0,
+                          duration: const Duration(milliseconds: 220),
+                          child: const Icon(
+                            Icons.expand_more,
+                            color: VetColors.brown,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  if (widget.onEdit != null)
-                    IconButton(
-                      tooltip: 'Editar',
-                      onPressed: widget.onEdit,
-                      icon: const Icon(Icons.edit_outlined, size: 20),
-                    ),
-                ],
-              ),
-              if (detailed) ...[
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Icon(
-                    expanded ? Icons.expand_less : Icons.expand_more,
-                    color: VetColors.brown,
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 220),
+                    alignment: Alignment.topCenter,
+                    child: expanded
+                        ? Column(
+                            children: [
+                              const Divider(),
+                              datum('Sexo', pet.sex ?? 'Não informado'),
+                              datum(
+                                'Nascimento',
+                                pet.birthDate == null
+                                    ? 'Não informado'
+                                    : fmtData(pet.birthDate!),
+                              ),
+                              datum('Espécie', pet.species ?? 'Não informada'),
+                              datum('Raça', pet.breed ?? 'Não informada'),
+                              datum(
+                                'Peso',
+                                pet.weightKg == null
+                                    ? 'Não informado'
+                                    : fmtPeso(pet.weightKg!),
+                              ),
+                              datum(
+                                'Castração',
+                                pet.neutered == null
+                                    ? 'Não informado'
+                                    : pet.neutered!
+                                    ? 'Castrado'
+                                    : 'Não castrado',
+                              ),
+                            ],
+                          )
+                        : const SizedBox(width: double.infinity),
                   ),
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 220),
-                  alignment: Alignment.topCenter,
-                  child: expanded
-                      ? Column(
-                          children: [
-                            const Divider(),
-                            datum('Sexo', pet.sex ?? 'Não informado'),
-                            datum(
-                              'Nascimento',
-                              pet.birthDate == null
-                                  ? 'Não informado'
-                                  : fmtData(pet.birthDate!),
-                            ),
-                            datum('Espécie', pet.species ?? 'Não informada'),
-                            datum('Raça', pet.breed ?? 'Não informada'),
-                            datum(
-                              'Peso',
-                              pet.weightKg == null
-                                  ? 'Não informado'
-                                  : fmtPeso(pet.weightKg!),
-                            ),
-                            datum(
-                              'Castração',
-                              pet.neutered == null
-                                  ? 'Não informado'
-                                  : pet.neutered!
-                                  ? 'Castrado'
-                                  : 'Não castrado',
-                            ),
-                          ],
-                        )
-                      : const SizedBox(width: double.infinity),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

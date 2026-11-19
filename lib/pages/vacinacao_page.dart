@@ -13,6 +13,43 @@ import '../widgets/status_chip.dart';
 import '../widgets/vet/vet_card.dart';
 import '../widgets/vet/vet_page_scaffold.dart';
 
+const _blockedVaccineMessage =
+    'Armazenamento local bloqueado. Nenhuma alteração na vacina foi realizada.';
+const _clearingVaccineMessage =
+    'A alteração na carteira foi bloqueada enquanto os dados locais estavam '
+    'sendo limpos. Nenhuma alteração foi realizada.';
+
+int _vaccineStatusOrder(VacinaStatus status) => switch (status) {
+  VacinaStatus.atrasada => 0,
+  VacinaStatus.vencendo => 1,
+  VacinaStatus.emDia => 2,
+  VacinaStatus.semPrevisao => 3,
+};
+
+List<Vacina> _vaccinesByUrgency(List<Vacina> vaccines) {
+  final indexed = [
+    for (var index = 0; index < vaccines.length; index++)
+      MapEntry(index, vaccines[index]),
+  ];
+  indexed.sort((first, second) {
+    final status = _vaccineStatusOrder(
+      first.value.status,
+    ).compareTo(_vaccineStatusOrder(second.value.status));
+    if (status != 0) return status;
+
+    final firstDate = first.value.proxima;
+    final secondDate = second.value.proxima;
+    if (firstDate != null && secondDate != null) {
+      final dueDate = DateUtils.dateOnly(
+        firstDate,
+      ).compareTo(DateUtils.dateOnly(secondDate));
+      if (dueDate != 0) return dueDate;
+    }
+    return first.key.compareTo(second.key);
+  });
+  return [for (final entry in indexed) entry.value];
+}
+
 class VacinacaoPage extends StatefulWidget {
   const VacinacaoPage({required this.pet, super.key});
   final PetModel pet;
@@ -21,20 +58,34 @@ class VacinacaoPage extends StatefulWidget {
 }
 
 class _VacinacaoPageState extends State<VacinacaoPage> {
+  bool _saving = false;
+
   Future<void> _edit([Vacina? vaccine]) async {
-    final changed = await showModalBottomSheet<bool>(
+    if (_saving) return;
+    final successMessage = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: VetColors.pink,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _VaccineEditor(petId: widget.pet.id, vaccine: vaccine),
+      builder: (_) => _VaccineEditor(
+        vaccine: vaccine,
+        onSave: (value) => _persist(
+          () => VetRepository.saveVaccine(widget.pet.id, value),
+          successMessage: vaccine == null
+              ? 'Vacina cadastrada.'
+              : 'Vacina atualizada.',
+        ),
+      ),
     );
-    if (changed == true && mounted) setState(() {});
+    if (successMessage != null && mounted) {
+      _showPersistenceMessage(successMessage);
+    }
   }
 
   Future<void> _delete(Vacina vaccine) async {
+    if (_saving) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -53,23 +104,65 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
-    VetRepository.removeVaccine(widget.pet.id, vaccine.id!);
+    if (confirmed != true || !mounted || _saving) return;
+    final lastRealVaccine =
+        VetRepository.realVaccines(widget.pet.id).length == 1;
+    try {
+      final successMessage = await _persist(
+        () => VetRepository.removeVaccine(widget.pet.id, vaccine.id!),
+        successMessage: lastRealVaccine
+            ? 'Vacina removida. A carteira ficou sem vacinas cadastradas.'
+            : 'Vacina removida.',
+      );
+      if (successMessage != null && mounted) {
+        _showPersistenceMessage(successMessage);
+      }
+    } on PersistenceClearingException {
+      if (!mounted) return;
+      _showPersistenceMessage(_clearingVaccineMessage);
+    } on PersistenceBlockedException {
+      if (!mounted) return;
+      _showPersistenceMessage(_blockedVaccineMessage);
+    }
+  }
+
+  void _showPersistenceMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Semantics(liveRegion: true, child: Text(message))),
+      );
+  }
+
+  Future<String?> _persist(
+    VoidCallback update, {
+    required String successMessage,
+  }) async {
+    update();
+    setState(() => _saving = true);
     final saved = await VetRepository.flush();
-    if (!mounted) return;
-    setState(() {});
-    if (!saved) _storageWarning(context);
+    if (!mounted) return null;
+    setState(() => _saving = false);
+    if (!saved) {
+      _showPersistenceMessage(
+        'Alteração na carteira feita nesta sessão. '
+        'Não foi possível salvar localmente.',
+      );
+      return null;
+    }
+    return successMessage;
   }
 
   @override
   Widget build(BuildContext context) {
     final pet = VetRepository.petById(widget.pet.id) ?? widget.pet;
-    final vaccines = VetRepository.vacinas(pet.id);
-    final demo = VetRepository.realVaccines(pet.id).isEmpty;
+    final vaccines = _vaccinesByUrgency(VetRepository.vacinas(pet.id));
+    final demo = VetRepository.usesDemoVaccines(pet.id);
     return VetPageScaffold(
       title: 'Carteira de vacinação',
       titleSize: 23,
       pet: pet,
+      contentMaxWidth: 1120,
       children: [
         PetSummary(pet: pet, size: PetSummarySize.medium),
         VetCard(
@@ -79,11 +172,17 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                contagemVacinas(vaccines),
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              Semantics(
+                label: demo
+                    ? 'Resumo demonstrativo: ${contagemVacinas(vaccines)}'
+                    : null,
+                excludeSemantics: demo,
+                child: Text(
+                  contagemVacinas(vaccines),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               if (demo) ...[const SizedBox(height: 6), const DemoBadge()],
@@ -98,35 +197,48 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: () => _edit(),
+            onPressed: _saving ? null : () => _edit(),
             icon: const Icon(Icons.add, size: 18),
             label: const Text('Adicionar vacina'),
           ),
         ),
-        for (final vaccine in vaccines)
-          _VacinaCard(
-            vaccine,
-            onEdit: demo ? null : () => _edit(vaccine),
-            onDelete: demo ? null : () => _delete(vaccine),
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final desktop = constraints.maxWidth >= 900;
+            final width = desktop
+                ? (constraints.maxWidth - 16) / 2
+                : constraints.maxWidth;
+            return Wrap(
+              key: ValueKey(
+                desktop ? 'vaccines-desktop-grid' : 'vaccines-mobile-list',
+              ),
+              spacing: 16,
+              runSpacing: 12,
+              children: [
+                for (final vaccine in vaccines)
+                  SizedBox(
+                    width: width,
+                    child: _VacinaCard(
+                      vaccine,
+                      isDemonstration: demo,
+                      enabled: !_saving,
+                      onEdit: demo ? null : () => _edit(vaccine),
+                      onDelete: demo ? null : () => _delete(vaccine),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
         const SizedBox(height: 8),
       ],
     );
   }
 }
 
-void _storageWarning(BuildContext context) =>
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Não foi possível salvar no dispositivo. Tente novamente.',
-        ),
-      ),
-    );
-
 class _VaccineEditor extends StatefulWidget {
-  const _VaccineEditor({required this.petId, this.vaccine});
-  final String petId;
+  const _VaccineEditor({required this.onSave, this.vaccine});
+  final Future<String?> Function(Vacina) onSave;
   final Vacina? vaccine;
   @override
   State<_VaccineEditor> createState() => _VaccineEditorState();
@@ -144,6 +256,8 @@ class _VaccineEditorState extends State<_VaccineEditor> {
         : fmtData(widget.vaccine!.proxima!),
   );
   bool _saving = false;
+  bool _blocked = false;
+  bool _clearing = false;
   @override
   void dispose() {
     _name.dispose();
@@ -153,11 +267,14 @@ class _VaccineEditorState extends State<_VaccineEditor> {
   }
 
   Future<void> _save() async {
-    if (!_form.currentState!.validate() || _saving) return;
-    setState(() => _saving = true);
+    if (_saving || !_form.currentState!.validate()) return;
+    setState(() {
+      _saving = true;
+      _blocked = false;
+      _clearing = false;
+    });
     try {
-      VetRepository.saveVaccine(
-        widget.petId,
+      final successMessage = await widget.onSave(
         Vacina(
           id: widget.vaccine?.id,
           nome: _name.text,
@@ -165,10 +282,13 @@ class _VaccineEditorState extends State<_VaccineEditor> {
           proxima: _next.text.isEmpty ? null : parseCalendarDate(_next.text),
         ),
       );
-      final saved = await VetRepository.flush();
-      if (!mounted) return;
-      if (!saved) _storageWarning(context);
-      Navigator.pop(context, true);
+      if (mounted && ModalRoute.of(context)?.isCurrent == true) {
+        Navigator.pop(context, successMessage);
+      }
+    } on PersistenceBlockedException {
+      if (mounted) setState(() => _blocked = true);
+    } on PersistenceClearingException {
+      if (mounted) setState(() => _clearing = true);
     } on FormatException catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -243,6 +363,26 @@ class _VaccineEditorState extends State<_VaccineEditor> {
                       : null;
                 },
               ),
+              if (_blocked || _clearing) ...[
+                const SizedBox(height: 12),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    _clearing
+                        ? _clearingVaccineMessage
+                        : _blockedVaccineMessage,
+                    key: ValueKey(
+                      _clearing
+                          ? 'vaccine-storage-clearing-message'
+                          : 'vaccine-storage-blocked-message',
+                    ),
+                    style: TextStyle(
+                      color: VetColors.brown,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: _saving ? null : _save,
@@ -261,18 +401,42 @@ class _VaccineEditorState extends State<_VaccineEditor> {
 }
 
 class _VacinaCard extends StatelessWidget {
-  const _VacinaCard(this.vaccine, {this.onEdit, this.onDelete});
+  const _VacinaCard(
+    this.vaccine, {
+    required this.isDemonstration,
+    required this.enabled,
+    this.onEdit,
+    this.onDelete,
+  });
   final Vacina vaccine;
+  final bool isDemonstration;
+  final bool enabled;
   final VoidCallback? onEdit, onDelete;
   @override
   Widget build(BuildContext context) {
-    final (color, label) = switch (vaccine.status) {
-      VacinaStatus.emDia => (VetTones.success, 'Em dia'),
-      VacinaStatus.vencendo => (VetTones.warning, 'Em breve'),
-      VacinaStatus.atrasada => (VetTones.warning, 'Atrasada'),
-      VacinaStatus.semPrevisao => (VetColors.brown, 'Sem previsão'),
+    final (color, label, textColor) = switch (vaccine.status) {
+      VacinaStatus.emDia => (
+        VetTones.success,
+        'Em dia',
+        VetTones.successForeground,
+      ),
+      VacinaStatus.vencendo => (
+        VetTones.warning,
+        'Em breve',
+        VetTones.warningForeground,
+      ),
+      VacinaStatus.atrasada => (
+        VetTones.warning,
+        'Atrasada',
+        VetTones.warningForeground,
+      ),
+      VacinaStatus.semPrevisao => (
+        VetColors.brown,
+        'Sem previsão',
+        VetColors.brown,
+      ),
     };
-    return VetCard(
+    final card = VetCard(
       flat: true,
       color: VetColors.rose.withValues(alpha: .17),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -296,12 +460,13 @@ class _VacinaCard extends StatelessWidget {
                   ),
                 ),
               ),
-              StatusChip(label, color, dense: true),
+              StatusChip(label, color, dense: true, textColor: textColor),
               if (onEdit != null)
                 SizedBox(
-                  width: 32,
-                  height: 32,
+                  width: 48,
+                  height: 48,
                   child: PopupMenuButton<String>(
+                    enabled: enabled,
                     tooltip: 'Opções da vacina ${vaccine.nome}',
                     padding: EdgeInsets.zero,
                     iconSize: 18,
@@ -316,6 +481,10 @@ class _VacinaCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
+          if (isDemonstration) ...[
+            const DemoBadge(label: 'Demonstração'),
+            const SizedBox(height: 4),
+          ],
           Text(
             'Aplicada: ${fmtData(vaccine.aplicada)}',
             style: const TextStyle(fontSize: 12),
@@ -328,6 +497,20 @@ class _VacinaCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+    if (!isDemonstration) return card;
+
+    final nextDose = vaccine.proxima == null
+        ? 'Próxima dose sem previsão.'
+        : 'Próxima dose: ${fmtData(vaccine.proxima!)}.';
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label:
+          'Vacina demonstrativa: ${vaccine.nome}. '
+          'Situação: $label. Aplicada: ${fmtData(vaccine.aplicada)}. '
+          '$nextDose',
+      child: card,
     );
   }
 }
