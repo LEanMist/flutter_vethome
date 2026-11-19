@@ -13,6 +13,8 @@ class GabrielaMessagesTab extends StatefulWidget {
 class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
   String? _selectedContact;
   final _composer = TextEditingController();
+  final Map<String, String> _drafts = {};
+  final Map<String, String> _latestSent = {};
   final Map<String, List<_Message>> _messages = {
     'Nicolly': [
       const _Message('Oi, doutora! Como está o Rambo?', true),
@@ -38,7 +40,26 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
     if (text.isEmpty || contact == null) return;
     setState(() {
       _messages.putIfAbsent(contact, () => []).add(_Message(text, false));
+      _latestSent[contact] = text;
+      _drafts.remove(contact);
       _composer.clear();
+    });
+  }
+
+  void _openContact(String contact) {
+    setState(() {
+      _selectedContact = contact;
+      _composer.text = _drafts[contact] ?? '';
+    });
+  }
+
+  void _closeContact() {
+    final contact = _selectedContact;
+    if (contact == null) return;
+    setState(() {
+      _drafts[contact] = _composer.text;
+      _composer.clear();
+      _selectedContact = null;
     });
   }
 
@@ -71,7 +92,7 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
         if (contact != null)
           IconButton(
             tooltip: 'Voltar para as conversas',
-            onPressed: () => setState(() => _selectedContact = null),
+            onPressed: _closeContact,
             icon: const Icon(Icons.arrow_back, color: Colors.white),
           )
         else
@@ -112,7 +133,7 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
       itemBuilder: (context, index) {
         final contact = contacts[index];
         return InkWell(
-          onTap: () => setState(() => _selectedContact = contact.$1),
+          onTap: () => _openContact(contact.$1),
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 10 * s),
             child: Row(
@@ -133,7 +154,7 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
                       ),
                       SizedBox(height: 5 * s),
                       Text(
-                        contact.$2,
+                        _latestSent[contact.$1] ?? contact.$2,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -176,10 +197,11 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
       children: [
         Expanded(
           child: ListView.builder(
+            reverse: true,
             padding: EdgeInsets.all(16 * s),
             itemCount: messages.length,
             itemBuilder: (context, index) {
-              final message = messages[index];
+              final message = messages[messages.length - 1 - index];
               return Align(
                 alignment: message.fromContact
                     ? Alignment.centerLeft
