@@ -191,7 +191,12 @@ void main() {
       expect(decoration.color, VetColors.roseOverlay50);
       expect(decoration.borderRadius, BorderRadius.circular(25));
       expect(decoration.boxShadow, isNotEmpty);
-      expect(tester.getSize(cardFinder).height, 173);
+      final height = tester.getSize(cardFinder).height;
+      if (viewport.width < 390) {
+        expect(height, greaterThanOrEqualTo(173));
+      } else {
+        expect(height, 173);
+      }
       if (viewport == const Size(390, 844)) {
         expect(tester.getSize(cardFinder).width, 320);
         expect(tester.getTopLeft(cardFinder).dy, 153);

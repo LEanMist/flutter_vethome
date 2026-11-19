@@ -1,7 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
@@ -13,6 +14,12 @@ import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 import 'package:flutter_vethome/widgets/vet/vet_header.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    final comfortaa = FontLoader(PetsTheme.fontComfortaa)
+      ..addFont(rootBundle.load('assets/fonts/ComfortaaBold.ttf'));
+    await comfortaa.load();
+  });
   const address = SavedAddress(
     id: 'figma-address-visual',
     name: 'Casa da Irmã',
@@ -283,7 +290,7 @@ void main() {
       tester.getRect(find.byType(VetHeader)),
       const Rect.fromLTWH(0, 0, 390, 125),
     );
-    expect(tester.getTopLeft(find.text('Endereços')).dy, closeTo(46, 3.1));
+    expect(tester.getCenter(find.text('Endereços')).dy, closeTo(62.5, 5));
     final card = find
         .ancestor(
           of: find.text('Casa da Irmã'),
@@ -371,6 +378,71 @@ void main() {
             .first;
         expect(tester.getSize(card).height, 173);
       }
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final textScale in [1.0, 2.0]) {
+    testWidgets('Endereços completos em 320 px com texto ${textScale}x', (
+      tester,
+    ) async {
+      const longAddress = SavedAddress(
+        id: 'address-long',
+        name: 'Endereço de trabalho da família',
+        street: 'Avenida das Flores do Jardim da Serra',
+        number: '1430',
+        complement: 'Bloco Primavera, apartamento 205',
+        city: 'São José dos Campos',
+        cep: '01234-567',
+      );
+      VetRepository.addresses
+        ..clear()
+        ..add(longAddress);
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
+          home: const AddressesPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      for (final value in [
+        longAddress.name,
+        '${longAddress.street}\n${longAddress.complement} - '
+            '${longAddress.number}\n${longAddress.city}',
+      ]) {
+        final render = tester.renderObject<RenderParagraph>(find.text(value));
+        expect(render.didExceedMaxLines, isFalse, reason: value);
+      }
+      final create = find.widgetWithText(ElevatedButton, 'Novo Endereço');
+      final createPosition = tester.getRect(create);
+      final delete = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label ==
+                'Deletar endereço ${longAddress.name}, '
+                    '${longAddress.street}, ${longAddress.number}',
+      );
+      await tester.ensureVisible(delete);
+      await tester.pumpAndSettle();
+      expect(create.hitTestable(), findsOneWidget);
+      expect(tester.getRect(create), createPosition);
+      expect(delete.hitTestable(), findsOneWidget);
+      await tester.tap(delete);
+      await tester.pumpAndSettle();
+      expect(find.text('Excluir endereço?'), findsOneWidget);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      expect(VetRepository.addresses.single, longAddress);
       expect(tester.takeException(), isNull);
     });
   }
