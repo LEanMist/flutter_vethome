@@ -342,6 +342,38 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('novo endereço leva ao primeiro campo inválido ao salvar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 460);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: AddressEditorPage()));
+    await tester.pumpAndSettle();
+
+    final cep = find.byType(TextFormField).first;
+    final save = find.widgetWithText(ElevatedButton, 'Salvar endereço');
+    final savePosition = tester.getRect(save);
+    await tester.ensureVisible(find.text('Cidade'));
+    await tester.pumpAndSettle();
+    expect(cep.hitTestable(), findsNothing);
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    expect(cep.hitTestable(), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('CEP')).dy,
+      greaterThanOrEqualTo(tester.getBottomLeft(find.byType(AppBar)).dy),
+    );
+    expect(
+      find.text('Informe um CEP com 8 números').hitTestable(),
+      findsOneWidget,
+    );
+    expect(tester.getRect(save), savePosition);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('novo endereço mantém Salvar visível com texto a 200%', (
     tester,
   ) async {

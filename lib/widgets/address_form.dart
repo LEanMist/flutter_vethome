@@ -109,9 +109,19 @@ class _AddressFormState extends State<AddressForm> {
 
   Future<void> _save() async {
     if (_loading || _saving) return;
-    if (!_key.currentState!.validate()) {
+    final invalidFields = _key.currentState!.validateGranularly();
+    if (invalidFields.isNotEmpty) {
       if (mounted && !_validationAttempted) {
         setState(() => _validationAttempted = true);
+      }
+      if (widget.initial == null && widget.onSkip == null) {
+        final firstInvalid = invalidFields.first;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (firstInvalid.mounted) {
+            // Mantenha o rótulo acima do campo dentro da área visível.
+            Scrollable.ensureVisible(firstInvalid.context, alignment: .12);
+          }
+        });
       }
       return;
     }
