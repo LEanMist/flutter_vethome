@@ -22,6 +22,8 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
       'Fernando',
       'Hemograma + 3',
       'R. Augusto Cury, 123 – Vila Osasco',
+      patientDetails: 'M  ·  24 kg  ·  23/03/2012',
+      breed: 'Lulu-da-Pomerânia',
     ),
     _AgendaAppointment(
       '13:00 – 14:00',
@@ -112,23 +114,22 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
                 style: const TextStyle(fontSize: 14, color: VetColors.brown),
               ),
               const SizedBox(height: 18),
-              const Text(
-                'Dados do paciente',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: VetColors.brown,
+              if (appointment.patientDetails != null ||
+                  appointment.breed != null) ...[
+                const Text(
+                  'Dados do paciente',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: VetColors.brown,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'M  ·  24 kg  ·  23/03/2012',
-                style: TextStyle(color: VetColors.brown),
-              ),
-              const Text(
-                'Lulu-da-Pomerânia',
-                style: TextStyle(color: VetColors.brown),
-              ),
-              const SizedBox(height: 14),
+                const SizedBox(height: 8),
+                if (appointment.patientDetails case final details?)
+                  Text(details, style: const TextStyle(color: VetColors.brown)),
+                if (appointment.breed case final breed?)
+                  Text(breed, style: const TextStyle(color: VetColors.brown)),
+                const SizedBox(height: 14),
+              ],
               _DetailCard(
                 icon: Icons.medical_services_outlined,
                 title: appointment.service,
@@ -248,14 +249,18 @@ class _AgendaAppointment {
     this.kind,
     this.client,
     this.service,
-    this.address,
-  );
+    this.address, {
+    this.patientDetails,
+    this.breed,
+  });
   final String time;
   final String pet;
   final String kind;
   final String client;
   final String service;
   final String address;
+  final String? patientDetails;
+  final String? breed;
 }
 
 class _AppointmentTile extends StatelessWidget {
