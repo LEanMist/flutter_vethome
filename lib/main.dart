@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/vet_repository.dart';
+import 'data/gabriela_profile_repository.dart';
 import 'pages/addresses_page.dart';
 import 'pages/chat_page.dart';
 import 'models/saved_address.dart';
@@ -27,6 +28,7 @@ import 'theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await VetRepository.initialize();
+  await GabrielaProfileRepository.initialize();
   runApp(const VetHomeApp());
 }
 

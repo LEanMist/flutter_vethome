@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/utils/photo_picker.dart';
-import '../../data/vet_repository.dart';
+import '../../data/gabriela_profile_repository.dart';
 import '../../theme.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets/pets/pets_theme.dart';
@@ -62,9 +62,9 @@ class GabrielaProfileTab extends StatefulWidget {
 }
 
 class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
-  late String _name = VetRepository.clientName;
-  late DateTime _birthday = VetRepository.clientBirthDate;
-  Uint8List? _photoBytes = VetRepository.clientPhotoBytes;
+  late String _name = GabrielaProfileRepository.name;
+  late DateTime _birthday = GabrielaProfileRepository.birthDate;
+  Uint8List? _photoBytes = GabrielaProfileRepository.photoBytes;
 
   String get _birthdayLabel =>
       '${_two(_birthday.day)}/${_two(_birthday.month)}/${_birthday.year}';
@@ -78,8 +78,7 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
       final bytes = await image.readAsBytes();
       if (!mounted) return;
       setState(() => _photoBytes = bytes);
-      VetRepository.clientPhotoPath = image.path;
-      VetRepository.clientPhotoBytes = bytes;
+      GabrielaProfileRepository.photoBytes = bytes;
     } catch (_) {
       if (mounted) _message('Não foi possível abrir a imagem.');
     }
@@ -107,8 +106,12 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
     );
     controller.dispose();
     if (name == null || name.isEmpty || !mounted) return;
-    setState(() => _name = name);
-    VetRepository.updateClient(name: name);
+    try {
+      await GabrielaProfileRepository.updateName(name);
+      if (mounted) setState(() => _name = name);
+    } catch (_) {
+      if (mounted) _message('Não foi possível salvar o nome.');
+    }
   }
 
   Future<void> _changeBirthday() async {
@@ -120,8 +123,12 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
       locale: const Locale('pt', 'BR'),
     );
     if (date == null || !mounted) return;
-    setState(() => _birthday = date);
-    VetRepository.updateClient(birthDate: date);
+    try {
+      await GabrielaProfileRepository.updateBirthDate(date);
+      if (mounted) setState(() => _birthday = date);
+    } catch (_) {
+      if (mounted) _message('Não foi possível salvar a data de nascimento.');
+    }
   }
 
   void _message(String text) =>
