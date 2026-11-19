@@ -10,13 +10,22 @@ import '../theme/vet_colors.dart';
 import '../widgets.dart';
 import '../widgets/appointment_card.dart';
 
-Widget _withBrownDialogActions(Widget dialog) => TextButtonTheme(
-  data: const TextButtonThemeData(
-    style: ButtonStyle(
-      foregroundColor: WidgetStatePropertyAll<Color?>(VetColors.brown),
-    ),
+Widget _withBrownDialogActions(Widget dialog, {ButtonStyle? actionStyle}) =>
+    TextButtonTheme(
+      data: TextButtonThemeData(
+        style: const ButtonStyle(
+          foregroundColor: WidgetStatePropertyAll<Color?>(VetColors.brown),
+        ).merge(actionStyle),
+      ),
+      child: dialog,
+    );
+
+Widget _withExitDialogActions(Widget dialog) => _withBrownDialogActions(
+  dialog,
+  actionStyle: const ButtonStyle(
+    minimumSize: WidgetStatePropertyAll(Size.square(48)),
+    visualDensity: VisualDensity.standard,
   ),
-  child: dialog,
 );
 
 class _ThemeColorWheel extends StatelessWidget {
@@ -522,9 +531,10 @@ class ConfigScreen extends StatelessWidget {
   Future<void> _signOut(BuildContext context) async {
     final action = await showDialog<_ExitAction>(
       context: context,
-      builder: (context) => _withBrownDialogActions(
+      builder: (context) => _withExitDialogActions(
         AlertDialog(
           backgroundColor: VH.background,
+          scrollable: true,
           title: const Text('Sair do VetHome?'),
           content: const Text(
             'Sair volta para a tela de login. Os dados salvos continuam neste dispositivo.',
@@ -553,9 +563,10 @@ class ConfigScreen extends StatelessWidget {
     if (action == _ExitAction.clearData) {
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (context) => _withBrownDialogActions(
+        builder: (context) => _withExitDialogActions(
           AlertDialog(
             backgroundColor: VH.background,
+            scrollable: true,
             title: const Text('Apagar os dados deste dispositivo?'),
             content: const Text(
               'Isso remove o perfil salvo, o e-mail lembrado, pets cadastrados, fotos, endereços, consultas e vacinas. Os dados demonstrativos iniciais continuarão disponíveis; a preferência de tema será mantida.',
@@ -567,6 +578,12 @@ class ConfigScreen extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(
+                  foregroundColor: VetColors.textColorOn(
+                    Theme.of(context).colorScheme.error,
+                    VH.background,
+                  ),
+                ),
                 child: const Text('Apagar dados'),
               ),
             ],
@@ -585,9 +602,10 @@ class ConfigScreen extends StatelessWidget {
           final hasUnsavedChanges = VetRepository.unsavedChanges.value;
           final reload = await showDialog<bool>(
             context: context,
-            builder: (context) => _withBrownDialogActions(
+            builder: (context) => _withExitDialogActions(
               AlertDialog(
                 backgroundColor: VH.background,
+                scrollable: true,
                 title: const Text('Dados atualizados em outra janela'),
                 content: Text(
                   hasUnsavedChanges
@@ -646,9 +664,10 @@ class ConfigScreen extends StatelessWidget {
       if (VetRepository.unsavedChanges.value) {
         final leaveAnyway = await showDialog<bool>(
           context: context,
-          builder: (dialogContext) => _withBrownDialogActions(
+          builder: (dialogContext) => _withExitDialogActions(
             AlertDialog(
               backgroundColor: VH.background,
+              scrollable: true,
               title: const Text('Sair com alterações não salvas?'),
               content: const Text(
                 'Há alterações que ainda não foram salvas neste dispositivo. '
