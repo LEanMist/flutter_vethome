@@ -315,12 +315,12 @@ class GabrielaSettingsTab extends StatelessWidget {
             ListTile(
               leading: const CircleAvatar(backgroundColor: Color(0xFFC08081)),
               title: const Text('Rosa VetHome'),
-              onTap: () => Navigator.pop(context, VetColors.brown),
+              onTap: () => Navigator.pop(context, VetColors.rose),
             ),
             ListTile(
               leading: const CircleAvatar(backgroundColor: Color(0xFF68442E)),
               title: const Text('Marrom VetHome'),
-              onTap: () => Navigator.pop(context, VetColors.rose),
+              onTap: () => Navigator.pop(context, VetColors.brown),
             ),
           ],
         ),
@@ -403,7 +403,7 @@ class GabrielaSettingsTab extends StatelessWidget {
                   onTap: () => _showSupport(context),
                 ),
                 _SettingsAction(
-                  label: 'Historico',
+                  label: 'Histórico',
                   icon: Icons.history,
                   onTap: () => _showHistory(context),
                 ),
