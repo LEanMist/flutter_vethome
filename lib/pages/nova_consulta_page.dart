@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
@@ -387,11 +388,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     final isMobile = media.size.width < VH.desktopBreakpoint;
     final compactMobileAction = isMobile && _needsCompactConfirmButton(context);
     final address = _address;
-    final addressLabel = switch (address) {
-      null => 'Escolher endereço',
-      SavedAddress(:final name) when name.trim().isNotEmpty => name.trim(),
-      _ => address.summary,
-    };
+    final addressLabel = address?.summary ?? 'Escolher endereço';
     final page = VetPageScaffold(
       title: 'Novo agendamento',
       pet: pet,
@@ -770,9 +767,7 @@ class _TimeChoicesState extends State<_TimeChoices> {
         scopesRoute: true,
         namesRoute: true,
         explicitChildNodes: true,
-        label: hasAvailableTime
-            ? 'Escolha o horário'
-            : 'Escolha o horário. Nenhum horário disponível para a data escolhida.',
+        label: hasAvailableTime ? 'Escolha o horário' : 'Escolha o horário. Nenhum horário disponível para a data escolhida.',
         child: Container(
           key: const ValueKey('time-choice-panel'),
           width: width,

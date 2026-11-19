@@ -65,9 +65,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(address: address, modal: true),
@@ -75,23 +74,23 @@ void main() {
     );
     await tester.pumpAndSettle();
     final fields = find.byType(TextFormField);
-    expect(fields, findsNWidgets(6));
-    for (var index = 0; index < 5; index++) {
+    expect(fields, findsNWidgets(5));
+    for (var index = 0; index < 4; index++) {
       expect(
         tester.getRect(fields.at(index)).bottom,
         lessThanOrEqualTo(tester.getRect(fields.at(index + 1)).top),
       );
     }
-    final name = fields.last;
-    await tester.ensureVisible(name);
-    await tester.enterText(name, 'Casa de teste revisada');
+    final city = fields.last;
+    await tester.ensureVisible(city);
+    await tester.enterText(city, 'Cidade de teste revisada');
     tester.view.viewInsets = const FakeViewPadding(bottom: 260);
     await tester.pumpAndSettle();
     final save = find.byKey(const ValueKey('address-save-target'));
     await tester.ensureVisible(save);
     await tester.pumpAndSettle();
     expect(save.hitTestable(), findsOneWidget);
-    expect(find.text('Casa de teste revisada'), findsOneWidget);
+    expect(find.text('Cidade de teste revisada'), findsOneWidget);
     expect(
       tester
           .renderObject<RenderParagraph>(find.text('Salvar'))
@@ -120,12 +119,13 @@ void main() {
     expect(find.text('Editar endereço'), findsNothing);
     final editorPanel = find.byKey(const ValueKey('address-editor-panel'));
     final editorRect = tester.getRect(editorPanel);
-    expect(editorRect.size, const Size(290, 633));
+    expect(editorRect.size, const Size(290, 546));
     expect(editorRect.left, 50);
-    expect(editorRect.top, 105.5);
+    expect(editorRect.top, 149);
 
     expect(find.text('Numero'), findsOneWidget);
     expect(find.text('Logradouro'), findsOneWidget);
+    expect(find.text('Nome'), findsNothing);
     expect(find.text('Endereço'), findsNothing);
     expect(find.text('Número'), findsNothing);
     expect(find.text('Complemento'), findsOneWidget);
@@ -140,7 +140,6 @@ void main() {
       ('Numero', 199.0, 219.0),
       ('Complemento', 291.0, 311.0),
       ('Cidade', 383.0, 403.0),
-      ('Nome', 475.0, 495.0),
     ]) {
       final labelRect = tester.getRect(find.text(label));
       expect(labelRect.left, closeTo(editorRect.left + 20, 1));
@@ -189,7 +188,7 @@ void main() {
       prefixAssets
           .where((assetName) => assetName.endsWith('address-prefix-home.png'))
           .length,
-      4,
+      3,
     );
     expect(
       prefixAssets
@@ -227,11 +226,8 @@ void main() {
     final saveStyle = tester.widget<ElevatedButton>(saveButton).style!;
     expect(tester.getSize(deleteTarget), const Size(90, 48));
     expect(tester.getSize(saveTarget), const Size(90, 48));
-    expect(
-      tester.getRect(deleteButton),
-      const Rect.fromLTWH(65, 681.5, 90, 34),
-    );
-    expect(tester.getRect(saveButton), const Rect.fromLTWH(234, 681.5, 90, 34));
+    expect(tester.getRect(deleteButton), const Rect.fromLTWH(65, 638, 90, 34));
+    expect(tester.getRect(saveButton), const Rect.fromLTWH(234, 638, 90, 34));
     expect(
       tester.getTopLeft(deleteButton).dy - tester.getTopLeft(deleteTarget).dy,
       14,
@@ -293,7 +289,7 @@ void main() {
       expect(find.text('Editar endereço'), findsNothing);
       expect(
         tester.getSize(find.byKey(const ValueKey('address-editor-panel'))),
-        const Size(290, 633),
+        const Size(290, 546),
       );
       expect(tester.takeException(), isNull);
     } finally {
@@ -359,9 +355,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(),
@@ -419,9 +414,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(),
@@ -461,7 +455,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final panel = find.byKey(const ValueKey('address-editor-panel'));
-    expect(tester.getSize(panel), const Size(290, 633));
+    expect(tester.getSize(panel), const Size(290, 546));
     final saveButton = find.widgetWithText(ElevatedButton, 'Salvar');
     await tester.ensureVisible(saveButton);
     await tester.pumpAndSettle();
@@ -515,7 +509,7 @@ void main() {
       prefixAssets
           .where((assetName) => assetName.endsWith('address-prefix-home.png'))
           .length,
-      4,
+      3,
     );
     expect(tester.takeException(), isNull);
   });
@@ -569,7 +563,6 @@ void main() {
       ('Numero', 287.0, 307.0),
       ('Complemento', 379.0, 399.0),
       ('Cidade', 471.0, 491.0),
-      ('Nome', 563.0, 583.0),
     ]) {
       final labelRect = tester.getRect(find.text(label));
       expect(labelRect.left, closeTo(69, 1));

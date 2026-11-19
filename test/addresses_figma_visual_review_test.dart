@@ -66,7 +66,7 @@ void main() {
 
     final card = find
         .ancestor(
-          of: find.text('Casa da Irmã'),
+          of: find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
           matching: find.byWidgetPredicate(
             (widget) =>
                 widget is Container &&
@@ -125,7 +125,9 @@ void main() {
       expect(textStyle.fontWeight, FontWeight.bold);
     }
 
-    for (final (label, size) in [('Nome:', 18.0), ('Endereço:', 18.0)]) {
+    expect(find.text('Nome:'), findsNothing);
+    expect(find.text('Casa da Irmã'), findsNothing);
+    for (final (label, size) in [('Endereço:', 18.0)]) {
       final text = tester.widget<Text>(find.text(label));
       expect(text.style?.fontFamily, PetsTheme.fontComfortaa);
       expect(text.style?.fontWeight, FontWeight.bold);
@@ -133,7 +135,6 @@ void main() {
       expect(text.style?.color, VetColors.brownOnRoseCard);
     }
     for (final valueFinder in [
-      find.text('Casa da Irmã'),
       find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
     ]) {
       final text = tester.widget<Text>(valueFinder);
@@ -152,7 +153,7 @@ void main() {
       _contrastRatio(cardTextColor, cardBackground),
       greaterThanOrEqualTo(4.5),
     );
-    for (final label in ['Nome:', 'Endereço:']) {
+    for (final label in ['Endereço:']) {
       final text = tester.widget<Text>(find.text(label));
       expect(
         _contrastRatio(text.style!.color!, cardBackground),
@@ -215,10 +216,10 @@ void main() {
         await showAddresses(tester, const Size(390, 844));
 
         for (final (action, description) in [
-          ('Editar', 'Casa da Irmã, Rua das Flores, 123'),
-          ('Deletar', 'Casa da Irmã, Rua das Flores, 123'),
-          ('Editar', 'Trabalho, Rua do Trabalho, 22'),
-          ('Deletar', 'Trabalho, Rua do Trabalho, 22'),
+          ('Editar', 'Rua das Flores, 123, Casa'),
+          ('Deletar', 'Rua das Flores, 123, Casa'),
+          ('Editar', 'Rua do Trabalho, 22'),
+          ('Deletar', 'Rua do Trabalho, 22'),
         ]) {
           final target = find.bySemanticsLabel('$action endereço $description');
           expect(target, findsOneWidget);
@@ -242,7 +243,7 @@ void main() {
         await showAddresses(tester, viewport);
 
         for (final action in ['Editar', 'Deletar']) {
-          final label = '$action endereço Casa da Irmã, Rua das Flores, 123';
+          final label = '$action endereço Rua das Flores, 123, Casa';
           final target = find.bySemanticsLabel(label);
           final targetRect = tester.getRect(target);
           final visual = find.widgetWithText(ElevatedButton, action);
@@ -293,7 +294,7 @@ void main() {
     expect(tester.getCenter(find.text('Endereços')).dy, closeTo(62.5, 5));
     final card = find
         .ancestor(
-          of: find.text('Casa da Irmã'),
+          of: find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
           matching: find.byWidgetPredicate(
             (widget) =>
                 widget is Container &&
@@ -330,7 +331,7 @@ void main() {
 
     final thirdCard = find
         .ancestor(
-          of: find.text('Outro endereço'),
+          of: find.text('Rua da Praça\n73\nPerus'),
           matching: find.byWidgetPredicate(
             (widget) =>
                 widget is Container &&
@@ -368,7 +369,7 @@ void main() {
       if (viewport.width >= 900) {
         final card = find
             .ancestor(
-              of: find.text('Casa da Irmã'),
+              of: find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
               matching: find.byWidgetPredicate(
                 (widget) =>
                     widget is Container &&
@@ -405,9 +406,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(textScale)),
             child: child!,
           ),
           home: const AddressesPage(),
@@ -416,7 +416,6 @@ void main() {
       await tester.pumpAndSettle();
 
       for (final value in [
-        longAddress.name,
         '${longAddress.street}\n${longAddress.complement} - '
             '${longAddress.number}\n${longAddress.city}',
       ]) {
@@ -429,8 +428,8 @@ void main() {
         (widget) =>
             widget is Semantics &&
             widget.properties.label ==
-                'Deletar endereço ${longAddress.name}, '
-                    '${longAddress.street}, ${longAddress.number}',
+                'Deletar endereço ${longAddress.street}, '
+                    '${longAddress.number}, ${longAddress.complement}',
       );
       await tester.ensureVisible(delete);
       await tester.pumpAndSettle();

@@ -199,7 +199,7 @@ class AppointmentBookingCard extends StatelessWidget {
             label: addressLabel,
             semanticLabel: addressSummary == null
                 ? addressLabel
-                : 'Endereço: $addressLabel. $addressSummary. Alterar endereço.',
+                : 'Endereço: $addressSummary. Alterar endereço.',
             color: VetColors.rose,
             textScale: textScale,
             tapTargetHeight: timeTargetHeight,

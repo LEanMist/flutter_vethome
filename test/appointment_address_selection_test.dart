@@ -47,9 +47,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
         home: NovaConsultaPage(
@@ -102,7 +101,7 @@ void main() {
     expect(tester.widget<Semantics>(option(work)).properties.checked, isTrue);
     await tester.tap(ok);
     await tester.pumpAndSettle();
-    expect(find.text('Trabalho'), findsOneWidget);
+    expect(find.text(work.summary), findsOneWidget);
 
     await openPanel(tester);
     expect(tester.widget<Semantics>(option(work)).properties.checked, isTrue);
@@ -110,7 +109,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     expect(find.byKey(panel), findsNothing);
-    expect(find.text('Trabalho'), findsOneWidget);
+    expect(find.text(work.summary), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -186,7 +185,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
-    expect(find.text('Trabalho'), findsOneWidget);
+    expect(find.text(work.summary), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

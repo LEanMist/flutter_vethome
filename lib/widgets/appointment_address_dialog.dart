@@ -141,7 +141,6 @@ class _AddressOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = address.name.trim();
     final street = [
       address.street,
       address.number,
@@ -180,7 +179,7 @@ class _AddressOption extends StatelessWidget {
       key: ValueKey('appointment-address-option-${address.id}'),
       checked: selected,
       inMutuallyExclusiveGroup: true,
-      label: [if (name.isNotEmpty) name, address.summary].join(', '),
+      label: address.summary,
       onTap: onTap,
       excludeSemantics: true,
       child: Material(
@@ -211,23 +210,6 @@ class _AddressOption extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (name.isNotEmpty) ...[
-                      if (largeText) ...[
-                        const Text('Nome:', style: titleStyle),
-                        Text(name),
-                      ] else
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const SizedBox(
-                              width: 119,
-                              child: Text('Nome:', style: titleStyle),
-                            ),
-                            Expanded(child: Text(name)),
-                          ],
-                        ),
-                      const SizedBox(height: 6),
-                    ],
                     if (largeText) ...[
                       const Text('Endereço:', style: titleStyle),
                       addressText,

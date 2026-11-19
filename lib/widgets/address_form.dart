@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+
 import '../data/cep_service.dart';
 import '../models/saved_address.dart';
 import '../core/utils/form_fields.dart';
@@ -42,7 +43,6 @@ class AddressForm extends StatefulWidget {
 
 class _AddressFormState extends State<AddressForm> {
   final _key = GlobalKey<FormState>();
-  late final _name = TextEditingController(text: widget.initial?.name ?? '');
   late final _cep = TextEditingController(text: widget.initial?.cep ?? '');
   late final _street = TextEditingController(
     text: widget.initial?.street ?? '',
@@ -62,7 +62,7 @@ class _AddressFormState extends State<AddressForm> {
   bool _validationAttempted = false;
   @override
   void dispose() {
-    for (final c in [_name, _cep, _street, _city, _number, _complement]) {
+    for (final c in [_cep, _street, _city, _number, _complement]) {
       c.dispose();
     }
     super.dispose();
@@ -158,7 +158,7 @@ class _AddressFormState extends State<AddressForm> {
               widget.initial?.id ??
               'address-${DateTime.now().microsecondsSinceEpoch}',
           street: _street.text.trim(),
-          name: _name.text.trim(),
+          name: widget.initial?.name ?? '',
           city: _city.text.trim(),
           number: _number.text.trim(),
           complement: _complement.text.trim(),
@@ -543,9 +543,7 @@ class _AddressFormState extends State<AddressForm> {
                                       _city,
                                       validator: _required,
                                     ),
-                                  ),
-                                  slot(
-                                    _field('Nome', Icons.home_outlined, _name),
+                                    full: true,
                                   ),
                                 ],
                               );
@@ -711,7 +709,6 @@ class _AddressFormState extends State<AddressForm> {
               _city,
               validator: _required,
             ),
-            field('Nome', Icons.home_outlined, _name, minHeight: 87),
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               runSpacing: 8,

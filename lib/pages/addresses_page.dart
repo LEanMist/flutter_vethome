@@ -321,25 +321,8 @@ class _AddressesPageState extends State<AddressesPage> {
       ),
     ];
 
-    Widget detail(String label, String value, {bool alignTop = false}) {
-      final caption = Text(label, style: _labelStyle);
-      final description = Text(value, style: _valueStyle);
-      if (stackDetails) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [caption, description],
-        );
-      }
-      return Row(
-        crossAxisAlignment: alignTop
-            ? CrossAxisAlignment.start
-            : CrossAxisAlignment.center,
-        children: [
-          SizedBox(width: 107, child: caption),
-          Expanded(child: description),
-        ],
-      );
-    }
+    const caption = Text('Endereço:', style: _labelStyle);
+    final description = Text(_addressLines(address), style: _valueStyle);
 
     return Container(
       decoration: inset_shadow.BoxDecoration(
@@ -363,14 +346,18 @@ class _AddressesPageState extends State<AddressesPage> {
             ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(19, 11, 19, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  detail('Nome:', address.name.isEmpty ? '—' : address.name),
-                  const SizedBox(height: 4),
-                  detail('Endereço:', _addressLines(address), alignTop: true),
-                ],
-              ),
+              child: stackDetails
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [caption, description],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(width: 107, child: caption),
+                        Expanded(child: description),
+                      ],
+                    ),
             ),
           ),
           if (stackActions)
@@ -413,9 +400,9 @@ class _AddressesPageState extends State<AddressesPage> {
   }
 
   String _addressIdentity(SavedAddress address) => [
-    address.name.trim(),
     address.street.trim(),
     address.number.trim(),
+    address.complement.trim(),
   ].where((value) => value.isNotEmpty).join(', ');
   Widget _addressAction({
     required String label,
@@ -623,7 +610,7 @@ class AddressEditorPage extends StatelessWidget {
   Widget _editorPanel(Widget form) => Container(
     key: const ValueKey('address-editor-panel'),
     width: 290,
-    constraints: const BoxConstraints(minHeight: 633),
+    constraints: const BoxConstraints(minHeight: 546),
     clipBehavior: Clip.antiAlias,
     decoration: inset_shadow.BoxDecoration(
       color: VetColors.pink,

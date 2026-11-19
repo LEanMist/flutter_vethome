@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -94,15 +95,15 @@ void main() {
       selection: TextSelection.collapsed(offset: value.length),
     );
     expect(
-      const DigitsMask(
-        '###.###.###-##',
-      ).formatEditUpdate(TextEditingValue.empty, input('12345678901')).text,
+      const DigitsMask('###.###.###-##')
+          .formatEditUpdate(TextEditingValue.empty, input('12345678901'))
+          .text,
       '123.456.789-01',
     );
     expect(
-      const DigitsMask(
-        '#####-###',
-      ).formatEditUpdate(TextEditingValue.empty, input('01001000')).text,
+      const DigitsMask('#####-###')
+          .formatEditUpdate(TextEditingValue.empty, input('01001000'))
+          .text,
       '01001-000',
     );
     expect(
@@ -285,7 +286,7 @@ void main() {
       );
       await fill(tester, 'Endereço', 'Rua editada');
       await fill(tester, 'Numero', '15');
-      await fill(tester, 'Nome', 'Casa da Irmã');
+      expect(find.text('Nome'), findsNothing);
       await tester.ensureVisible(find.text('Salvar endereço'));
       await tester.tap(find.text('Salvar endereço'));
       await tester.pumpAndSettle();
@@ -295,7 +296,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(saved?.street, 'Rua editada');
       expect(saved?.complement, '');
-      expect(saved?.name, 'Casa da Irmã');
+      expect(saved?.name, isEmpty);
     },
   );
   for (final mode in ['inexistente', 'rede']) {
