@@ -9,6 +9,7 @@ import '../../theme.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets/pets/pets_theme.dart';
 import '../../widgets/vet/gabriela_bottom_nav.dart';
+import '../../widgets/vet/vet_centered_dialog.dart';
 import 'gabriela_agenda_tab.dart';
 import 'gabriela_messages_tab.dart';
 
@@ -73,7 +74,7 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
 
   Future<void> _changePhoto() async {
     try {
-      final XFile? image = await pickLocalPhoto(context);
+      final XFile? image = await pickLocalPhoto(context, centered: true);
       if (image == null) return;
       final bytes = await image.readAsBytes();
       if (!mounted) return;
@@ -299,9 +300,8 @@ class GabrielaSettingsTab extends StatelessWidget {
   const GabrielaSettingsTab({super.key});
 
   Future<void> _chooseTheme(BuildContext context) async {
-    final theme = await showModalBottomSheet<Color>(
+    final theme = await showVetCenteredDialog<Color>(
       context: context,
-      backgroundColor: VetColors.pink,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -346,9 +346,8 @@ class GabrielaSettingsTab extends StatelessWidget {
     ),
   );
 
-  void _showHistory(BuildContext context) => showModalBottomSheet<void>(
+  void _showHistory(BuildContext context) => showVetCenteredDialog<void>(
     context: context,
-    backgroundColor: VetColors.pink,
     builder: (context) => SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),

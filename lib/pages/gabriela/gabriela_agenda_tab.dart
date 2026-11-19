@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'gabriela_calendar_picker.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets/pets/pets_theme.dart';
+import '../../widgets/vet/vet_centered_dialog.dart';
 
 class GabrielaAgendaTab extends StatefulWidget {
   const GabrielaAgendaTab({super.key});
@@ -57,17 +58,11 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
   ][day - 1];
 
   Future<void> _chooseDate() async {
-    final date = await showModalBottomSheet<DateTime>(
+    final date = await showVetCenteredDialog<DateTime>(
       context: context,
-      isScrollControlled: true,
-      constraints: const BoxConstraints(maxWidth: 390),
-      backgroundColor: VetColors.pink,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
       builder: (_) => GabrielaCalendarPicker(initialDate: _selectedDate),
     );
-    if (date != null) setState(() => _selectedDate = date);
+    if (date != null && mounted) setState(() => _selectedDate = date);
   }
 
   List<_AgendaAppointment> get _visibleAppointments =>
@@ -76,13 +71,8 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
       : const [];
 
   void _showAppointment(_AgendaAppointment appointment) {
-    showModalBottomSheet<void>(
+    showVetCenteredDialog<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: VetColors.pink,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-      ),
       builder: (context) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
