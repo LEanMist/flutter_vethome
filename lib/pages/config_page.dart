@@ -505,6 +505,10 @@ class ConfigScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                    visualDensity: VisualDensity.standard,
+                  ),
                   child: const Text('Fechar'),
                 ),
               ],

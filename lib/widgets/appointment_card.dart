@@ -22,6 +22,8 @@ class AppointmentCard extends StatelessWidget {
   final Agendamento event;
   final bool demo, next;
   final VoidCallback? onTap;
+
+  static const _detailStyle = TextStyle(fontSize: 13, color: VetColors.brown);
   @override
   Widget build(BuildContext context) {
     final current = VetRepository.petById(pet.id) ?? pet;
@@ -92,16 +94,16 @@ class AppointmentCard extends StatelessWidget {
               const SizedBox(height: 5),
               Text(
                 'Veterinário: ${event.veterinario}',
-                style: TextStyle(fontSize: 12, color: VetColors.brown),
+                style: _detailStyle,
               ),
               if (event.address != null)
                 Text(
                   'Endereço: ${event.locationLabel}',
-                  style: const TextStyle(fontSize: 12, color: VetColors.brown),
+                  style: _detailStyle,
                 ),
               Text(
                 'Local/convênio: ${event.local}',
-                style: TextStyle(fontSize: 12, color: VetColors.brown),
+                style: _detailStyle,
               ),
               if (demo) ...[
                 const SizedBox(height: 6),
