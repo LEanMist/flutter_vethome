@@ -653,6 +653,7 @@ class _NomeDialogState extends State<_NomeDialog> {
               child: Semantics(
                 key: const ValueKey('profile-name-validation-error'),
                 liveRegion: true,
+                excludeSemantics: true,
                 label: error,
                 child: Text(
                   error,
