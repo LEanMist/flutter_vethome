@@ -81,6 +81,8 @@ class _ThemeColorWheel extends StatelessWidget {
 class ConfigScreen extends StatelessWidget {
   const ConfigScreen({super.key, this.clearLocalUserData});
 
+  static const _supportWidth = 349.0;
+
   final Future<bool> Function()? clearLocalUserData;
 
   @override
@@ -253,10 +255,13 @@ class ConfigScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 349, minHeight: 289),
+          constraints: const BoxConstraints(
+            maxWidth: _supportWidth,
+            minHeight: 289,
+          ),
           child: Container(
             key: const ValueKey('support-figma-surface'),
-            width: 349,
+            width: _supportWidth,
             decoration: BoxDecoration(
               color: VetColors.pink,
               borderRadius: BorderRadius.circular(30),
@@ -334,18 +339,31 @@ class ConfigScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 13),
-                  const SelectableText(
-                    'Kelvinpro@gmail.com',
-                    semanticsLabel:
-                        'E-mail fictício para demonstração: Kelvinpro@gmail.com',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Comfortaa',
-                      fontSize: 30,
-                      height: 1,
-                      fontWeight: FontWeight.w500,
-                      color: VetColors.brown,
-                    ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final inset = constraints.maxWidth < _supportWidth
+                          ? 8.0
+                          : 0.0;
+                      final availableWidth = constraints.maxWidth - 2 * inset;
+                      final fontSize = (30 * availableWidth / _supportWidth)
+                          .clamp(18.0, 30.0);
+                      return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: inset),
+                        child: SelectableText(
+                          'Kelvinpro@gmail.com',
+                          semanticsLabel:
+                              'E-mail fictício para demonstração: Kelvinpro@gmail.com',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Comfortaa',
+                            fontSize: fontSize,
+                            height: 1,
+                            fontWeight: FontWeight.w500,
+                            color: VetColors.brown,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
