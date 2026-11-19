@@ -351,7 +351,8 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       key: const ValueKey('chat-conversation-card'),
       height: cardHeight,
-      decoration: insetBox(color: VH.muted),
+      decoration: insetBox(color: VH.muted, radius: 25),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           Expanded(
@@ -477,6 +478,7 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Container(
         key: const ValueKey('chat-locality-notice'),
         width: double.infinity,
+        constraints: const BoxConstraints(minHeight: 20),
         margin: const EdgeInsets.only(bottom: 2),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -508,69 +510,124 @@ class _ChatScreenState extends State<ChatScreen> {
     return 80 + extraText * 1.5;
   }
 
-  Widget _composer(BuildContext context) => SizedBox(
-    key: const ValueKey('chat-composer'),
-    height: _composerHeight(context),
-    child: ColoredBox(
-      color: VetColors.chatComposerBackground,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-        child: Row(
-          children: [
-            Expanded(
-              child: Container(
-                decoration: insetBox(
-                  color: Colors.transparent,
-                  radius: 999,
-                  gradient: LinearGradient(
-                    colors: [
-                      VH.background.withValues(alpha: .5),
-                      VH.secondary.withValues(alpha: .375),
+  Widget _composer(BuildContext context) {
+    final height = _composerHeight(context);
+    final fieldHeight = height - 33;
+    final fieldRadius = BorderRadius.circular(100);
+    const fieldText = TextStyle(
+      fontFamily: VH.headingFontFamily,
+      fontSize: 15,
+      height: 1.2,
+    );
+    final lineHeight = MediaQuery.textScalerOf(context).scale(15) * 1.2;
+    return SizedBox(
+      key: const ValueKey('chat-composer'),
+      height: height,
+      child: ColoredBox(
+        color: VetColors.chatComposerBackground,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: fieldHeight,
+                  decoration: BoxDecoration(
+                    borderRadius: fieldRadius,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x40000000),
+                        offset: Offset(2, 2),
+                        blurRadius: 2,
+                      ),
                     ],
-                    stops: const [.25, 1],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    transform: GradientRotation(-0.1781671607501732),
+                    gradient: LinearGradient(
+                      colors: [
+                        Color.alphaBlend(
+                          VH.background.withValues(alpha: .5),
+                          VetColors.chatComposerBackground,
+                        ),
+                        Color.alphaBlend(
+                          VH.secondary.withValues(alpha: .375),
+                          VetColors.chatComposerBackground,
+                        ),
+                      ],
+                      stops: const [.25, 1],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      transform: GradientRotation(-0.1781671607501732),
+                    ),
                   ),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextField(
-                  controller: ctrl,
-                  onSubmitted: (_) => enviar(),
-                  textAlignVertical: TextAlignVertical.center,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: 'Mensagem',
-                    hintStyle: TextStyle(
-                      color: VetColors.brownOnRose,
-                      fontFamily: VH.headingFontFamily,
-                      fontSize: 15,
+                  child: TextField(
+                    controller: ctrl,
+                    onSubmitted: (_) => enviar(),
+                    style: fieldText,
+                    textAlign: TextAlign.center,
+                    textAlignVertical: TextAlignVertical.center,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      filled: false,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: (fieldHeight - lineHeight) / 2,
+                      ),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: fieldRadius,
+                        borderSide: const BorderSide(
+                          color: VetColors.brown,
+                          width: 2,
+                        ),
+                      ),
+                      hintText: 'Mensagem',
+                      hintStyle: fieldText.copyWith(
+                        color: VetColors.brownOnRose,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            SizedBox(
-              width: 50,
-              height: 50,
-              child: IconButton(
-                tooltip: 'Enviar mensagem',
-                onPressed: enviar,
-                style: IconButton.styleFrom(
-                  backgroundColor: VH.background.withValues(alpha: .25),
-                  foregroundColor: VetColors.brownSecondary,
-                  fixedSize: const Size(50, 50),
-                  padding: EdgeInsets.zero,
-                  shape: const CircleBorder(),
-                  side: const BorderSide(color: VetColors.brownSecondary),
+              const SizedBox(width: 19),
+              SizedBox(
+                width: 50,
+                height: 50,
+                child: IconButton(
+                  tooltip: 'Enviar mensagem',
+                  onPressed: enviar,
+                  iconSize: 50,
+                  style:
+                      IconButton.styleFrom(
+                        foregroundColor: VetColors.brownSecondary,
+                        fixedSize: const Size.square(50),
+                        padding: EdgeInsets.zero,
+                        shape: const CircleBorder(),
+                      ).copyWith(
+                        side: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.focused)
+                              ? const BorderSide(color: Colors.white, width: 2)
+                              : BorderSide.none,
+                        ),
+                      ),
+                  icon: OverflowBox(
+                    // O quadro de 54 px inclui a sombra além do círculo de 50 px.
+                    alignment: Alignment.topLeft,
+                    minWidth: 54,
+                    maxWidth: 54,
+                    minHeight: 54,
+                    maxHeight: 54,
+                    child: Image.asset(
+                      'assets/imagens/figma/chat-send-button.png',
+                      excludeFromSemantics: true,
+                    ),
+                  ),
                 ),
-                icon: const Icon(Icons.send_outlined, size: 25),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
