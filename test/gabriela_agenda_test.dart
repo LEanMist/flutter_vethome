@@ -3,25 +3,47 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/gabriela/gabriela_agenda_tab.dart';
 
 void main() {
-  testWidgets(
-    'dados do paciente aparecem somente no atendimento correspondente',
-    (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: GabrielaAgendaTab())),
-      );
+  testWidgets('consulta distingue cliente Rambo do pet Fernando', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: GabrielaAgendaTab())),
+    );
 
-      await tester.tap(find.text('Rambo Augusto'));
-      await tester.pumpAndSettle();
-      expect(find.text('Lulu-da-Pomerânia'), findsOneWidget);
-      expect(find.text('M  ·  24 kg  ·  23/03/2012'), findsOneWidget);
-      Navigator.of(tester.element(find.text('Lulu-da-Pomerânia'))).pop();
-      await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Rambo Augusto'));
+    await tester.tap(find.text('Rambo Augusto'));
+    await tester.pumpAndSettle();
+    final dialog = find.byType(Dialog);
+    Finder inDialog(String text) =>
+        find.descendant(of: dialog, matching: find.text(text));
+    expect(inDialog('Rambo'), findsOneWidget);
+    expect(inDialog('Fernando'), findsOneWidget);
+    expect(find.bySemanticsLabel('Foto de Fernando'), findsOneWidget);
+    for (final field in [
+      'Gênero/Sexo',
+      'Peso',
+      'Data de Nascimento',
+      'Raça',
+      'M',
+      '24kg',
+      '23 / 03 / 2012',
+      'Lulu-da-Pomerânia',
+      'Hemograma + 3',
+      'R. Augusto Cury 123 - Vila Osasco',
+    ]) {
+      expect(inDialog(field), findsOneWidget);
+    }
+    Navigator.of(tester.element(inDialog('Fernando'))).pop();
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Nicolly Santos'));
-      await tester.pumpAndSettle();
-      expect(find.text('Lulu-da-Pomerânia'), findsNothing);
-      expect(find.text('M  ·  24 kg  ·  23/03/2012'), findsNothing);
-      expect(find.text('Dados do paciente'), findsNothing);
-    },
-  );
+    await tester.ensureVisible(find.text('Nicolly Santos'));
+    await tester.tap(find.text('Nicolly Santos'));
+    await tester.pumpAndSettle();
+    expect(inDialog('Fernando'), findsNothing);
+    expect(inDialog('Lulu-da-Pomerânia'), findsNothing);
+    expect(inDialog('24kg'), findsNothing);
+    expect(find.bySemanticsLabel('Foto de Fernando'), findsNothing);
+    semantics.dispose();
+  });
 }

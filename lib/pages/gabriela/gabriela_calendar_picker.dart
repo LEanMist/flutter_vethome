@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/vet_colors.dart';
-import '../../widgets/pets/pets_theme.dart';
 
+/// Calendário integrado à agenda; selecionar um dia atualiza a própria página.
 class GabrielaCalendarPicker extends StatefulWidget {
-  const GabrielaCalendarPicker({super.key, required this.initialDate});
+  const GabrielaCalendarPicker({
+    super.key,
+    required this.selectedDate,
+    required this.onChanged,
+  });
 
-  final DateTime initialDate;
+  final DateTime selectedDate;
+  final ValueChanged<DateTime> onChanged;
 
   @override
   State<GabrielaCalendarPicker> createState() => _GabrielaCalendarPickerState();
@@ -28,176 +33,137 @@ class _GabrielaCalendarPickerState extends State<GabrielaCalendarPicker> {
     'Novembro',
     'Dezembro',
   ];
-
   late DateTime _visibleMonth = DateTime(
-    widget.initialDate.year,
-    widget.initialDate.month,
+    widget.selectedDate.year,
+    widget.selectedDate.month,
   );
 
-  String get _monthTitle =>
-      '${_months[_visibleMonth.month - 1]} ${_visibleMonth.year}';
+  void _moveMonth(int offset) => setState(() {
+    _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month + offset);
+  });
 
   @override
-  Widget build(BuildContext context) {
-    final s = PetsTheme.scaleOf(context);
-    final width = 305 * s;
-    final cell = 35 * s;
-
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(20 * s, 12 * s, 20 * s, 20 * s),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final s = (constraints.maxWidth / 342).clamp(.7, 1.0);
+      final firstWeekday = _visibleMonth.weekday % 7;
+      final days = DateUtils.getDaysInMonth(
+        _visibleMonth.year,
+        _visibleMonth.month,
+      );
+      final rows = ((firstWeekday + days) / 7).ceil();
+      return Container(
+        padding: EdgeInsets.all(10 * s),
+        decoration: BoxDecoration(
+          color: VetColors.pink.withValues(alpha: .65),
+          borderRadius: BorderRadius.circular(28 * s),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 42 * s,
-              height: 4 * s,
-              decoration: BoxDecoration(
-                color: VetColors.rose,
-                borderRadius: BorderRadius.circular(4 * s),
-              ),
-            ),
-            SizedBox(height: 12 * s),
-            SizedBox(
-              width: width,
-              child: Row(
-                children: [
-                  IconButton(
-                    tooltip: 'Mês anterior',
-                    onPressed: () => setState(
-                      () => _visibleMonth = DateTime(
-                        _visibleMonth.year,
-                        _visibleMonth.month - 1,
-                      ),
-                    ),
-                    icon: const Icon(Icons.chevron_left),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  tooltip: 'Mês anterior',
+                  onPressed: () => _moveMonth(-1),
+                  icon: Icon(Icons.chevron_left, size: 20 * s),
+                  color: VetColors.brown,
+                ),
+                Text(
+                  '${_months[_visibleMonth.month - 1]}  ${_visibleMonth.year}',
+                  style: TextStyle(
+                    fontFamily: 'Comfortaa',
+                    fontSize: 15 * s,
                     color: VetColors.brown,
                   ),
+                ),
+                IconButton(
+                  tooltip: 'Próximo mês',
+                  onPressed: () => _moveMonth(1),
+                  icon: Icon(Icons.chevron_right, size: 20 * s),
+                  color: VetColors.brown,
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                for (final day in _weekdays)
                   Expanded(
-                    child: Text(
-                      _monthTitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: VetColors.brown,
-                        fontSize: 17 * s,
-                        fontFamily: PetsTheme.fontComfortaa,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Próximo mês',
-                    onPressed: () => setState(
-                      () => _visibleMonth = DateTime(
-                        _visibleMonth.year,
-                        _visibleMonth.month + 1,
-                      ),
-                    ),
-                    icon: const Icon(Icons.chevron_right),
-                    color: VetColors.brown,
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 12 * s),
-            SizedBox(
-              width: width,
-              child: Row(
-                children: [
-                  for (var i = 0; i < _weekdays.length; i++) ...[
-                    if (i > 0) SizedBox(width: 10 * s),
-                    SizedBox(
-                      width: cell,
-                      height: cell,
+                    child: SizedBox(
+                      height: 35 * s,
                       child: Center(
                         child: Text(
-                          _weekdays[i],
+                          day,
                           style: TextStyle(
-                            color: VetColors.brown,
+                            fontFamily: 'Comfortaa',
                             fontSize: 13 * s,
-                            fontFamily: PetsTheme.fontComfortaa,
-                            fontWeight: FontWeight.w700,
+                            color: VetColors.brown,
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ],
-              ),
+                  ),
+              ],
             ),
-            SizedBox(height: 10 * s),
-            SizedBox(
-              width: width,
-              height: 260 * s,
-              child: GridView.builder(
-                padding: EdgeInsets.zero,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 42,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  mainAxisSpacing: 10 * s,
-                  crossAxisSpacing: 10 * s,
-                  childAspectRatio: 1,
-                ),
-                itemBuilder: (context, index) {
-                  final firstWeekday =
-                      DateTime(
-                        _visibleMonth.year,
-                        _visibleMonth.month,
-                        1,
-                      ).weekday %
-                      7;
-                  final day = index - firstWeekday + 1;
-                  final daysInMonth = DateUtils.getDaysInMonth(
-                    _visibleMonth.year,
-                    _visibleMonth.month,
-                  );
-                  if (day < 1 || day > daysInMonth) {
-                    return const SizedBox.shrink();
-                  }
-
-                  final date = DateTime(
-                    _visibleMonth.year,
-                    _visibleMonth.month,
-                    day,
-                  );
-                  final selected = DateUtils.isSameDay(
-                    date,
-                    widget.initialDate,
-                  );
-                  return Semantics(
-                    button: true,
-                    selected: selected,
-                    label: '$day de ${_months[_visibleMonth.month - 1]}',
-                    child: Material(
-                      color: selected
-                          ? VetColors.rose.withValues(alpha: .42)
-                          : Colors.transparent,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => Navigator.pop(context, date),
-                        child: Center(
-                          child: Text(
-                            '$day',
-                            style: TextStyle(
-                              color: VetColors.brown,
-                              fontSize: 15 * s,
-                              fontFamily: PetsTheme.fontComfortaa,
-                              fontWeight: FontWeight.w700,
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              itemCount: rows * 7,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                mainAxisSpacing: 4 * s,
+                crossAxisSpacing: 4 * s,
+              ),
+              itemBuilder: (context, index) {
+                final date = DateTime(
+                  _visibleMonth.year,
+                  _visibleMonth.month,
+                  index - firstWeekday + 1,
+                );
+                final inMonth = date.month == _visibleMonth.month;
+                final selected = DateUtils.isSameDay(date, widget.selectedDate);
+                return Semantics(
+                  button: true,
+                  selected: selected,
+                  label: '${date.day} de ${_months[date.month - 1]}',
+                  child: Material(
+                    color: selected
+                        ? VetColors.roseOverlay50
+                        : Colors.transparent,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () {
+                        if (!inMonth) {
+                          setState(
+                            () =>
+                                _visibleMonth = DateTime(date.year, date.month),
+                          );
+                        }
+                        widget.onChanged(date);
+                      },
+                      child: Center(
+                        child: Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            fontFamily: 'Comfortaa',
+                            fontSize: 14 * s,
+                            color: VetColors.brown.withValues(
+                              alpha: inMonth ? 1 : .3,
                             ),
                           ),
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
 }
