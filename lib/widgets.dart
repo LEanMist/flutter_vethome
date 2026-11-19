@@ -51,6 +51,7 @@ class VHField extends StatefulWidget {
     this.textAlign = TextAlign.start,
     this.figmaContentPaddingLeft,
     this.figmaContentPaddingRight,
+    this.figmaFillColor,
     this.figmaForm = false,
     this.showChoiceIndicator = true,
     this.compact = false,
@@ -88,6 +89,7 @@ class VHField extends StatefulWidget {
   final TextAlign textAlign;
   final double? figmaContentPaddingLeft;
   final double? figmaContentPaddingRight;
+  final Color? figmaFillColor;
   @override
   State<VHField> createState() => _VHFieldState();
 }
@@ -733,12 +735,15 @@ class _VHFieldState extends State<VHField> {
             child: DecoratedBox(
               decoration: widget.figmaForm
                   ? inset_shadow.BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          VH.secondary.withValues(alpha: .25),
-                          VH.background,
-                        ],
-                      ),
+                      color: widget.figmaFillColor,
+                      gradient: widget.figmaFillColor == null
+                          ? LinearGradient(
+                              colors: [
+                                VH.secondary.withValues(alpha: .25),
+                                VH.background,
+                              ],
+                            )
+                          : null,
                       borderRadius: fieldRadius,
                       boxShadow: const [
                         inset_shadow.BoxShadow(

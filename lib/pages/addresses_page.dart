@@ -577,21 +577,24 @@ class AddressEditorPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: VetColors.pink,
       appBar: compactEditor ? null : AppBar(backgroundColor: VetColors.pink),
-      bottomNavigationBar: VetBottomNav(
-        key: const ValueKey('address-editor-bottom-navigation'),
-        selectedIndex: 4,
-        compact: !desktop,
-        onSelected: (index) async {
-          final canLeave = await vetConfirmLeavingForm(
-            context,
-            title: 'Sair da edição?',
-            message:
-                'Se você ainda não salvou, as alterações deste formulário '
-                'serão descartadas ao trocar de tela.',
-          );
-          if (!canLeave || !context.mounted) return;
-          vetNavigate(context, index, selected: 4, isTabRoot: false);
-        },
+      bottomNavigationBar: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 88),
+        child: VetBottomNav(
+          key: const ValueKey('address-editor-bottom-navigation'),
+          selectedIndex: 4,
+          compact: !desktop,
+          onSelected: (index) async {
+            final canLeave = await vetConfirmLeavingForm(
+              context,
+              title: 'Sair da edição?',
+              message:
+                  'Se você ainda não salvou, as alterações deste formulário '
+                  'serão descartadas ao trocar de tela.',
+            );
+            if (!canLeave || !context.mounted) return;
+            vetNavigate(context, index, selected: 4, isTabRoot: false);
+          },
+        ),
       ),
       body: Padding(
         padding: EdgeInsets.only(
@@ -620,7 +623,7 @@ class AddressEditorPage extends StatelessWidget {
   Widget _editorPanel(Widget form) => Container(
     key: const ValueKey('address-editor-panel'),
     width: 290,
-    height: 633,
+    constraints: const BoxConstraints(minHeight: 633),
     clipBehavior: Clip.antiAlias,
     decoration: inset_shadow.BoxDecoration(
       color: VetColors.pink,

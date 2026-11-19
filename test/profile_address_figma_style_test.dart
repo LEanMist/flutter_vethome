@@ -149,7 +149,9 @@ void main() {
               editedAddress = settings.arguments;
               return MaterialPageRoute<void>(
                 settings: settings,
-                builder: (_) => const Scaffold(body: Text('Editor aberto')),
+                builder: (_) => AddressEditorPage(
+                  address: settings.arguments as SavedAddress?,
+                ),
               );
             }
             return null;
@@ -230,7 +232,14 @@ void main() {
         expect(find.text('Editar endereço'), findsNothing);
       } else {
         expect(editedAddress, same(address));
-        expect(find.text('Editor aberto'), findsOneWidget);
+        expect(find.text('Editar endereço'), findsOneWidget);
+        final fields = find.byType(TextFormField);
+        expect(fields, findsNWidgets(6));
+        expect(find.text(address.street).hitTestable(), findsOneWidget);
+        expect(
+          find.widgetWithText(ElevatedButton, 'Salvar endereço').hitTestable(),
+          findsOneWidget,
+        );
       }
       expect(tester.takeException(), isNull);
     });

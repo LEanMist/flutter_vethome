@@ -54,6 +54,53 @@ void main() {
     cep: '34556-234',
   );
 
+  testWidgets('editor móvel mantém campos e Salvar acessíveis com teclado', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const AddressEditorPage(address: address, modal: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final fields = find.byType(TextFormField);
+    expect(fields, findsNWidgets(6));
+    for (var index = 0; index < 5; index++) {
+      expect(
+        tester.getRect(fields.at(index)).bottom,
+        lessThanOrEqualTo(tester.getRect(fields.at(index + 1)).top),
+      );
+    }
+    final name = fields.last;
+    await tester.ensureVisible(name);
+    await tester.enterText(name, 'Casa de teste revisada');
+    tester.view.viewInsets = const FakeViewPadding(bottom: 260);
+    await tester.pumpAndSettle();
+    final save = find.byKey(const ValueKey('address-save-target'));
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    expect(save.hitTestable(), findsOneWidget);
+    expect(find.text('Casa de teste revisada'), findsOneWidget);
+    expect(
+      tester
+          .renderObject<RenderParagraph>(find.text('Salvar'))
+          .didExceedMaxLines,
+      isFalse,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('EDIT_ADRESS_WIDGET mantém campos e ações do Figma', (
     tester,
   ) async {
@@ -109,6 +156,23 @@ void main() {
       expect(fieldRect.top, closeTo(editorRect.top + fieldTop, 1));
       expect(fieldRect.width, closeTo(259, 1));
       expect(fieldRect.height, closeTo(56, 1));
+      final editable = tester.widget<EditableText>(
+        find.descendant(of: input, matching: find.byType(EditableText)),
+      );
+      expect(editable.textAlign, TextAlign.center);
+      final fieldSurface = find.ancestor(
+        of: input,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is DecoratedBox &&
+              widget.decoration is inset_shadow.BoxDecoration,
+        ),
+      );
+      final decoration =
+          tester.widget<DecoratedBox>(fieldSurface.first).decoration
+              as inset_shadow.BoxDecoration;
+      expect(decoration.color, VH.secondary.withValues(alpha: .25));
+      expect(decoration.gradient, isNull);
     }
 
     final prefixAssets = _addressAssetNames(tester);
@@ -178,6 +242,12 @@ void main() {
     );
     expect(saveStyle.backgroundColor!.resolve({}), VH.primary);
     expect(saveStyle.foregroundColor!.resolve({}), Colors.white);
+    expect(
+      tester
+          .renderObject<RenderParagraph>(find.text('Salvar'))
+          .didExceedMaxLines,
+      isFalse,
+    );
     expect(
       saveStyle.textStyle!.resolve(const <WidgetState>{})!.fontFamily,
       'Comfortaa',

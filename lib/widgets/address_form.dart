@@ -244,6 +244,11 @@ class _AddressFormState extends State<AddressForm> {
       icon,
       compact: true,
       figmaForm: registrationLayout || editingLayout,
+      figmaFillColor: editingLayout
+          ? VH.secondary.withValues(alpha: .25)
+          : null,
+      textAlign: editingLayout ? TextAlign.center : TextAlign.start,
+      figmaContentPaddingRight: editingLayout ? 34 : null,
       labelAbove: true,
       labelHorizontalPadding: registrationLayout || editingLayout ? 5 : null,
       labelBottomPadding: registrationLayout || editingLayout ? 0 : null,
@@ -270,11 +275,19 @@ class _AddressFormState extends State<AddressForm> {
     final saveForegroundColor = editing
         ? Colors.white
         : VetColors.calendarTextOnRose;
+    final saveText = Text(
+      _saving ? 'Salvando…' : saveLabel,
+      maxLines: 1,
+      softWrap: false,
+    );
     final saveButton = ElevatedButton(
       onPressed: _loading || _saving ? null : _save,
       style: ElevatedButton.styleFrom(
         backgroundColor: saveBackgroundColor,
         foregroundColor: saveForegroundColor,
+        padding: figmaEditing
+            ? const EdgeInsets.symmetric(horizontal: 5)
+            : null,
         shape: const StadiumBorder(),
         textStyle: TextStyle(
           fontFamily: VH.headingFontFamily,
@@ -282,11 +295,9 @@ class _AddressFormState extends State<AddressForm> {
           fontWeight: FontWeight.bold,
         ),
       ),
-      child: Text(
-        _saving ? 'Salvando…' : saveLabel,
-        maxLines: 1,
-        softWrap: false,
-      ),
+      child: figmaEditing
+          ? FittedBox(fit: BoxFit.scaleDown, child: saveText)
+          : saveText,
     );
     final deleteButton = editing
         ? SizedBox(
@@ -308,7 +319,12 @@ class _AddressFormState extends State<AddressForm> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              child: const Text('Excluir'),
+              child: figmaEditing
+                  ? const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Excluir'),
+                    )
+                  : const Text('Excluir'),
             ),
           )
         : null;
@@ -627,24 +643,36 @@ class _AddressFormState extends State<AddressForm> {
       TextEditingController controller, {
       FormFieldValidator<String>? validator,
       ValueChanged<String>? onChanged,
-      required double top,
-    }) => Positioned(
-      left: 15,
-      top: top,
-      width: 259,
-      child: _field(
-        label,
-        icon,
-        controller,
-        validator: validator,
-        onChanged: onChanged,
+      double minHeight = 92,
+      Widget? status,
+    }) => ConstrainedBox(
+      constraints: BoxConstraints(minHeight: minHeight),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _field(
+              label,
+              icon,
+              controller,
+              validator: validator,
+              onChanged: onChanged,
+            ),
+            ?status,
+          ],
+        ),
       ),
     );
 
-    return SizedBox.expand(
-      child: Form(
-        key: _key,
-        child: Stack(
+    return Form(
+      key: _key,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(15, 14, 16, 23),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             field(
               'CEP',
@@ -655,76 +683,56 @@ class _AddressFormState extends State<AddressForm> {
                   (value ?? '').replaceAll(RegExp(r'\D'), '').length == 8
                   ? null
                   : 'Informe um CEP com 8 números',
-              top: 14,
+              status: _status.isEmpty
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.only(left: 5),
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          _status,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ),
             ),
             field(
               'Logradouro',
               Icons.home_outlined,
               _street,
               validator: _required,
-              top: 106,
+              minHeight: 93,
             ),
-            field(
-              'Numero',
-              Icons.numbers,
-              _number,
-              validator: _required,
-              top: 199,
-            ),
-            field('Complemento', Icons.home_outlined, _complement, top: 291),
+            field('Numero', Icons.numbers, _number, validator: _required),
+            field('Complemento', Icons.home_outlined, _complement),
             field(
               'Cidade',
               Icons.location_city_outlined,
               _city,
               validator: _required,
-              top: 383,
             ),
-            field('Nome', Icons.home_outlined, _name, top: 475),
-            if (_status.isNotEmpty)
-              Positioned(
-                left: 20,
-                top: 90,
-                width: 254,
-                height: 14,
-                child: Semantics(
-                  liveRegion: true,
-                  label: _status,
-                  child: ExcludeSemantics(
-                    child: Text(
-                      _status,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                  ),
+            field('Nome', Icons.home_outlined, _name, minHeight: 87),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              runSpacing: 8,
+              children: [
+                FigmaActionTarget(
+                  key: const ValueKey('address-delete-target'),
+                  width: 90,
+                  label: 'Excluir endereço',
+                  onPressed: _saving ? null : _delete,
+                  child: deleteButton,
                 ),
-              ),
-            Positioned(
-              left: 15,
-              top: 562,
-              child: FigmaActionTarget(
-                key: const ValueKey('address-delete-target'),
-                width: 90,
-                label: 'Excluir endereço',
-                onPressed: _saving ? null : _delete,
-                child: deleteButton,
-              ),
+                ?routeButton,
+                FigmaActionTarget(
+                  key: const ValueKey('address-save-target'),
+                  width: 90,
+                  label: 'Salvar endereço',
+                  onPressed: _loading || _saving ? null : _save,
+                  child: SizedBox(width: 90, height: 34, child: saveButton),
+                ),
+              ],
             ),
-            Positioned(
-              left: 184,
-              top: 562,
-              width: 90,
-              height: 48,
-              child: FigmaActionTarget(
-                key: const ValueKey('address-save-target'),
-                width: 90,
-                label: 'Salvar endereço',
-                onPressed: _loading || _saving ? null : _save,
-                child: SizedBox(width: 90, height: 34, child: saveButton),
-              ),
-            ),
-            if (routeButton != null)
-              Positioned(left: 121, top: 562, child: routeButton),
           ],
         ),
       ),
