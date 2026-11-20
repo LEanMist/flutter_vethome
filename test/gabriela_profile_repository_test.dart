@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -17,6 +18,25 @@ void main() {
 
   tearDown(() async {
     await VetRepository.flush();
+  });
+
+  test('perfil inicial tem nome e nenhum nascimento atribuído', () {
+    expect(GabrielaProfileRepository.name, 'Gabriela');
+    expect(GabrielaProfileRepository.birthDate, isNull);
+  });
+
+  test('foto é restaurada e uma imagem inválida preserva a foto salva', () async {
+    const photo =
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aBhoAAAAASUVORK5CYII=';
+    await GabrielaProfileRepository.updatePhoto(photo);
+    await expectLater(
+      GabrielaProfileRepository.updatePhoto('imagem inválida'),
+      throwsFormatException,
+    );
+
+    await GabrielaProfileRepository.initialize();
+    expect(GabrielaProfileRepository.photoBytes, base64Decode(photo));
+    expect(VetRepository.clientPhotoBytes, isNull);
   });
 
   test('nome e nascimento da Gabriela sobrevivem à reinicialização', () async {
@@ -57,7 +77,10 @@ void main() {
     await GabrielaProfileRepository.updateName('Gabriela');
     await GabrielaProfileRepository.updateBirthDate(DateTime(1995, 6, 17));
 
-    VetRepository.updateClient(name: 'Outro cliente', birthDate: DateTime(1988));
+    VetRepository.updateClient(
+      name: 'Outro cliente',
+      birthDate: DateTime(1988),
+    );
     await VetRepository.flush();
     await GabrielaProfileRepository.initialize();
 

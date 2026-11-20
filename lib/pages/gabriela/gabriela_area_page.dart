@@ -2,9 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:image_picker/image_picker.dart';
 
-import '../../core/utils/photo_picker.dart';
+import '../../core/utils/pet_photo.dart';
 import '../../data/gabriela_profile_repository.dart';
 import '../../theme.dart';
 import '../../theme/vet_colors.dart';
@@ -72,48 +71,61 @@ class GabrielaProfileTab extends StatefulWidget {
 
 class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
   late String _name = GabrielaProfileRepository.name;
-  late DateTime _birthday = GabrielaProfileRepository.birthDate;
+  late DateTime? _birthday = GabrielaProfileRepository.birthDate;
   Uint8List? _photoBytes = GabrielaProfileRepository.photoBytes;
+  bool _changingPhoto = false;
 
-  String get _birthdayLabel =>
-      '${_two(_birthday.day)}/${_two(_birthday.month)}/${_birthday.year}';
+  String get _birthdayLabel {
+    final date = _birthday;
+    if (date == null) return 'Nascimento não informado';
+    return '${_two(date.day)} / ${_two(date.month)} / ${date.year}';
+  }
 
   String _two(int value) => value.toString().padLeft(2, '0');
 
   Future<void> _changePhoto() async {
+    if (_changingPhoto) return;
+    setState(() => _changingPhoto = true);
     try {
-      final XFile? image = await pickLocalPhoto(context, centered: true);
-      if (image == null) return;
-      final bytes = await image.readAsBytes();
-      if (!mounted) return;
-      setState(() => _photoBytes = bytes);
-      GabrielaProfileRepository.photoBytes = bytes;
+      final photo = await PetPhoto.choose(context, centered: true);
+      if (photo == null || !mounted) return;
+      await GabrielaProfileRepository.updatePhoto(photo);
+      if (mounted) {
+        setState(() => _photoBytes = GabrielaProfileRepository.photoBytes);
+      }
+    } on FormatException catch (error) {
+      if (mounted) _message(error.message);
     } catch (_) {
-      if (mounted) _message('Não foi possível abrir a imagem.');
+      if (mounted) _message('Não foi possível atualizar a foto de perfil.');
+    } finally {
+      if (mounted) setState(() => _changingPhoto = false);
     }
   }
 
   Future<void> _changeName() async {
-    final controller = TextEditingController(text: _name);
+    var editedName = _name;
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: VetColors.pink,
         title: const Text('Nome do perfil'),
-        content: TextField(controller: controller, autofocus: true),
+        content: TextFormField(
+          initialValue: _name,
+          autofocus: true,
+          onChanged: (value) => editedName = value,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            onPressed: () => Navigator.pop(context, editedName.trim()),
             child: const Text('Salvar'),
           ),
         ],
       ),
     );
-    controller.dispose();
     if (name == null || name.isEmpty || !mounted) return;
     try {
       await GabrielaProfileRepository.updateName(name);
@@ -126,7 +138,7 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
   Future<void> _changeBirthday() async {
     final date = await showDatePicker(
       context: context,
-      initialDate: _birthday,
+      initialDate: _birthday ?? DateTime.now(),
       firstDate: DateTime(1920),
       lastDate: DateTime.now(),
       locale: const Locale('pt', 'BR'),
@@ -146,134 +158,154 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
   @override
   Widget build(BuildContext context) {
     final s = PetsTheme.scaleOf(context);
-    return Column(
+    final photo = _photoBytes;
+    return ListView(
+      padding: EdgeInsets.zero,
       children: [
-        _GabrielaHeader(title: 'Perfil', height: 116 * s),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(20 * s, 0, 20 * s, 18 * s),
-            child: Column(
+        Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 131 * s,
+              child: const DecoratedBox(
+                decoration: BoxDecoration(
+                  color: VetColors.rose,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(30),
+                  ),
+                ),
+              ),
+            ),
+            Column(
               children: [
-                Transform.translate(
-                  offset: Offset(0, -22 * s),
-                  child: Container(
-                    width: 224 * s,
-                    padding: EdgeInsets.fromLTRB(
-                      14 * s,
-                      14 * s,
-                      14 * s,
-                      18 * s,
-                    ),
-                    decoration: BoxDecoration(
-                      color: VetColors.pink.withValues(alpha: .55),
-                      border: Border.all(color: VetColors.rose, width: 2 * s),
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(28 * s),
-                        bottom: Radius.circular(100 * s),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16, 22 * s, 16, 13 * s),
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      'Perfil',
+                      style: TextStyle(
+                        fontFamily: PetsTheme.fontComfortaa,
+                        fontSize: 30 * s,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          _name,
-                          style: TextStyle(
-                            fontFamily: PetsTheme.fontComfortaa,
-                            fontSize: 20 * s,
-                            fontWeight: FontWeight.w700,
-                            color: VetColors.brown,
-                          ),
-                        ),
-                        SizedBox(height: 12 * s),
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            CustomPaint(
-                              size: Size(178 * s, 178 * s),
-                              painter: _DashedProfileOutlinePainter(),
-                            ),
-                            ClipOval(
-                              child: SizedBox(
-                                width: 148 * s,
-                                height: 148 * s,
-                                child: _photoBytes != null
-                                    ? Image.memory(
-                                        _photoBytes!,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : ColoredBox(
-                                        color: VetColors.pink,
-                                        child: Image.asset(
-                                          'assets/imagens/figma/frame-53-3.png',
-                                          fit: BoxFit.contain,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: Material(
-                                color: VetColors.pink,
-                                shape: const CircleBorder(),
-                                child: InkWell(
-                                  customBorder: const CircleBorder(),
-                                  onTap: _changePhoto,
-                                  child: Padding(
-                                    padding: EdgeInsets.all(5 * s),
-                                    child: Icon(
-                                      Icons.edit_outlined,
-                                      size: 36 * s,
-                                      color: VetColors.profileOutline,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
                     ),
                   ),
                 ),
-                Transform.translate(
-                  offset: Offset(0, -6 * s),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                Container(
+                  width: 220 * s,
+                  padding: EdgeInsets.fromLTRB(8 * s, 15 * s, 8 * s, 10 * s),
+                  decoration: BoxDecoration(
+                    color: VetColors.pink.withValues(alpha: .5),
+                    border: Border.all(color: VetColors.rose, width: 5 * s),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(30 * s),
+                      bottom: Radius.circular(110 * s),
+                    ),
+                  ),
+                  child: Column(
                     children: [
-                      Icon(
-                        Icons.cake_outlined,
-                        color: VetColors.brown,
-                        size: 18 * s,
-                      ),
-                      SizedBox(width: 7 * s),
                       Text(
-                        _birthdayLabel,
+                        _name,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: PetsTheme.fontComfortaa,
-                          fontSize: 13 * s,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 22 * s,
+                          fontWeight: FontWeight.bold,
                           color: VetColors.brown,
+                        ),
+                      ),
+                      SizedBox(height: 28 * s),
+                      CustomPaint(
+                        painter: _DashedProfileOutlinePainter(),
+                        child: Padding(
+                          padding: EdgeInsets.all(12 * s),
+                          child: Material(
+                            type: MaterialType.transparency,
+                            shape: const CircleBorder(),
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
+                              onTap: _changingPhoto ? null : _changePhoto,
+                              child: Semantics(
+                                button: true,
+                                label: 'Alterar foto de perfil',
+                                child: SizedBox.square(
+                                  dimension: 165 * s,
+                                  child: photo == null
+                                      ? Image.asset(
+                                          'assets/imagens/figma/profile-pet-placeholder.png',
+                                          fit: BoxFit.contain,
+                                          excludeFromSemantics: true,
+                                        )
+                                      : Image.memory(
+                                          photo,
+                                          fit: BoxFit.cover,
+                                          excludeFromSemantics: true,
+                                          errorBuilder: (_, _, _) => const Icon(
+                                            Icons.add_a_photo_outlined,
+                                            color: VetColors.brown,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 8 * s),
-                _ProfileAction(
-                  label: 'Mudar Foto de Perfil',
-                  onTap: _changePhoto,
-                ),
-                _ProfileAction(
-                  label: 'Mudar Nome de Perfil',
-                  onTap: _changeName,
-                ),
-                _ProfileAction(
-                  label: 'Mudar Data de Nascimento',
-                  onTap: _changeBirthday,
-                  last: true,
-                ),
               ],
             ),
+          ],
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 10 * s, 16, 64 * s),
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8 * s,
+            children: [
+              Image.asset(
+                'assets/imagens/figma/profile-birthday-icon.png',
+                width: 18 * s,
+                height: 22 * s,
+                excludeFromSemantics: true,
+              ),
+              Text(
+                _birthdayLabel,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: PetsTheme.fontComfortaa,
+                  fontSize: 18 * s,
+                  fontWeight: FontWeight.bold,
+                  color: VetColors.brown,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+          child: Column(
+            children: [
+              _ProfileAction(
+                label: 'Mudar Foto de Perfil',
+                onTap: _changingPhoto ? null : _changePhoto,
+              ),
+              _ProfileAction(label: 'Mudar Nome de Perfil', onTap: _changeName),
+              _ProfileAction(
+                label: 'Mudar Data de Nascimento',
+                onTap: _changeBirthday,
+                last: true,
+              ),
+            ],
           ),
         ),
       ],
@@ -447,35 +479,6 @@ class GabrielaSettingsTab extends StatelessWidget {
   }
 }
 
-class _GabrielaHeader extends StatelessWidget {
-  const _GabrielaHeader({required this.title, required this.height});
-
-  final String title;
-  final double height;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    height: height,
-    alignment: Alignment.topCenter,
-    padding: const EdgeInsets.only(top: 18),
-    decoration: const BoxDecoration(
-      color: VetColors.rose,
-      borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
-    ),
-    child: Text(
-      title,
-      textAlign: TextAlign.center,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 26,
-        fontFamily: PetsTheme.fontComfortaa,
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-  );
-}
-
 class _ProfileAction extends StatelessWidget {
   const _ProfileAction({
     required this.label,
@@ -484,35 +487,39 @@ class _ProfileAction extends StatelessWidget {
   });
 
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool last;
 
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      InkWell(
+      ListTile(
+        enabled: onTap != null,
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontFamily: PetsTheme.fontComfortaa,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: VetColors.brown,
-                  ),
-                ),
-              ),
-              const Icon(Icons.chevron_right, color: VetColors.brown),
-            ],
+        minTileHeight: 56,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        title: Text(
+          label,
+          style: const TextStyle(
+            fontFamily: VH.headingFontFamily,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: VetColors.brown,
           ),
         ),
+        trailing: SvgPicture.asset(
+          'assets/imagens/figma/services-chevron-right.svg',
+          width: 11,
+          height: 19.6299,
+          excludeFromSemantics: true,
+        ),
       ),
-      if (!last) const Divider(height: 1, color: VetColors.profileOutline),
+      if (!last)
+        Divider(
+          height: 1,
+          thickness: 1,
+          color: VetColors.brown.withValues(alpha: .25),
+        ),
     ],
   );
 }

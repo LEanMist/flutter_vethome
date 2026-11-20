@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+
 import 'photo_picker.dart';
 
 /// Small local PNG thumbnails; no blob URLs or file paths in saved photos.
@@ -22,8 +24,15 @@ class PetPhoto {
     }
   }
 
-  static Future<String?> choose(BuildContext context) async {
-    final picked = await pickLocalPhoto(context, maxSize: 512);
+  static Future<String?> choose(
+    BuildContext context, {
+    bool centered = false,
+  }) async {
+    final picked = await pickLocalPhoto(
+      context,
+      maxSize: 512,
+      centered: centered,
+    );
     if (picked == null) return null;
     if (await picked.length() > 5 * 1024 * 1024) {
       throw const FormatException('Escolha uma imagem menor que 5 MB.');

@@ -61,7 +61,9 @@ void main() {
 
         testWidgets('opções de foto ficam no centro', (tester) async {
           await _showScreen(tester, size, const GabrielaProfileTab());
-          await tester.tap(find.text('Mudar Foto de Perfil'));
+          final changePhoto = find.text('Mudar Foto de Perfil');
+          await tester.ensureVisible(changePhoto);
+          await tester.tap(changePhoto);
           await tester.pumpAndSettle();
           _expectCentered(tester, size);
           expect(
