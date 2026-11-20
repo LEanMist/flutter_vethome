@@ -16,7 +16,7 @@ class PetCardWidget extends StatelessWidget {
   final Color nameColor;
   final int maxNameLines;
   final WidgetStateProperty<Color?>? overlayColor;
-  final bool raised;
+  final bool figmaList;
   final String? semanticLabel;
 
   const PetCardWidget({
@@ -26,37 +26,32 @@ class PetCardWidget extends StatelessWidget {
     this.nameColor = VetColors.brownOnRose,
     this.maxNameLines = 1,
     this.overlayColor,
-    this.raised = false,
+    this.figmaList = false,
     this.semanticLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
-    final Decoration decoration = raised
-        ? BoxDecoration(
-            color: VetColors.roseOverlay50,
-            borderRadius: BorderRadius.circular(25 * s),
-            boxShadow: [
-              BoxShadow(
-                color: VetColors.brown.withValues(alpha: .12),
-                offset: const Offset(0, 2),
-                blurRadius: 6,
-              ),
-            ],
-          )
-        : inset_shadow.BoxDecoration(
-            color: VetColors.roseOverlay50,
-            borderRadius: BorderRadius.circular(25 * s),
-            boxShadow: const [
-              inset_shadow.BoxShadow(
-                color: VetColors.shadowDark,
-                offset: Offset(2, 2),
-                blurRadius: 2,
-                inset: true,
-              ),
-            ],
-          );
+    final highContrast = MediaQuery.highContrastOf(context);
+    final useWhite = figmaList && !highContrast;
+    final titleColor = useWhite
+        ? Colors.white
+        : figmaList
+        ? VetColors.calendarTextOnRose
+        : nameColor;
+    final decoration = inset_shadow.BoxDecoration(
+      color: useWhite ? PetsTheme.figmaListAccent : VetColors.roseOverlay50,
+      borderRadius: BorderRadius.circular(25 * s),
+      boxShadow: const [
+        inset_shadow.BoxShadow(
+          color: VetColors.shadowDark,
+          offset: Offset(2, 2),
+          blurRadius: 2,
+          inset: true,
+        ),
+      ],
+    );
     final card = Container(
       decoration: decoration,
       child: Material(
@@ -70,9 +65,17 @@ class PetCardWidget extends StatelessWidget {
               : SystemMouseCursors.click,
           overlayColor:
               overlayColor ??
-              WidgetStateProperty.resolveWith(VH.interactionOverlay),
+              WidgetStateProperty.resolveWith(
+                useWhite
+                    ? PetsTheme.figmaListOverlay
+                    : figmaList
+                    ? PetsTheme.listInteractionOverlay
+                    : VH.interactionOverlay,
+              ),
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: 52 * s),
+            constraints: BoxConstraints(
+              minHeight: figmaList ? (52 * s).clamp(48.0, 52.0) : 52 * s,
+            ),
             child: Padding(
               padding: EdgeInsets.symmetric(
                 vertical: 8 * s,
@@ -86,18 +89,19 @@ class PetCardWidget extends StatelessWidget {
                     species: pet.species,
                     size: 34,
                     listSilhouette: true,
+                    silhouetteColor: figmaList ? titleColor : null,
                   ),
-                  SizedBox(width: 2 * s),
+                  SizedBox(width: (figmaList ? 20 : 2) * s),
                   Expanded(
                     child: Text(
                       pet.name,
                       maxLines: maxNameLines,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 20 * s,
+                        fontSize: figmaList ? (20 * s).clamp(19, 20) : 20 * s,
                         fontWeight: FontWeight.w700,
                         fontFamily: PetsTheme.fontComfortaa,
-                        color: nameColor,
+                        color: titleColor,
                       ),
                     ),
                   ),

@@ -12,12 +12,14 @@ class VetBottomNav extends StatelessWidget {
     required this.onSelected,
     this.compact = false,
     this.showPetsTab = true,
+    this.figmaPetsSelection = false,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onSelected;
   final bool compact;
   final bool showPetsTab;
+  final bool figmaPetsSelection;
 
   static const _allDestinationIndices = [0, 1, 2, 3, 4];
   static const _destinationIndicesWithoutPets = [1, 2, 3, 4];
@@ -102,6 +104,8 @@ class VetBottomNav extends StatelessWidget {
                       icon: _icons[destination.value],
                       selected: destination.value == selectedIndex,
                       highlighted: destination.key == 0,
+                      figmaPetsSelection:
+                          figmaPetsSelection && destination.value == 0,
                       scale: s,
                       onTap: () => onSelected(destination.value),
                     ),
@@ -131,6 +135,7 @@ class _VetNavDestination extends StatefulWidget {
     required this.icon,
     required this.selected,
     required this.highlighted,
+    required this.figmaPetsSelection,
     required this.scale,
     required this.onTap,
   });
@@ -139,6 +144,7 @@ class _VetNavDestination extends StatefulWidget {
   final String icon;
   final bool selected;
   final bool highlighted;
+  final bool figmaPetsSelection;
   final double scale;
   final VoidCallback onTap;
 
@@ -154,13 +160,17 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
   @override
   Widget build(BuildContext context) {
     final dimension = (50 * widget.scale).clamp(48.0, 50.0);
-    final overlay = _pressed
-        ? VH.interactionOverlay({WidgetState.pressed})
-        : _focused
-        ? VH.interactionOverlay({WidgetState.focused})
-        : _hovered
-        ? VH.interactionOverlay({WidgetState.hovered})
-        : Colors.transparent;
+    final selectedPets = widget.figmaPetsSelection && widget.selected;
+    final highContrast = selectedPets && MediaQuery.highContrastOf(context);
+    final whitePetsIcon = selectedPets && !highContrast;
+    final states = <WidgetState>{
+      if (_pressed) WidgetState.pressed,
+      if (_focused) WidgetState.focused,
+      if (_hovered) WidgetState.hovered,
+    };
+    final overlay = whitePetsIcon
+        ? PetsTheme.figmaListOverlay(states)
+        : VH.interactionOverlay(states);
     return Semantics(
       button: true,
       selected: widget.selected,
@@ -193,7 +203,9 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
                           alignment: Alignment.center,
                           decoration: widget.selected
                               ? inset_shadow.BoxDecoration(
-                                  color: VetColors.roseOverlay50,
+                                  color: whitePetsIcon
+                                      ? PetsTheme.figmaListAccent
+                                      : VetColors.roseOverlay50,
                                   shape: BoxShape.circle,
                                   boxShadow: const [
                                     inset_shadow.BoxShadow(
@@ -213,6 +225,14 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
                               widget.icon,
                               width: 35 * widget.scale,
                               height: 35 * widget.scale,
+                              color: whitePetsIcon
+                                  ? Colors.white
+                                  : highContrast
+                                  ? VetColors.calendarTextOnRose
+                                  : null,
+                              colorBlendMode: selectedPets
+                                  ? BlendMode.srcIn
+                                  : null,
                             ),
                           ),
                         )

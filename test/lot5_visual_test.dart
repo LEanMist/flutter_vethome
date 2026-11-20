@@ -13,6 +13,7 @@ import 'package:flutter_vethome/screens/pets.dart' show EscolhaPetScreen;
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pets/pet_card_widget.dart';
 import 'package:flutter_vethome/widgets/pets/pet_avatar.dart';
+import 'package:flutter_vethome/widgets/pets/pets_theme.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 import 'package:flutter_vethome/widgets/vet_choice_pill.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,7 +31,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
   }
 
-  testWidgets('D8 keeps the 390px panel and softly raises pet rows', (
+  testWidgets('Pets usa painel, linhas e cores do Figma em 390 px', (
     tester,
   ) async {
     viewport(tester, const Size(390, 844));
@@ -93,27 +94,55 @@ void main() {
           find.descendant(of: card, matching: find.byType(DecoratedBox)),
         )
         .map((widget) => widget.decoration)
-        .whereType<BoxDecoration>()
+        .whereType<inset_shadow.BoxDecoration>()
         .single;
-    expect(decoration.color, VetColors.roseOverlay50);
+    expect(decoration.color, PetsTheme.figmaListAccent);
     expect(decoration.borderRadius, BorderRadius.circular(25));
-    final shadow = decoration.boxShadow!.single;
-    expect(shadow.color, VetColors.brown.withValues(alpha: .12));
-    expect(shadow.offset, const Offset(0, 2));
-    expect(shadow.blurRadius, 6);
+    final shadow = decoration.boxShadow!.single as inset_shadow.BoxShadow;
+    expect(shadow.color, VetColors.shadowDark);
+    expect(shadow.offset, const Offset(2, 2));
+    expect(shadow.blurRadius, 2);
+    expect(shadow.inset, isTrue);
 
     final avatar = find.descendant(of: card, matching: find.byType(PetAvatar));
     final name = find.descendant(of: card, matching: find.text('Fernando'));
     expect(
       tester.getTopLeft(name).dx - tester.getTopRight(avatar).dx,
-      closeTo(2, .1),
+      closeTo(20, .1),
     );
+    expect(tester.getTopLeft(name).dx, closeTo(104, 1));
+    expect(tester.widget<Text>(name).style?.color, Colors.white);
+    expect(tester.widget<PetAvatar>(avatar).silhouetteColor, Colors.white);
+    final paw = find.image(const AssetImage('assets/imagens/figma/pets.png'));
+    expect(tester.widget<Image>(paw).color, Colors.white);
 
     final chevron = tester.widget<VetChevron>(
       find.descendant(of: card, matching: find.byType(VetChevron)),
     );
     expect(chevron.color, VetColors.brownOnRose);
     expect(chevron.strokeWidth, 3);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Pets usa texto e silhuetas escuros em alto contraste', (
+    tester,
+  ) async {
+    viewport(tester, const Size(390, 844));
+    tester.view.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(highContrast: true);
+    addTearDown(
+      tester.view.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    await tester.pumpWidget(const MaterialApp(home: PetsPage()));
+
+    final title = tester.widget<Text>(find.text('Fernando'));
+    final paw = find.image(const AssetImage('assets/imagens/figma/pets.png'));
+    expect(title.style?.color, VetColors.calendarTextOnRose);
+    expect(
+      tester.widget<PetAvatar>(find.byType(PetAvatar).first).silhouetteColor,
+      VetColors.calendarTextOnRose,
+    );
+    expect(tester.widget<Image>(paw).color, VetColors.calendarTextOnRose);
     expect(tester.takeException(), isNull);
   });
 
@@ -135,6 +164,68 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('lista vazia continua acessível em tela baixa com texto a 200%', (
+    tester,
+  ) async {
+    viewport(tester, const Size(320, 460));
+    VetRepository.pets.clear();
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const PetsPage(),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    final scrollable = find.descendant(
+      of: find.byKey(const ValueKey('pets-empty-state')),
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(scrollable).position;
+    expect(position.extentAfter, greaterThan(0));
+    await tester.sendEventToBinding(
+      PointerScrollEvent(
+        position: tester.getCenter(scrollable),
+        scrollDelta: Offset(0, position.extentAfter),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(position.extentAfter, lessThan(1));
+    final hint = find.text('Cadastre seu primeiro pet pelo botão + abaixo.');
+    expect(tester.getRect(hint).bottom, tester.getRect(scrollable).bottom);
+    expect(
+      find.byKey(const ValueKey('pets-add-target')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cartão de Pets abre Detalhes com alvo de 48 px em 320 px', (
+    tester,
+  ) async {
+    viewport(tester, const Size(320, 640));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const PetsPage(),
+        routes: {
+          '/pet': (context) {
+            final pet = ModalRoute.of(context)!.settings.arguments! as PetModel;
+            return Scaffold(body: Text('Detalhes de ${pet.name}'));
+          },
+        },
+      ),
+    );
+    final card = tester.getRect(find.byType(PetCardWidget).first);
+    expect(card.height, greaterThanOrEqualTo(48));
+    await tester.tapAt(Offset(card.center.dx, card.top + 1));
+    await tester.pumpAndSettle();
+    expect(find.text('Detalhes de Fernando'), findsOneWidget);
+  });
+
   testWidgets(
     'lista Pets expande o cartão para nomes longos em telas estreitas',
     (tester) async {
@@ -150,18 +241,31 @@ void main() {
             description: '',
           ),
         );
-      await tester.pumpWidget(const MaterialApp(home: PetsPage()));
+      for (final scale in [1.0, 2.0]) {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(scale)),
+                child: const PetsPage(),
+              ),
+            ),
+          ),
+        );
 
-      final card = find.byType(PetCardWidget).first;
-      final nameFinder = find.descendant(
-        of: card,
-        matching: find.text(longName),
-      );
-      final name = tester.widget<Text>(nameFinder);
-      expect(name.maxLines, 2);
-      expect(tester.getSize(nameFinder).height, greaterThan(25));
-      expect(tester.getSize(card).height, greaterThan(52 * 320 / 390));
-      expect(tester.takeException(), isNull);
+        final card = find.byType(PetCardWidget).first;
+        final nameFinder = find.descendant(
+          of: card,
+          matching: find.text(longName),
+        );
+        final name = tester.widget<Text>(nameFinder);
+        expect(name.maxLines, 2);
+        expect(tester.getSize(nameFinder).height, greaterThan(25));
+        expect(tester.getSize(card).height, greaterThan(52 * 320 / 390));
+        expect(tester.takeException(), isNull);
+      }
     },
   );
 
@@ -424,7 +528,7 @@ void main() {
         .map((item) => item.decoration)
         .whereType<inset_shadow.BoxDecoration>()
         .single;
-    expect(circle.color, VetColors.roseOverlay50);
+    expect(circle.color, PetsTheme.figmaListAccent);
     final shadow = circle.boxShadow!.single as inset_shadow.BoxShadow;
     expect(shadow.inset, isTrue);
     expect(shadow.color, VetColors.shadowDark);

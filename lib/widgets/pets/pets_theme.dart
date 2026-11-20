@@ -18,6 +18,8 @@ class PetsTheme {
   static const Color color33C080 = Color(0x33C08081);
   static const Color color3FC080 = Color(0x3FC08081);
   static const Color color7FC080 = Color(0x7FC08081);
+  // Rosa próximo do Figma com contraste de 3,03:1 para branco.
+  static const figmaListAccent = Color(0xFFC08586);
 
   // ── Fontes ──────────────────────────────────────────────────────────────
   // Os nomes precisam ser IGUAIS aos `family:` declarados no pubspec.yaml.
@@ -43,6 +45,19 @@ class PetsTheme {
     }
     if (states.contains(WidgetState.hovered)) {
       return VetColors.pink.withValues(alpha: .12);
+    }
+    return null;
+  }
+
+  /// Mantém os nomes brancos e as setas escuras legíveis durante a interação.
+  static Color? figmaListOverlay(Set<WidgetState> states) {
+    if (states.contains(WidgetState.disabled)) return Colors.transparent;
+    if (states.contains(WidgetState.pressed) ||
+        states.contains(WidgetState.focused)) {
+      return VetColors.brownOnRose.withValues(alpha: .10);
+    }
+    if (states.contains(WidgetState.hovered)) {
+      return VetColors.brownOnRose.withValues(alpha: .06);
     }
     return null;
   }

@@ -42,6 +42,7 @@ class _PetsPageState extends State<PetsPage> {
                 top: false,
                 child: VetBottomNav(
                   selectedIndex: 0,
+                  figmaPetsSelection: true,
                   onSelected: (i) =>
                       vetNavigate(context, i, selected: 0, isTabRoot: true),
                 ),
@@ -169,18 +170,24 @@ class _PetsPageState extends State<PetsPage> {
             onPressed: addPet,
             child: Align(
               alignment: Alignment.topCenter,
-              child: SizedBox(
-                width: 107,
-                height: 47,
-                child: IconButton.filled(
-                  tooltip: 'Adicionar pet',
-                  onPressed: addPet,
-                  style: IconButton.styleFrom(
-                    backgroundColor: VetColors.brown,
-                    foregroundColor: Colors.white,
-                    shape: const StadiumBorder(),
+              child: Tooltip(
+                message: 'Adicionar pet',
+                child: SizedBox(
+                  width: 107,
+                  height: 47,
+                  child: OverflowBox(
+                    // A exportação mede 111 × 51 px com a sombra do botão.
+                    alignment: Alignment.topLeft,
+                    minWidth: 111,
+                    maxWidth: 111,
+                    minHeight: 51,
+                    maxHeight: 51,
+                    child: Ink.image(
+                      image: const AssetImage(
+                        'assets/imagens/figma/pets-add-button.png',
+                      ),
+                    ),
                   ),
-                  icon: const Icon(Icons.add, size: 30),
                 ),
               ),
             ),
@@ -192,7 +199,8 @@ class _PetsPageState extends State<PetsPage> {
 
   Widget _emptyPetsState(double scale) => Center(
     key: const ValueKey('pets-empty-state'),
-    child: Padding(
+    child: SingleChildScrollView(
+      primary: false,
       padding: EdgeInsets.symmetric(horizontal: 20 * scale),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -240,11 +248,8 @@ class _PetsPageState extends State<PetsPage> {
 
   Widget _petCard(BuildContext context, int index) => PetCardWidget(
     pet: VetRepository.pets[index],
-    raised: true,
+    figmaList: true,
     maxNameLines: 2,
-    overlayColor: WidgetStateProperty.resolveWith(
-      PetsTheme.listInteractionOverlay,
-    ),
     semanticLabel: 'Abrir detalhes de ${VetRepository.pets[index].name}',
     onTap: () async {
       VetRepository.selectedPetId = VetRepository.pets[index].id;
