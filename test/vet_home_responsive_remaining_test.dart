@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/pages/agenda_page.dart';
+import 'package:flutter_vethome/pages/cadastroPet_page.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/chat_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
@@ -58,6 +59,34 @@ Future<void> pumpMobileDetails(
 }
 
 void main() {
+  testWidgets(
+    'Cadastro Pet pela lista mantém o formulário visível em desktop',
+    (tester) async {
+      await pumpPage(
+        tester,
+        const PetsPage(),
+        const Size(1280, 720),
+        extraRoutes: {
+          '/cadastroPet': (_) =>
+              const CadastroPetScreen(initialData: {'flow': 'addPet'}),
+        },
+      );
+      await tester.tap(find.byKey(const ValueKey('pets-add-target')));
+      await tester.pumpAndSettle();
+
+      final navigation = find.byType(VetBottomNav);
+      expect(tester.getSize(navigation).height, lessThan(110));
+      expect(find.text('Cadastro Pet').hitTestable(), findsOneWidget);
+      expect(find.byType(EditableText).hitTestable(), findsWidgets);
+      final skip = find.text('Pular');
+      expect(skip.hitTestable(), findsOneWidget);
+      await tester.tap(skip);
+      await tester.pumpAndSettle();
+      expect(find.byType(PetsPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('telas principais não apresentam overflow nas cinco larguras', (
     tester,
   ) async {

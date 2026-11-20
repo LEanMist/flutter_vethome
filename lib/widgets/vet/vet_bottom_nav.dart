@@ -62,6 +62,8 @@ class VetBottomNav extends StatelessWidget {
               .toDouble()
         : standardBottomGap;
     final navigation = Center(
+      // No rodapé do Scaffold, ocupe apenas a altura da barra.
+      heightFactor: 1,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: VH.mobileContentMaxWidth),
         child: Container(
