@@ -8,7 +8,7 @@ import '../widgets.dart';
 const String _chatLocalityNotice =
     'Conversa de demonstração local. As mensagens digitadas aparecem somente '
     'nesta sessão e não são enviadas à veterinária.';
-const String _chatVeterinarianName = 'Gabriela Falcão';
+const String _chatVeterinarianName = VetRepository.contactVeterinarianName;
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});

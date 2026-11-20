@@ -442,6 +442,8 @@ class VetRepository {
   );
 
   static final Map<String, List<Agendamento>> _novosAgendamentos = {};
+
+  static const contactVeterinarianName = 'Gabriela Falcão';
   static final List<ChatMessage> chatMessages = [
     const ChatMessage(
       fromClient: false,
