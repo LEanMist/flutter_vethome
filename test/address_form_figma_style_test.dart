@@ -65,8 +65,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(address: address, modal: true),
@@ -387,8 +388,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(),
@@ -446,8 +448,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(),
@@ -574,7 +577,7 @@ void main() {
     expect(tester.getTopLeft(title).dy, 31);
     expect(
       tester.getRect(find.byKey(const ValueKey('address-registration-panel'))),
-      const Rect.fromLTWH(49, 88, 290, 565),
+      const Rect.fromLTWH(49, 137, 290, 473),
     );
     final registrationPanel = tester.widget<Container>(
       find.byKey(const ValueKey('address-registration-panel')),
@@ -590,11 +593,11 @@ void main() {
     expect(panelShadow.blurRadius, 5);
     expect(panelShadow.inset, isTrue);
     for (final (label, labelTop, fieldTop) in const [
-      ('CEP', 102.0, 122.0),
-      ('Logradouro', 194.0, 215.0),
-      ('Numero', 287.0, 307.0),
-      ('Complemento', 379.0, 399.0),
-      ('Cidade', 471.0, 491.0),
+      ('CEP', 151.0, 171.0),
+      ('Logradouro', 243.0, 264.0),
+      ('Numero', 336.0, 356.0),
+      ('Complemento', 428.0, 448.0),
+      ('Cidade', 520.0, 540.0),
     ]) {
       final labelRect = tester.getRect(find.text(label));
       expect(labelRect.left, closeTo(69, 1));
@@ -614,24 +617,21 @@ void main() {
     }
     expect(
       tester.getRect(find.widgetWithText(ElevatedButton, 'Continuar')),
-      const Rect.fromLTWH(104.5, 683, 181, 65),
+      const Rect.fromLTWH(104.5, 663, 181, 65),
     );
     final continueButton = tester.widget<ElevatedButton>(
       find.widgetWithText(ElevatedButton, 'Continuar'),
     );
     expect(
       continueButton.style?.backgroundColor?.resolve(const <WidgetState>{}),
-      VH.secondary,
+      VH.primary,
     );
     expect(
       continueButton.style?.foregroundColor?.resolve(const <WidgetState>{}),
-      VetColors.calendarTextOnRose,
+      Colors.white,
     );
-    expect(
-      _contrastRatio(VetColors.calendarTextOnRose, VH.secondary),
-      greaterThanOrEqualTo(4.5),
-    );
-    expect(tester.getTopLeft(find.text('Pular')).dy, closeTo(764, 1));
+    expect(_contrastRatio(Colors.white, VH.primary), greaterThanOrEqualTo(4.5));
+    expect(tester.getTopLeft(find.text('Pular')).dy, closeTo(744, 1));
     final skipStyle = tester
         .renderObject<RenderParagraph>(find.text('Pular'))
         .text

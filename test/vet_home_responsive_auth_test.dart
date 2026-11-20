@@ -181,8 +181,13 @@ void main() {
     );
     final panel = tester.widget<Container>(panelFinder);
     final decoration = panel.decoration! as BoxDecoration;
-    expect(tester.getSize(panelFinder), const Size(290, 565));
-    expect(tester.getTopLeft(panelFinder).dy, closeTo(88, 1));
+    expect(tester.getSize(panelFinder), const Size(290, 473));
+    expect(tester.getTopLeft(panelFinder).dy, closeTo(137, 1));
+    expect(
+      find.descendant(of: panelFinder, matching: find.byType(TextFormField)),
+      findsNWidgets(5),
+    );
+    expect(find.text('Nome'), findsNothing);
     expect(decoration.color, Colors.white.withValues(alpha: .2));
     expect(decoration.borderRadius, BorderRadius.circular(30));
     expect(decoration.border!.top.width, 3);
@@ -208,7 +213,7 @@ void main() {
       addressAssets
           .where((assetName) => assetName.endsWith('address-prefix-home.png'))
           .length,
-      4,
+      3,
     );
     expect(
       addressAssets
@@ -241,14 +246,14 @@ void main() {
     final button = tester.widget<ElevatedButton>(buttonFinder);
     expect(
       button.style?.backgroundColor?.resolve(const <WidgetState>{}),
-      VetColors.rose,
+      VH.primary,
     );
     expect(
       button.style?.foregroundColor?.resolve(const <WidgetState>{}),
-      VetColors.calendarTextOnRose,
+      Colors.white,
     );
     expect(tester.getSize(buttonFinder), const Size(181, 65));
-    expect(tester.getTopLeft(buttonFinder).dy, closeTo(683, 1));
+    expect(tester.getTopLeft(buttonFinder).dy, closeTo(663, 1));
   });
 
   testWidgets('cadastro de pet usa o painel medido no Figma', (tester) async {
@@ -275,6 +280,26 @@ void main() {
     expect(find.byType(PetForm), findsOneWidget);
   });
 
+  testWidgets('Endereço do cadastro mantém as duas ações visíveis em 320 px', (
+    tester,
+  ) async {
+    await pumpAt(tester, const EnderecoScreen(), const Size(320, 640));
+
+    final next = find.widgetWithText(ElevatedButton, 'Continuar');
+    final skip = find.widgetWithText(TextButton, 'Pular');
+    expect(next.hitTestable(), findsOneWidget);
+    expect(skip.hitTestable(), findsOneWidget);
+    final initialPosition = tester.getRect(next);
+
+    final city = find.widgetWithText(VHField, 'Cidade');
+    await tester.ensureVisible(city);
+    await tester.pumpAndSettle();
+    expect(city.hitTestable(), findsOneWidget);
+    expect(tester.getRect(next), initialPosition);
+    expect(skip.hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('cadastro distribui campos em duas colunas no desktop', (
     tester,
   ) async {
@@ -284,23 +309,23 @@ void main() {
     expect(find.byKey(const ValueKey('vh-form-desktop-grid')), findsOneWidget);
   });
 
-  testWidgets('endereço usa grade desktop sem perder os seis campos', (
-    tester,
-  ) async {
+  testWidgets('endereço usa grade desktop com cinco campos', (tester) async {
     await pumpAt(tester, const EnderecoScreen(), const Size(1280, 800));
 
     expect(tester.takeException(), isNull);
+    final grid = find.byKey(const ValueKey('address-form-desktop-grid'));
+    expect(grid, findsOneWidget);
     expect(
-      find.byKey(const ValueKey('address-form-desktop-grid')),
-      findsOneWidget,
+      find.descendant(of: grid, matching: find.byType(TextFormField)),
+      findsNWidgets(5),
     );
+    expect(find.text('Nome'), findsNothing);
     for (final label in [
       'CEP',
       'Endereço',
       'Numero',
       'Complemento',
       'Cidade',
-      'Nome',
     ]) {
       expect(find.text(label), findsWidgets);
     }

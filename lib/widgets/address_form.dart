@@ -10,6 +10,7 @@ import '../widgets/figma_action_target.dart';
 import '../widgets.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
+import 'auth/registration_actions_footer.dart';
 
 class AddressForm extends StatefulWidget {
   const AddressForm({
@@ -281,8 +282,10 @@ class _AddressFormState extends State<AddressForm> {
         : editing
         ? 'Salvar'
         : 'Salvar endereço';
-    final saveBackgroundColor = editing ? VH.primary : VH.secondary;
-    final saveForegroundColor = editing
+    final saveBackgroundColor = editing || registration
+        ? VH.primary
+        : VH.secondary;
+    final saveForegroundColor = editing || registration
         ? Colors.white
         : VetColors.calendarTextOnRose;
     final saveText = Text(
@@ -354,6 +357,39 @@ class _AddressFormState extends State<AddressForm> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final compactHeight = !registration && constraints.maxHeight < 680;
+            final textExpansion =
+                (MediaQuery.textScalerOf(context).scale(15) / 15 - 1).clamp(
+                  0.0,
+                  3.0,
+                );
+            final compactRegistration =
+                registration &&
+                constraints.maxHeight < 793 + textExpansion * 150;
+            final pinRegistrationActions =
+                registration &&
+                constraints.maxHeight >= 190 &&
+                (compactRegistration ||
+                    constraints.maxHeight <
+                        793 +
+                            (_validationAttempted ? 80 : 0) +
+                            (_status.isNotEmpty ? 40 : 0));
+            final skipButton = TextButton(
+              style: widget.skipButtonStyle,
+              onPressed: _saving ? null : _skip,
+              child: Text(_saving ? 'Salvando…' : 'Pular'),
+            );
+            final registrationActions = Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 181 + textExpansion * 80,
+                  height: constraints.maxHeight < 320 ? 54 : 65,
+                  child: saveButton,
+                ),
+                SizedBox(height: pinRegistrationActions ? 8 : 2),
+                skipButton,
+              ],
+            );
             final pinPrimaryAction =
                 widget.pinSaveAction &&
                 !desktop &&
@@ -393,7 +429,7 @@ class _AddressFormState extends State<AddressForm> {
                   ),
                   SizedBox(
                     height: registration
-                        ? 21
+                        ? (compactRegistration ? 16 : 70)
                         : compactHeight
                         ? 12
                         : 16,
@@ -402,18 +438,12 @@ class _AddressFormState extends State<AddressForm> {
                     alignment: Alignment(registrationPanelAlignment, 0),
                     child: SizedBox(
                       width: registration ? 290 : double.infinity,
-                      // Preserve the measured Figma panel before interaction.
-                      // CEP feedback can add another line to the form; let the
-                      // panel grow for that state instead of clipping fields.
-                      height:
-                          registration &&
-                              _status.isEmpty &&
-                              !_validationAttempted
-                          ? 565
-                          : null,
                       child: Container(
                         key: registration
                             ? const ValueKey('address-registration-panel')
+                            : null,
+                        constraints: registration
+                            ? const BoxConstraints(minHeight: 473)
                             : null,
                         clipBehavior:
                             registration &&
@@ -563,10 +593,10 @@ class _AddressFormState extends State<AddressForm> {
                       ),
                     ),
                   ),
-                  if (!pinPrimaryAction) ...[
+                  if (!pinPrimaryAction && !pinRegistrationActions) ...[
                     SizedBox(
                       height: registration
-                          ? 30
+                          ? 53
                           : compactHeight
                           ? 12
                           : 16,
@@ -591,26 +621,34 @@ class _AddressFormState extends State<AddressForm> {
                             ),
                           )
                         : registration
-                        ? Center(
-                            child: SizedBox(
-                              width: 181,
-                              height: 65,
-                              child: saveButton,
-                            ),
-                          )
+                        ? Center(child: registrationActions)
                         : SizedBox(height: 48, child: saveButton),
-                    if (widget.onSkip != null) ...[
+                    if (widget.onSkip != null && !registration) ...[
                       const SizedBox(height: 2),
-                      TextButton(
-                        style: widget.skipButtonStyle,
-                        onPressed: _saving ? null : _skip,
-                        child: Text(_saving ? 'Salvando…' : 'Pular'),
-                      ),
+                      skipButton,
                     ],
                   ],
                 ],
               ),
             );
+
+            if (pinRegistrationActions) {
+              return Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(
+                        bottom: RegistrationActionsFooter.contentSpacing,
+                      ),
+                      child: content,
+                    ),
+                  ),
+                  RegistrationActionsFooter(
+                    child: Center(child: registrationActions),
+                  ),
+                ],
+              );
+            }
 
             if (pinPrimaryAction) {
               return Column(

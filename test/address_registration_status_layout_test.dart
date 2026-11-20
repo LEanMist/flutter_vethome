@@ -11,7 +11,7 @@ class _MissingCepService extends CepService {
 }
 
 void main() {
-  testWidgets('status do CEP expande o painel sem cortar o campo Nome', (
+  testWidgets('status do CEP expande o painel sem cortar o campo Cidade', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -42,7 +42,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final panel = find.byKey(const ValueKey('address-registration-panel'));
-    expect(tester.getSize(panel).height, 565);
+    expect(tester.getSize(panel).height, 473);
 
     await tester.enterText(field('CEP'), '99999999');
     await tester.pumpAndSettle();
@@ -52,9 +52,9 @@ void main() {
       findsOneWidget,
     );
     final panelRect = tester.getRect(panel);
-    expect(panelRect.height, greaterThan(565));
+    expect(panelRect.height, greaterThan(473));
     expect(
-      tester.getRect(field('Nome')).bottom,
+      tester.getRect(field('Cidade')).bottom,
       lessThanOrEqualTo(panelRect.bottom),
     );
     expect(tester.takeException(), isNull);
@@ -91,12 +91,12 @@ void main() {
     await tester.pumpAndSettle();
 
     final panel = find.byKey(const ValueKey('address-registration-panel'));
-    expect(tester.getSize(panel).height, 565);
+    expect(tester.getSize(panel).height, 473);
     await tester.tap(find.widgetWithText(ElevatedButton, 'Continuar'));
     await tester.pumpAndSettle();
 
     final panelRect = tester.getRect(panel);
-    expect(panelRect.height, greaterThan(565));
+    expect(panelRect.height, greaterThan(473));
     expect(find.text('Informe um CEP com 8 números'), findsOneWidget);
     expect(find.text('Preencha este campo'), findsNWidgets(3));
     await tester.ensureVisible(field('Cidade'));
@@ -151,9 +151,9 @@ void main() {
       findsOneWidget,
     );
     final panel = find.byKey(const ValueKey('address-registration-panel'));
-    expect(tester.getRect(panel).height, greaterThan(565));
-    await tester.ensureVisible(field('Nome'));
-    expect(tester.getRect(field('Nome')).bottom, lessThanOrEqualTo(640));
+    expect(tester.getRect(panel).height, greaterThan(473));
+    await tester.ensureVisible(field('Cidade'));
+    expect(field('Cidade').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
