@@ -1,12 +1,14 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/utils/photo_picker.dart';
 import '../../data/gabriela_profile_repository.dart';
 import '../../theme.dart';
 import '../../theme/vet_colors.dart';
+import '../../widgets.dart' show VHHeader;
 import '../../widgets/pets/pets_theme.dart';
 import '../../widgets/vet/gabriela_bottom_nav.dart';
 import '../../widgets/vet/vet_centered_dialog.dart';
@@ -388,41 +390,56 @@ class GabrielaSettingsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = PetsTheme.scaleOf(context);
-    return Column(
+    final actions = <({String label, VoidCallback onTap})>[
+      (label: 'Tema do Aplicativo', onTap: () => _chooseTheme(context)),
+      (label: 'Suporte', onTap: () => _showSupport(context)),
+      (label: 'Histórico', onTap: () => _showHistory(context)),
+      (
+        label: 'Sair',
+        onTap: () => Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/gabriela/login',
+          (_) => false,
+        ),
+      ),
+    ];
+    return ListView(
+      padding: EdgeInsets.zero,
       children: [
-        _GabrielaHeader(title: 'Configurações', height: 112 * s),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(24 * s, 26 * s, 24 * s, 20 * s),
-            child: Column(
-              children: [
-                _SettingsAction(
-                  label: 'Tema do Aplicativo',
-                  icon: Icons.palette_outlined,
-                  onTap: () => _chooseTheme(context),
-                ),
-                _SettingsAction(
-                  label: 'Suporte',
-                  icon: Icons.support_agent,
-                  onTap: () => _showSupport(context),
-                ),
-                _SettingsAction(
-                  label: 'Histórico',
-                  icon: Icons.history,
-                  onTap: () => _showHistory(context),
-                ),
-                _SettingsAction(
-                  label: 'Sair',
-                  icon: Icons.logout,
-                  onTap: () => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/gabriela/login',
-                    (_) => false,
+        const VHHeader('Configurações', showBack: false, settingsStyle: true),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 26, 12, 24),
+          child: Column(
+            children: [
+              for (var index = 0; index < actions.length; index++) ...[
+                ListTile(
+                  minTileHeight: 57,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  title: Text(
+                    actions[index].label,
+                    style: const TextStyle(
+                      fontFamily: VH.headingFontFamily,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: VH.foreground,
+                    ),
                   ),
+                  trailing: SvgPicture.asset(
+                    'assets/imagens/figma/services-chevron-right.svg',
+                    width: 11,
+                    height: 19.6299,
+                    excludeFromSemantics: true,
+                  ),
+                  onTap: actions[index].onTap,
                 ),
+                if (index < actions.length - 1)
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: VH.foreground.withValues(alpha: .25),
+                  ),
               ],
-            ),
+            ],
           ),
         ),
       ],
@@ -497,50 +514,5 @@ class _ProfileAction extends StatelessWidget {
       ),
       if (!last) const Divider(height: 1, color: VetColors.profileOutline),
     ],
-  );
-}
-
-class _SettingsAction extends StatelessWidget {
-  const _SettingsAction({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 14),
-    child: Material(
-      color: VetColors.rose.withValues(alpha: .27),
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-          child: Row(
-            children: [
-              Icon(icon, color: VetColors.brown),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: VetColors.brown,
-                  ),
-                ),
-              ),
-              const Icon(Icons.chevron_right, color: VetColors.brown),
-            ],
-          ),
-        ),
-      ),
-    ),
   );
 }

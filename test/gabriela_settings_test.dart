@@ -23,4 +23,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(VH.themeSeed.value, VetColors.brown);
   });
+
+  testWidgets('permite rolar até Sair e voltar ao login da Gabriela', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 260);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const Scaffold(body: GabrielaSettingsTab()),
+        routes: {
+          '/gabriela/login': (_) => const Scaffold(body: Text('Login Gabriela')),
+        },
+      ),
+    );
+    final exit = find.text('Sair');
+    await tester.scrollUntilVisible(exit, 100);
+    await tester.tap(exit);
+    await tester.pumpAndSettle();
+    expect(find.text('Login Gabriela'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
