@@ -237,6 +237,7 @@ class _PetFormState extends State<PetForm> {
     String Function(String)? choiceDisplayLabel,
     String? Function(String)? semanticsValue,
     String? suffixText,
+    bool persistentSuffix = false,
     List<String> suggestions = const [],
     String? Function(String?)? validator,
     ValueChanged<String>? onChanged,
@@ -279,6 +280,7 @@ class _PetFormState extends State<PetForm> {
       choiceDisplayLabel: choiceDisplayLabel,
       semanticsValue: semanticsValue,
       suffixText: suffixText,
+      persistentSuffix: persistentSuffix,
       suggestions: suggestions,
       onChanged: onChanged,
       validator: validator ?? requiredValue,
@@ -893,9 +895,11 @@ class _PetFormState extends State<PetForm> {
       figmaStyle: figmaEdit,
       figmaRegistrationStyle: figmaRegistration,
       figmaLabelHorizontalPadding: 7,
-      figmaContentPaddingLeft: figmaEdit ? 15 : null,
+      figmaContentPaddingLeft: figmaRegistration ? 2 : (figmaEdit ? 15 : null),
+      figmaContentPaddingRight: figmaRegistration ? 0 : null,
       figmaLabelBottomPadding: 0,
       suffixText: figmaEdit || registration ? 'kg' : null,
+      persistentSuffix: registration,
       validator: _validateWeight,
     );
     final neuteredField = field(

@@ -68,6 +68,20 @@ class CadastroPetScreen extends StatelessWidget {
     return saved;
   }
 
+  EdgeInsets _registrationInsets(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final useReferenceSpacing =
+        initialData['flow'] != 'addPet' &&
+        size.width >= 322 &&
+        size.width < 600 &&
+        size.height >= 800 &&
+        MediaQuery.textScalerOf(context).scale(14) <= 15.4;
+    // O SafeArea usa o maior valor entre o recorte do sistema e o mínimo.
+    return useReferenceSpacing
+        ? const EdgeInsets.only(top: 24)
+        : EdgeInsets.zero;
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: VH.background,
@@ -96,6 +110,7 @@ class CadastroPetScreen extends StatelessWidget {
           )
         : null,
     body: SafeArea(
+      minimum: _registrationInsets(context),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),

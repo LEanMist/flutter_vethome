@@ -43,6 +43,7 @@ class VHField extends StatefulWidget {
     this.choiceDisplayLabel,
     this.semanticsValue,
     this.suffixText,
+    this.persistentSuffix = false,
     this.suggestions = const [],
     this.onChanged,
     this.textInputAction,
@@ -81,6 +82,7 @@ class VHField extends StatefulWidget {
   final String Function(String)? choiceDisplayLabel;
   final String? Function(String)? semanticsValue;
   final String? suffixText;
+  final bool persistentSuffix;
   final List<String> suggestions;
   final ValueChanged<String>? onChanged;
   final TextInputAction? textInputAction;
@@ -469,6 +471,13 @@ class _VHFieldState extends State<VHField> {
     return (base * available / painter.width).clamp(12.0, base);
   }
 
+  Widget _suffixLabel(double? width) => Text(
+    widget.suffixText!,
+    style: widget.figmaForm
+        ? VH.figmaFieldValueStyle.copyWith(fontSize: _fontSize(width))
+        : null,
+  );
+
   Widget input(
     TextEditingController c,
     FocusNode focus, {
@@ -516,14 +525,9 @@ class _VHFieldState extends State<VHField> {
       labelStyle: const TextStyle(fontSize: 12, color: VH.foreground),
       isDense: widget.compact,
       hintText: widget.value,
-      suffix: widget.suffixText == null
+      suffix: widget.suffixText == null || widget.persistentSuffix
           ? null
-          : Text(
-              widget.suffixText!,
-              style: widget.figmaForm
-                  ? VH.figmaFieldValueStyle.copyWith(fontSize: _fontSize(width))
-                  : null,
-            ),
+          : _suffixLabel(width),
       filled: true,
       fillColor: Colors.transparent,
       prefixIconConstraints: BoxConstraints.tightFor(
@@ -544,7 +548,16 @@ class _VHFieldState extends State<VHField> {
             : const EdgeInsets.only(left: 3, right: 10),
         child: _prefix(),
       ),
-      suffixIcon: widget.choices == null || !widget.showChoiceIndicator
+      suffixIcon: widget.persistentSuffix && widget.suffixText != null
+          ? Align(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _suffixLabel(width),
+              ),
+            )
+          : widget.choices == null || !widget.showChoiceIndicator
           ? null
           : AnimatedRotation(
               turns: isOpen ? .5 : 0,
@@ -598,6 +611,9 @@ class _VHFieldState extends State<VHField> {
   Widget build(BuildContext context) {
     final choices = widget.choices ?? const <String>[];
     final hasChoices = choices.isNotEmpty;
+    final hasExternalLabel = !widget.compact || widget.labelAbove;
+    final labelPersistentSuffixField =
+        widget.persistentSuffix && hasExternalLabel;
     final activeRawChoice = hasChoices
         ? choices[_activeChoiceIndex % choices.length]
         : '';
@@ -682,12 +698,14 @@ class _VHFieldState extends State<VHField> {
             ),
             child: fieldInput,
           )
+        : labelPersistentSuffixField
+        ? Semantics(label: widget.label, child: fieldInput)
         : fieldInput;
     final fieldContent = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!widget.compact || widget.labelAbove)
+        if (hasExternalLabel)
           Padding(
             padding: EdgeInsets.only(
               left:
@@ -700,7 +718,7 @@ class _VHFieldState extends State<VHField> {
               bottom: widget.labelBottomPadding ?? 5,
             ),
             child: ExcludeSemantics(
-              excluding: hasChoices,
+              excluding: hasChoices || labelPersistentSuffixField,
               child: widget.labelFitSingleLine
                   ? SizedBox(
                       height: 20,

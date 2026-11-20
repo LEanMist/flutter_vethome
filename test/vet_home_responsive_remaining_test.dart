@@ -13,6 +13,7 @@ import 'package:flutter_vethome/pages/sobre_page.dart';
 import 'package:flutter_vethome/screens/pets.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
+import 'package:flutter_vethome/widgets.dart';
 
 Future<void> pumpPage(
   WidgetTester tester,
@@ -59,6 +60,66 @@ Future<void> pumpMobileDetails(
 }
 
 void main() {
+  testWidgets('Cadastro Pet inicial usa a posição de referência uma vez', (
+    tester,
+  ) async {
+    await pumpPage(tester, const CadastroPetScreen(), const Size(390, 844));
+    final panel = find.byKey(const ValueKey('pet-registration-panel'));
+    expect(tester.getTopLeft(panel), const Offset(49, 139));
+
+    tester.view.padding = const FakeViewPadding(top: 24);
+    addTearDown(tester.view.resetPadding);
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(panel), const Offset(49, 139));
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final size in [const Size(320, 640), const Size(390, 844)]) {
+    testWidgets(
+      'Cadastro Pet pelo + deixa kg visível com Peso vazio em $size',
+      (tester) async {
+        await pumpPage(
+          tester,
+          const CadastroPetScreen(initialData: {'flow': 'addPet'}),
+          size,
+        );
+        if (size.width == 390) {
+          final panel = find.byKey(const ValueKey('pet-registration-panel'));
+          expect(tester.getTopLeft(panel), const Offset(49, 115));
+        }
+        final weight = find.byWidgetPredicate(
+          (widget) => widget is VHField && widget.label == 'Peso',
+        );
+        final input = find.descendant(
+          of: weight,
+          matching: find.byType(TextFormField),
+        );
+        final decorator = find.descendant(
+          of: weight,
+          matching: find.byType(InputDecorator),
+        );
+        expect(tester.widget<TextFormField>(input).controller!.text, isEmpty);
+        expect(
+          tester.widget<InputDecorator>(decorator).decoration.suffixIcon,
+          isNotNull,
+        );
+        final suffix = find.descendant(of: weight, matching: find.text('kg'));
+        expect(
+          tester.getRect(input).contains(tester.getCenter(suffix)),
+          isTrue,
+        );
+        await tester.enterText(input, '4,2');
+        await tester.pumpAndSettle();
+        expect(tester.widget<TextFormField>(input).controller!.text, '4,2');
+        expect(
+          tester.getRect(input).contains(tester.getCenter(suffix)),
+          isTrue,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets(
     'Cadastro Pet pela lista mantém o formulário visível em desktop',
     (tester) async {
@@ -78,6 +139,15 @@ void main() {
       expect(tester.getSize(navigation).height, lessThan(110));
       expect(find.text('Cadastro Pet').hitTestable(), findsOneWidget);
       expect(find.byType(EditableText).hitTestable(), findsWidgets);
+      final weightUnit = find.text('kg');
+      final weightDecoration = find.ancestor(
+        of: weightUnit,
+        matching: find.byType(InputDecorator),
+      );
+      expect(
+        tester.widget<InputDecorator>(weightDecoration).decoration.suffixIcon,
+        isNotNull,
+      );
       final skip = find.text('Pular');
       expect(skip.hitTestable(), findsOneWidget);
       await tester.tap(skip);
