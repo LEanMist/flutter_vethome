@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
-
 import 'photo_picker.dart';
 
 /// Small local PNG thumbnails; no blob URLs or file paths in saved photos.
 class PetPhoto {
+  static const maxThumbnailDimension = 256;
   static const maxEncodedLength = 180000;
   static const maxTotalEncodedLength = 1500000;
   static bool isValid(String value) {
@@ -45,7 +44,10 @@ class PetPhoto {
       // Read dimensions from a decoded frame, which works on every renderer.
       codec = await ui.instantiateImageCodec(bytes);
       image = (await codec.getNextFrame()).image;
-      final scale = math.min(1.0, 256 / math.max(image.width, image.height));
+      final scale = math.min(
+        1.0,
+        maxThumbnailDimension / math.max(image.width, image.height),
+      );
       if (scale < 1) {
         final width = math.max(1, (image.width * scale).round());
         final height = math.max(1, (image.height * scale).round());

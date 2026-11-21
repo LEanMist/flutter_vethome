@@ -86,8 +86,9 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
   Future<void> _changePhoto() async {
     if (_changingPhoto) return;
     setState(() => _changingPhoto = true);
+    String? photo;
     try {
-      final photo = await PetPhoto.choose(context, centered: true);
+      photo = await PetPhoto.choose(context, centered: true);
       if (photo == null || !mounted) return;
       await GabrielaProfileRepository.updatePhoto(photo);
       if (mounted) {
@@ -96,7 +97,13 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
     } on FormatException catch (error) {
       if (mounted) _message(error.message);
     } catch (_) {
-      if (mounted) _message('Não foi possível atualizar a foto de perfil.');
+      if (mounted) {
+        _message(
+          photo == null
+              ? 'Não foi possível abrir a imagem.'
+              : 'Não foi possível salvar a foto de perfil.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _changingPhoto = false);
     }
@@ -113,6 +120,7 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
           initialValue: _name,
           autofocus: true,
           onChanged: (value) => editedName = value,
+          onFieldSubmitted: (value) => Navigator.pop(context, value.trim()),
         ),
         actions: [
           TextButton(
@@ -138,8 +146,8 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
   Future<void> _changeBirthday() async {
     final date = await showDatePicker(
       context: context,
-      initialDate: _birthday ?? DateTime.now(),
-      firstDate: DateTime(1920),
+      initialDate: _birthday,
+      firstDate: GabrielaProfileRepository.firstBirthDate,
       lastDate: DateTime.now(),
       locale: const Locale('pt', 'BR'),
     );
@@ -305,6 +313,17 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
                 onTap: _changeBirthday,
                 last: true,
               ),
+              if (GabrielaProfileRepository.readFailed)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: const Text(
+                      'Não foi possível carregar todos os dados do perfil.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
