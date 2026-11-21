@@ -177,7 +177,7 @@ class TestePage extends StatelessWidget {
       (
         titulo: 'Gabriela - Login',
         icone: Icons.lock_outline,
-        pagina: (_) => const LoginPage(successRoute: '/gabriela'),
+        pagina: (_) => const LoginPage.veterinarianDemo(),
       ),
       (
         titulo: 'Gabriela - Perfil',

@@ -68,7 +68,7 @@ class AppRoutes {
     '/home': (_) => const HomePage(),
     '/login': (_) => const LoginPage(),
     '/gabriela/splash': (_) => const GabrielaSplashScreen(),
-    '/gabriela/login': (_) => const LoginPage(successRoute: '/gabriela'),
+    '/gabriela/login': (_) => const LoginPage.veterinarianDemo(),
     '/gabriela': (_) => const GabrielaAreaPage(),
     '/gabriela/perfil': (_) => const GabrielaAreaPage(initialIndex: 0),
     '/gabriela/mensagens': (_) => const GabrielaAreaPage(initialIndex: 1),

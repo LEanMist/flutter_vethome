@@ -10,9 +10,15 @@ import '../theme/vet_colors.dart';
 import '../widgets/auth/demo_mode_notice.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, this.successRoute = '/home'});
+  const LoginPage({super.key, this.successRoute = '/home'})
+    : _veterinarianDemo = false;
+
+  const LoginPage.veterinarianDemo({super.key})
+    : successRoute = '/gabriela',
+      _veterinarianDemo = true;
 
   final String successRoute;
+  final bool _veterinarianDemo;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -31,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _restoreRememberedEmail();
+    if (!widget._veterinarianDemo) _restoreRememberedEmail();
   }
 
   Future<void> _restoreRememberedEmail() async {
@@ -79,6 +85,10 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> entrar() async {
     if (_signingIn) return;
+    if (widget._veterinarianDemo) {
+      Navigator.pushReplacementNamed(context, widget.successRoute);
+      return;
+    }
     if (!VetRepository.authenticate(
       _emailController.text,
       _passwordController.text,
@@ -211,12 +221,19 @@ class _LoginPageState extends State<LoginPage> {
                       left: 43.5 * s,
                       top: MediaQuery.viewPaddingOf(context).top + 8 * s,
                       width: 303 * s,
-                      child: const DemoModeNotice(
-                        compact: true,
-                        message: 'Demonstração · use dados fictícios',
-                        semanticLabel:
-                            'Modo demonstração. Não há contas individuais. As informações ficam neste dispositivo; use apenas dados fictícios.',
-                      ),
+                      child: widget._veterinarianDemo
+                          ? const DemoModeNotice(
+                              message: 'Demonstração local',
+                              semanticLabel:
+                                  'Área veterinária em demonstração. Acesso local sem credenciais.',
+                              compact: true,
+                            )
+                          : const DemoModeNotice(
+                              compact: true,
+                              message: 'Demonstração · use dados fictícios',
+                              semanticLabel:
+                                  'Modo demonstração. Não há contas individuais. As informações ficam neste dispositivo; use apenas dados fictícios.',
+                            ),
                     ),
                     Column(
                       children: [
@@ -231,38 +248,69 @@ class _LoginPageState extends State<LoginPage> {
                             semanticLabel: 'VetHome',
                           ),
                         ),
-                        // O primeiro campo começa em 333 no frame de referência.
-                        Transform.translate(
-                          offset: Offset(0, -13 * s),
-                          child: Column(
-                            children: [
-                              _loginField(
-                                'Usuário',
-                                _emailController,
-                                prefix: 'frame-6.png',
-                                scale: s,
-                                enabled: !_signingIn,
+                        if (widget._veterinarianDemo)
+                          SizedBox(
+                            height: 161 * s,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                ),
+                                child: Semantics(
+                                  header: true,
+                                  child: const Text(
+                                    'Área veterinária',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontFamily: VH.headingFontFamily,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: VetColors.brownOnRose,
+                                    ),
+                                  ),
+                                ),
                               ),
-                              SizedBox(height: 17 * s),
-                              _loginField(
-                                'Senha',
-                                _passwordController,
-                                prefix: 'frame-7-5.png',
-                                scale: s,
-                                password: true,
-                                enabled: !_signingIn,
-                              ),
-                            ],
+                            ),
+                          )
+                        else ...[
+                          // O primeiro campo começa em 333 no frame de referência.
+                          Transform.translate(
+                            offset: Offset(0, -13 * s),
+                            child: Column(
+                              children: [
+                                _loginField(
+                                  'Usuário',
+                                  _emailController,
+                                  prefix: 'frame-6.png',
+                                  scale: s,
+                                  enabled: !_signingIn,
+                                ),
+                                SizedBox(height: 17 * s),
+                                _loginField(
+                                  'Senha',
+                                  _passwordController,
+                                  prefix: 'frame-7-5.png',
+                                  scale: s,
+                                  password: true,
+                                  enabled: !_signingIn,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Transform.translate(
-                          offset: Offset((258 - 242 * s) / 2, -17.5),
-                          child: SizedBox(width: 258, child: secondaryActions),
-                        ),
+                          Transform.translate(
+                            offset: Offset((258 - 242 * s) / 2, -17.5),
+                            child: SizedBox(
+                              width: 258,
+                              child: secondaryActions,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 11),
                         SizedBox(
                           width: 303 * s,
-                          height: 54,
+                          height: widget._veterinarianDemo && textScale >= 1.4
+                              ? 76
+                              : 54,
                           child: ElevatedButton.icon(
                             onPressed: _signingIn ? null : entrar,
                             style: ElevatedButton.styleFrom(
@@ -291,7 +339,12 @@ class _LoginPageState extends State<LoginPage> {
                             label: Semantics(
                               liveRegion: _signingIn,
                               child: Text(
-                                _signingIn ? 'Entrando…' : 'Entrar',
+                                _signingIn
+                                    ? 'Entrando…'
+                                    : widget._veterinarianDemo
+                                    ? 'Entrar na demonstração'
+                                    : 'Entrar',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -300,126 +353,128 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 28),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: textScale >= 1.4
-                              ? const Text(
-                                  'Ou continue com',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: VetColors.brownOnRose,
+                        if (!widget._veterinarianDemo) ...[
+                          const SizedBox(height: 28),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: textScale >= 1.4
+                                ? const Text(
+                                    'Ou continue com',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: VetColors.brownOnRose,
+                                    ),
+                                  )
+                                : Row(
+                                    children: [
+                                      Expanded(
+                                        child: Divider(
+                                          color: VH.foreground.withValues(
+                                            alpha: .5,
+                                          ),
+                                        ),
+                                      ),
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 26,
+                                        ),
+                                        child: Text(
+                                          'Ou continue com',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: VetColors.brownOnRose,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Divider(
+                                          color: VH.foreground.withValues(
+                                            alpha: .5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                )
-                              : Row(
-                                  children: [
-                                    Expanded(
-                                      child: Divider(
-                                        color: VH.foreground.withValues(
-                                          alpha: .5,
-                                        ),
+                          ),
+                          const SizedBox(height: 22),
+                          Transform.translate(
+                            offset: const Offset(0, -2),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                for (final (index, social) in const [
+                                  ('Google', 'icons8-google-logo-96-1.png'),
+                                  ('Facebook', 'icons8-facebook-novo-96-1.png'),
+                                  ('Instagram', 'icons8-instagram-96-1.png'),
+                                ].indexed) ...[
+                                  if (index > 0) const SizedBox(width: 37.5),
+                                  Tooltip(
+                                    message: social.$1,
+                                    child: DecoratedBox(
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: VH.background,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: VH.shadowSubtle,
+                                            offset: Offset(2, 2),
+                                            blurRadius: 2,
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 26,
-                                      ),
-                                      child: Text(
-                                        'Ou continue com',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: VetColors.brownOnRose,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Divider(
-                                        color: VH.foreground.withValues(
-                                          alpha: .5,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                        const SizedBox(height: 22),
-                        Transform.translate(
-                          offset: const Offset(0, -2),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              for (final (index, social) in const [
-                                ('Google', 'icons8-google-logo-96-1.png'),
-                                ('Facebook', 'icons8-facebook-novo-96-1.png'),
-                                ('Instagram', 'icons8-instagram-96-1.png'),
-                              ].indexed) ...[
-                                if (index > 0) const SizedBox(width: 37.5),
-                                Tooltip(
-                                  message: social.$1,
-                                  child: DecoratedBox(
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: VH.background,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: VH.shadowSubtle,
-                                          offset: Offset(2, 2),
-                                          blurRadius: 2,
-                                        ),
-                                      ],
-                                    ),
-                                    child: SizedBox(
-                                      width: 56,
-                                      height: 56,
-                                      child: OutlinedButton(
-                                        onPressed: () => mostrarMensagem(
-                                          'A autenticação com ${social.$1} não está disponível nesta demonstração.',
-                                        ),
-                                        style: OutlinedButton.styleFrom(
-                                          backgroundColor: VH.background,
-                                          side: BorderSide.none,
-                                          shape: const CircleBorder(),
-                                          padding: EdgeInsets.zero,
-                                        ),
-                                        child: Image.asset(
-                                          'assets/imagens/figma/${social.$2}',
-                                          width: 39,
-                                          height: 39,
-                                          semanticLabel: social.$1,
+                                      child: SizedBox(
+                                        width: 56,
+                                        height: 56,
+                                        child: OutlinedButton(
+                                          onPressed: () => mostrarMensagem(
+                                            'A autenticação com ${social.$1} não está disponível nesta demonstração.',
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            backgroundColor: VH.background,
+                                            side: BorderSide.none,
+                                            shape: const CircleBorder(),
+                                            padding: EdgeInsets.zero,
+                                          ),
+                                          child: Image.asset(
+                                            'assets/imagens/figma/${social.$2}',
+                                            width: 39,
+                                            height: 39,
+                                            semanticLabel: social.$1,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 27),
-                        const Text(
-                          'Ainda não possui uma conta?',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: VetColors.brownOnRose,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/cadastro'),
-                          child: const Text(
-                            'CADASTRE-SE',
+                          const SizedBox(height: 27),
+                          const Text(
+                            'Ainda não possui uma conta?',
                             style: TextStyle(
-                              fontFamily: VH.bodyFontFamily,
-                              fontSize: 15,
+                              fontSize: 10,
                               fontWeight: FontWeight.bold,
                               color: VetColors.brownOnRose,
                             ),
                           ),
-                        ),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/cadastro'),
+                            child: const Text(
+                              'CADASTRE-SE',
+                              style: TextStyle(
+                                fontFamily: VH.bodyFontFamily,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: VetColors.brownOnRose,
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
                       ],
                     ),
