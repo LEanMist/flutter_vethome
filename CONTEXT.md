@@ -13,6 +13,10 @@
 
 ## Agenda veterinária e integração futura
 
+- A [auditoria dos contratos de integração](docs/integration_contracts_pending.md)
+  compara as duas branches e reúne as decisões de sessão, titularidade,
+  atribuição da veterinária e conclusão que a equipe de backend precisa validar.
+
 - A agenda da Gabriela abre na data local de hoje. Os exemplos históricos de
   10/03/2026 têm identificação de demonstração e ficam isolados dos dados do Cliente.
 - Na `liminha`, `VetRepository.realAppointments(petId)` consulta o repositório
