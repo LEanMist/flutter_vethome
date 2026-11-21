@@ -8,12 +8,37 @@ import 'package:flutter_vethome/pages/finalizar_agendamento_page.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/services/cep_lookup_service.dart';
+import 'package:flutter_vethome/widgets/botao_estilizado.dart';
 import 'package:flutter_vethome/widgets/calendario.dart';
 import 'package:flutter_vethome/widgets/campo_cadastro.dart';
 import 'package:flutter_vethome/widgets/etiqueta_perfil.dart';
 import 'package:flutter_vethome/widgets/seletor_horario.dart';
 
 void main() {
+  testWidgets('posiciona cancelar e salvar em lados opostos', (tester) async {
+    final usuarios = InMemoryUsuarioRepository(incluirUsuarioTeste: true);
+    await _abrirFinalizacao(tester, usuarioRepository: usuarios);
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('adicionar-endereco')),
+    );
+    await tester.tap(find.byKey(const ValueKey('adicionar-endereco')));
+    await tester.pumpAndSettle();
+
+    final cancelar = tester.getRect(find.byType(BotaoEstilizado));
+    final salvar = tester.getRect(
+      find.byKey(const ValueKey('salvar-novo-endereco')),
+    );
+    final acoes = tester.getRect(find.byType(OverflowBar));
+    expect(cancelar.left - acoes.left, lessThanOrEqualTo(16));
+    expect(acoes.right - salvar.right, lessThanOrEqualTo(16));
+    expect(cancelar.center.dy, closeTo(salvar.center.dy, 1));
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Adicionar endereço'), findsNothing);
+    expect(usuarios.findAll().single.enderecosAdicionais, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('consulta o CEP e salva logradouro e cidade preenchidos', (
     tester,
   ) async {

@@ -12,6 +12,7 @@ import 'package:flutter_vethome/widgets/calendario.dart';
 import 'package:flutter_vethome/widgets/campo_cadastro.dart';
 import 'package:flutter_vethome/widgets/seletor_horario.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_vethome/widgets/botao_estilizado.dart';
 
 class FinalizarAgendamentoPage extends StatefulWidget {
 	const FinalizarAgendamentoPage({
@@ -760,9 +761,10 @@ class _NovoEnderecoDialogState extends State<_NovoEnderecoDialog> {
 					child: Column(
 							mainAxisSize: MainAxisSize.min,
 							children: [
-								_campo('Nome do endereço', _nomeController, icone: Icons.label),
+								_campo('Nome do endereço', _nomeController, icone: Icons.label
+                ),
 								_campo(
-									'CEP',
+                  'CEP',
 									_cepController,
 									icone: Icons.home,
 									keyboardType: TextInputType.number,
@@ -804,19 +806,32 @@ class _NovoEnderecoDialogState extends State<_NovoEnderecoDialog> {
 				),
 			),
 			actions: [
-				TextButton(
-					onPressed: () => Navigator.of(context).pop(),
-					child: Text('Cancelar', style: GoogleFonts.comfortaa()),
-				),
-				ElevatedButton(
-					key: const ValueKey('salvar-novo-endereco'),
-					onPressed: _salvar,
-					style: ElevatedButton.styleFrom(
-						backgroundColor: VetCores.marrom,
-						foregroundColor: VetCores.branco,
-					),
-					child: Text('Salvar endereço', style: GoogleFonts.comfortaa()),
-				),
+				Row(
+					mainAxisAlignment: MainAxisAlignment.spaceBetween,
+					children: [
+						Flexible(
+							child: BotaoEstilizado(
+								texto: 'Cancelar',
+								largura: 120,
+								altura: 44,
+								tamanhoFonte: 14,
+								onPressed: () => Navigator.of(context).pop(),
+							),
+						),
+						const SizedBox(width: 8),
+						Flexible(
+							child: ElevatedButton(
+								key: const ValueKey('salvar-novo-endereco'),
+								onPressed: _salvar,
+								style: ElevatedButton.styleFrom(
+									backgroundColor: VetCores.marrom,
+									foregroundColor: VetCores.branco,
+								),
+								child: Text('Salvar endereço', style: GoogleFonts.comfortaa()),
+							),
+						),
+					],
+    	  ),
 			],
 		);
 	}
