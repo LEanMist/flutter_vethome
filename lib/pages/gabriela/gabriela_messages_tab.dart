@@ -22,6 +22,7 @@ class GabrielaMessagesTab extends StatefulWidget {
 class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
   GabrielaConversation? _selectedContact;
   final _composer = TextEditingController();
+  final _messagesScroll = ScrollController();
   final Map<String, String> _drafts = {};
   final Map<String, List<ChatMessage>> _localMessages = {};
 
@@ -35,6 +36,7 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
   @override
   void dispose() {
     _composer.dispose();
+    _messagesScroll.dispose();
     super.dispose();
   }
 
@@ -49,12 +51,22 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
       _drafts.remove(contact.id);
       _composer.clear();
     });
+    _showLatestMessage();
   }
 
   void _openContact(GabrielaConversation contact) {
     setState(() {
       _selectedContact = contact;
       _composer.text = _drafts[contact.id] ?? '';
+    });
+    _showLatestMessage();
+  }
+
+  void _showLatestMessage() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _messagesScroll.hasClients) {
+        _messagesScroll.jumpTo(_messagesScroll.position.maxScrollExtent);
+      }
     });
   }
 
@@ -155,7 +167,7 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
                         vertical: 3,
                       ),
                       child: Text(
-                        'Demonstração local · mensagens só nesta sessão',
+                        'Demonstração local · só nesta sessão',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 11 * s,
@@ -283,11 +295,11 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
               ? const Center(child: Text('Nenhuma mensagem nesta conversa.'))
               : ListView.builder(
                   key: ValueKey(contact.id),
-                  reverse: true,
+                  controller: _messagesScroll,
                   padding: EdgeInsets.all(10 * s),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final message = messages[messages.length - 1 - index];
+                    final message = messages[index];
                     final received = message.fromClient;
                     final sender = received
                         ? contact.name

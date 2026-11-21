@@ -191,7 +191,7 @@ class _GabrielaProfileTabState extends State<GabrielaProfileTab> {
             Column(
               children: [
                 Padding(
-                  padding: EdgeInsets.fromLTRB(16, 22 * s, 16, 13 * s),
+                  padding: EdgeInsets.fromLTRB(16, 22 * s, 16, 7 * s),
                   child: Semantics(
                     header: true,
                     child: Text(

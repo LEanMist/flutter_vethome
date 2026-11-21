@@ -84,6 +84,17 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
       final s = width / 390;
       final appointments = _visibleAppointments;
       final showingDemo = DateUtils.isSameDay(_selectedDate, _demoDate);
+      final demoShortcut = TextButton(
+        onPressed: () => setState(() {
+          _selectedDate = showingDemo
+              ? DateUtils.dateOnly(DateTime.now())
+              : _demoDate;
+        }),
+        child: Text(
+          showingDemo ? 'Voltar para hoje' : 'Ver exemplos de 10/03/2026',
+          textAlign: TextAlign.center,
+        ),
+      );
       return Align(
         alignment: Alignment.topCenter,
         child: SizedBox(
@@ -135,27 +146,23 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
                     ],
                   ),
                 ),
-                SizedBox(height: 40 * s),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24),
-                  child: DemoModeNotice(
-                    message:
-                        'Agenda demonstrativa. Consultas de clientes não são compartilhadas.',
+                SizedBox(height: (showingDemo ? 25 : 40) * s),
+                if (showingDemo) ...[
+                  const DemoModeNotice(
+                    compact: true,
+                    message: 'Consultas demonstrativas',
                   ),
-                ),
-                TextButton(
-                  onPressed: () => setState(() {
-                    _selectedDate = showingDemo
-                        ? DateUtils.dateOnly(DateTime.now())
-                        : _demoDate;
-                  }),
-                  child: Text(
-                    showingDemo
-                        ? 'Voltar para hoje'
-                        : 'Ver exemplos de 10/03/2026',
-                    textAlign: TextAlign.center,
+                  SizedBox(height: 10 * s),
+                ] else ...[
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    child: DemoModeNotice(
+                      message:
+                          'Agenda demonstrativa. Consultas de clientes não são compartilhadas.',
+                    ),
                   ),
-                ),
+                  demoShortcut,
+                ],
                 if (appointments.isEmpty)
                   Padding(
                     padding: EdgeInsets.all(24 * s),
@@ -191,6 +198,7 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
                         ),
                       ),
                   ],
+                if (showingDemo) demoShortcut,
                 SizedBox(height: 20 * s),
               ],
             ),

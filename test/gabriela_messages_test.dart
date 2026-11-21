@@ -1,9 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/gabriela_demo_chat.dart';
+import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/gabriela/gabriela_messages_tab.dart';
 
 void main() {
+  testWidgets('a conversa longa abre e envia junto à última mensagem', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GabrielaMessagesTab(
+            conversations: [
+              GabrielaConversation(
+                id: 'demo-longa',
+                name: 'Consulta de exemplo',
+                messages: [
+                  for (var i = 0; i < 30; i++)
+                    ChatMessage(
+                      text: 'Exemplo de mensagem $i',
+                      fromClient: true,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Consulta de exemplo'));
+    await tester.pumpAndSettle();
+    expect(find.text('Exemplo de mensagem 29').hitTestable(), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'Mensagem mais recente');
+    await tester.tap(find.byTooltip('Enviar mensagem'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mensagem mais recente').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a conversa curta começa junto ao topo do painel', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: GabrielaMessagesTab())),
+    );
+    await tester.tap(find.text('Nicolly'));
+    await tester.pumpAndSettle();
+    final first = find.text('Oi, doutora! Como está o Rambo?');
+    final list = find.byType(ListView);
+    expect(
+      tester.getTopLeft(first).dy - tester.getTopLeft(list).dy,
+      lessThan(80),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('mostra o estado vazio da lista local', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(

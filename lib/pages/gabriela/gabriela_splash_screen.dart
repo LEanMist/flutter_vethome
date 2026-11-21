@@ -33,8 +33,8 @@ class _GabrielaSplashScreenState extends State<GabrielaSplashScreen> {
                 children: [
                   Image.asset(
                     'assets/imagens/figma/ellipse-3.png',
-                    width: 390 * s,
-                    height: 390 * s,
+                    width: 300.158 * s,
+                    height: 300.158 * s,
                     fit: BoxFit.contain,
                     excludeFromSemantics: true,
                   ),
@@ -43,19 +43,7 @@ class _GabrielaSplashScreenState extends State<GabrielaSplashScreen> {
                     width: 350 * s,
                     height: 350 * s,
                     fit: BoxFit.contain,
-                    semanticLabel: 'VetHome',
-                  ),
-                  Positioned(
-                    bottom: 62 * s,
-                    child: Text(
-                      'Área veterinária',
-                      style: TextStyle(
-                        color: VetColors.brown,
-                        fontSize: 14 * s,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
+                    semanticLabel: 'VetHome · Área veterinária',
                   ),
                 ],
               );
