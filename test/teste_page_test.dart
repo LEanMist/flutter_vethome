@@ -71,7 +71,7 @@ void main() {
     const destinations = {
       'Gabriela - Login': '/gabriela/login',
       'Gabriela - Perfil': '/gabriela/perfil',
-      'Gabriela - WhatsApp': '/gabriela/mensagens',
+      'Gabriela - Chat': '/gabriela/mensagens',
       'Gabriela - Agenda': '/gabriela/agenda',
       'Gabriela - Configurações': '/gabriela/configuracoes',
     };
@@ -102,7 +102,7 @@ void main() {
   ) async {
     const destinations = {
       '/gabriela/perfil': 'Perfil',
-      '/gabriela/mensagens': 'WhatsApp',
+      '/gabriela/mensagens': 'Chat',
       '/gabriela/agenda': 'Agenda',
       '/gabriela/configuracoes': 'Configurações',
     };

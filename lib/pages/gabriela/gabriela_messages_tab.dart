@@ -1,32 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 
+import '../../data/gabriela_demo_chat.dart';
+import '../../data/gabriela_profile_repository.dart';
+import '../../models/vet_models.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets/pets/pets_theme.dart';
 
 class GabrielaMessagesTab extends StatefulWidget {
-  const GabrielaMessagesTab({super.key});
+  const GabrielaMessagesTab({
+    super.key,
+    this.conversations = gabrielaDemoConversations,
+  });
+
+  final List<GabrielaConversation> conversations;
 
   @override
   State<GabrielaMessagesTab> createState() => _GabrielaMessagesTabState();
 }
 
 class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
-  String? _selectedContact;
+  GabrielaConversation? _selectedContact;
   final _composer = TextEditingController();
   final Map<String, String> _drafts = {};
-  final Map<String, String> _latestSent = {};
-  final Map<String, List<_Message>> _messages = {
-    'Nicolly': [
-      const _Message('Oi, doutora! Como está o Rambo?', true),
-      const _Message('Está bem e já está se recuperando. 😊', false),
-      const _Message('Que bom! Obrigada pelo retorno.', true),
-    ],
-    'Caio': [const _Message('A consulta ficou confirmada para amanhã.', true)],
-    'Kelvin': [const _Message('Enviei os exames por aqui.', true)],
-    'Estevão': [const _Message('Obrigado pela orientação, doutora.', true)],
-    'Judite': [const _Message('Podemos remarcar para sexta-feira?', true)],
-    'Rambo': [const _Message('Tudo certo com o retorno de hoje.', true)],
-  };
+  final Map<String, List<ChatMessage>> _localMessages = {};
+
+  static const _contactFont = 'MontserratAlternates';
+
+  List<ChatMessage> _messagesFor(GabrielaConversation contact) => [
+    ...contact.messages,
+    ...?_localMessages[contact.id],
+  ];
 
   @override
   void dispose() {
@@ -39,17 +43,18 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
     final contact = _selectedContact;
     if (text.isEmpty || contact == null) return;
     setState(() {
-      _messages.putIfAbsent(contact, () => []).add(_Message(text, false));
-      _latestSent[contact] = text;
-      _drafts.remove(contact);
+      _localMessages
+          .putIfAbsent(contact.id, () => [])
+          .add(ChatMessage(text: text, fromClient: false));
+      _drafts.remove(contact.id);
       _composer.clear();
     });
   }
 
-  void _openContact(String contact) {
+  void _openContact(GabrielaConversation contact) {
     setState(() {
       _selectedContact = contact;
-      _composer.text = _drafts[contact] ?? '';
+      _composer.text = _drafts[contact.id] ?? '';
     });
   }
 
@@ -57,7 +62,7 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
     final contact = _selectedContact;
     if (contact == null) return;
     setState(() {
-      _drafts[contact] = _composer.text;
+      _drafts[contact.id] = _composer.text;
       _composer.clear();
       _selectedContact = null;
     });
@@ -67,123 +72,201 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
   Widget build(BuildContext context) {
     final s = PetsTheme.scaleOf(context);
     final contact = _selectedContact;
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return Column(
       children: [
-        _header(s, contact),
+        _header(s, contact, keyboardOpen),
         Expanded(
-          child: contact == null
-              ? _conversationList(s)
-              : _conversation(s, contact),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              12 * s,
+              (keyboardOpen
+                      ? 4
+                      : contact == null
+                      ? 32
+                      : 22) *
+                  s,
+              12 * s,
+              (keyboardOpen ? 4 : 20) * s,
+            ),
+            child: Material(
+              color: Color.alphaBlend(
+                VetColors.rose.withValues(alpha: .25),
+                VetColors.pink,
+              ),
+              borderRadius: BorderRadius.circular(25 * s),
+              clipBehavior: Clip.antiAlias,
+              child: contact == null
+                  ? _conversationList(s)
+                  : _conversation(s, contact),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _header(double s, String? contact) => Container(
-    width: double.infinity,
-    height: 90 * s,
-    padding: EdgeInsets.only(top: 12 * s),
-    decoration: BoxDecoration(
-      color: VetColors.rose,
-      borderRadius: BorderRadius.vertical(bottom: Radius.circular(28 * s)),
-    ),
-    child: Row(
-      children: [
-        if (contact != null)
-          IconButton(
-            tooltip: 'Voltar para as conversas',
-            onPressed: _closeContact,
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-          )
-        else
-          SizedBox(width: 52 * s),
-        Expanded(
-          child: Text(
-            contact ?? 'WhatsApp',
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: PetsTheme.fontComfortaa,
-              fontWeight: FontWeight.w700,
-              fontSize: 25 * s,
-            ),
+  Widget _header(double s, GabrielaConversation? contact, bool keyboardOpen) {
+    return Container(
+      width: double.infinity,
+      constraints: BoxConstraints(minHeight: (keyboardOpen ? 72 : 125) * s),
+      decoration: BoxDecoration(
+        color: VetColors.rose,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30 * s)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 52 * s,
+            child: contact == null
+                ? null
+                : IconButton(
+                    tooltip: 'Voltar para as conversas',
+                    onPressed: _closeContact,
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  ),
           ),
-        ),
-        SizedBox(width: 52 * s),
-      ],
-    ),
-  );
-
-  Widget _conversationList(double s) {
-    const contacts = [
-      ('Nicolly', 'Oi, doutora! Como está o Rambo?', '15'),
-      ('Caio', 'A consulta ficou confirmada para amanhã.', '2'),
-      ('Kelvin', 'Enviei os exames por aqui.', '4'),
-      ('Estevão', 'Obrigado pela orientação, doutora.', ''),
-      ('Judite', 'Podemos remarcar para sexta-feira?', ''),
-      ('Rambo', 'Tudo certo com o retorno de hoje.', ''),
-    ];
-    return ListView.separated(
-      padding: EdgeInsets.fromLTRB(18 * s, 16 * s, 18 * s, 12 * s),
-      itemCount: contacts.length,
-      separatorBuilder: (_, _) =>
-          Divider(height: 1, color: VetColors.rose.withValues(alpha: .38)),
-      itemBuilder: (context, index) {
-        final contact = contacts[index];
-        return InkWell(
-          onTap: () => _openContact(contact.$1),
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 10 * s),
-            child: Row(
-              children: [
-                _ContactAvatar(name: contact.$1, size: 52 * s),
-                SizedBox(width: 12 * s),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        contact.$1,
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 10 * s),
+              child: Column(
+                children: [
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      'Chat',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: PetsTheme.fontComfortaa,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 30 * s,
+                      ),
+                    ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: VetColors.pink,
+                      borderRadius: BorderRadius.circular(10 * s),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      child: Text(
+                        'Demonstração local · mensagens só nesta sessão',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 16 * s,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 11 * s,
                           color: VetColors.brown,
                         ),
                       ),
-                      SizedBox(height: 5 * s),
-                      Text(
-                        _latestSent[contact.$1] ?? contact.$2,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12 * s,
-                          color: VetColors.brown.withValues(alpha: .78),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(width: 52 * s),
+        ],
+      ),
+    );
+  }
+
+  Widget _conversationList(double s) {
+    final contacts = widget.conversations;
+    if (contacts.isEmpty) {
+      return const Center(child: Text('Nenhuma conversa disponível.'));
+    }
+    return ListView.separated(
+      padding: EdgeInsets.fromLTRB(19 * s, 25 * s, 19 * s, 20 * s),
+      itemCount: contacts.length,
+      separatorBuilder: (_, _) => SizedBox(height: 15 * s),
+      itemBuilder: (context, index) {
+        final contact = contacts[index];
+        final unread = contact.demoUnread;
+        final messages = _messagesFor(contact);
+        final radius = BorderRadius.circular(32 * s);
+        return DecoratedBox(
+          decoration: inset.BoxDecoration(
+            color: VetColors.rose.withValues(alpha: .5),
+            borderRadius: radius,
+            boxShadow: const [
+              inset.BoxShadow(
+                color: Color(0x40000000),
+                offset: Offset(2, 2),
+                blurRadius: 2,
+                inset: true,
+              ),
+            ],
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              borderRadius: radius,
+              onTap: () => _openContact(contact),
+              child: Row(
+                children: [
+                  _ContactAvatar(size: 61 * s),
+                  SizedBox(width: 15 * s),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 6 * s),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            contact.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: _contactFont,
+                              fontSize: 20 * s,
+                              fontWeight: FontWeight.w500,
+                              color: VetColors.brown,
+                            ),
+                          ),
+                          Text(
+                            messages.lastOrNull?.text ?? 'Nenhuma mensagem',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: PetsTheme.fontComfortaa,
+                              fontSize: 11 * s,
+                              color: VetColors.brown,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (unread != null)
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Container(
+                        constraints: BoxConstraints(minWidth: 28 * s),
+                        padding: EdgeInsets.all(5 * s),
+                        decoration: const BoxDecoration(
+                          color: VetColors.pink,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$unread',
+                          semanticsLabel: '$unread não lidas no exemplo',
+                          style: TextStyle(
+                            color: VetColors.brown,
+                            fontFamily: _contactFont,
+                            fontSize: 12 * s,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                if (contact.$3.isNotEmpty)
-                  Container(
-                    width: 25 * s,
-                    height: 25 * s,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: VetColors.rose,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      contact.$3,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11 * s,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-              ],
+                    )
+                  else
+                    SizedBox(width: 12 * s),
+                ],
+              ),
             ),
           ),
         );
@@ -191,76 +274,140 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
     );
   }
 
-  Widget _conversation(double s, String contact) {
-    final messages = _messages[contact] ?? const <_Message>[];
+  Widget _conversation(double s, GabrielaConversation contact) {
+    final messages = _messagesFor(contact);
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            reverse: true,
-            padding: EdgeInsets.all(16 * s),
-            itemCount: messages.length,
-            itemBuilder: (context, index) {
-              final message = messages[messages.length - 1 - index];
-              return Align(
-                alignment: message.fromContact
-                    ? Alignment.centerLeft
-                    : Alignment.centerRight,
-                child: Container(
-                  constraints: BoxConstraints(maxWidth: 285 * s),
-                  margin: EdgeInsets.only(bottom: 10 * s),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14 * s,
-                    vertical: 11 * s,
-                  ),
-                  decoration: BoxDecoration(
-                    color: message.fromContact
-                        ? Colors.white.withValues(alpha: .78)
-                        : VetColors.chatComposerBackground,
-                    borderRadius: BorderRadius.circular(17 * s),
-                  ),
-                  child: Text(
-                    message.text,
-                    style: TextStyle(fontSize: 14 * s, color: VetColors.brown),
-                  ),
+          child: messages.isEmpty
+              ? const Center(child: Text('Nenhuma mensagem nesta conversa.'))
+              : ListView.builder(
+                  key: ValueKey(contact.id),
+                  reverse: true,
+                  padding: EdgeInsets.all(10 * s),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[messages.length - 1 - index];
+                    final received = message.fromClient;
+                    final sender = received
+                        ? contact.name
+                        : GabrielaProfileRepository.name;
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: 12 * s),
+                      child: Align(
+                        alignment: received
+                            ? Alignment.centerLeft
+                            : Alignment.centerRight,
+                        child: FractionallySizedBox(
+                          widthFactor: .79,
+                          child: Column(
+                            crossAxisAlignment: received
+                                ? CrossAxisAlignment.start
+                                : CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                sender,
+                                textAlign: received
+                                    ? TextAlign.left
+                                    : TextAlign.right,
+                                style: TextStyle(
+                                  fontFamily: PetsTheme.fontComfortaa,
+                                  fontSize: 19 * s,
+                                  fontWeight: FontWeight.w700,
+                                  color: VetColors.brown,
+                                ),
+                              ),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 13 * s,
+                                  vertical: 13 * s,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: received
+                                      ? VetColors.rose.withValues(alpha: .5)
+                                      : VetColors.brown,
+                                  borderRadius: BorderRadius.circular(25 * s),
+                                ),
+                                child: Text(
+                                  message.text,
+                                  textAlign: received
+                                      ? TextAlign.left
+                                      : TextAlign.right,
+                                  style: TextStyle(
+                                    fontFamily: PetsTheme.fontComfortaa,
+                                    fontSize: 13 * s,
+                                    color: received
+                                        ? VetColors.brown
+                                        : Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
         Padding(
-          padding: EdgeInsets.fromLTRB(12 * s, 7 * s, 12 * s, 12 * s),
+          padding: EdgeInsets.fromLTRB(17 * s, 8 * s, 17 * s, 10 * s),
           child: Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: _composer,
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => _send(),
-                  decoration: InputDecoration(
-                    hintText: 'Mensagem',
-                    filled: true,
-                    fillColor: VetColors.chatComposerBackground,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16 * s,
-                      vertical: 12 * s,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28 * s),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        VetColors.pink,
+                        VetColors.rose.withValues(alpha: .36),
+                      ],
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24 * s),
-                      borderSide: BorderSide.none,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        offset: Offset(2, 2),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _composer,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _send(),
+                    style: TextStyle(
+                      fontFamily: _contactFont,
+                      fontSize: 15 * s,
+                      color: VetColors.brown,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Mensagem',
+                      hintStyle: const TextStyle(color: VetColors.brown),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16 * s,
+                        vertical: 12 * s,
+                      ),
+                      border: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(28)),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
               ),
-              SizedBox(width: 8 * s),
+              SizedBox(width: 12 * s),
               IconButton.filled(
                 tooltip: 'Enviar mensagem',
                 onPressed: _send,
                 style: IconButton.styleFrom(
-                  backgroundColor: VetColors.rose,
+                  minimumSize: Size.square(48 * s),
+                  backgroundColor: VetColors.brown,
                   foregroundColor: Colors.white,
                 ),
-                icon: const Icon(Icons.send_rounded),
+                icon: const Icon(Icons.send_outlined),
               ),
             ],
           ),
@@ -270,15 +417,8 @@ class _GabrielaMessagesTabState extends State<GabrielaMessagesTab> {
   }
 }
 
-class _Message {
-  const _Message(this.text, this.fromContact);
-  final String text;
-  final bool fromContact;
-}
-
 class _ContactAvatar extends StatelessWidget {
-  const _ContactAvatar({required this.name, required this.size});
-  final String name;
+  const _ContactAvatar({required this.size});
   final double size;
 
   @override
@@ -286,18 +426,15 @@ class _ContactAvatar extends StatelessWidget {
     width: size,
     height: size,
     alignment: Alignment.center,
-    decoration: BoxDecoration(
+    decoration: const BoxDecoration(
       shape: BoxShape.circle,
-      color: VetColors.rose.withValues(alpha: .6),
-      border: Border.all(color: VetColors.rose, width: 1.5),
+      color: VetColors.pink,
     ),
-    child: Text(
-      name.substring(0, 1).toUpperCase(),
-      style: TextStyle(
-        fontSize: size * .42,
-        color: VetColors.brown,
-        fontWeight: FontWeight.w700,
-      ),
+    child: Image.asset(
+      'assets/imagens/figma/frame-53-3.png',
+      width: size,
+      height: size,
+      excludeFromSemantics: true,
     ),
   );
 }

@@ -25,7 +25,7 @@ class GabrielaBottomNav extends StatelessWidget {
     'frame-52-3.png',
     'frame-49.png',
   ];
-  static const _labels = ['Perfil', 'WhatsApp', 'Agenda', 'Configurações'];
+  static const _labels = ['Perfil', 'Chat', 'Agenda', 'Configurações'];
 
   @override
   Widget build(BuildContext context) {

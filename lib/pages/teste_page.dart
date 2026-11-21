@@ -185,7 +185,7 @@ class TestePage extends StatelessWidget {
         pagina: (_) => const GabrielaAreaPage(initialIndex: 0),
       ),
       (
-        titulo: 'Gabriela - WhatsApp',
+        titulo: 'Gabriela - Chat',
         icone: Icons.chat_bubble_outline,
         pagina: (_) => const GabrielaAreaPage(initialIndex: 1),
       ),
@@ -224,7 +224,7 @@ class TestePage extends StatelessWidget {
                   'Área da Gabriela' => '/gabriela/splash',
                   'Gabriela - Login' => '/gabriela/login',
                   'Gabriela - Perfil' => '/gabriela/perfil',
-                  'Gabriela - WhatsApp' => '/gabriela/mensagens',
+                  'Gabriela - Chat' => '/gabriela/mensagens',
                   'Gabriela - Agenda' => '/gabriela/agenda',
                   'Gabriela - Configurações' => '/gabriela/configuracoes',
                   _ => null,
