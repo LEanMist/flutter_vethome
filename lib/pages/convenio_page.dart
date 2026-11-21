@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vethome/models/agendamento.dart';
 import 'package:flutter_vethome/models/pet.dart';
+import 'package:flutter_vethome/pages/finalizar_agendamento_page.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
+import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -11,12 +13,14 @@ class ConvenioPage extends StatefulWidget {
     required this.rascunho,
     required this.petNome,
     required this.petTipo,
+    this.usuarioRepository,
     this.agendamentoRepository,
   });
 
   final AgendamentoRascunho rascunho;
   final String petNome;
   final PetType petTipo;
+  final UsuarioRepository? usuarioRepository;
   final AgendamentoRepository? agendamentoRepository;
 
   @override
@@ -49,32 +53,7 @@ class _ConvenioPageState extends State<ConvenioPage> {
     ConvenioAgendamento.particular,
   ];
 
-  bool _salvando = false;
-
-  AgendamentoRepository get _repository =>
-      widget.agendamentoRepository ?? InMemoryAgendamentoRepository.instance;
-
-  Future<void> _concluirAgendamento(ConvenioAgendamento convenio) async {
-    final agendamento = widget.rascunho.finalizar(convenio: convenio);
-    if (agendamento.errors.isNotEmpty) {
-      _mostrarMensagem(agendamento.errors.first);
-      return;
-    }
-
-    setState(() => _salvando = true);
-    try {
-      final salvo = await _repository.save(agendamento);
-      if (mounted) Navigator.of(context).pop(salvo);
-    } catch (error) {
-      if (mounted) _mostrarMensagem('Não foi possível salvar: $error');
-    } finally {
-      if (mounted) setState(() => _salvando = false);
-    }
-  }
-
   Future<void> _confirmarConvenio(ConvenioAgendamento convenio) async {
-    if (_salvando) return;
-
     final continuar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -114,13 +93,20 @@ class _ConvenioPageState extends State<ConvenioPage> {
     );
 
     if (!mounted || continuar != true) return;
-    await _concluirAgendamento(convenio);
-  }
-
-  void _mostrarMensagem(String mensagem) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(mensagem)));
+    final agendamento = await Navigator.of(context).push<Agendamento>(
+      MaterialPageRoute(
+        builder: (_) => FinalizarAgendamentoPage(
+          rascunho: widget.rascunho,
+          petNome: widget.petNome,
+          petTipo: widget.petTipo,
+          convenio: convenio,
+          usuarioRepository: widget.usuarioRepository,
+          agendamentoRepository: widget.agendamentoRepository,
+        ),
+      ),
+    );
+    if (!mounted || agendamento == null) return;
+    Navigator.of(context).pop(agendamento);
   }
 
   String _nomeConvenio(ConvenioAgendamento convenio) => switch (convenio) {
@@ -254,9 +240,7 @@ class _ConvenioPageState extends State<ConvenioPage> {
                                     child: InkWell(
                                       key: ValueKey('convenio-${convenio.name}'),
                                       borderRadius: _bordaDaCategoria(convenio),
-                                      onTap: _salvando
-                                          ? null
-                                          : () => _confirmarConvenio(convenio),
+                                      onTap: () => _confirmarConvenio(convenio),
                                       child: Ink(
                                         decoration: BoxDecoration(
                                           gradient: _gradienteCategorias,
@@ -304,9 +288,7 @@ class _ConvenioPageState extends State<ConvenioPage> {
                                 IconButton(
                                   tooltip:
                                       'Continuar com ${_nomeConvenio(convenio)}',
-                                  onPressed: _salvando
-                                      ? null
-                                      : () => _confirmarConvenio(convenio),
+                                  onPressed: () => _confirmarConvenio(convenio),
                                   icon: const Icon(
                                     Icons.keyboard_double_arrow_right_rounded,
                                     size: 35,

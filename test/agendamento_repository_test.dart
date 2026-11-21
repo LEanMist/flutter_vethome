@@ -40,6 +40,37 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test(
+    'bloqueia horário ocupado por outro usuário e libera após cancelamento',
+    () async {
+      final repository = InMemoryAgendamentoRepository();
+      final primeiro = await repository.save(_agendamento());
+      final outro = _agendamento().copyWith(
+        usuarioId: 'usuario-2',
+        petId: 'pet-2',
+      );
+
+      expect(await repository.horariosOcupados(primeiro.data), {'13:00'});
+      expect(
+        await repository.horariosOcupados(
+          primeiro.data.add(const Duration(days: 1)),
+        ),
+        isEmpty,
+      );
+      await expectLater(
+        repository.save(outro),
+        throwsA(isA<HorarioOcupadoException>()),
+      );
+      await repository.save(
+        primeiro.copyWith(status: StatusAgendamento.cancelado),
+      );
+      expect(await repository.horariosOcupados(primeiro.data), isEmpty);
+      final salvo = await repository.save(outro);
+      await repository.save(salvo.copyWith(descricao: 'Atualizado'));
+      expect(await repository.horariosOcupados(primeiro.data), {'13:00'});
+    },
+  );
 }
 
 Agendamento _agendamento({List<ServicoAgendamento>? servicos}) {
@@ -49,13 +80,15 @@ Agendamento _agendamento({List<ServicoAgendamento>? servicos}) {
     petId: 'pet-1',
     data: DateTime(amanha.year, amanha.month, amanha.day),
     horario: '13:00',
-    servicos: servicos ?? const [
-      ServicoAgendamento(
-        id: 'hemograma',
-        categoria: CategoriaServico.exames,
-        nome: 'Hemograma',
-      ),
-    ],
+    servicos:
+        servicos ??
+        const [
+          ServicoAgendamento(
+            id: 'hemograma',
+            categoria: CategoriaServico.exames,
+            nome: 'Hemograma',
+          ),
+        ],
     convenio: ConvenioAgendamento.petlove,
   );
 }

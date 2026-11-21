@@ -1,10 +1,16 @@
+import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_vethome/models/agendamento.dart';
 import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/models/usuario.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
+import 'package:flutter_vethome/services/cep_lookup_service.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
+import 'package:flutter_vethome/widgets/calendario.dart';
+import 'package:flutter_vethome/widgets/campo_cadastro.dart';
+import 'package:flutter_vethome/widgets/seletor_horario.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FinalizarAgendamentoPage extends StatefulWidget {
@@ -16,6 +22,7 @@ class FinalizarAgendamentoPage extends StatefulWidget {
 		required this.convenio,
 		this.usuarioRepository,
 		this.agendamentoRepository,
+		this.cepLookupService,
 	});
 
 	final AgendamentoRascunho rascunho;
@@ -24,6 +31,7 @@ class FinalizarAgendamentoPage extends StatefulWidget {
 	final ConvenioAgendamento convenio;
 	final UsuarioRepository? usuarioRepository;
 	final AgendamentoRepository? agendamentoRepository;
+	final CepLookupService? cepLookupService;
 
 	@override
 	State<FinalizarAgendamentoPage> createState() =>
@@ -104,43 +112,67 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
 			'${data.day.toString().padLeft(2, '0')}/'
 			'${data.month.toString().padLeft(2, '0')}/${data.year}';
 
-	Future<String?> _escolherHorario(DateTime data) {
+	Future<String?> _escolherHorario(DateTime data) async {
+		Set<String> horariosOcupados;
+		try {
+			horariosOcupados = await _agendamentoRepository.horariosOcupados(data);
+		} catch (error) {
+			if (mounted) _mostrarMensagem('Não foi possível consultar os horários: $error');
+			return null;
+		}
+		if (!mounted) return null;
 		return showDialog<String>(
 			context: context,
-			builder: (context) => AlertDialog(
-				backgroundColor: VetCores.rosaFundo,
-				title: Text(
-					'Horários para ${_formatarData(data)}',
-					style: GoogleFonts.comfortaa(
-						color: VetCores.marrom,
-						fontWeight: FontWeight.bold,
-					),
-				),
-				content: Column(
-					mainAxisSize: MainAxisSize.min,
-					children: [
-						for (final horario in _horariosDisponiveis)
-							ListTile(
-								key: ValueKey('horario-$horario'),
-								title: Text(
-									horario,
-									style: GoogleFonts.comfortaa(color: VetCores.marrom),
-								),
-								onTap: () => Navigator.of(context).pop(horario),
-							),
-					],
-				),
+			builder: (context) => SeletorHorario(
+				data: data,
+				horarios: _horariosDisponiveis,
+				horariosOcupados: horariosOcupados,
 			),
 		);
 	}
 
 	Future<void> _selecionarData() async {
 		final hoje = DateUtils.dateOnly(DateTime.now());
-		final data = await showDatePicker(
+		var dataTemporaria = _data.isBefore(hoje) ? hoje : _data;
+		final data = await showDialog<DateTime>(
 			context: context,
-			initialDate: _data.isBefore(hoje) ? hoje : _data,
-			firstDate: hoje,
-			lastDate: DateTime(hoje.year + 2, hoje.month, hoje.day),
+			builder: (context) => Dialog(
+				backgroundColor: Colors.transparent,
+				insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+				child: ConstrainedBox(
+					constraints: const BoxConstraints(maxWidth: 520),
+					child: StatefulBuilder(
+						builder: (context, atualizarDialogo) {
+							final alturaDisponivel = MediaQuery.sizeOf(context).height - 110;
+							final escala = math.min(0.85, math.max(0.1, alturaDisponivel / 380));
+							return Column(
+								mainAxisSize: MainAxisSize.min,
+								crossAxisAlignment: CrossAxisAlignment.stretch,
+								children: [
+									Align(
+										alignment: Alignment.centerRight,
+										child: IconButton(
+											tooltip: 'Fechar calendário',
+											onPressed: () => Navigator.of(context).pop(),
+											icon: const Icon(Icons.close_rounded),
+											color: VetCores.branco,
+										),
+									),
+									CalendarioAgendamento(
+										dataSelecionada: dataTemporaria,
+										onDataSelecionada: (data) =>
+												atualizarDialogo(() => dataTemporaria = data),
+										onDiaSelecionado: (data) => Navigator.of(context).pop(data),
+										escala: escala,
+										mostrarEtiqueta: false,
+										arredondarTopo: true,
+									),
+								],
+							);
+						},
+					),
+				),
+			),
 		);
 		if (!mounted || data == null) return;
 
@@ -168,7 +200,9 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
 
 		final endereco = await showDialog<EnderecoUsuario>(
 			context: context,
-			builder: (context) => const _NovoEnderecoDialog(),
+			builder: (context) => _NovoEnderecoDialog(
+				cepLookupService: widget.cepLookupService ?? ViaCepLookupService(),
+			),
 		);
 		if (!mounted || endereco == null) return;
 
@@ -220,6 +254,8 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
 		try {
 			final salvo = await _agendamentoRepository.save(agendamento);
 			if (mounted) Navigator.of(context).pop(salvo);
+		} on HorarioOcupadoException catch (error) {
+			if (mounted) _mostrarMensagem(error.toString());
 		} catch (error) {
 			if (mounted) _mostrarMensagem('Não foi possível salvar: $error');
 		} finally {
@@ -290,207 +326,222 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
 
 	@override
 	Widget build(BuildContext context) {
-		final compacto = MediaQuery.sizeOf(context).width < 500;
 		final servicos = widget.rascunho.servicos.map((servico) => servico.nome);
-
 		return Scaffold(
 			backgroundColor: VetCores.rosaFundo,
-			body: Column(
-				children: [
-					Container(
-						width: double.infinity,
-						height: compacto ? 116 : 128,
-						padding: EdgeInsets.fromLTRB(6, compacto ? 18 : 24, 8, 12),
-						decoration: const BoxDecoration(
-							color: VetCores.rosaEscuro,
-							borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-						),
-						child: Row(
-							children: [
-								IconButton(
-									tooltip: 'Voltar para convênio',
-									onPressed: () => Navigator.of(context).pop(),
-									icon: const Icon(Icons.arrow_back),
-									color: VetCores.branco,
-								),
-								Expanded(
-									child: Text(
-										'Finalizar agendamento',
-										textAlign: TextAlign.center,
-										maxLines: 1,
-										overflow: TextOverflow.ellipsis,
-										style: GoogleFonts.comfortaa(
-											color: VetCores.branco,
-											fontSize: compacto ? 24 : 30,
-											fontWeight: FontWeight.bold,
-										),
-									),
-								),
-								const SizedBox(width: 48),
-							],
-						),
-					),
-					Expanded(
-						child: ListView(
-							padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-							children: [
-								Text(
-									'Revisar agendamento',
-									style: GoogleFonts.montserratAlternates(
-										color: VetCores.marrom,
-										fontSize: 17,
-										fontWeight: FontWeight.bold,
-									),
-								),
-								const SizedBox(height: 10),
-								_campoResumo(
-									icone: Icons.medical_services_outlined,
-									titulo: 'Serviços',
-									valor: servicos.join(', '),
-								),
-								_campoResumo(
-									icone: Icons.health_and_safety_outlined,
-									titulo: 'Convênio',
-									valor: _nomeConvenio(widget.convenio),
-								),
-								Row(
-									children: [
-										Expanded(
-											child: _campoResumo(
-												icone: Icons.calendar_month_outlined,
-												titulo: 'Data',
-												valor: _formatarData(_data),
-												onTap: _selecionarData,
-											),
-										),
-										const SizedBox(width: 10),
-										Expanded(
-											child: _campoResumo(
-												icone: Icons.access_time_rounded,
-												titulo: 'Horário',
-												valor: _horario,
-												onTap: _selecionarHorario,
-											),
-										),
-									],
-								),
-								const SizedBox(height: 4),
-								Text(
-									'Endereço do atendimento',
-									style: GoogleFonts.montserratAlternates(
-										color: VetCores.marrom,
-										fontSize: 17,
-										fontWeight: FontWeight.bold,
-									),
-								),
-								const SizedBox(height: 8),
-								if (_enderecos.isEmpty)
-									Padding(
-										padding: const EdgeInsets.only(bottom: 10),
-										child: Text(
-											'Não há endereço principal disponível para este usuário.',
-											style: GoogleFonts.montserratAlternates(
-												color: VetCores.marrom,
-											),
-										),
-									),
-								for (final endereco in _enderecos)
-									Padding(
-										padding: const EdgeInsets.only(bottom: 8),
-										child: Material(
-											color: _enderecoSelecionadoId == endereco.id
-													? VetCores.rosaEscuro.withValues(alpha: 0.24)
-													: VetCores.rosaCard,
-											borderRadius: BorderRadius.circular(10),
-											child: InkWell(
-												key: ValueKey('endereco-${endereco.id}'),
-												borderRadius: BorderRadius.circular(10),
-												onTap: () => setState(
-													() => _enderecoSelecionadoId = endereco.id,
-												),
-												child: Padding(
-													padding: const EdgeInsets.all(12),
-													child: Row(
-														children: [
-															Icon(
-																_enderecoSelecionadoId == endereco.id
-																		? Icons.radio_button_checked
-																		: Icons.radio_button_unchecked,
-																color: VetCores.marrom,
-															),
-															const SizedBox(width: 10),
-															Expanded(
-																child: Column(
-																	crossAxisAlignment: CrossAxisAlignment.start,
-																	children: [
-																		Text(
-																			endereco.nome,
-																			style: GoogleFonts.montserratAlternates(
-																				color: VetCores.marrom,
-																				fontWeight: FontWeight.bold,
-																			),
-																		),
-																		Text(
-																			endereco.descricao,
-																			style: GoogleFonts.montserratAlternates(
-																				color: VetCores.marrom,
-																				fontSize: 12,
-																			),
-																		),
-																	],
-																),
-															),
-														],
-													),
-												),
-											),
-										),
-									),
-								Align(
-									alignment: Alignment.centerLeft,
-									child: OutlinedButton.icon(
-										key: const ValueKey('adicionar-endereco'),
-										onPressed: _adicionarEndereco,
-										icon: const Icon(Icons.add_location_alt_outlined),
-										label: Text(
-											'Adicionar mais endereço',
-											style: GoogleFonts.montserratAlternates(),
-										),
-										style: OutlinedButton.styleFrom(
-											foregroundColor: VetCores.marrom,
-											side: const BorderSide(color: VetCores.rosaEscuro),
-										),
-									),
-								),
-								const SizedBox(height: 14),
-								Text(
-									'Descrição para a veterinária',
-									style: GoogleFonts.montserratAlternates(
-										color: VetCores.marrom,
-										fontWeight: FontWeight.bold,
-									),
-								),
-								const SizedBox(height: 6),
-								TextField(
-									key: const ValueKey('descricao-agendamento'),
-									controller: _descricaoController,
-									minLines: 3,
-									maxLines: 5,
-									textCapitalization: TextCapitalization.sentences,
-									decoration: InputDecoration(
-										hintText: 'Adicione informações importantes',
-										filled: true,
-										fillColor: VetCores.rosaEscuro.withValues(alpha: 0.35),
-										border: OutlineInputBorder(
-											borderRadius: BorderRadius.circular(10),
-											borderSide: BorderSide.none,
-										),
-									),
-								),
-							],
-						),
-					),
-				],
+			body: LayoutBuilder(
+				builder: (context, constraints) {
+					final bool compacto =
+							constraints.maxWidth < 500 || constraints.maxHeight < 700;
+              final double alturaCabecalho = compacto ? 140 : 160;
+					return Column(
+            children: [
+              Container(
+                width: double.infinity,
+                height: alturaCabecalho,
+                padding: EdgeInsets.fromLTRB(
+                  10,
+                  compacto ? 29 : 30,
+                  8,
+                  compacto ? 11 : 16,
+                ),
+                decoration: const BoxDecoration(
+                  color: VetCores.rosaEscuro,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(20)
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Voltar para serviços',
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.arrow_back),
+                          color: VetCores.branco,
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Finalizar',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.comfortaa(
+                              color: VetCores.branco,
+                              fontSize: compacto ? 30 : 35,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: compacto ? 47 : 80),
+                      ],
+                    ),
+                    SizedBox(height: compacto ? 20 : 12),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                  children: [
+                    Text(
+                      'Revisar agendamento',
+                      style: GoogleFonts.montserratAlternates(
+                        color: VetCores.marrom,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _campoResumo(
+                      icone: Icons.medical_services_outlined,
+                      titulo: 'Serviços',
+                      valor: servicos.join(', '),
+                    ),
+                    _campoResumo(
+                      icone: Icons.health_and_safety_outlined,
+                      titulo: 'Convênio',
+                      valor: _nomeConvenio(widget.convenio),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _campoResumo(
+                            icone: Icons.calendar_month_outlined,
+                            titulo: 'Data',
+                            valor: _formatarData(_data),
+                            onTap: _selecionarData,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _campoResumo(
+                            icone: Icons.access_time_rounded,
+                            titulo: 'Horário',
+                            valor: _horario,
+                            onTap: _selecionarHorario,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Endereço do atendimento',
+                      style: GoogleFonts.montserratAlternates(
+                        color: VetCores.marrom,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (_enderecos.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Text(
+                          'Não há endereço principal disponível para este usuário.',
+                          style: GoogleFonts.montserratAlternates(
+                            color: VetCores.marrom,
+                          ),
+                        ),
+                      ),
+                    for (final endereco in _enderecos)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Material(
+                          color: _enderecoSelecionadoId == endereco.id
+                              ? VetCores.rosaEscuro.withValues(alpha: 0.24)
+                              : VetCores.rosaCard,
+                          borderRadius: BorderRadius.circular(10),
+                          child: InkWell(
+                            key: ValueKey('endereco-${endereco.id}'),
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () => setState(
+                              () => _enderecoSelecionadoId = endereco.id,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _enderecoSelecionadoId == endereco.id
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
+                                    color: VetCores.marrom,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          endereco.nome,
+                                          style: GoogleFonts.montserratAlternates(
+                                            color: VetCores.marrom,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          endereco.descricao,
+                                          style: GoogleFonts.montserratAlternates(
+                                            color: VetCores.marrom,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        key: const ValueKey('adicionar-endereco'),
+                        onPressed: _adicionarEndereco,
+                        icon: const Icon(Icons.add_location_alt_outlined),
+                        label: Text(
+                          'Adicionar mais endereço',
+                          style: GoogleFonts.montserratAlternates(),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: VetCores.marrom,
+                          side: const BorderSide(color: VetCores.rosaEscuro),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Adicionar uma descrição',
+                      style: GoogleFonts.montserratAlternates(
+                        color: VetCores.marrom,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      key: const ValueKey('descricao-agendamento'),
+                      controller: _descricaoController,
+                      minLines: 3,
+                      maxLines: 5,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: InputDecoration(
+                        hintText: 'Adicione informações importantes',
+                        filled: true,
+                        fillColor: VetCores.rosaEscuro.withValues(alpha: 0.35),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+					);
+				},
 			),
 			bottomNavigationBar: SafeArea(
 				top: false,
@@ -536,20 +587,25 @@ class _EnderecoOpcao {
 }
 
 class _NovoEnderecoDialog extends StatefulWidget {
-	const _NovoEnderecoDialog();
+	const _NovoEnderecoDialog({required this.cepLookupService});
+
+	final CepLookupService cepLookupService;
 
 	@override
 	State<_NovoEnderecoDialog> createState() => _NovoEnderecoDialogState();
 }
 
 class _NovoEnderecoDialogState extends State<_NovoEnderecoDialog> {
-	final _formKey = GlobalKey<FormState>();
 	final _nomeController = TextEditingController();
 	final _cepController = TextEditingController();
 	final _logradouroController = TextEditingController();
 	final _numeroController = TextEditingController();
 	final _complementoController = TextEditingController();
 	final _cidadeController = TextEditingController();
+	final Map<String, String> _errors = {};
+	int _cepRequestId = 0;
+	bool _consultandoCep = false;
+	String? _cepFeedback;
 
 	@override
 	void dispose() {
@@ -562,11 +618,25 @@ class _NovoEnderecoDialogState extends State<_NovoEnderecoDialog> {
 		super.dispose();
 	}
 
-	String? _obrigatorio(String? valor) =>
-			valor == null || valor.trim().isEmpty ? 'Campo obrigatório' : null;
-
 	void _salvar() {
-		if (!_formKey.currentState!.validate()) return;
+		final errors = <String, String>{
+			if (_nomeController.text.trim().isEmpty)
+				'nome do endereço': 'Campo obrigatório',
+			if (_cepController.text.replaceAll(RegExp(r'\D'), '').length != 8)
+				'cep': 'Informe um CEP válido',
+			if (_logradouroController.text.trim().isEmpty)
+				'logradouro': 'Campo obrigatório',
+			if (_numeroController.text.trim().isEmpty)
+				'número': 'Campo obrigatório',
+			if (_cidadeController.text.trim().isEmpty)
+				'cidade': 'Campo obrigatório',
+		};
+		setState(() {
+			_errors
+				..clear()
+				..addAll(errors);
+		});
+		if (errors.isNotEmpty) return;
 		Navigator.of(context).pop(
 			EnderecoUsuario(
 				nome: _nomeController.text.trim(),
@@ -579,30 +649,96 @@ class _NovoEnderecoDialogState extends State<_NovoEnderecoDialog> {
 		);
 	}
 
+	void _aoAlterarCep(String valor) {
+		final cep = valor.replaceAll(RegExp(r'\D'), '');
+		final requestId = ++_cepRequestId;
+		setState(() {
+			_consultandoCep = cep.length == 8;
+			_cepFeedback = null;
+		});
+		if (cep.length == 8) {
+			unawaited(_consultarCep(cep, requestId));
+		}
+	}
+
+	Future<void> _consultarCep(String cep, int requestId) async {
+		final logradouroAnterior = _logradouroController.text;
+		final cidadeAnterior = _cidadeController.text;
+		try {
+			final endereco = await widget.cepLookupService.consultar(cep);
+			if (!mounted || requestId != _cepRequestId) return;
+			setState(() {
+				_consultandoCep = false;
+				if (endereco == null) {
+					_cepFeedback = 'CEP não encontrado. Confira ou preencha manualmente.';
+					return;
+				}
+				if (endereco.logradouro.isNotEmpty &&
+						_logradouroController.text == logradouroAnterior) {
+					_logradouroController.text = endereco.logradouro;
+					_errors.remove('logradouro');
+				}
+				if (endereco.cidade.isNotEmpty &&
+						_cidadeController.text == cidadeAnterior) {
+					_cidadeController.text = endereco.cidade;
+					_errors.remove('cidade');
+				}
+				_cepFeedback = 'Consulta de CEP concluída.';
+			});
+		} catch (_) {
+			if (!mounted || requestId != _cepRequestId) return;
+			setState(() {
+				_consultandoCep = false;
+				_cepFeedback = 'Falha na consulta. Você pode preencher manualmente.';
+			});
+		}
+	}
+
 	Widget _campo(
 		String label,
 		TextEditingController controller, {
-		String? Function(String?)? validator,
+		required IconData icone,
 		TextInputType? keyboardType,
-		bool obrigatorio = true,
+		ValueChanged<String>? onChanged,
 	}) {
+		final chave = label.toLowerCase();
+		final erro = _errors[chave];
 		return Padding(
 			padding: const EdgeInsets.only(bottom: 10),
-			child: TextFormField(
-				key: ValueKey('novo-endereco-${label.toLowerCase()}'),
-				controller: controller,
-				validator: obrigatorio ? (validator ?? _obrigatorio) : null,
-				keyboardType: keyboardType,
-				textCapitalization: TextCapitalization.words,
-				decoration: InputDecoration(
-					labelText: label,
-					filled: true,
-					fillColor: VetCores.rosaEscuro.withValues(alpha: 0.18),
-					border: OutlineInputBorder(
-						borderRadius: BorderRadius.circular(8),
-						borderSide: BorderSide.none,
+			child: Column(
+				crossAxisAlignment: CrossAxisAlignment.start,
+				children: [
+					CampoCadastro(
+						key: ValueKey('novo-endereco-$chave'),
+						titulo: label,
+						icone: icone,
+						altura: 55,
+						largura: double.infinity,
+						tamanhoIcone: 55,
+						tamanhoIconeInterno: 27,
+						fonteLabel: 15,
+						controller: controller,
+						keyboardType: keyboardType,
+						textCapitalization: TextCapitalization.words,
+						onChanged: (valor) {
+							if (_errors.containsKey(chave)) {
+								setState(() => _errors.remove(chave));
+							}
+							onChanged?.call(valor);
+						},
 					),
-				),
+					if (erro != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 8),
+            child: Text(
+              erro,
+              style: const TextStyle(
+                color: VetCores.vermelhoEscuro,
+                fontSize: 12,
+              ),
+            ),
+          ),
+				],
 			),
 		);
 	}
@@ -621,32 +757,50 @@ class _NovoEnderecoDialogState extends State<_NovoEnderecoDialog> {
 			content: SizedBox(
 				width: 380,
 				child: SingleChildScrollView(
-					child: Form(
-						key: _formKey,
-						child: Column(
+					child: Column(
 							mainAxisSize: MainAxisSize.min,
 							children: [
-								_campo('Nome do endereço', _nomeController),
+								_campo('Nome do endereço', _nomeController, icone: Icons.label),
 								_campo(
 									'CEP',
 									_cepController,
+									icone: Icons.home,
 									keyboardType: TextInputType.number,
-									validator: (valor) {
-										final numeros = valor?.replaceAll(RegExp(r'\D'), '') ?? '';
-										return numeros.length == 8 ? null : 'Informe um CEP válido';
-									},
+									onChanged: _aoAlterarCep,
 								),
-								_campo('Logradouro', _logradouroController),
-								_campo('Número', _numeroController),
+								if (_consultandoCep)
+									const Padding(
+										padding: EdgeInsets.only(bottom: 10),
+										child: SizedBox(
+											width: 16,
+											height: 16,
+											child: CircularProgressIndicator(
+												strokeWidth: 2,
+												color: VetCores.marrom,
+											),
+										),
+									)
+								else if (_cepFeedback != null)
+									Padding(
+										padding: const EdgeInsets.only(bottom: 10),
+										child: Text(
+											_cepFeedback!,
+											style: const TextStyle(
+												color: VetCores.marrom,
+												fontSize: 12,
+											),
+										),
+									),
+								_campo('Logradouro', _logradouroController, icone: Icons.home),
+								_campo('Número', _numeroController, icone: Icons.numbers),
+								_campo('Cidade', _cidadeController, icone: Icons.location_city),
 								_campo(
 									'Complemento',
 									_complementoController,
-									obrigatorio: false,
+									icone: Icons.home,
 								),
-								_campo('Cidade', _cidadeController),
 							],
 						),
-					),
 				),
 			),
 			actions: [
@@ -668,39 +822,4 @@ class _NovoEnderecoDialogState extends State<_NovoEnderecoDialog> {
 	}
 }
 
-class _SeletorHorarioDialog extends StatelessWidget {
-	const _SeletorHorarioDialog({required this.data});
-
-	static const _horarios = ['12:00', '13:00', '14:00', '15:00', '16:00'];
-
-	final DateTime data;
-
-	@override
-	Widget build(BuildContext context) {
-		final dataFormatada =
-				'${data.day.toString().padLeft(2, '0')}/'
-				'${data.month.toString().padLeft(2, '0')}/${data.year}';
-		return AlertDialog(
-			backgroundColor: VetCores.rosaFundo,
-			title: Text(
-				'Horários para $dataFormatada',
-				style: GoogleFonts.comfortaa(
-					color: VetCores.marrom,
-					fontWeight: FontWeight.bold,
-				),
-			),
-			content: Column(
-				mainAxisSize: MainAxisSize.min,
-				children: [
-					for (final horario in _horarios)
-						ListTile(
-							key: ValueKey('horario-$horario'),
-							title: Text(horario),
-							onTap: () => Navigator.of(context).pop(horario),
-						),
-				],
-			),
-		);
-	}
-}
 

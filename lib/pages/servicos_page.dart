@@ -3,6 +3,7 @@ import 'package:flutter_vethome/models/agendamento.dart';
 import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/pages/convenio_page.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
+import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,12 +13,14 @@ class ServicosPage extends StatefulWidget {
     required this.rascunho,
     required this.petNome,
     required this.petTipo,
+    this.usuarioRepository,
     this.agendamentoRepository,
   });
 
   final AgendamentoRascunho rascunho;
   final String petNome;
   final PetType petTipo;
+  final UsuarioRepository? usuarioRepository;
   final AgendamentoRepository? agendamentoRepository;
 
   @override
@@ -235,6 +238,7 @@ class _ServicosPageState extends State<ServicosPage> {
           rascunho: rascunho,
           petNome: widget.petNome,
           petTipo: widget.petTipo,
+          usuarioRepository: widget.usuarioRepository,
           agendamentoRepository: _repository,
         ),
       ),

@@ -1,6 +1,7 @@
+import 'dart:async';
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 import 'package:flutter_vethome/models/agendamento.dart';
 import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/pages/servicos_page.dart';
@@ -8,8 +9,9 @@ import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/repositories/pet_repository.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
-import 'package:flutter_vethome/widgets/etiqueta_perfil.dart';
+import 'package:flutter_vethome/widgets/calendario.dart';
 import 'package:flutter_vethome/widgets/pet_card.dart';
+import 'package:flutter_vethome/widgets/seletor_horario.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AgendamentoPage extends StatefulWidget {
@@ -31,38 +33,6 @@ class AgendamentoPage extends StatefulWidget {
 }
 
 class _AgendamentoPage extends State<AgendamentoPage> {
-  static const _meses = [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro',
-  ];
-  static const _diasDaSemana = [
-    'Dom',
-    'Seg',
-    'Ter',
-    'Qua',
-    'Qui',
-    'Sex',
-    'Sáb',
-  ];
-  static const _nomesDiasDaSemana = [
-    'Domingo',
-    'Segunda-feira',
-    'Terça-feira',
-    'Quarta-feira',
-    'Quinta-feira',
-    'Sexta-feira',
-    'Sábado',
-  ];
   static const _horariosDisponiveis = [
     '12:00',
     '13:00',
@@ -71,11 +41,9 @@ class _AgendamentoPage extends State<AgendamentoPage> {
     '16:00',
   ];
 
-  late DateTime _mesVisivel;
   late DateTime _dataSelecionada;
   final List<Agendamento> _agendamentos = [];
-  Pet? _petSelecionado;
-  String? _horarioSelecionado;
+  int _versaoCarregamento = 0;
 
   PetRepository get _repository =>
       widget.petRepository ?? InMemoryPetRepository.instance;
@@ -84,9 +52,32 @@ class _AgendamentoPage extends State<AgendamentoPage> {
   AgendamentoRepository get _agendamentoRepository =>
       widget.agendamentoRepository ?? InMemoryAgendamentoRepository.instance;
 
-  DateTime get _mesAtual {
-    final hoje = DateTime.now();
-    return DateTime(hoje.year, hoje.month);
+  String? get _usuarioId {
+    final usuarios = _usuarioRepository.findAll();
+    return widget.usuarioId ?? (usuarios.isEmpty ? null : usuarios.first.id);
+  }
+
+  Future<void> _carregarAgendamentos() async {
+    final versao = ++_versaoCarregamento;
+    final usuarioId = _usuarioId;
+    if (usuarioId == null || usuarioId.trim().isEmpty) {
+      if (mounted) setState(() => _agendamentos.clear());
+      return;
+    }
+
+    try {
+      final agendamentos = await _agendamentoRepository.findByUsuarioId(usuarioId);
+      if (!mounted || versao != _versaoCarregamento) return;
+      setState(() {
+        _agendamentos
+          ..clear()
+          ..addAll(agendamentos.reversed);
+      });
+    } catch (error) {
+      if (mounted && versao == _versaoCarregamento) {
+        _mostrarMensagem('Não foi possível carregar os agendamentos: $error');
+      }
+    }
   }
 
   Future<void> _agendarConsulta() async {
@@ -101,9 +92,7 @@ class _AgendamentoPage extends State<AgendamentoPage> {
       return;
     }
 
-    final usuarios = _usuarioRepository.findAll();
-    final usuarioId =
-      widget.usuarioId ?? (usuarios.isEmpty ? null : usuarios.first.id);
+    final usuarioId = _usuarioId;
     if (usuarioId == null || usuarioId.trim().isEmpty) {
       _mostrarMensagem('Cadastre um usuário antes de agendar consulta.');
       return;
@@ -120,13 +109,23 @@ class _AgendamentoPage extends State<AgendamentoPage> {
       return;
     }
 
+    Set<String> horariosOcupados;
+    try {
+      horariosOcupados = await _agendamentoRepository.horariosOcupados(
+        _dataSelecionada,
+      );
+    } catch (error) {
+      if (mounted) _mostrarMensagem('Não foi possível consultar os horários: $error');
+      return;
+    }
+    if (!mounted) return;
+
     final horario = await showDialog<String>(
       context: context,
-      builder: (context) => _SeletorHorario(
+      builder: (context) => SeletorHorario(
         data: _dataSelecionada,
-        meses: _meses,
-        diasDaSemana: _nomesDiasDaSemana,
         horarios: _horariosDisponiveis,
+        horariosOcupados: horariosOcupados,
       ),
     );
     if (!mounted || horario == null) return;
@@ -152,17 +151,19 @@ class _AgendamentoPage extends State<AgendamentoPage> {
           rascunho: rascunho,
           petNome: petSelecionado.nome,
           petTipo: petSelecionado.tipo,
+          usuarioRepository: _usuarioRepository,
           agendamentoRepository: _agendamentoRepository,
         ),
       ),
     );
     if (!mounted || agendamento == null) return;
 
-    setState(() {
-      _petSelecionado = petSelecionado;
-      _horarioSelecionado = horario;
-      _agendamentos.insert(0, agendamento);
-    });
+    if (_usuarioId == usuarioId) {
+      setState(() {
+        _agendamentos.insert(0, agendamento);
+      });
+      unawaited(_carregarAgendamentos());
+    }
     _mostrarMensagem('Agendamento concluído para ${petSelecionado.nome}.');
   }
 
@@ -176,40 +177,19 @@ class _AgendamentoPage extends State<AgendamentoPage> {
   void initState() {
     super.initState();
     final hoje = DateUtils.dateOnly(DateTime.now());
-    _mesVisivel = DateTime(hoje.year, hoje.month);
     _dataSelecionada = hoje;
+    unawaited(_carregarAgendamentos());
   }
 
-  void _mudarMes(int quantidade) {
-    final proximoMes = DateTime(
-      _mesVisivel.year,
-      _mesVisivel.month + quantidade,
-    );
-    if (proximoMes.isBefore(_mesAtual)) return;
-
-    setState(() {
-      _mesVisivel = proximoMes;
-      final ultimoDia = DateTime(proximoMes.year, proximoMes.month + 1, 0).day;
-      var diaSelecionado = math.min(_dataSelecionada.day, ultimoDia);
-      if (proximoMes == _mesAtual && diaSelecionado < DateTime.now().day) {
-        diaSelecionado = DateTime.now().day;
-      }
-      _dataSelecionada = DateTime(
-        proximoMes.year,
-        proximoMes.month,
-        diaSelecionado,
-      );
-    });
-  }
-
-  void _selecionarData(DateTime data) {
-    final selecionada = DateUtils.dateOnly(data);
-    if (selecionada.isBefore(DateUtils.dateOnly(DateTime.now()))) return;
-
-    setState(() {
-      _dataSelecionada = selecionada;
-      _mesVisivel = DateTime(data.year, data.month);
-    });
+  @override
+  void didUpdateWidget(covariant AgendamentoPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.usuarioId != widget.usuarioId ||
+        oldWidget.usuarioRepository != widget.usuarioRepository ||
+        oldWidget.agendamentoRepository != widget.agendamentoRepository) {
+      _agendamentos.clear();
+      unawaited(_carregarAgendamentos());
+    }
   }
 
   @override
@@ -221,262 +201,122 @@ class _AgendamentoPage extends State<AgendamentoPage> {
         final alturaCalendario = math
             .min(compacto ? 380.0 : 500.0, constraints.maxHeight * 0.68)
             .toDouble();
-        final tamanhoFonte = compacto ? 15.0 : 20.0;
-        final alturaBase = compacto ? 118.0 : 128.0;
-        final alturaCelula = math
-            .min(
-              compacto ? 40.0 : 80.0,
-              math.max(24.0, (alturaCalendario - alturaBase) / 6),
-            )
-            .toDouble();
-        final hoje = DateUtils.dateOnly(DateTime.now());
-        final primeiroDia = DateTime(_mesVisivel.year, _mesVisivel.month);
-        final inicioGrade = DateTime(
-          primeiroDia.year,
-          primeiroDia.month,
-          1 - primeiroDia.weekday % 7,
-        );
-        final double larguraEtiqueta = compacto ? 280 : 200.0;
-        final double alturaEtiqueta = compacto ? 60 : 68;
-        final double espessuraBordaEtiqueta = compacto ? 5 : 7;
-
         return Column(
           children: [
-            SizedBox(
-              height: alturaCalendario + 30,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: alturaCalendario,
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                    decoration: const BoxDecoration(
-                      color: VetCores.rosaEscuro,
-                      borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(26),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          height: 48,
-                          child: Row(
-                            children: [
-                              if (_mesVisivel.isAfter(_mesAtual))
-                                IconButton(
-                                  tooltip: 'Mês anterior',
-                                  onPressed: () => _mudarMes(-1),
-                                  icon: const Icon(Icons.chevron_left_rounded),
-                                  color: VetCores.marrom,
-                                )
-                              else
-                                const SizedBox(width: 48),
-                              Expanded(
-                                child: Text(
-                                  '${_meses[_mesVisivel.month - 1]} ${_mesVisivel.year}',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.comfortaa(
-                                    color: VetCores.marrom,
-                                    fontSize: tamanhoFonte + 2,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                tooltip: 'Próximo mês',
-                                onPressed: () => _mudarMes(1),
-                                icon: const Icon(Icons.chevron_right_rounded),
-                                color: VetCores.marrom,
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          height: compacto ? 30 : 40,
-                          child: Row(
-                            children: [
-                              for (final dia in _diasDaSemana)
-                                Expanded(
-                                  child: Center(
-                                    child: Text(
-                                      dia,
-                                      style: GoogleFonts.comfortaa(
-                                        color: VetCores.marrom,
-                                        fontSize: tamanhoFonte,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          height: alturaCelula * 6,
-                          child: GridView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            itemCount: 42,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 7,
-                                  mainAxisExtent: alturaCelula,
-                                ),
-                            itemBuilder: (context, index) {
-                              final data = DateTime(
-                                inicioGrade.year,
-                                inicioGrade.month,
-                                inicioGrade.day + index,
-                              );
-                              final selecionada = DateUtils.isSameDay(
-                                data,
-                                _dataSelecionada,
-                              );
-                              final hojeSelecionado = DateUtils.isSameDay(
-                                data,
-                                hoje,
-                              );
-                              final mesmoMes = data.month == _mesVisivel.month;
-                              final dataPassada = data.isBefore(hoje);
-
-                              return Padding(
-                                padding: const EdgeInsets.all(2),
-                                child: Material(
-                                  key: selecionada
-                                      ? const ValueKey('selected-calendar-day')
-                                      : ValueKey(
-                                          'calendar-day-${data.year}-${data.month}-${data.day}',
-                                        ),
-                                  color: selecionada
-                                      ? VetCores.rosaFundo
-                                      : Colors.transparent,
-                                  shape: const CircleBorder(),
-                                  child: InkWell(
-                                    customBorder: const CircleBorder(),
-                                    onTap: dataPassada
-                                        ? null
-                                        : () => _selecionarData(data),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: hojeSelecionado && !selecionada
-                                            ? Border.all(
-                                                color: VetCores.rosaClaro,
-                                                width: 1.5,
-                                              )
-                                            : null,
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        '${data.day}',
-                                        style: GoogleFonts.comfortaa(
-                                          color: selecionada
-                                              ? VetCores.marrom
-                                              : !mesmoMes || dataPassada
-                                              ? VetCores.marrom50
-                                              : VetCores.marrom,
-                                          fontSize: tamanhoFonte,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: EtiquetaPerfil(
-                        compacto: compacto,
-                        largura: larguraEtiqueta,
-                        altura: alturaEtiqueta,
-                        raioInferior: 70,
-                        espessuraBorda: espessuraBordaEtiqueta,
-                        conteudo: Text(
-                          '${_dataSelecionada.day} - ${_nomesDiasDaSemana[_dataSelecionada.weekday % 7]}',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.comfortaa(
-                            color: VetCores.marrom,
-                            fontSize: compacto ? 22 : 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            CalendarioAgendamento(
+              dataSelecionada: _dataSelecionada,
+              onDataSelecionada: (data) =>
+                  setState(() => _dataSelecionada = data),
+              alturaCalendario: alturaCalendario,
+              compacto: compacto,
             ),
+            SizedBox(height: compacto ? 20 : 24),
             Expanded(
-              child: ListView.builder(
+              child: ListView.separated(
                 key: const ValueKey('lista-agendamentos'),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 itemCount: _agendamentos.length,
+                separatorBuilder: (context, index) => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 9),
+                  child: Center(
+                    child: SizedBox(
+                      width: 350,
+                      height: 9,
+                      child: CustomPaint(
+                        key: ValueKey('separador-agendamentos'),
+                        painter: _SeparadorAgendamentoPainter(),
+                      ),
+                    ),
+                  ),
+                ),
                 itemBuilder: (context, index) {
                   final agendamento = _agendamentos[index];
-                  final petNome =
-                      _repository.findById(agendamento.petId)?.nome ??
-                      agendamento.petId;
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: VetCores.rosaCard,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '$petNome - ${agendamento.horario}',
-                          style: GoogleFonts.comfortaa(
-                            color: VetCores.marrom,
-                            fontWeight: FontWeight.bold,
+                  final data = agendamento.data;
+                  final dataFormatada =
+                      '${data.day.toString().padLeft(2, '0')}/'
+                      '${data.month.toString().padLeft(2, '0')}/${data.year}';
+                  final servico = agendamento.servicos.isEmpty
+                      ? 'Serviço não informado'
+                      : agendamento.servicos.first.nome;
+                      
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 350, maxHeight: 60),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 100,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FittedBox(
+                                  alignment: Alignment.centerLeft,
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    dataFormatada,
+                                    style: GoogleFonts.montserratAlternates(
+                                      color: VetCores.marrom,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  agendamento.horario,
+                                  style: GoogleFonts.montserratAlternates(
+                                    color: VetCores.marrom,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Text(
-                          '${agendamento.data.day}/${agendamento.data.month}/${agendamento.data.year}',
-                          style: GoogleFonts.comfortaa(
-                            color: VetCores.marrom,
-                            fontSize: 13,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Container(
+                              constraints: const BoxConstraints(minHeight: 42),
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: inset.BoxDecoration(
+                                color: VetCores.rosaEscuro,
+                                borderRadius: BorderRadius.circular(14),
+                                boxShadow: const [
+                                  inset.BoxShadow(
+                                    color: Color.fromARGB(55, 0, 0, 0),
+                                    blurRadius: 3,
+                                    offset: Offset(2, 3),
+                                    inset: true,
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                servico,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.montserratAlternates(
+                                  color: VetCores.branco,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
+                  
                 },
               ),
             ),
+            SizedBox(height: compacto ? 16 : 24),
             Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, compacto ? 16 : 20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (_petSelecionado != null) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        _horarioSelecionado == null
-                            ? 'Pet selecionado: ${_petSelecionado!.nome}'
-                            : '${_petSelecionado!.nome} - $_horarioSelecionado',
-                        style: GoogleFonts.comfortaa(
-                          color: VetCores.marrom,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
                   SizedBox(
                     width: 165,
                     height: 52,
@@ -506,6 +346,24 @@ class _AgendamentoPage extends State<AgendamentoPage> {
       },
     );
   }
+}
+
+class _SeparadorAgendamentoPainter extends CustomPainter {
+  const _SeparadorAgendamentoPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = VetCores.marrom;
+    final centro = size.height / 2;
+    canvas.drawCircle(Offset(2, centro), 2, paint);
+    canvas.drawCircle(Offset(size.width - 2, centro), 2, paint);
+    for (double x = 7; x < size.width - 5; x += 3) {
+      canvas.drawCircle(Offset(x, centro), 0.6, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SeparadorAgendamentoPainter oldDelegate) => false;
 }
 
 class _SeletorPet extends StatelessWidget {
@@ -565,99 +423,3 @@ class _SeletorPet extends StatelessWidget {
   }
 }
 
-class _SeletorHorario extends StatelessWidget {
-  const _SeletorHorario({
-    required this.data,
-    required this.meses,
-    required this.diasDaSemana,
-    required this.horarios,
-  });
-
-  final DateTime data;
-  final List<String> meses;
-  final List<String> diasDaSemana;
-  final List<String> horarios;
-
-  @override
-  Widget build(BuildContext context) {
-    final diaDaSemana = diasDaSemana[data.weekday % 7];
-    final dataFormatada =
-        '${data.day} - $diaDaSemana, ${meses[data.month - 1]} ${data.year}';
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
-      child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(maxWidth: 430),
-        padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
-        decoration: BoxDecoration(
-          color: VetCores.rosaFundo,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(width: 52),
-                Expanded(
-                  child: Text(
-                    dataFormatada,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.comfortaa(
-                      color: VetCores.marrom,
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  iconSize: 26,
-                  tooltip: 'Fechar horários',
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                  color: VetCores.marrom,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 14,
-              runSpacing: 16,
-              children: [
-                for (final horario in horarios)
-                  SizedBox(
-                    width: 90,
-                    height: 48,
-                    child: ElevatedButton(
-                      key: ValueKey('horario-$horario'),
-                      onPressed: () => Navigator.of(context).pop(horario),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: VetCores.rosaEscuro,
-                        foregroundColor: VetCores.branco,
-                        elevation: 2,
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                      child: Text(
-                        horario,
-                        style: GoogleFonts.comfortaa(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
