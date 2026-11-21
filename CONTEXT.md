@@ -11,6 +11,19 @@
   tema.
 - Os atalhos de desenvolvimento para essas telas ficam no `TestePage`.
 
+## Agenda veterinária e integração futura
+
+- A agenda da Gabriela abre na data local de hoje. Os exemplos históricos de
+  10/03/2026 têm identificação de demonstração e ficam isolados dos dados do Cliente.
+- Na `liminha`, `VetRepository.realAppointments(petId)` consulta o repositório
+  local do Cliente. O campo textual `veterinario` identifica apenas um rótulo.
+- Na `leandro`, `AgendamentoRepository` oferece consultas por `usuarioId`
+  e `petId` em memória. Esses IDs são candidatos ao contrato compartilhado. Para
+  habilitar agenda e histórico veterinários, o backend precisa vincular cada
+  consulta a uma veterinária autenticada e autorizar a leitura dos dados do
+  tutor e do pet. O histórico também precisa de um status verificável de conclusão.
+
+
 ## Estado consolidado — 10/11/2026
 
 - **Agenda sem consultas (10/11):** as setas laterais que acompanham os cartões agora ficam ocultas quando o dia está vazio; com consultas, as posições originais do Figma permanecem. `vet_calendar_figma_style_test.dart`: 15 testes passaram; `flutter analyze --no-pub` sem problemas; `git diff --check` aprovado.

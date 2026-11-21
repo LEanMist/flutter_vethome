@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../theme/vet_colors.dart';
+import '../../widgets/auth/demo_mode_notice.dart';
 import '../../widgets/vet/vet_centered_dialog.dart';
 import 'gabriela_calendar_picker.dart';
 import 'gabriela_appointment.dart';
@@ -17,10 +18,12 @@ class GabrielaAgendaTab extends StatefulWidget {
 }
 
 class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
-  DateTime _selectedDate = DateTime(2026, 3, 10);
+  late DateTime _selectedDate = DateUtils.dateOnly(DateTime.now());
+  static final _demoDate = DateTime(2026, 3, 10);
 
-  static final _appointments = [
+  static final _demoAppointments = [
     GabrielaAppointment(
+      isDemonstration: true,
       startTime: '10:00',
       endTime: '11:00',
       clientName: 'Rambo',
@@ -37,6 +40,7 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
       breed: 'Lulu-da-Pomerânia',
     ),
     const GabrielaAppointment(
+      isDemonstration: true,
       startTime: '16:00',
       endTime: '17:00',
       clientName: 'Olivia',
@@ -47,6 +51,7 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
       address: 'R. Augusto Cury 123 - Vila Osasco',
     ),
     const GabrielaAppointment(
+      isDemonstration: true,
       startTime: '13:00',
       endTime: '14:00',
       clientName: 'Nicolly',
@@ -62,8 +67,8 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
       '${_selectedDate.day} - ${const ['Segunda Feira', 'Terça Feira', 'Quarta Feira', 'Quinta Feira', 'Sexta Feira', 'Sábado', 'Domingo'][_selectedDate.weekday - 1]}';
 
   List<GabrielaAppointment> get _visibleAppointments =>
-      DateUtils.isSameDay(_selectedDate, DateTime(2026, 3, 10))
-      ? _appointments
+      DateUtils.isSameDay(_selectedDate, _demoDate)
+      ? _demoAppointments
       : const [];
 
   void _showAppointment(GabrielaAppointment appointment) =>
@@ -77,6 +82,8 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
     builder: (context, constraints) {
       final width = math.min(390.0, constraints.maxWidth);
       final s = width / 390;
+      final appointments = _visibleAppointments;
+      final showingDemo = DateUtils.isSameDay(_selectedDate, _demoDate);
       return Align(
         alignment: Alignment.topCenter,
         child: SizedBox(
@@ -128,8 +135,28 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
                     ],
                   ),
                 ),
-                SizedBox(height: 47 * s),
-                if (_visibleAppointments.isEmpty)
+                SizedBox(height: 40 * s),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: DemoModeNotice(
+                    message:
+                        'Agenda demonstrativa. Consultas de clientes não são compartilhadas.',
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => setState(() {
+                    _selectedDate = showingDemo
+                        ? DateUtils.dateOnly(DateTime.now())
+                        : _demoDate;
+                  }),
+                  child: Text(
+                    showingDemo
+                        ? 'Voltar para hoje'
+                        : 'Ver exemplos de 10/03/2026',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                if (appointments.isEmpty)
                   Padding(
                     padding: EdgeInsets.all(24 * s),
                     child: const Text(
@@ -139,23 +166,18 @@ class _GabrielaAgendaTabState extends State<GabrielaAgendaTab> {
                     ),
                   )
                 else
-                  for (
-                    var index = 0;
-                    index < _visibleAppointments.length;
-                    index++
-                  ) ...[
+                  for (var index = 0; index < appointments.length; index++) ...[
                     _AppointmentTile(
-                      appointment: _visibleAppointments[index],
-                      onTap: () =>
-                          _showAppointment(_visibleAppointments[index]),
+                      appointment: appointments[index],
+                      onTap: () => _showAppointment(appointments[index]),
                       scale: s,
                       arrow: index == 0
                           ? 'agenda-up.svg'
-                          : index == _visibleAppointments.length - 1
+                          : index == appointments.length - 1
                           ? 'agenda-down.svg'
                           : null,
                     ),
-                    if (index < _visibleAppointments.length - 1)
+                    if (index < appointments.length - 1)
                       Padding(
                         padding: EdgeInsets.symmetric(vertical: 14 * s),
                         child: SizedBox(

@@ -14,6 +14,12 @@ void main() {
           tester,
         ) async {
           await _showScreen(tester, size, const GabrielaAgendaTab());
+          final examples = find.text('Ver exemplos de 10/03/2026');
+          await tester.ensureVisible(examples);
+          await tester.tap(examples);
+          await tester.pumpAndSettle();
+          await tester.ensureVisible(find.byType(GabrielaCalendarPicker));
+          await tester.pumpAndSettle();
           expect(find.byType(GabrielaCalendarPicker), findsOneWidget);
           expect(find.byType(Dialog), findsNothing);
           expect(
@@ -43,6 +49,10 @@ void main() {
           tester,
         ) async {
           await _showScreen(tester, size, const GabrielaAgendaTab());
+          final examples = find.text('Ver exemplos de 10/03/2026');
+          await tester.ensureVisible(examples);
+          await tester.tap(examples);
+          await tester.pumpAndSettle();
           await tester.ensureVisible(find.text('Rambo Augusto'));
           await tester.tap(find.text('Rambo Augusto'));
           await tester.pumpAndSettle();

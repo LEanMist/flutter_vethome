@@ -13,10 +13,12 @@ class GabrielaAppointment {
     this.weight,
     this.birthDate,
     this.breed,
+    this.isDemonstration = false,
   });
 
   final String startTime, endTime, clientName, clientFullName, petName;
   final String service, serviceDescription, address;
   final String? imageAsset, sex, weight, breed;
   final DateTime? birthDate;
+  final bool isDemonstration;
 }

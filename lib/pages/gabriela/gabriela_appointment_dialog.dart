@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../theme/vet_colors.dart';
+import '../../widgets/auth/demo_mode_notice.dart';
 import 'gabriela_appointment.dart';
 
 class GabrielaAppointmentDetails extends StatelessWidget {
@@ -35,7 +36,7 @@ class GabrielaAppointmentDetails extends StatelessWidget {
         children: [
           Container(
             width: double.infinity,
-            height: 70 * s,
+            constraints: BoxConstraints(minHeight: 70 * s),
             alignment: Alignment.center,
             color: VetColors.rose,
             child: Text(
@@ -44,6 +45,14 @@ class GabrielaAppointmentDetails extends StatelessWidget {
               style: _text(40 * s, color: Colors.white),
             ),
           ),
+          if (a.isDemonstration)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
+              child: DemoModeNotice(
+                compact: true,
+                message: 'Consulta demonstrativa',
+              ),
+            ),
           Padding(
             padding: EdgeInsets.fromLTRB(25 * s, 15 * s, 25 * s, 19 * s),
             child: Column(
@@ -300,7 +309,7 @@ class GabrielaAppointmentDetails extends StatelessWidget {
     String icon, {
     bool completeIcon = false,
   }) => Container(
-    height: 40 * s,
+    constraints: BoxConstraints(minHeight: 40 * s),
     decoration: BoxDecoration(
       color: VetColors.roseOverlay50,
       borderRadius: BorderRadius.circular(100),
@@ -333,7 +342,6 @@ class GabrielaAppointmentDetails extends StatelessWidget {
           child: Text(
             value,
             textAlign: TextAlign.center,
-            maxLines: 1,
             style: _text(12 * s, color: Colors.white),
           ),
         ),

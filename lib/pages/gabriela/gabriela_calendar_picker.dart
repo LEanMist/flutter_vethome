@@ -38,6 +38,17 @@ class _GabrielaCalendarPickerState extends State<GabrielaCalendarPicker> {
     widget.selectedDate.month,
   );
 
+  @override
+  void didUpdateWidget(covariant GabrielaCalendarPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!DateUtils.isSameDay(oldWidget.selectedDate, widget.selectedDate)) {
+      _visibleMonth = DateTime(
+        widget.selectedDate.year,
+        widget.selectedDate.month,
+      );
+    }
+  }
+
   void _moveMonth(int offset) => setState(() {
     _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month + offset);
   });
@@ -70,12 +81,15 @@ class _GabrielaCalendarPickerState extends State<GabrielaCalendarPicker> {
                   icon: Icon(Icons.chevron_left, size: 20 * s),
                   color: VetColors.brown,
                 ),
-                Text(
-                  '${_months[_visibleMonth.month - 1]}  ${_visibleMonth.year}',
-                  style: TextStyle(
-                    fontFamily: 'Comfortaa',
-                    fontSize: 15 * s,
-                    color: VetColors.brown,
+                Flexible(
+                  child: Text(
+                    '${_months[_visibleMonth.month - 1]}  ${_visibleMonth.year}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Comfortaa',
+                      fontSize: 15 * s,
+                      color: VetColors.brown,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -127,7 +141,8 @@ class _GabrielaCalendarPickerState extends State<GabrielaCalendarPicker> {
                 return Semantics(
                   button: true,
                   selected: selected,
-                  label: '${date.day} de ${_months[date.month - 1]}',
+                  label:
+                      '${date.day} de ${_months[date.month - 1]} de ${date.year}',
                   child: Material(
                     color: selected
                         ? VetColors.roseOverlay50
@@ -137,10 +152,9 @@ class _GabrielaCalendarPickerState extends State<GabrielaCalendarPicker> {
                       customBorder: const CircleBorder(),
                       onTap: () {
                         if (!inMonth) {
-                          setState(
-                            () =>
-                                _visibleMonth = DateTime(date.year, date.month),
-                          );
+                          setState(() {
+                            _visibleMonth = DateTime(date.year, date.month);
+                          });
                         }
                         widget.onChanged(date);
                       },
