@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/utils/pet_photo.dart';
 import '../../data/gabriela_profile_repository.dart';
+import '../../data/theme_preferences.dart';
 import '../../theme.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets.dart' show VHHeader;
@@ -355,37 +356,60 @@ class _DashedProfileOutlinePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class GabrielaSettingsTab extends StatelessWidget {
+class GabrielaSettingsTab extends StatefulWidget {
   const GabrielaSettingsTab({super.key});
 
+  @override
+  State<GabrielaSettingsTab> createState() => _GabrielaSettingsTabState();
+}
+
+class _GabrielaSettingsTabState extends State<GabrielaSettingsTab> {
+  bool _choosingPalette = false;
+
   Future<void> _chooseTheme(BuildContext context) async {
-    final theme = await showVetCenteredDialog<Color>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const ListTile(
-              title: Text(
-                'Tema do Aplicativo',
-                style: TextStyle(fontWeight: FontWeight.bold),
+    if (_choosingPalette) return;
+    _choosingPalette = true;
+    try {
+      final palette = await showVetCenteredDialog<Color>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const ListTile(
+                title: Text(
+                  'Paleta de cores',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text('A aparência permanece clara.'),
               ),
-            ),
-            ListTile(
-              leading: const CircleAvatar(backgroundColor: Color(0xFFC08081)),
-              title: const Text('Rosa VetHome'),
-              onTap: () => Navigator.pop(context, VetColors.rose),
-            ),
-            ListTile(
-              leading: const CircleAvatar(backgroundColor: Color(0xFF68442E)),
-              title: const Text('Marrom VetHome'),
-              onTap: () => Navigator.pop(context, VetColors.brown),
-            ),
-          ],
+              for (final option in ThemePreferences.options)
+                ListTile(
+                  leading: CircleAvatar(backgroundColor: option.color),
+                  title: Text('${option.name} VetHome'),
+                  selected: option.color == VH.themeSeed.value,
+                  trailing: option.color == VH.themeSeed.value
+                      ? const Icon(Icons.check)
+                      : null,
+                  onTap: () => Navigator.pop(context, option.color),
+                ),
+            ],
+          ),
         ),
-      ),
-    );
-    if (theme != null) VH.themeSeed.value = theme;
+      );
+      if (palette == null || palette == VH.themeSeed.value) return;
+      if (await ThemePreferences.save(palette)) {
+        VH.themeSeed.value = palette;
+      } else if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível salvar a paleta de cores.'),
+          ),
+        );
+      }
+    } finally {
+      _choosingPalette = false;
+    }
   }
 
   void _showSupport(BuildContext context) => showDialog<void>(
@@ -394,7 +418,7 @@ class GabrielaSettingsTab extends StatelessWidget {
       backgroundColor: VetColors.pink,
       title: const Text('Suporte'),
       content: const Text(
-        'Entre em contato com a equipe VetHome para receber ajuda.',
+        'A equipe VetHome ainda não informou os canais oficiais de suporte.',
       ),
       actions: [
         TextButton(
@@ -423,16 +447,7 @@ class GabrielaSettingsTab extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16),
-            ListTile(
-              leading: Icon(Icons.check_circle_outline),
-              title: Text('Consulta de rotina'),
-              subtitle: Text('Rambo · atendimento concluído'),
-            ),
-            ListTile(
-              leading: Icon(Icons.check_circle_outline),
-              title: Text('Vacinação'),
-              subtitle: Text('Olivia · atendimento concluído'),
-            ),
+            Text('Nenhum atendimento verificado disponível.'),
           ],
         ),
       ),

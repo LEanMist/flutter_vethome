@@ -98,7 +98,9 @@ void main() {
           await tester.tap(find.text('Histórico'));
           await tester.pumpAndSettle();
           _expectCentered(tester, size);
-          final lastItem = find.text('Olivia · atendimento concluído');
+          final lastItem = find.text(
+            'Nenhum atendimento verificado disponível.',
+          );
           await tester.ensureVisible(lastItem);
           await tester.pumpAndSettle();
           expect(lastItem.hitTestable(), findsOneWidget);
