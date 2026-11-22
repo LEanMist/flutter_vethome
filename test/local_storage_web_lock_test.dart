@@ -36,6 +36,19 @@ void main() {
   );
 
   test(
+    'falha em uma operação é entregue ao chamador e libera a próxima',
+    () async {
+      final error = StateError('falha na gravação');
+      final first = withLocalStorageWriteLock<void>(() async => throw error);
+      final second = withLocalStorageWriteLock(() async => 'próxima operação');
+
+      await expectLater(first, throwsA(same(error)));
+      expect(await second, 'próxima operação');
+    },
+    skip: !kIsWeb,
+  );
+
+  test(
     'sem Web Locks permite leitura e bloqueia mutações entre abas',
     () async {
       var mutationStarted = false;

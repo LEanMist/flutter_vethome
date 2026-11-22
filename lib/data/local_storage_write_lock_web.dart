@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 
@@ -21,18 +20,17 @@ Future<T> withLocalStorageWriteLock<T>(
     return action();
   }
 
-  final result = Completer<T>();
+  late T result;
+  (Object, StackTrace)? failure;
+
   Future<JSAny?> runAction(JSAny? lock) async {
-    if (lock == null) {
-      result.completeError(
-        StateError('Não foi possível reservar o armazenamento local.'),
-      );
-      return null;
-    }
     try {
-      result.complete(await action());
+      if (lock == null) {
+        throw StateError('Não foi possível reservar o armazenamento local.');
+      }
+      result = await action();
     } catch (error, stackTrace) {
-      result.completeError(error, stackTrace);
+      failure = (error, stackTrace);
     }
     return null;
   }
@@ -42,5 +40,8 @@ Future<T> withLocalStorageWriteLock<T>(
   await navigator.locks
       .request('vethome.state.write.v1', onGranted.toJS)
       .toDart;
-  return result.future;
+  if (failure case (final error, final stackTrace)) {
+    Error.throwWithStackTrace(error, stackTrace);
+  }
+  return result;
 }
