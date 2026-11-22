@@ -60,6 +60,7 @@ class VHField extends StatefulWidget {
     this.circularPrefixDiameter,
     this.circularPrefixWidth,
     this.fullHeightPrefix = false,
+    this.figmaPrefixWidth,
     this.showErrorBelowSurface = false,
     this.figmaForm = false,
     this.useIconPrefix = false,
@@ -109,6 +110,7 @@ class VHField extends StatefulWidget {
   final double? circularPrefixDiameter;
   final double? circularPrefixWidth;
   final bool fullHeightPrefix;
+  final double? figmaPrefixWidth;
   final bool showErrorBelowSurface;
   @override
   State<VHField> createState() => _VHFieldState();
@@ -647,7 +649,7 @@ class _VHFieldState extends State<VHField> {
       fillColor: Colors.transparent,
       prefixIconConstraints: BoxConstraints.tightFor(
         width: widget.fullHeightPrefix
-            ? 58
+            ? (widget.figmaPrefixWidth ?? 58)
             : widget.circularPrefix
             ? (widget.circularPrefixWidth ?? (widget.figmaForm ? 56 : 44))
             : widget.figmaForm

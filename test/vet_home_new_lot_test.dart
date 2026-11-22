@@ -413,7 +413,7 @@ void main() {
       await t.pumpAndSettle();
       await t.tap(find.widgetWithText(ListTile, 'SRD / Sem raça definida'));
       await t.pumpAndSettle();
-      await t.tap(find.text('Cadastrar'));
+      await t.tap(find.text('Continuar'));
       await t.pump();
       await VetRepository.flush();
       await t.pumpAndSettle();

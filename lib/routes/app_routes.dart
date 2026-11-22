@@ -65,7 +65,12 @@ class AppRoutes {
     '/landing': (_) => const LandingPage(),
     '/home': (_) => const HomePage(),
     '/login': (_) => const LoginPage(),
-    '/cadastro': (_) => const CadastroScreen(),
+    '/cadastro': (context) => CadastroScreen(
+      entry: switch (ModalRoute.of(context)?.settings.arguments) {
+        final CadastroEntry entry => entry,
+        _ => null,
+      },
+    ),
     '/endereco': (context) =>
         EnderecoScreen(initialData: _formDataFromRoute(context)),
     '/cadastroPet': (context) =>

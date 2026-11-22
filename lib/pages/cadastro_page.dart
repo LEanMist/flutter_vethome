@@ -3,18 +3,29 @@ import 'package:flutter/material.dart';
 import '../widgets.dart';
 import '../widgets/auth/vh_form.dart';
 
+enum CadastroEntry { fromAddress, fromPet }
+
 class CadastroScreen extends StatelessWidget {
-  const CadastroScreen({super.key});
+  const CadastroScreen({super.key, this.entry});
+
+  final CadastroEntry? entry;
 
   @override
   Widget build(BuildContext context) => MediaQuery.removePadding(
     context: context,
     removeTop: true,
-    child: const VHForm(
+    child: VHForm(
       title: 'Cadastro',
       dataPrefix: 'client.',
       next: '/endereco',
-      fields: [
+      guidance: switch (entry) {
+        CadastroEntry.fromAddress =>
+          'Preencha os dados do tutor. Depois, você pode pular o endereço.',
+        CadastroEntry.fromPet =>
+          'Preencha os dados do tutor. Depois, você pode cadastrar ou pular o pet.',
+        null => null,
+      },
+      fields: const [
         VHField('Nome Completo', Icons.person, value: 'Matheus Santana Lima'),
         VHField('Data de Nascimento', Icons.cake, value: '05 / 02 / 2007'),
         VHField(
