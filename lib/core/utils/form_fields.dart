@@ -48,7 +48,18 @@ bool hasCompleteTutorRegistrationData(Map<String, String> values) {
       parseBirthDate(birthDate) != null &&
       isValidCpf(cpf) &&
       (phoneDigits.length == 10 || phoneDigits.length == 11) &&
-      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+      isValidTutorEmail(email);
+}
+
+bool isValidTutorEmail(String text) {
+  final parts = text.trim().split('@');
+  if (parts.length != 2) return false;
+  final local = parts.first;
+  return RegExp(r'^[^\s.@]+(?:\.[^\s.@]+)*$').hasMatch(local) &&
+      RegExp(
+        r'^(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]*[\p{L}\p{N}])?\.)+[\p{L}\p{N}](?:[\p{L}\p{N}-]*[\p{L}\p{N}])?$',
+        unicode: true,
+      ).hasMatch(parts.last);
 }
 
 class DigitsMask extends TextInputFormatter {
@@ -94,16 +105,34 @@ class DigitsMask extends TextInputFormatter {
 }
 
 class PhoneMask extends TextInputFormatter {
-  const PhoneMask();
+  const PhoneMask({this.acceptBrazilCountryCode = false});
+  final bool acceptBrazilCountryCode;
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final length = newValue.text.replaceAll(RegExp(r'\D'), '').length;
+    var input = newValue;
+    var length = input.text.replaceAll(RegExp(r'\D'), '').length;
+    if (acceptBrazilCountryCode) {
+      final text = input.text.trimLeft();
+      if (text.startsWith('+')) {
+        if (!text.startsWith('+55') || length <= 2 || length > 13) {
+          return oldValue;
+        }
+        final local = text.substring(3);
+        input = TextEditingValue(
+          text: local,
+          selection: TextSelection.collapsed(offset: local.length),
+        );
+        length -= 2;
+      } else if (length > 11) {
+        return oldValue;
+      }
+    }
     return DigitsMask(
       length <= 10 ? '(##) ####-####' : '(##) #####-####',
-    ).formatEditUpdate(oldValue, newValue);
+    ).formatEditUpdate(oldValue, input);
   }
 }
 

@@ -6,6 +6,7 @@ import '../../core/utils/form_fields.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 import 'demo_mode_notice.dart';
+import 'registration_actions_footer.dart';
 
 const _registerScrollIndicatorAsset =
     'assets/imagens/figma/register-scroll-indicator.svg';
@@ -18,6 +19,7 @@ class VHForm extends StatefulWidget {
     required this.next,
     this.initialData = const {},
     this.dataPrefix = '',
+    this.guidance,
   });
 
   final String title;
@@ -25,6 +27,7 @@ class VHForm extends StatefulWidget {
   final String next;
   final Map<String, String> initialData;
   final String dataPrefix;
+  final String? guidance;
 
   @override
   State<VHForm> createState() => _VHFormState();
@@ -97,8 +100,7 @@ class _VHFormState extends State<VHForm> {
     if (value.isEmpty) {
       return field.label == 'Complemento' ? null : 'Preencha este campo';
     }
-    if (field.label == 'E-mail' &&
-        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
+    if (field.label == 'E-mail' && !isValidTutorEmail(value)) {
       return 'Informe um e-mail válido';
     }
     final digits = value.replaceAll(RegExp(r'\D'), '');
@@ -154,6 +156,7 @@ class _VHFormState extends State<VHForm> {
   }
 
   void _continue() {
+    if (ModalRoute.isCurrentOf(context) != true) return;
     if (!_hasAttemptedSubmit) {
       setState(() => _hasAttemptedSubmit = true);
     }
@@ -176,6 +179,16 @@ class _VHFormState extends State<VHForm> {
     final mobileRegistration =
         widget.dataPrefix == 'client.' &&
         MediaQuery.sizeOf(context).width < VH.desktopBreakpoint;
+    final registrationIcon = switch (field.label) {
+      'Nome Completo' => 'name',
+      'Data de Nascimento' => 'birth',
+      'CPF' => 'cpf',
+      'Telefone/Celular' => 'phone',
+      'E-mail' => 'email',
+      'Senha' => 'password',
+      'Confirmar Senha' => 'confirm',
+      _ => null,
+    };
     return VHField(
       field.label,
       field.icon,
@@ -183,11 +196,23 @@ class _VHFormState extends State<VHForm> {
       focusNode: _focusNodes[i],
       password: field.password,
       figmaForm: true,
-      labelHorizontalPadding: mobileRegistration ? 28 : null,
+      circularPrefix: widget.dataPrefix == 'client.',
+      circularPrefixDiameter: widget.dataPrefix == 'client.' ? 56 : null,
+      circularPrefixWidth: widget.dataPrefix == 'client.' ? 71 : null,
+      labelAbove: true,
+      showErrorBelowSurface: true,
+      labelHorizontalPadding: mobileRegistration ? 7 : null,
       labelBottomPadding: mobileRegistration ? 0 : null,
+      figmaPrefixIconAsset:
+          widget.dataPrefix == 'client.' && registrationIcon != null
+          ? 'assets/imagens/figma/register-$registrationIcon.svg'
+          : null,
       controller: _controllers[i],
       value: field.value,
       keyboardType: field.keyboardType,
+      inputFormatters: field.label == 'Telefone/Celular'
+          ? const [PhoneMask(acceptBrazilCountryCode: true)]
+          : null,
       textInputAction: widget.dataPrefix == 'client.'
           ? i == widget.fields.length - 1
                 ? TextInputAction.done
@@ -215,153 +240,206 @@ class _VHFormState extends State<VHForm> {
     final viewport = MediaQuery.sizeOf(context);
     final desktop = viewport.width >= VH.desktopBreakpoint;
     final mobileRegistration = widget.dataPrefix == 'client.' && !desktop;
+    final usableHeight =
+        viewport.height - MediaQuery.viewInsetsOf(context).bottom;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final fieldRows = desktop
+        ? (widget.fields.length + 1) ~/ 2
+        : widget.fields.length;
+    final scaledTextGrowth = (textScaler.scale(28) - 28).clamp(
+      0,
+      double.infinity,
+    );
+    final formHeight =
+        (desktop ? 640 : 860) +
+        fieldRows *
+            (scaledTextGrowth +
+                (_hasAttemptedSubmit ? textScaler.scale(20) : 0));
+    final pinContinue =
+        widget.dataPrefix == 'client.' && usableHeight < formHeight;
     final showRegisterScrollIndicator =
-        mobileRegistration && viewport.width <= 430 && viewport.height >= 700;
+        mobileRegistration &&
+        !pinContinue &&
+        viewport.width <= 430 &&
+        viewport.height >= 700;
     final centeredFormOffset = ((viewport.width - 390) / 2)
         .clamp(0.0, double.infinity)
         .toDouble();
+    final continueButton = Center(
+      child: PillButton(
+        color: VH.primary,
+        padding: EdgeInsets.zero,
+        onTap: _continue,
+        child: SizedBox(
+          width:
+              181 + (textScaler.scale(18) - 18).clamp(0, 54).toDouble() * 4.5,
+          height: usableHeight < 320 ? 54 : 71,
+          child: const Center(
+            child: Text('Continuar', style: VH.figmaButtonTextStyle),
+          ),
+        ),
+      ),
+    );
     return Scaffold(
       backgroundColor: VH.background,
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: desktop ? 900 : 390),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    desktop
-                        ? 32
-                        : 39 *
-                              (MediaQuery.sizeOf(context).width / 390).clamp(
-                                .8,
-                                1.0,
-                              ),
-                    widget.dataPrefix == 'client.' ? 8 : 38,
-                    desktop
-                        ? 32
-                        : 39 *
-                              (MediaQuery.sizeOf(context).width / 390).clamp(
-                                .8,
-                                1.0,
-                              ),
-                    24,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (widget.dataPrefix == 'client.') ...[
-                        const Center(
-                          child: DemoModeNotice(
-                            compact: true,
-                            message: 'Demonstração · dados fictícios',
-                            semanticLabel:
-                                'Protótipo demonstrativo. Não há contas individuais. As informações ficam neste dispositivo; use apenas dados fictícios.',
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                      ],
-                      Text(
-                        widget.title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Comfortaa',
-                          color: VH.foreground,
-                        ),
+            Expanded(
+              child: Stack(
+                children: [
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: desktop ? 900 : 390,
                       ),
-                      SizedBox(height: mobileRegistration ? 14 : 25),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: mobileRegistration ? 7 : 10,
-                          vertical: mobileRegistration ? 11 : 12,
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          desktop
+                              ? 32
+                              : 33 *
+                                    (MediaQuery.sizeOf(context).width / 390)
+                                        .clamp(.8, 1.0),
+                          widget.dataPrefix == 'client.' ? 8 : 38,
+                          desktop
+                              ? 32
+                              : 33 *
+                                    (MediaQuery.sizeOf(context).width / 390)
+                                        .clamp(.8, 1.0),
+                          RegistrationActionsFooter.contentSpacing,
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: .2),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: VH.secondary, width: 3),
-                        ),
-                        child: Form(
-                          key: _formKey,
-                          autovalidateMode: _hasAttemptedSubmit
-                              ? AutovalidateMode.onUserInteraction
-                              : AutovalidateMode.disabled,
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              final fieldWidth = desktop
-                                  ? (constraints.maxWidth - 14) / 2
-                                  : constraints.maxWidth;
-                              return Wrap(
-                                key: ValueKey(
-                                  desktop
-                                      ? 'vh-form-desktop-grid'
-                                      : 'vh-form-mobile-grid',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (widget.dataPrefix == 'client.') ...[
+                              const Center(
+                                child: DemoModeNotice(
+                                  compact: true,
+                                  message: 'Demonstração · dados fictícios',
+                                  semanticLabel:
+                                      'Protótipo demonstrativo. Não há contas individuais. As informações ficam neste dispositivo; use apenas dados fictícios.',
                                 ),
-                                spacing: 14,
-                                runSpacing: mobileRegistration ? 16 : 14,
-                                children: [
-                                  for (var i = 0; i < widget.fields.length; i++)
-                                    SizedBox(
-                                      width: fieldWidth,
-                                      child: _buildField(i),
+                              ),
+                              const SizedBox(height: 4),
+                            ],
+                            Text(
+                              widget.title,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Comfortaa',
+                                color: VH.foreground,
+                              ),
+                            ),
+                            SizedBox(height: mobileRegistration ? 14 : 25),
+                            if (widget.guidance case final guidance?) ...[
+                              Semantics(
+                                liveRegion: true,
+                                child: Text(
+                                  guidance,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: VH.foreground),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            Container(
+                              padding: mobileRegistration
+                                  ? const EdgeInsets.fromLTRB(13, 11, 13, 17)
+                                  : const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 12,
                                     ),
-                                ],
-                              );
-                            },
-                          ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: .2),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: VH.secondary,
+                                  width: 3,
+                                ),
+                              ),
+                              child: Form(
+                                key: _formKey,
+                                autovalidateMode: _hasAttemptedSubmit
+                                    ? AutovalidateMode.onUserInteraction
+                                    : AutovalidateMode.disabled,
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final fieldWidth = desktop
+                                        ? (constraints.maxWidth - 14) / 2
+                                        : constraints.maxWidth;
+                                    return Wrap(
+                                      key: ValueKey(
+                                        desktop
+                                            ? 'vh-form-desktop-grid'
+                                            : 'vh-form-mobile-grid',
+                                      ),
+                                      spacing: 14,
+                                      runSpacing: mobileRegistration ? 0 : 14,
+                                      children: [
+                                        for (
+                                          var i = 0;
+                                          i < widget.fields.length;
+                                          i++
+                                        )
+                                          SizedBox(
+                                            width: fieldWidth,
+                                            child: Padding(
+                                              padding: EdgeInsets.only(
+                                                top:
+                                                    !mobileRegistration ||
+                                                        i == 0
+                                                    ? 0
+                                                    : widget.fields[i].label ==
+                                                          'CPF'
+                                                    ? 4
+                                                    : 16,
+                                              ),
+                                              child: _buildField(i),
+                                            ),
+                                          ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                            if (!pinContinue) ...[
+                              const SizedBox(height: 32),
+                              continueButton,
+                            ],
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 32),
-                      Center(
-                        child: PillButton(
-                          color: VH.primary,
-                          padding: EdgeInsets.zero,
-                          onTap: _continue,
-                          child: SizedBox(
-                            width: 181,
-                            height: 71,
-                            child: const Center(
-                              child: Text(
-                                'Continuar',
-                                style: TextStyle(
-                                  fontFamily: VH.headingFontFamily,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                    ),
+                  ),
+                  if (showRegisterScrollIndicator)
+                    Positioned(
+                      right: centeredFormOffset + 15.5,
+                      top: 369,
+                      child: IgnorePointer(
+                        child: ExcludeSemantics(
+                          child: RotatedBox(
+                            key: const ValueKey('register-scroll-indicator'),
+                            quarterTurns: 1,
+                            child: SizedBox(
+                              width: 328.001,
+                              height: 3,
+                              child: SvgPicture.asset(
+                                _registerScrollIndicatorAsset,
+                                fit: BoxFit.fill,
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                ],
               ),
             ),
-            if (showRegisterScrollIndicator)
-              Positioned(
-                right: centeredFormOffset + 15.5,
-                top: 369,
-                child: IgnorePointer(
-                  child: ExcludeSemantics(
-                    child: RotatedBox(
-                      key: const ValueKey('register-scroll-indicator'),
-                      quarterTurns: 1,
-                      child: SizedBox(
-                        width: 328.001,
-                        height: 3,
-                        child: SvgPicture.asset(
-                          _registerScrollIndicatorAsset,
-                          fit: BoxFit.fill,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            if (pinContinue) RegistrationActionsFooter(child: continueButton),
           ],
         ),
       ),
