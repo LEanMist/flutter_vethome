@@ -1,10 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:flutter_vethome/pages/splashScreen.dart';
+import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/theme.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  for (final viewport in [
+    const Size(320, 640),
+    const Size(390, 844),
+    const Size(390, 500),
+    const Size(800, 900),
+    const Size(1280, 800),
+    const Size(1543, 900),
+  ]) {
+    testWidgets('a entrada abre Splash e Login em $viewport', (tester) async {
+      tester.view.physicalSize = viewport;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(MaterialApp(routes: AppRoutes.routes));
+      expect(find.byType(SplashScreen), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1500));
+      await tester.pumpAndSettle();
+      expect(find.byType(LoginPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   for (final viewport in [
     const Size(390, 844),

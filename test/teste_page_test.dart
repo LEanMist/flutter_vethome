@@ -21,7 +21,9 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: TestePage()));
 
     expect(find.text('Telas do projeto'), findsOneWidget);
-    expect(find.text('Início'), findsOneWidget);
+    expect(find.text('Splash'), findsOneWidget);
+    expect(find.text('Início'), findsNothing);
+    expect(find.text('Apresentação'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

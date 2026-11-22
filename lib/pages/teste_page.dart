@@ -17,8 +17,7 @@ import '../pages/gabriela/gabriela_splash_screen.dart';
 import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
 import '../pages/sobre_page.dart';
-import '../pages/start_page.dart';
-import '../pages/landing_page.dart';
+import '../pages/splashScreen.dart';
 import '../pages/home_page.dart';
 import '../pages/sucessoScreen.dart';
 import '../pages/vacinacao_page.dart';
@@ -42,14 +41,9 @@ class TestePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final telas = <({String titulo, IconData icone, WidgetBuilder pagina})>[
       (
-        titulo: 'Início',
+        titulo: 'Splash',
         icone: Icons.play_arrow_outlined,
-        pagina: (_) => const StartPage(),
-      ),
-      (
-        titulo: 'Apresentação',
-        icone: Icons.web_asset_outlined,
-        pagina: (_) => const LandingPage(),
+        pagina: (_) => const SplashScreen(),
       ),
       (
         titulo: 'Home',
