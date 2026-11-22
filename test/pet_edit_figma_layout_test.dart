@@ -43,6 +43,20 @@ void main() {
       expect(find.text('Editar pet'), findsNothing);
       expect(find.bySemanticsLabel('Editar pet'), findsOneWidget);
 
+      for (final entry in {
+        'Nome do Cachorro(a)': Icons.person_outline,
+        'Raça': Icons.pets,
+      }.entries) {
+        final field = find.ancestor(
+          of: find.text(entry.key),
+          matching: find.byType(VHField),
+        );
+        expect(
+          find.descendant(of: field, matching: find.byIcon(entry.value)),
+          findsOneWidget,
+        );
+      }
+
       void expectField(
         String label,
         Offset offset,

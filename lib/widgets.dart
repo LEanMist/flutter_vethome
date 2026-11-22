@@ -54,6 +54,7 @@ class VHField extends StatefulWidget {
     this.figmaContentPaddingRight,
     this.figmaFillColor,
     this.figmaForm = false,
+    this.useIconPrefix = false,
     this.showChoiceIndicator = true,
     this.compact = false,
     this.labelAbove = false,
@@ -63,6 +64,7 @@ class VHField extends StatefulWidget {
     this.fitSingleLine = false,
   });
   final bool figmaForm;
+  final bool useIconPrefix;
   final bool showChoiceIndicator;
   final bool compact;
   final bool labelAbove;
@@ -369,7 +371,7 @@ class _VHFieldState extends State<VHField> {
     if (widget.compact && !widget.figmaForm) {
       return Icon(widget.icon, color: VH.foreground, size: 18);
     }
-    final asset = widget.figmaForm
+    final asset = widget.figmaForm && !widget.useIconPrefix
         ? switch (widget.label) {
             'Tipo de Animal' => 'register-pet-species.png',
             'Nome do Pet' ||

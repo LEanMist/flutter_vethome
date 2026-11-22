@@ -259,6 +259,7 @@ class _PetFormState extends State<PetForm> {
       figmaContentPaddingLeft: figmaContentPaddingLeft,
       figmaContentPaddingRight: figmaContentPaddingRight,
       figmaForm: useFigmaStyle,
+      useIconPrefix: figmaStyle && (identical(c, name) || identical(c, breed)),
       showChoiceIndicator: !figmaStyle,
       labelAbove: useFigmaStyle || size.width >= 900,
       labelHorizontalPadding: useFigmaStyle
