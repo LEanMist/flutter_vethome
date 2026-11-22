@@ -88,7 +88,6 @@ class _PetFormState extends State<PetForm> {
   late String? photo = widget.pet?.photoBase64;
   bool busy = false;
   bool validationFailed = false;
-  bool editExtrasExpanded = false;
   String _previousSpecies = '';
 
   @override
@@ -196,7 +195,7 @@ class _PetFormState extends State<PetForm> {
       _weightFocusNode,
       _birthFocusNode,
       _breedFocusNode,
-      if (figmaEditModal && editExtrasExpanded) _speciesFocusNode,
+      if (figmaEditModal) _speciesFocusNode,
     ];
 
     for (final focusNode in candidates) {
@@ -292,7 +291,6 @@ class _PetFormState extends State<PetForm> {
     if (busy) return;
     if (widget.modal && widget.pet != null && species.text.trim().isEmpty) {
       setState(() {
-        editExtrasExpanded = true;
         validationFailed = true;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -720,78 +718,10 @@ class _PetFormState extends State<PetForm> {
                       ],
                     ),
                   ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 22,
-                    height: 48,
-                    child: Center(
-                      child: Transform.translate(
-                        offset: const Offset(5, 0),
-                        child: FigmaActionTarget(
-                          key: const ValueKey('edit-pet-extra-fields-toggle'),
-                          width: 69,
-                          height: 48,
-                          label: editExtrasExpanded
-                              ? 'Menos opções'
-                              : 'Mais opções',
-                          expanded: editExtrasExpanded,
-                          onPressed: busy
-                              ? null
-                              : () => setState(
-                                  () =>
-                                      editExtrasExpanded = !editExtrasExpanded,
-                                ),
-                          child: Transform.translate(
-                            offset: const Offset(-5, 0),
-                            child: OverflowBox(
-                              maxWidth: 160,
-                              maxHeight: 22,
-                              alignment: Alignment.bottomCenter,
-                              child: SizedBox(
-                                height: 22,
-                                child: TextButton(
-                                  onPressed: () {},
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF68442E),
-                                    minimumSize: Size.zero,
-                                    padding: EdgeInsets.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    visualDensity: VisualDensity.compact,
-                                    textStyle: const TextStyle(
-                                      fontFamily: 'Montserrat Alternates',
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        editExtrasExpanded
-                                            ? 'Menos opções'
-                                            : 'Mais opções',
-                                      ),
-                                      Icon(
-                                        editExtrasExpanded
-                                            ? Icons.expand_less
-                                            : Icons.expand_more,
-                                        size: 15,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
-            if (editExtrasExpanded) ...[
+            ...[
               const SizedBox(height: 8),
               Row(
                 children: [
