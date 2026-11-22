@@ -13,12 +13,14 @@ class VetHeader extends StatelessWidget {
     this.showBack = true,
     this.bottom,
     this.titleSize = 30,
+    this.alignTop = false,
   });
 
   final String title;
   final bool showBack;
   final Widget? bottom;
   final double titleSize;
+  final bool alignTop;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +38,9 @@ class VetHeader extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: alignTop
+            ? MainAxisAlignment.start
+            : MainAxisAlignment.center,
         children: [
           Row(
             children: [

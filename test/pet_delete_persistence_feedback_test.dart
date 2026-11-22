@@ -98,7 +98,9 @@ void main() {
     );
     await tester.tap(find.text('Abrir detalhes'));
     await tester.pumpAndSettle();
-    final editButton = find.byTooltip('Editar');
+    await tester.tap(find.text('Detalhes'));
+    await tester.pumpAndSettle();
+    final editButton = find.widgetWithText(ElevatedButton, 'Editar');
     await tester.ensureVisible(editButton);
     await tester.tap(editButton);
     await tester.pumpAndSettle();
