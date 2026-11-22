@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../theme/vet_colors.dart';
@@ -10,12 +12,27 @@ class GabrielaSplashScreen extends StatefulWidget {
 }
 
 class _GabrielaSplashScreenState extends State<GabrielaSplashScreen> {
+  Timer? _loginTimer;
+
   @override
-  void initState() {
-    super.initState();
-    Future<void>.delayed(const Duration(milliseconds: 1400), () {
-      if (mounted) Navigator.pushReplacementNamed(context, '/gabriela/login');
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (ModalRoute.isCurrentOf(context) == false) {
+      _loginTimer?.cancel();
+      _loginTimer = null;
+      return;
+    }
+    _loginTimer ??= Timer(const Duration(milliseconds: 1400), () {
+      if (mounted && ModalRoute.of(context)?.isCurrent != false) {
+        Navigator.pushReplacementNamed(context, '/gabriela/login');
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _loginTimer?.cancel();
+    super.dispose();
   }
 
   @override

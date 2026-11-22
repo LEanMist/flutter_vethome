@@ -47,6 +47,31 @@ void main() {
     },
   );
 
+  testWidgets('splash veterinária aguarda uma rota sobreposta fechar', (
+    tester,
+  ) async {
+    await _open(tester, '/gabriela/splash');
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    navigator.push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => const Scaffold(body: Text('Tela sobreposta')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.pump(const Duration(milliseconds: 1400));
+    await tester.pumpAndSettle();
+    expect(find.text('Tela sobreposta'), findsOneWidget);
+    expect(find.text('Entrar na demonstração'), findsNothing);
+
+    navigator.pop();
+    await tester.pumpAndSettle();
+    expect(find.byType(GabrielaSplashScreen), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1400));
+    await tester.pumpAndSettle();
+    expect(find.text('Entrar na demonstração'), findsOneWidget);
+  });
+
   for (final size in [
     const Size(320, 640),
     const Size(390, 500),
