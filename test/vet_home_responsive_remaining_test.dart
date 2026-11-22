@@ -10,6 +10,7 @@ import 'package:flutter_vethome/pages/perfil_page.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/pages/sobre_page.dart';
 import 'package:flutter_vethome/screens/pets.dart';
+import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
@@ -145,6 +146,19 @@ void main() {
       expect(find.text('Detalhes'), findsOneWidget);
       expect(find.text(pet.name), findsOneWidget);
       expect(find.text('Nova Consulta'), findsOneWidget);
+      for (final label in ['Saúde', 'Vacinação']) {
+        final button = find.widgetWithText(OutlinedButton, label);
+        expect(button.hitTestable(), findsOneWidget);
+        expect(
+          tester
+              .widget<OutlinedButton>(button)
+              .style
+              ?.textStyle
+              ?.resolve({})
+              ?.fontFamily,
+          VH.bodyFontFamily,
+        );
+      }
       expect(find.byType(VetBottomNav), findsOneWidget);
       await tester.ensureVisible(find.text('Próximo agendamento'));
       await tester.pumpAndSettle();

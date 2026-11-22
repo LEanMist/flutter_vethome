@@ -7,6 +7,7 @@ import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
 import '../models/vet_models.dart';
 import '../pages/editar_pet_page.dart';
+import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/vet/vet_card.dart';
 import '../widgets/vet/vet_page_scaffold.dart';
@@ -159,7 +160,10 @@ class _DetalhesPetPageState extends State<DetalhesPetPage> {
       OutlinedButton.icon(
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          textStyle: const TextStyle(fontSize: 12),
+          textStyle: const TextStyle(
+            fontFamily: VH.bodyFontFamily,
+            fontSize: 12,
+          ),
           minimumSize: const Size.fromHeight(48),
         ),
         onPressed: () =>

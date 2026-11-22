@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/agenda_page.dart';
@@ -409,6 +410,30 @@ void main() {
       );
       expect(tester.takeException(), isNull, reason: '$viewport');
     }
+  });
+
+  testWidgets('Agenda mostra Novembro inteiro no cabeçalho móvel', (
+    tester,
+  ) async {
+    await pumpCalendar(
+      tester,
+      viewport: const Size(390, 844),
+      month: DateTime(2026, 11),
+      agendaPageStyle: true,
+    );
+
+    final title = find.byKey(const ValueKey('agenda-calendar-month-heading'));
+    final paragraph = tester.renderObject<RenderParagraph>(title);
+    expect(
+      paragraph.size.width,
+      closeTo(paragraph.getMaxIntrinsicWidth(double.infinity), .01),
+    );
+    final slot = find.byKey(const ValueKey('agenda-calendar-month-slot'));
+    expect(tester.getRect(slot).contains(tester.getCenter(title)), isTrue);
+    expect(
+      tester.getRect(title).width,
+      lessThanOrEqualTo(tester.getSize(slot).width),
+    );
   });
 
   testWidgets('Agenda usa viewport lógico 390×844 sem corte horizontal', (

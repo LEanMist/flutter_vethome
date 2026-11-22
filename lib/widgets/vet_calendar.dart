@@ -459,16 +459,21 @@ class VetCalendar extends StatelessWidget {
                     child: Semantics(
                       label: 'Mês ${monthNames[month.month - 1]}',
                       child: Center(
-                        child: Text(
-                          monthNames[month.month - 1],
-                          key: const ValueKey('agenda-calendar-month-heading'),
-                          maxLines: 1,
-                          softWrap: false,
-                          style: TextStyle(
-                            color: VetColors.calendarTextOnRose,
-                            fontSize: 15 * scale,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: VH.headingFontFamily,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            monthNames[month.month - 1],
+                            key: const ValueKey(
+                              'agenda-calendar-month-heading',
+                            ),
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              color: VetColors.calendarTextOnRose,
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: VH.headingFontFamily,
+                            ),
                           ),
                         ),
                       ),
