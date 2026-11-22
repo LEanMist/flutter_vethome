@@ -112,7 +112,7 @@ void main() {
     addTearDown(tester.view.resetPadding);
 
     await tester.pumpWidget(
-      const MaterialApp(home: AddressEditorPage(address: address)),
+      const MaterialApp(home: AddressEditorPage(address: address, modal: true)),
     );
     await tester.pumpAndSettle();
 
