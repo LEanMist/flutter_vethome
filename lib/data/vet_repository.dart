@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart'
     show ValueListenable, ValueNotifier, debugPrint;
 
 import '../models/pet_model.dart';
+import '../models/service_catalog.dart';
 import '../models/vet_models.dart';
 import '../models/saved_address.dart';
 import '../core/utils/pet_images.dart';
@@ -898,30 +899,42 @@ class VetRepository {
   }
 
   static bool usesDemoVaccines(String petId) =>
-      petById(petId) != null &&
+      PetSpecies.parse(petById(petId)?.species) != null &&
       realVaccines(petId).isEmpty &&
       !_vaccinationDemoDismissedPetIds.contains(petId);
 
-  static List<Vacina> vacinas(String petId) =>
-      usesDemoVaccines(petId) ? _demoVaccines() : realVaccines(petId);
+  static List<Vacina> vacinas(String petId) => usesDemoVaccines(petId)
+      ? _demoVaccines(PetSpecies.parse(petById(petId)?.species))
+      : realVaccines(petId);
 
-  static List<Vacina> _demoVaccines() => [
-    Vacina(
-      nome: 'V10',
-      aplicada: _hoje.subtract(const Duration(days: 200)),
-      proxima: _hoje.add(const Duration(days: 165)),
-    ),
-    Vacina(
-      nome: 'Antirrábica',
-      aplicada: _hoje.subtract(const Duration(days: 120)),
-      proxima: _hoje.add(const Duration(days: 245)),
-    ),
-    Vacina(
-      nome: 'Giardia',
-      aplicada: _hoje.subtract(const Duration(days: 150)),
-      proxima: _hoje.add(const Duration(days: 20)),
-    ),
-  ];
+  static List<Vacina> _demoVaccines(PetSpecies? species) =>
+      [
+            Vacina(
+              nome: 'V10',
+              aplicada: _hoje.subtract(const Duration(days: 200)),
+              proxima: _hoje.add(const Duration(days: 165)),
+            ),
+            Vacina(
+              nome: 'Antirrábica',
+              aplicada: _hoje.subtract(const Duration(days: 120)),
+              proxima: _hoje.add(const Duration(days: 245)),
+            ),
+            Vacina(
+              nome: 'Giardia',
+              aplicada: _hoje.subtract(const Duration(days: 150)),
+              proxima: _hoje.add(const Duration(days: 20)),
+            ),
+            Vacina(
+              nome: 'V4',
+              aplicada: _hoje.subtract(const Duration(days: 150)),
+              proxima: _hoje.add(const Duration(days: 20)),
+            ),
+          ]
+          .where(
+            (sample) =>
+                ServiceCatalog.vaccinesFor(species).contains(sample.nome),
+          )
+          .toList();
 
   static List<Agendamento> agendamentos(String petId) => petById(petId) == null
       ? []
