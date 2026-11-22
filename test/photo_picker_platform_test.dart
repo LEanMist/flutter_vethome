@@ -21,17 +21,25 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Windows oferece somente a galeria', (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
-    try {
-      await openPhotoPicker(tester);
+  testWidgets(
+    kIsWeb
+        ? 'navegador no Windows oferece câmera e galeria'
+        : 'Windows nativo oferece somente a galeria',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      try {
+        await openPhotoPicker(tester);
 
-      expect(find.byIcon(Icons.photo_camera), findsNothing);
-      expect(find.byIcon(Icons.photo_library), findsOneWidget);
-    } finally {
-      debugDefaultTargetPlatformOverride = null;
-    }
-  });
+        expect(
+          find.byIcon(Icons.photo_camera),
+          kIsWeb ? findsOneWidget : findsNothing,
+        );
+        expect(find.byIcon(Icons.photo_library), findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    },
+  );
 
   for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
     testWidgets('$platform oferece câmera e galeria', (tester) async {

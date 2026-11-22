@@ -1,12 +1,11 @@
-import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/core/utils/pet_images.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 
 class _BlockedPhotoStorage extends LocalStorage {
   @override
@@ -14,8 +13,22 @@ class _BlockedPhotoStorage extends LocalStorage {
       const LocalLoadResult.invalid(FormatException('snapshot bloqueado'));
 }
 
+class _GalleryPicker extends ImagePickerPlatform {
+  @override
+  Future<XFile?> getImageFromSource({
+    required ImageSource source,
+    ImagePickerOptions options = const ImagePickerOptions(),
+  }) async => XFile.fromData(
+    base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGPQCKj4DwADhAHwaWoWWwAAAABJRU5ErkJggg==',
+    ),
+    name: 'pet.png',
+    mimeType: 'image/png',
+  );
+}
+
 void main() {
-  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('foto bloqueada informa que não foi alterada', (tester) async {
     await tester.runAsync(
@@ -23,17 +36,9 @@ void main() {
     );
     final pet = VetRepository.pets.first;
     final originalPhoto = pet.photoBase64;
-    const pickerChannel = MethodChannel('plugins.flutter.io/image_picker');
-    binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      pickerChannel,
-      (call) async => File(PetImages.dog).absolute.path,
-    );
-    addTearDown(
-      () => binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        pickerChannel,
-        null,
-      ),
-    );
+    final previousPicker = ImagePickerPlatform.instance;
+    ImagePickerPlatform.instance = _GalleryPicker();
+    addTearDown(() => ImagePickerPlatform.instance = previousPicker);
 
     await tester.pumpWidget(MaterialApp(home: DetalhesPetPage(pet: pet)));
     await tester.tap(find.byTooltip('Alterar foto do pet'));
