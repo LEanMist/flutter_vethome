@@ -29,12 +29,12 @@ class _SucessoScreenState extends State<SucessoScreen>
       setState(() => _arrived = true);
       if (MediaQuery.of(context).accessibleNavigation) return;
       await Future<void>.delayed(const Duration(milliseconds: 1400));
-      if (mounted) _goHome();
+      if (mounted) _openPets();
     });
   }
 
-  void _goHome() =>
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+  void _openPets() =>
+      Navigator.pushNamedAndRemoveUntil(context, '/pets', (_) => false);
 
   @override
   void dispose() {
@@ -184,7 +184,7 @@ class _SucessoScreenState extends State<SucessoScreen>
                       height: 48 * scale,
                       child: ElevatedButton(
                         key: const ValueKey('registration-success-continue'),
-                        onPressed: _goHome,
+                        onPressed: _openPets,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: VH.primary,
                           foregroundColor: Colors.white,

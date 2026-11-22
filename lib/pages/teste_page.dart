@@ -18,7 +18,6 @@ import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
 import '../pages/sobre_page.dart';
 import '../pages/splashScreen.dart';
-import '../pages/home_page.dart';
 import '../pages/sucessoScreen.dart';
 import '../pages/vacinacao_page.dart';
 import 'cadastro_page.dart';
@@ -44,11 +43,6 @@ class TestePage extends StatelessWidget {
         titulo: 'Splash',
         icone: Icons.play_arrow_outlined,
         pagina: (_) => const SplashScreen(),
-      ),
-      (
-        titulo: 'Home',
-        icone: Icons.home_outlined,
-        pagina: (_) => const HomePage(),
       ),
       (titulo: 'Login', icone: Icons.login, pagina: (_) => const LoginPage()),
       (

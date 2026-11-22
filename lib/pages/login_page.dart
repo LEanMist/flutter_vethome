@@ -10,7 +10,7 @@ import '../theme/vet_colors.dart';
 import '../widgets/auth/demo_mode_notice.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, this.successRoute = '/home'})
+  const LoginPage({super.key, this.successRoute = '/pets'})
     : _veterinarianDemo = false;
 
   const LoginPage.veterinarianDemo({super.key})

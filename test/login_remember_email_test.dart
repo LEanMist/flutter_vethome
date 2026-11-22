@@ -3,7 +3,7 @@ import 'dart:ui' show CheckedState, SemanticsAction, Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/home_page.dart';
+import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,10 +40,7 @@ Future<void> _pumpLogin(WidgetTester tester, {double textScale = 1}) async {
         child: child!,
       ),
       home: const LoginPage(),
-      routes: {
-        '/home': (_) => const HomePage(),
-        '/pets': (_) => const Scaffold(body: Text('Pets')),
-      },
+      routes: {'/pets': (_) => const PetsPage()},
     ),
   );
   await tester.pumpAndSettle();
@@ -66,7 +63,7 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Entrar'));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('home-figma-frame')), findsOneWidget);
+    expect(find.byType(PetsPage), findsOneWidget);
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.getString(_rememberedEmailKey), 'ana@example.test');
     expect(preferences.getKeys(), {_rememberedEmailKey});
@@ -116,7 +113,7 @@ void main() {
 
     releaseWrite.complete();
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('home-figma-frame')), findsOneWidget);
+    expect(find.byType(PetsPage), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -219,7 +216,7 @@ void main() {
 
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.getString(_rememberedEmailKey), isNull);
-    expect(find.byKey(const ValueKey('home-figma-frame')), findsOneWidget);
+    expect(find.byType(PetsPage), findsOneWidget);
   });
 
   testWidgets('textos auxiliares do login respeitam ampliação do sistema', (

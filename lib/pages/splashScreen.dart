@@ -1,5 +1,6 @@
 // ignore_for_file: file_names
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -16,12 +17,27 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Timer? _loginTimer;
+
   @override
-  void initState() {
-    super.initState();
-    Future<void>.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) Navigator.pushReplacementNamed(context, '/login');
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (ModalRoute.isCurrentOf(context) == false) {
+      _loginTimer?.cancel();
+      _loginTimer = null;
+      return;
+    }
+    _loginTimer ??= Timer(const Duration(milliseconds: 1500), () {
+      if (mounted && ModalRoute.of(context)?.isCurrent != false) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _loginTimer?.cancel();
+    super.dispose();
   }
 
   @override

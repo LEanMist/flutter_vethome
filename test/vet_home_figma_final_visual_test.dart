@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/editar_pet_page.dart';
-import 'package:flutter_vethome/pages/home_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/pages/perfil_page.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
@@ -148,7 +147,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: const SucessoScreen(saved: true),
-        routes: {'/home': (_) => const HomePage()},
+        routes: {'/pets': (_) => const PetsPage()},
       ),
     );
     await tester.pumpAndSettle();
@@ -162,6 +161,6 @@ void main() {
     expect(tester.getSize(ring).height, closeTo(300.158, .01));
     await tester.pump(const Duration(milliseconds: 1500));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('home-figma-frame')), findsOneWidget);
+    expect(find.byType(PetsPage), findsOneWidget);
   });
 }

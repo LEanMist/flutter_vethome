@@ -14,7 +14,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: const SucessoScreen(saved: true),
-        routes: {'/home': (_) => const Scaffold(body: Text('Início'))},
+        routes: {'/pets': (_) => const Scaffold(body: Text('Início'))},
       ),
     );
     await tester.pump();
@@ -104,7 +104,7 @@ void main() {
           ),
           child: const SucessoScreen(saved: true),
         ),
-        routes: {'/home': (_) => const Scaffold(body: Text('Início'))},
+        routes: {'/pets': (_) => const Scaffold(body: Text('Início'))},
       ),
     );
     await tester.pump();

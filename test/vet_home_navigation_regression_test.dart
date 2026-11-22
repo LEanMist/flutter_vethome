@@ -5,14 +5,17 @@ import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/editar_pet_page.dart';
-import 'package:flutter_vethome/pages/home_page.dart';
+import 'package:flutter_vethome/pages/login_page.dart';
+import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/pages/cadastroPet_page.dart';
 import 'package:flutter_vethome/pages/teste_page.dart';
+import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/screens/outros.dart';
 import 'package:flutter_vethome/screens/pets.dart'
     show ConvenioScreen, ServicosScreen;
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Widget agendaRoute(BuildContext context) {
   final date = ModalRoute.of(context)?.settings.arguments as DateTime?;
@@ -20,31 +23,66 @@ Widget agendaRoute(BuildContext context) {
 }
 
 void main() {
-  testWidgets('Home permite trocar para as abas principais', (tester) async {
+  testWidgets('Cliente chega a Pets pelo login e acessa todas as abas', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
 
+    await tester.pumpWidget(MaterialApp(routes: AppRoutes.routes));
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginPage), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).at(0), 'tutor@example.test');
+    await tester.enterText(find.byType(TextField).at(1), 'senha-local');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Entrar'));
+    await tester.pumpAndSettle();
+
+    final pets = find.byType(PetsPage);
+    expect(pets, findsOneWidget);
+    expect(ModalRoute.of(tester.element(pets))?.settings.name, '/pets');
+
+    final bar = find.byType(VetBottomNav);
+    expect(tester.widget<VetBottomNav>(bar).selectedIndex, 0);
+    for (final (index, label) in const [
+      (1, 'Perfil'),
+      (2, 'Conversa'),
+      (3, 'Agenda'),
+      (4, 'Configurações'),
+      (0, 'Pets'),
+    ]) {
+      final tab = find.descendant(
+        of: bar,
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Semantics && widget.properties.label == label,
+        ),
+      );
+      await tester.tap(tab);
+      await tester.pumpAndSettle();
+      expect(tester.widget<VetBottomNav>(bar).selectedIndex, index);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('link legado /home abre Pets sem a Splash tomar a rota', (
+    tester,
+  ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: const HomePage(),
-        routes: {
-          '/chat': (_) => const Scaffold(body: Text('Conversa destino')),
-        },
-      ),
+      MaterialApp(routes: AppRoutes.routes, initialRoute: '/home'),
     );
+    await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
 
-    expect(find.byType(VetBottomNav), findsOneWidget);
-    final chatTab = find.byWidgetPredicate(
-      (widget) => widget is Semantics && widget.properties.label == 'Conversa',
+    expect(find.byType(PetsPage), findsOneWidget);
+    expect(find.byType(LoginPage), findsNothing);
+    expect(
+      tester.widget<VetBottomNav>(find.byType(VetBottomNav)).selectedIndex,
+      0,
     );
-    expect(chatTab, findsOneWidget);
-    await tester.tap(chatTab);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Conversa destino'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

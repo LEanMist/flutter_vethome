@@ -10,7 +10,6 @@ import 'package:flutter_vethome/models/saved_address.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
-import 'package:flutter_vethome/pages/home_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
@@ -584,7 +583,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: const SucessoScreen(saved: true),
-          routes: {'/home': (_) => const HomePage()},
+          routes: {'/pets': (_) => const PetsPage()},
         ),
       );
       expect(find.textContaining(VetRepository.clientName), findsOneWidget);
@@ -593,7 +592,7 @@ void main() {
       expect(find.text('Usuário\nCadastrado!'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('home-figma-frame')), findsOneWidget);
+      expect(find.byType(PetsPage), findsOneWidget);
       expect(VetRepository.pets, isEmpty);
     },
   );

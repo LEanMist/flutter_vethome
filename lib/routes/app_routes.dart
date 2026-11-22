@@ -11,7 +11,6 @@ import '../pages/gabriela/gabriela_area_page.dart';
 import '../pages/gabriela/gabriela_splash_screen.dart';
 import '../models/saved_address.dart';
 import '../models/pet_model.dart';
-import '../pages/home_page.dart';
 import '../pages/agendamentos_page.dart';
 import '../pages/detalhes_pet_page.dart';
 import '../pages/editar_pet_page.dart';
@@ -63,7 +62,8 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> get routes => {
     '/': (_) => const SplashScreen(),
-    '/home': (_) => const HomePage(),
+    // Mantém links antigos apontando para a primeira aba do Cliente.
+    '/home': (_) => const PetsPage(),
     '/login': (_) => const LoginPage(),
     '/gabriela/splash': (_) => const GabrielaSplashScreen(),
     '/gabriela/login': (_) => const LoginPage.veterinarianDemo(),
