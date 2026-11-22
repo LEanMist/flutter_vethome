@@ -38,19 +38,22 @@ Para iniciar em outro dispositivo, consulte os destinos disponíveis com `flutte
 ```powershell
 flutter analyze --no-pub
 flutter test --no-pub
-flutter test --no-pub -d chrome
+flutter test --no-pub --platform chrome
 flutter build web --no-pub
 ```
 
-Os resultados e tamanhos de tela verificados na auditoria mais recente estão
-em [CONTEXT.md](CONTEXT.md). Para tentar executar os testes de widgets no
-navegador nesta versão do SDK, use `flutter test --no-pub --platform chrome`.
+`--platform chrome` seleciona o runner de widgets no navegador neste SDK.
+A validação com Flutter 3.50.1 no Windows precisou de um ajuste local no
+runner para servir o CanvasKit. O comando `flutter test -d chrome` selecionou
+o runner local para a suíte de widgets. Os resultados estão em
+[CONTEXT.md](CONTEXT.md).
 
 ## Estado das plataformas
 
-- Web: build de produção e prévia aprovados. A suíte de widgets no navegador ainda precisa de validação.
-- Android e Windows: as suítes de widgets usam o runner Flutter local. Os
-  builds específicos dessas duas plataformas ainda precisam de validação.
+- Web: build de produção aprovado e regressões focadas executadas no Chrome.
+  A suíte completa de widgets no navegador continua pendente.
+- Android e Windows: os builds debug foram interrompidos antes da
+  compilação por toolchain e download de artefatos indisponíveis.
 
 ## Estrutura útil
 

@@ -12,6 +12,49 @@
   identificar o papel autenticado e autorizar a área correspondente. Os
   acessos demonstrativos continuam disponíveis durante o desenvolvimento.
 
+## Validação multiplataforma do frontend (22/11/2026)
+
+- Base validada na `liminha`: `b89d78be52e923f12e9309c6ddd1284074399f0c`.
+  Ambiente Windows, Flutter 3.50.1, Dart 3.14.0 e Chrome 157.0.8103.79.
+- O SDK original trava na inicialização da primeira suíte em
+  `flutter test --no-pub --platform chrome`. No Windows, o handler local
+  do CanvasKit compara um caminho com barras invertidas com o prefixo
+  `canvaskit/`. Um snapshot separado do `flutter_tools`, usando
+  `request.url.path` no handler, permitiu executar testes reais no Chrome.
+  O SDK instalado e o projeto ficaram sem esse patch de ferramenta.
+  [Ocorrência no Flutter](https://github.com/flutter/flutter/issues/192069).
+- No Chrome, os 43 testes focados de entrada, cadastro, navegação nas
+  cinco abas, área Gabriela, depuração e Web Locks passaram.
+- Depois dos ajustes de persistência, passaram 43 testes no Chrome nos
+  arquivos de Web Locks, proteção do snapshot e limpeza local. A operação
+  mantém a zona Dart do chamador e o erro original com seu stack trace
+  chega após a liberação do bloqueio. Os novos testes cobrem a entrega da
+  falha, a operação seguinte na fila e a zona do callback.
+- No Chrome, passaram 40 testes focados de perfil e foto da Gabriela,
+  agenda, diálogos, tema e responsividade. Os quatro testes de seleção
+  de foto passaram no Chrome e no runner local após a troca do mock
+  nativo pela interface multiplataforma e o ajuste da expectativa de
+  câmera no navegador.
+- As tentativas integrais no Chrome ficaram sem aprovação. Depois de
+  corrigir a inicialização, houve timeouts em testes que carregam fontes
+  ou SVG, inclusive no `setUpAll` da suíte de Configurações. A varredura
+  com Wasm também encontrou falhas e perdeu progresso nesse carregamento.
+- No runner local, a regressão completa passou com 666 testes e 5
+  ignorados após os ajustes de persistência. Os dois arquivos de teste
+  de foto modificados passaram em uma execução focada posterior. O
+  build Web de produção passou após os dois ajustes de persistência.
+- Android e Windows: `flutter doctor -v` não encontrou o SDK Android nem
+  o Visual Studio com C++. `flutter build apk --debug` e
+  `flutter build windows --debug` pararam antes da compilação, ao tentar
+  obter os artefatos de engine. O DNS do executor falhou para
+  `storage.googleapis.com`. Nenhum APK ou executável Windows foi gerado.
+- A análise estática retornou código 1 com zero erros, zero avisos e
+  208 informações. São 177 depreciações e 31 lints de estilo ou tipagem.
+  A migração ampla de Material ficou fora desta rodada.
+- O login único, a agenda e o histórico reais, o chat entre contas e os
+  contatos oficiais continuam registrados nos
+  [contratos pendentes](docs/integration_contracts_pending.md).
+
 ## Auditoria do frontend (22/11/2026)
 
 - O Cliente inicia em Splash → Login → Pets em 320 × 640, 390 × 844,
