@@ -23,50 +23,68 @@ Widget agendaRoute(BuildContext context) {
 }
 
 void main() {
-  testWidgets('Cliente chega a Pets pelo login e acessa todas as abas', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    SharedPreferences.setMockInitialValues({});
-
-    await tester.pumpWidget(MaterialApp(routes: AppRoutes.routes));
-    await tester.pump(const Duration(milliseconds: 1500));
-    await tester.pumpAndSettle();
-    expect(find.byType(LoginPage), findsOneWidget);
-
-    await tester.enterText(find.byType(TextField).at(0), 'tutor@example.test');
-    await tester.enterText(find.byType(TextField).at(1), 'senha-local');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Entrar'));
-    await tester.pumpAndSettle();
-
-    final pets = find.byType(PetsPage);
-    expect(pets, findsOneWidget);
-    expect(ModalRoute.of(tester.element(pets))?.settings.name, '/pets');
-
-    final bar = find.byType(VetBottomNav);
-    expect(tester.widget<VetBottomNav>(bar).selectedIndex, 0);
-    for (final (index, label) in const [
-      (1, 'Perfil'),
-      (2, 'Conversa'),
-      (3, 'Agenda'),
-      (4, 'Configurações'),
-      (0, 'Pets'),
-    ]) {
-      final tab = find.descendant(
-        of: bar,
-        matching: find.byWidgetPredicate(
-          (widget) => widget is Semantics && widget.properties.label == label,
-        ),
-      );
-      await tester.tap(tab);
+  for (final size in const [
+    Size(320, 640),
+    Size(390, 844),
+    Size(390, 500),
+    Size(800, 900),
+    Size(1280, 800),
+    Size(1543, 900),
+  ]) {
+    testWidgets('Cliente chega a Pets e acessa todas as abas em $size', (
+      tester,
+    ) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(MaterialApp(routes: AppRoutes.routes));
+      await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
-      expect(tester.widget<VetBottomNav>(bar).selectedIndex, index);
-    }
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.byType(LoginPage), findsOneWidget);
+      if (size.height == 500) {
+        tester.view.viewInsets = const FakeViewPadding(bottom: 240);
+        addTearDown(tester.view.resetViewInsets);
+        await tester.pumpAndSettle();
+      }
+      final email = find.byType(TextField).at(0);
+      final password = find.byType(TextField).at(1);
+      final login = find.widgetWithText(ElevatedButton, 'Entrar');
+      await tester.ensureVisible(email);
+      await tester.enterText(email, 'tutor@example.test');
+      await tester.ensureVisible(password);
+      await tester.enterText(password, 'senha-local');
+      await tester.ensureVisible(login);
+      await tester.pumpAndSettle();
+      await tester.tap(login);
+      tester.view.resetViewInsets();
+      await tester.pumpAndSettle();
+      final pets = find.byType(PetsPage);
+      expect(pets, findsOneWidget);
+      expect(ModalRoute.of(tester.element(pets))?.settings.name, '/pets');
+      final bar = find.byType(VetBottomNav);
+      expect(tester.widget<VetBottomNav>(bar).selectedIndex, 0);
+      for (final (index, label) in const [
+        (1, 'Perfil'),
+        (2, 'Conversa'),
+        (3, 'Agenda'),
+        (4, 'Configurações'),
+        (0, 'Pets'),
+      ]) {
+        final tab = find.descendant(
+          of: bar,
+          matching: find.byWidgetPredicate(
+            (widget) => widget is Semantics && widget.properties.label == label,
+          ),
+        );
+        await tester.tap(tab);
+        await tester.pumpAndSettle();
+        expect(tester.widget<VetBottomNav>(bar).selectedIndex, index);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('link legado /home abre Pets sem a Splash tomar a rota', (
     tester,
@@ -397,6 +415,7 @@ void main() {
       find.widgetWithText(OutlinedButton, 'Pets'),
       300,
     );
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'Pets'));
     await tester.pumpAndSettle();
     expect(find.text('/pets'), findsOneWidget);
@@ -407,6 +426,7 @@ void main() {
       find.widgetWithText(OutlinedButton, 'Agenda'),
       300,
     );
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'Agenda'));
     await tester.pumpAndSettle();
     expect(find.text('/agenda'), findsOneWidget);

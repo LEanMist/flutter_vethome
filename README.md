@@ -42,12 +42,15 @@ flutter test --no-pub -d chrome
 flutter build web --no-pub
 ```
 
-O teste nativo ignora deliberadamente um caso exclusivo do navegador; a execução com `-d chrome` cobre esse caso. Na validação desta integração, `flutter test --no-pub` e `flutter test --no-pub -d chrome` passaram **653 testes cada**, com **3 ignorados em cada execução**. `flutter build web --no-pub` também foi concluído. A análise estática não encontrou erros nem warnings; restam 31 sugestões informativas de lint.
+Os resultados e tamanhos de tela verificados na auditoria mais recente estão
+em [CONTEXT.md](CONTEXT.md). Para tentar executar os testes de widgets no
+navegador nesta versão do SDK, use `flutter test --no-pub --platform chrome`.
 
 ## Estado das plataformas
 
-- Web: build aprovado nesta integração; os testes específicos do navegador não foram executados nesta validação.
-- Android e Windows: builds não foram revalidados nesta integração.
+- Web: build de produção e prévia aprovados. A suíte de widgets no navegador ainda precisa de validação.
+- Android e Windows: as suítes de widgets usam o runner Flutter local. Os
+  builds específicos dessas duas plataformas ainda precisam de validação.
 
 ## Estrutura útil
 

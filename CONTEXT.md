@@ -12,6 +12,33 @@
   identificar o papel autenticado e autorizar a área correspondente. Os
   acessos demonstrativos continuam disponíveis durante o desenvolvimento.
 
+## Auditoria do frontend (22/11/2026)
+
+- O Cliente inicia em Splash → Login → Pets em 320 × 640, 390 × 844,
+  390 × 500, 800 × 900, 1280 × 800 e 1543 × 900. O teste usa a rota real,
+  percorre as cinco abas em cada tamanho e simula o teclado em 390 × 500.
+- A Agenda do Cliente mantém os espaços do frame de referência e ajusta o
+  tamanho de nomes de mês que ultrapassam a largura disponível. Em Detalhes
+  do Pet, os botões Saúde e Vacinação carregam explicitamente a fonte do app.
+- A Splash da Gabriela aguarda o fechamento de uma tela sobreposta para
+  continuar para o acesso demonstrativo. O ícone de sexo em Detalhes da
+  Consulta mantém os traços e as cores do SVG sem o filtro ignorado pelo Flutter.
+- Os atalhos Início, Apresentação e Home foram retirados. O seletor aparece em
+  `kDebugMode` e mantém a Splash do Cliente uma única vez. `/landing` foi
+  retirada e `/home` continua como alias de `/pets`.
+- A comparação usou a página **Telas para Entregar** do Figma. Pets e Detalhes
+  seguem a composição aprovada para o app. Os avisos de demonstração, os
+  exemplos de agenda isolados e o acesso veterinário local permanecem durante
+  o desenvolvimento.
+
+- Validação com Flutter 3.50.1: 666 testes aprovados e 3 ignorados no runner
+  local, também selecionado por `flutter test --no-pub -d chrome` para esses
+  testes de widgets. A execução com `--platform chrome` ficou bloqueada na
+  inicialização do iframe de testes. A prévia do build de produção no Chrome
+  confirmou a leitura do mês e dos botões de Detalhes. O build Web e
+  `git diff --check` passaram. `flutter analyze --no-pub` retornou código 1
+  com 208 diagnósticos informativos, sem erros ou avisos.
+
 ## Integração da área Gabriela (19/11/2026)
 
 - A área da veterinária continua disponível nas rotas `/gabriela/splash`,

@@ -456,7 +456,7 @@ void main() {
     // Carrega a fonte real para não medir o texto de Figma com Ahem.
     final fontLoader = FontLoader(VH.bodyFontFamily)
       ..addFont(rootBundle.load('assets/fonts/MontserratAlternatesBold.ttf'));
-    await fontLoader.load();
+    await tester.runAsync(fontLoader.load);
 
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
