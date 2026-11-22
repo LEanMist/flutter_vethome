@@ -1,5 +1,17 @@
 # VetHome — contexto para continuar o projeto
 
+## Entrada do Cliente e seletor de telas
+
+- A rota `/` abre a Splash do Cliente em qualquer tamanho. O login demonstrativo
+  e a conclusão do cadastro levam a `/pets`. A rota legada `/home` abre a mesma
+  tela de Pets.
+- A apresentação institucional, a seleção de entrada por largura e a Home
+  antiga foram removidas. O seletor de depuração oferece a Splash e os atalhos
+  das telas funcionais.
+- Cliente e Gabriela usarão uma única tela de login quando o backend puder
+  identificar o papel autenticado e autorizar a área correspondente. Os
+  acessos demonstrativos continuam disponíveis durante o desenvolvimento.
+
 ## Integração da área Gabriela (19/11/2026)
 
 - A área da veterinária continua disponível nas rotas `/gabriela/splash`,

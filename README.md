@@ -19,6 +19,11 @@ O projeto ainda não usa autenticação real nem sincroniza dados com um servido
 
 ## Executar
 
+A entrada do Cliente segue Splash → Login → Pets em celular, tablet e desktop.
+O cadastro também termina em Pets. Links antigos para `/home` abrem a lista de
+pets. Em modo de depuração, o botão de grade abre o seletor de telas, incluindo
+o acesso demonstrativo à área da Gabriela.
+
 Instale o Flutter e as dependências do projeto. Na pasta do projeto:
 
 ```powershell

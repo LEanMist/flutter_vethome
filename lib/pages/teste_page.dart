@@ -46,11 +46,6 @@ class TestePage extends StatelessWidget {
       ),
       (titulo: 'Login', icone: Icons.login, pagina: (_) => const LoginPage()),
       (
-        titulo: 'Área da Gabriela',
-        icone: Icons.medical_services_outlined,
-        pagina: (_) => const GabrielaSplashScreen(),
-      ),
-      (
         titulo: 'Cadastro',
         icone: Icons.person_add_alt_1,
         pagina: (_) => const CadastroScreen(),
@@ -163,6 +158,11 @@ class TestePage extends StatelessWidget {
         pagina: (_) => const ConfigScreen(),
       ),
       (
+        titulo: 'Gabriela - Splash',
+        icone: Icons.medical_services_outlined,
+        pagina: (_) => const GabrielaSplashScreen(),
+      ),
+      (
         titulo: 'Gabriela - Login',
         icone: Icons.lock_outline,
         pagina: (_) => const LoginPage.veterinarianDemo(),
@@ -207,9 +207,11 @@ class TestePage extends StatelessWidget {
                 }
 
                 final routeName = switch (tela.titulo) {
+                  'Splash' => '/',
+                  'Login' => '/login',
                   'Pets' => '/pets',
                   'Agenda' => '/agenda',
-                  'Área da Gabriela' => '/gabriela/splash',
+                  'Gabriela - Splash' => '/gabriela/splash',
                   'Gabriela - Login' => '/gabriela/login',
                   'Gabriela - Perfil' => '/gabriela/perfil',
                   'Gabriela - Chat' => '/gabriela/mensagens',

@@ -4,6 +4,8 @@ import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/gabriela/gabriela_area_page.dart';
+import 'package:flutter_vethome/pages/login_page.dart';
+import 'package:flutter_vethome/pages/splashScreen.dart';
 import 'package:flutter_vethome/pages/teste_page.dart';
 import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/widgets/debug_screen_switcher.dart';
@@ -24,6 +26,32 @@ void main() {
     expect(find.text('Splash'), findsOneWidget);
     expect(find.text('Início'), findsNothing);
     expect(find.text('Apresentação'), findsNothing);
+    expect(find.text('Home'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Splash do seletor continua para o login do Cliente', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          ...AppRoutes.routes,
+          '/catalogo-teste': (_) => const TestePage(),
+        },
+        initialRoute: '/catalogo-teste',
+      ),
+    );
+    await tester.tap(find.text('Splash'));
+    await tester.pumpAndSettle();
+    final splash = find.byType(SplashScreen);
+    expect(splash, findsOneWidget);
+    expect(ModalRoute.of(tester.element(splash))?.settings.name, '/');
+
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pumpAndSettle();
+    final login = find.byType(LoginPage);
+    expect(ModalRoute.of(tester.element(login))?.settings.name, '/login');
     expect(tester.takeException(), isNull);
   });
 
@@ -71,6 +99,7 @@ void main() {
     tester,
   ) async {
     const destinations = {
+      'Gabriela - Splash': '/gabriela/splash',
       'Gabriela - Login': '/gabriela/login',
       'Gabriela - Perfil': '/gabriela/perfil',
       'Gabriela - Chat': '/gabriela/mensagens',
