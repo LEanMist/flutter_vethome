@@ -40,7 +40,7 @@ void main() {
     // Navegação global mantida por solicitação do usuário; o frame é usado
     // para validar a geometria e o conteúdo específico de Serviços.
     expect(find.byType(VetBottomNav), findsOneWidget);
-    expect(tester.getSize(find.byType(VetBottomNav)).height, 50);
+    expect(tester.getSize(find.byType(VetBottomNav)).height, 62);
     // SERVICES_PAGE 2791:3113 não apresenta o resumo do pet no mobile.
     expect(find.byType(PetSummary), findsNothing);
     expect(find.text('Serviços'), findsOneWidget);
@@ -147,6 +147,13 @@ void main() {
     expect(continueRect.topLeft.dx, closeTo(116, 1));
     expect(continueRect.topLeft.dy, closeTo(718, 1));
     expect(continueRect.size, const Size(157, 57));
+    final navigationSurface = find.byKey(
+      const ValueKey('vet-bottom-nav-surface'),
+    );
+    expect(
+      tester.getRect(navigationSurface),
+      const Rect.fromLTRB(12, 782, 378, 832),
+    );
     expect(
       continueRect.bottom,
       lessThanOrEqualTo(tester.getTopLeft(find.byType(VetBottomNav)).dy),
@@ -158,7 +165,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(VetBottomNav), findsOneWidget);
-    expect(tester.getSize(find.byType(VetBottomNav)).height, 50);
+    expect(tester.getSize(find.byType(VetBottomNav)).height, 62);
     final selectedPet = VetRepository.pets.first;
     expect(find.byType(PetSummary), findsNothing);
     expect(find.text(selectedPet.name), findsNothing);

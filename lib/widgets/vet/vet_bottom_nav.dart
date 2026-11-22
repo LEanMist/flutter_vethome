@@ -21,6 +21,16 @@ class VetBottomNav extends StatelessWidget {
   final bool showPetsTab;
   final bool figmaPetsSelection;
 
+  static double compactHeight(BuildContext context) {
+    final scale = PetsTheme.scaleOf(context);
+    return _compactSurfaceHeight(scale) +
+        12 * scale +
+        MediaQuery.paddingOf(context).bottom;
+  }
+
+  static double _compactSurfaceHeight(double scale) =>
+      (50 * scale).clamp(48.0, 50.0);
+
   static const _allDestinationIndices = [0, 1, 2, 3, 4];
   static const _destinationIndicesWithoutPets = [1, 2, 3, 4];
 
@@ -67,6 +77,7 @@ class VetBottomNav extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: VH.mobileContentMaxWidth),
         child: Container(
+          key: const ValueKey('vet-bottom-nav-surface'),
           width: compact ? double.infinity : null,
           margin: compact
               ? EdgeInsets.zero
@@ -124,7 +135,13 @@ class VetBottomNav extends StatelessWidget {
     );
 
     if (compact) {
-      return SizedBox(height: (50 * s).clamp(48.0, 50.0), child: navigation);
+      return SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(12 * s, 0, 12 * s, standardBottomGap),
+          child: SizedBox(height: _compactSurfaceHeight(s), child: navigation),
+        ),
+      );
     }
 
     return SafeArea(top: false, left: false, right: false, child: navigation);

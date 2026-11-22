@@ -17,6 +17,7 @@ import '../widgets/vet_choice_pill.dart';
 import '../widgets/pets/pet_card_widget.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets.dart';
+import '../widgets/vet/vet_bottom_nav.dart';
 import '../widgets/vet/vet_page_scaffold.dart';
 
 Future<void> openPetChoiceDialog(BuildContext context) async {
@@ -395,8 +396,10 @@ class _ServicosScreenState extends State<ServicosScreen> {
     final desktop = media.size.width >= VH.desktopBreakpoint;
     final availableHeight =
         media.size.height - media.padding.top - media.viewInsets.bottom;
-    // The Figma button ends at y=775 and the compact bottom navigation is 50 px.
-    final shortViewport = availableHeight < 825;
+    // Reserve room for the navigation below the Figma button (y=775).
+    final shortViewport =
+        availableHeight <
+        775 + (desktop ? 50 : VetBottomNav.compactHeight(context));
     final petSpecies = PetSpecies.parse(pet.species);
     final categories = ServiceCatalog.categoriesFor(petSpecies);
     final orderedSelection = [
@@ -417,6 +420,7 @@ class _ServicosScreenState extends State<ServicosScreen> {
       footer: shortViewport
           ? SafeArea(
               top: false,
+              bottom: desktop,
               child: _continueButton(pet.id, orderedSelection, topPadding: 8),
             )
           : null,
@@ -1156,7 +1160,9 @@ class ConvenioScreen extends StatelessWidget {
     final routeService = service ?? values['service'];
     final selectedService = routeService is String ? routeService.trim() : '';
     final media = MediaQuery.of(context);
-    const navigationHeight = 50.0;
+    final navigationHeight = media.size.width >= VH.desktopBreakpoint
+        ? 50.0
+        : VetBottomNav.compactHeight(context);
     const headerHeight = 157.0;
     final referenceGaps = _options.fold(0.0, (total, plan) => total + plan.gap);
     final compactLargeTextPlans =
