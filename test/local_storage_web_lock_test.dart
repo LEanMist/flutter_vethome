@@ -48,6 +48,15 @@ void main() {
     skip: !kIsWeb,
   );
 
+  test('operação do Web Lock mantém a zona do chamador', () async {
+    final value = await runZoned(
+      () => withLocalStorageWriteLock(() async => Zone.current[#writeLock]),
+      zoneValues: {#writeLock: 'contexto da operação'},
+    );
+
+    expect(value, 'contexto da operação');
+  }, skip: !kIsWeb);
+
   test(
     'sem Web Locks permite leitura e bloqueia mutações entre abas',
     () async {

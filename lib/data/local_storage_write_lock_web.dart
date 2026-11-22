@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 
@@ -35,7 +36,9 @@ Future<T> withLocalStorageWriteLock<T>(
     return null;
   }
 
-  JSPromise<JSAny?> onGranted(JSAny? lock) => runAction(lock).toJS;
+  final onGranted = Zone.current.bindUnaryCallback(
+    (JSAny? lock) => runAction(lock).toJS,
+  );
 
   await navigator.locks
       .request('vethome.state.write.v1', onGranted.toJS)
