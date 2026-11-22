@@ -542,7 +542,8 @@ void main() {
         t.getBottomRight(find.text('Salvar endereço')).dy,
         lessThan(size.height),
       );
-      for (final label in ['Endereço', 'Complemento', 'Cidade', 'Nome']) {
+      expect(field('Nome'), findsNothing);
+      for (final label in ['Endereço', 'Complemento', 'Cidade']) {
         final editable = find.descendant(
           of: field(label),
           matching: find.byType(EditableText),
