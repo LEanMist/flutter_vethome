@@ -37,6 +37,20 @@ A suíte automatizada cobre navegação entre abas durante edição, operações
 
 ## Checklist
 
+### Teste manual em Android e Windows
+
+Use os artefatos do merge `1ce51c8`. Baixe o APK de depuração e instale em um dispositivo de teste. No Windows x64, extraia o ZIP inteiro e abra o executável na pasta extraída. O build Web também está disponível na mesma execução. Os artefatos têm retenção de sete dias. [Execução e downloads](https://github.com/LEanMist/flutter_vethome/actions/runs/45184103395)
+
+Em cada plataforma, use dados fictícios e anote o dispositivo, a versão do sistema e o resultado de cada passo.
+
+1. Abra o app, siga Splash → Login → Pets e navegue pelas cinco abas.
+2. Cadastre um pet, edite o nome e selecione uma foto usando o seletor do sistema.
+3. Inicie uma consulta local. Abra Exames e Vacinas, selecione mais de um serviço e confira se as escolhas chegam a Convênio. Selecione um endereço salvo e confirme a consulta na Agenda.
+4. Feche o processo e reabra o aplicativo. Confira pet, alterações, foto e consulta.
+5. Digite nos formulários, percorra os campos com teclado ou toque e confira a rolagem e o botão Confirmar com a janela reduzida ou o teclado na tela.
+6. Abra a entrada demonstrativa da Gabriela e percorra Perfil e foto, Agenda, Mensagens e Configurações.
+7. Registre travamentos, cortes de texto, sobreposições ou ações encobertas, com a tela e os passos para reproduzir.
+
 - [x] Exibir VetHome no Android, Windows e Web.
 - [x] Fixar a versão do Flutter e automatizar a validação em `liminha`.
 - [x] Verificar localmente o build Web, a abertura com acesso externo bloqueado e a suíte no runner local.
