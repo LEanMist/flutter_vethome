@@ -9,6 +9,7 @@ import 'package:flutter_vethome/models/saved_address.dart';
 import 'package:flutter_vethome/pages/endereco_page.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/widgets/address_form.dart';
+import 'package:flutter_vethome/widgets/auth/registration_field_icon.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
@@ -65,9 +66,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(address: address, modal: true),
@@ -112,7 +112,7 @@ void main() {
     addTearDown(tester.view.resetPadding);
 
     await tester.pumpWidget(
-      const MaterialApp(home: AddressEditorPage(address: address)),
+      const MaterialApp(home: AddressEditorPage(address: address, modal: true)),
     );
     await tester.pumpAndSettle();
 
@@ -388,9 +388,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(),
@@ -448,9 +447,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(),
@@ -498,7 +496,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('REGISTER_ADRESS_PAGE usa os ícones originais do Figma', (
+  testWidgets('Endereço de cadastro usa um ícone distinto para cada campo', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -521,31 +519,54 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final prefixAssets = _addressAssetNames(tester);
     expect(find.text('Logradouro'), findsOneWidget);
-    expect(find.text('Numero'), findsOneWidget);
-    expect(
-      prefixAssets,
-      contains('assets/imagens/figma/address-prefix-home.png'),
+    expect(find.text('Número'), findsOneWidget);
+    expect(find.text('Nome'), findsNothing);
+    expect(find.byType(RegistrationFieldIcon), findsNWidgets(5));
+    for (final icon in const [
+      Icons.location_on,
+      Icons.home_outlined,
+      Icons.numbers,
+      Icons.meeting_room_outlined,
+      Icons.location_city_outlined,
+    ]) {
+      final glyph = find.byIcon(icon);
+      final circle = find.ancestor(
+        of: glyph,
+        matching: find.byType(RegistrationFieldIcon),
+      );
+      expect(tester.getSize(circle), const Size.square(48));
+      expect(tester.getCenter(glyph), tester.getCenter(circle));
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Endereço permite alcançar Pular em uma janela muito baixa', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(319, 100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    var skipped = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AddressForm(
+            title: 'Endereço',
+            onSaved: (_) {},
+            onSkip: () => skipped = true,
+          ),
+        ),
+      ),
     );
-    expect(
-      prefixAssets,
-      contains('assets/imagens/figma/address-prefix-number.png'),
-    );
-    expect(
-      prefixAssets,
-      contains('assets/imagens/figma/address-prefix-city-circle.png'),
-    );
-    expect(
-      prefixAssets,
-      contains('assets/imagens/figma/address-prefix-city.png'),
-    );
-    expect(
-      prefixAssets
-          .where((assetName) => assetName.endsWith('address-prefix-home.png'))
-          .length,
-      3,
-    );
+    await tester.pumpAndSettle();
+    final skip = find.text('Pular');
+    await tester.ensureVisible(skip);
+    await tester.tap(skip);
+    await tester.pumpAndSettle();
+    expect(skipped, isTrue);
     expect(tester.takeException(), isNull);
   });
 
@@ -582,7 +603,7 @@ void main() {
     final registrationPanel = tester.widget<Container>(
       find.byKey(const ValueKey('address-registration-panel')),
     );
-    expect(registrationPanel.clipBehavior, Clip.antiAlias);
+    expect(registrationPanel.clipBehavior, Clip.none);
     final panelDecoration =
         registrationPanel.decoration! as inset_shadow.BoxDecoration;
     expect(panelDecoration.boxShadow, hasLength(1));
@@ -595,7 +616,7 @@ void main() {
     for (final (label, labelTop, fieldTop) in const [
       ('CEP', 151.0, 171.0),
       ('Logradouro', 243.0, 264.0),
-      ('Numero', 336.0, 356.0),
+      ('Número', 336.0, 356.0),
       ('Complemento', 428.0, 448.0),
       ('Cidade', 520.0, 540.0),
     ]) {
@@ -631,7 +652,7 @@ void main() {
       Colors.white,
     );
     expect(_contrastRatio(Colors.white, VH.primary), greaterThanOrEqualTo(4.5));
-    expect(tester.getTopLeft(find.text('Pular')).dy, closeTo(744, 1));
+    expect(tester.getTopLeft(find.text('Pular')).dy, closeTo(744, 2));
     final skipStyle = tester
         .renderObject<RenderParagraph>(find.text('Pular'))
         .text

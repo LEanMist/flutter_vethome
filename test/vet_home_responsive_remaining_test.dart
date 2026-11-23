@@ -11,7 +11,6 @@ import 'package:flutter_vethome/pages/perfil_page.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/pages/sobre_page.dart';
 import 'package:flutter_vethome/screens/pets.dart';
-import 'package:flutter_vethome/widgets/pet_summary.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 import 'package:flutter_vethome/widgets.dart';
 
@@ -252,31 +251,23 @@ void main() {
     }
   });
 
-  testWidgets('detalhes móvel: expandir e recolher dados no cartão anterior', (
+  testWidgets('detalhes móvel: dados e histórico ficam na página de detalhes', (
     tester,
   ) async {
     final pet = VetRepository.pets.first;
-    final summary = find.byType(PetSummary);
-
     for (final size in const [Size(320, 640), Size(390, 844)]) {
       await pumpMobileDetails(tester, size);
       expect(find.text('Espécie'), findsNothing);
       expect(find.text('Castração'), findsNothing);
-      await tester.ensureVisible(summary);
-      await tester.tap(summary);
+      await tester.tap(find.text('Detalhes'));
       await tester.pumpAndSettle();
       expect(find.text('Espécie'), findsOneWidget);
       expect(find.text('Castração'), findsOneWidget);
       expect(find.text(pet.species!), findsOneWidget);
       expect(find.text('Castrado'), findsOneWidget);
-      expect(tester.takeException(), isNull, reason: 'Expandido em $size');
-      await tester.ensureVisible(summary);
-      await tester.tap(summary);
-      await tester.pumpAndSettle();
-      expect(find.text('Espécie'), findsNothing);
-      expect(find.text('Castração'), findsNothing);
-      expect(find.text('Castrado'), findsNothing);
-      expect(tester.takeException(), isNull, reason: 'Recolhido em $size');
+      expect(find.text('Histórico de atendimentos'), findsOneWidget);
+      expect(find.text('Dados demonstrativos'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: 'Detalhes em $size');
     }
   });
 
@@ -286,8 +277,11 @@ void main() {
     final pet = VetRepository.pets.first;
     for (final size in const [Size(320, 640), Size(390, 844)]) {
       await pumpMobileDetails(tester, size);
-      await tester.ensureVisible(find.byTooltip('Editar'));
-      await tester.tap(find.byTooltip('Editar'));
+      await tester.tap(find.text('Detalhes'));
+      await tester.pumpAndSettle();
+      final edit = find.widgetWithText(ElevatedButton, 'Editar');
+      await tester.ensureVisible(edit);
+      await tester.tap(edit);
       await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey('edit-pet-modal-surface')),
@@ -307,10 +301,56 @@ void main() {
         find.byKey(const ValueKey('edit-pet-modal-surface')),
         findsNothing,
       );
-      expect(find.text(pet.name), findsOneWidget);
+      expect(find.text('Histórico de atendimentos'), findsOneWidget);
       expect(VetRepository.petById(pet.id)?.name, pet.name);
       expect(tester.takeException(), isNull, reason: 'Editar em $size');
     }
+  });
+
+  testWidgets('histórico permite ver o último atendimento acima das ações', (
+    tester,
+  ) async {
+    for (final size in const [Size(320, 640), Size(390, 844)]) {
+      await pumpMobileDetails(tester, size);
+      await tester.tap(find.text('Detalhes'));
+      await tester.pumpAndSettle();
+      final last = find.text('Pesagem e avaliação');
+      await tester.ensureVisible(last);
+      await tester.pumpAndSettle();
+      final edit = find.widgetWithText(ElevatedButton, 'Editar');
+      expect(
+        tester.getBottomLeft(last).dy,
+        lessThan(tester.getTopLeft(edit).dy),
+      );
+      expect(tester.takeException(), isNull, reason: 'Histórico em $size');
+    }
+  });
+
+  testWidgets('detalhes mantém histórico acessível com texto ampliado', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: DetalhesPetPage(pet: VetRepository.pets.first),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Detalhes'));
+    await tester.tap(find.text('Detalhes'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Pesagem e avaliação'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('detalhes móvel: Nova Consulta seleciona pet e abre Serviços', (

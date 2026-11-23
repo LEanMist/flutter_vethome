@@ -7,11 +7,13 @@ class DemoModeNotice extends StatelessWidget {
     super.key,
     required this.message,
     this.compact = false,
+    this.multiline = false,
     this.semanticLabel,
   });
 
   final String message;
   final bool compact;
+  final bool multiline;
   final String? semanticLabel;
 
   @override
@@ -45,8 +47,8 @@ class DemoModeNotice extends StatelessWidget {
             Flexible(
               child: Text(
                 message,
-                maxLines: compact ? 1 : null,
-                overflow: compact ? TextOverflow.ellipsis : null,
+                maxLines: compact && !multiline ? 1 : null,
+                overflow: compact && !multiline ? TextOverflow.ellipsis : null,
                 style: TextStyle(
                   fontFamily: VH.bodyFontFamily,
                   color: VH.foreground,

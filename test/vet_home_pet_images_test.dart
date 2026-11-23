@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_vethome/core/utils/pet_images.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/pet_model.dart';
-import 'package:flutter_vethome/pages/agendamentos_page.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/editar_pet_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
@@ -109,7 +108,6 @@ void main() {
             const ServicosScreen(),
             const ConvenioScreen(),
             NovaConsultaPage(pet: pet, service: 'Urina', plan: 'Particular'),
-            AgendamentosPage(pet: pet),
           ]) {
             await tester.pumpWidget(MaterialApp(home: screen));
             await tester.pumpAndSettle();

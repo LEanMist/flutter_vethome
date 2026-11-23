@@ -47,8 +47,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
         home: NovaConsultaPage(
@@ -111,6 +112,42 @@ void main() {
     expect(find.byKey(panel), findsNothing);
     expect(find.text(work.summary), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('permite retirar o endereço sem perder o restante da consulta', (
+    tester,
+  ) async {
+    await seedAddresses(tester, [home]);
+    final petId = VetRepository.pets.first.id;
+    await pumpBooking(tester);
+    await openPanel(tester);
+    await tester.tap(option(home));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    await openPanel(tester);
+    await tester.tap(find.text('Remover seleção'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.text(home.summary), findsOneWidget);
+
+    await openPanel(tester);
+    await tester.tap(find.text('Remover seleção'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('Escolher endereço'), findsOneWidget);
+    await tester.runAsync(() async {
+      await tester.tap(find.byKey(const ValueKey('appointment-booking-save')));
+      expect(await VetRepository.flush(), isTrue);
+    });
+    await tester.pumpAndSettle();
+    final saved = VetRepository.realAppointments(petId).single;
+    expect(saved.address, isNull);
+    expect(saved.tipo, 'Consulta');
+    expect(VetRepository.addresses.single.id, home.id);
   });
 
   testWidgets('salva o endereço e abre a Agenda com os dados da consulta', (

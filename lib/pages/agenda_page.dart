@@ -132,11 +132,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
     const selectedDateTop = 350.0;
     final weekdays = const [
       'Domingo',
-      'Segunda Feira',
-      'Terça Feira',
-      'Quarta Feira',
-      'Quinta Feira',
-      'Sexta Feira',
+      'Segunda-feira',
+      'Terça-feira',
+      'Quarta-feira',
+      'Quinta-feira',
+      'Sexta-feira',
       'Sábado',
     ];
     final selectedDateLabel =

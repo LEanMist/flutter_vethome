@@ -157,7 +157,7 @@ void main() {
       expect(nextDayData.flagsCollection.isEnabled, Tristate.isTrue);
       nextDay.owner!.performAction(nextDay.id, SemanticsAction.tap);
       await tester.pumpAndSettle();
-      expect(find.text('14 - Quarta Feira'), findsOneWidget);
+      expect(find.text('14 - Quarta-feira'), findsOneWidget);
       expect(
         tester
             .getSemantics(
@@ -459,7 +459,7 @@ void main() {
 
       await tester.sendKeyEvent(key);
       await tester.pumpAndSettle();
-      expect(find.text('14 - Quarta Feira'), findsOneWidget);
+      expect(find.text('14 - Quarta-feira'), findsOneWidget);
 
       final semantics = tester.ensureSemantics();
       try {

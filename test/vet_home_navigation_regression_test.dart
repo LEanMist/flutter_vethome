@@ -5,7 +5,7 @@ import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/editar_pet_page.dart';
-import 'package:flutter_vethome/pages/home_page.dart';
+import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/pages/cadastroPet_page.dart';
 import 'package:flutter_vethome/pages/teste_page.dart';
@@ -20,7 +20,7 @@ Widget agendaRoute(BuildContext context) {
 }
 
 void main() {
-  testWidgets('Home permite trocar para as abas principais', (tester) async {
+  testWidgets('Pets permite trocar para as abas principais', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -28,7 +28,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: const HomePage(),
+        home: const PetsPage(),
         routes: {
           '/chat': (_) => const Scaffold(body: Text('Conversa destino')),
         },
@@ -367,6 +367,8 @@ void main() {
       find.widgetWithText(OutlinedButton, 'Pets'),
       300,
     );
+    await tester.ensureVisible(find.text('Pets'));
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'Pets'));
     await tester.pumpAndSettle();
     expect(find.text('/pets'), findsOneWidget);
@@ -377,6 +379,8 @@ void main() {
       find.widgetWithText(OutlinedButton, 'Agenda'),
       300,
     );
+    await tester.ensureVisible(find.text('Agenda'));
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'Agenda'));
     await tester.pumpAndSettle();
     expect(find.text('/agenda'), findsOneWidget);

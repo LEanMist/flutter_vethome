@@ -26,15 +26,17 @@ class ServiceCatalog {
   ];
   static const catVaccines = ['V5', 'V4', 'V3', 'Antirrábica'];
 
+  static List<String> vaccinesFor(PetSpecies? species) => switch (species) {
+    PetSpecies.dog => dogVaccines,
+    PetSpecies.cat => catVaccines,
+    null => const [],
+  };
+
   static Map<String, List<String>> categoriesFor(PetSpecies? species) => {
     'Exames': species == PetSpecies.cat
         ? const [felineExam, ...commonExams]
         : commonExams,
-    'Vacinas': switch (species) {
-      PetSpecies.dog => dogVaccines,
-      PetSpecies.cat => catVaccines,
-      null => const [],
-    },
+    'Vacinas': vaccinesFor(species),
     'Microchipagem': const ['Microchipagem'],
     'Atestados': const ['Atestado'],
   };

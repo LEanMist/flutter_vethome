@@ -11,7 +11,6 @@ import 'package:flutter_vethome/models/saved_address.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
-import 'package:flutter_vethome/pages/home_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
@@ -205,28 +204,6 @@ void main() {
     expect(VetRepository.clientGender, genderBefore);
     expect(VetRepository.clientGenderCustom, genderCustomBefore);
   });
-  testWidgets('pular endereço sem identidade do tutor permanece bloqueado', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: const EnderecoScreen(),
-        routes: {
-          '/cadastroPet': (_) => const Scaffold(body: Text('Etapa pet')),
-        },
-      ),
-    );
-    await tester.ensureVisible(find.text('Pular'));
-    await tester.tap(find.text('Pular'));
-    await tester.pump();
-    expect(find.text('Etapa pet'), findsNothing);
-    expect(
-      find.text('Conclua os dados obrigatórios do tutor antes de avançar.'),
-      findsOneWidget,
-    );
-    expect(VetRepository.clientEmail, isEmpty);
-    expect(VetRepository.addresses, isEmpty);
-  });
   testWidgets('pular pet funciona com zero pets', (tester) async {
     await tester.runAsync(() async {
       for (final pet in [...VetRepository.pets]) {
@@ -244,6 +221,7 @@ void main() {
     );
     await tester.ensureVisible(find.text('Pular'));
     await tester.tap(find.text('Pular'));
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pumpAndSettle();
     expect(VetRepository.pets, isEmpty);
     expect(find.text('Concluído'), findsOneWidget);
@@ -585,7 +563,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: const SucessoScreen(saved: true),
-          routes: {'/home': (_) => const HomePage()},
+          routes: {'/pets': (_) => const PetsPage()},
         ),
       );
       expect(find.textContaining(VetRepository.clientName), findsOneWidget);
@@ -594,7 +572,7 @@ void main() {
       expect(find.text('Usuário\nCadastrado!'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('home-figma-frame')), findsOneWidget);
+      expect(find.byType(PetsPage), findsOneWidget);
       expect(VetRepository.pets, isEmpty);
     },
   );

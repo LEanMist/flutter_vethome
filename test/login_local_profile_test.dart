@@ -23,7 +23,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: const LoginPage(),
-        routes: {'/home': (_) => const Scaffold(body: Text('Home aberta'))},
+        routes: {'/pets': (_) => const Scaffold(body: Text('Pets aberta'))},
       ),
     );
     await tester.pumpAndSettle();
@@ -43,6 +43,6 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Home aberta'), findsNothing);
+    expect(find.text('Pets aberta'), findsNothing);
   });
 }

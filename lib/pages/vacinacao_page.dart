@@ -163,6 +163,23 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
       titleSize: 23,
       pet: pet,
       contentMaxWidth: 1120,
+      footerReserveHeight: 72,
+      footer: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 54, maxWidth: 180),
+          child: TextButton.icon(
+            onPressed: _saving ? null : () => _edit(),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: VetColors.brown,
+              minimumSize: const Size(143, 54),
+              visualDensity: VisualDensity.standard,
+            ),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Adicionar vacina'),
+          ),
+        ),
+      ),
       children: [
         PetSummary(pet: pet, size: PetSummarySize.medium),
         VetCard(
@@ -192,14 +209,6 @@ class _VacinacaoPageState extends State<VacinacaoPage> {
                 style: TextStyle(fontSize: 11),
               ),
             ],
-          ),
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: _saving ? null : () => _edit(),
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Adicionar vacina'),
           ),
         ),
         LayoutBuilder(
@@ -440,60 +449,73 @@ class _VacinaCard extends StatelessWidget {
       flat: true,
       color: VetColors.rose.withValues(alpha: .17),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.vaccines_outlined,
-                size: 17,
-                color: VetColors.brown,
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  vaccine.nome,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              StatusChip(label, color, dense: true, textColor: textColor),
-              if (onEdit != null)
-                SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: PopupMenuButton<String>(
-                    enabled: enabled,
-                    tooltip: 'Opções da vacina ${vaccine.nome}',
-                    padding: EdgeInsets.zero,
-                    iconSize: 18,
-                    onSelected: (value) =>
-                        value == 'edit' ? onEdit!() : onDelete!(),
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'edit', child: Text('Editar')),
-                      PopupMenuItem(value: 'delete', child: Text('Excluir')),
-                    ],
-                  ),
-                ),
-            ],
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Icon(
+              Icons.vaccines_outlined,
+              size: 30,
+              color: VetColors.brown,
+            ),
           ),
-          const SizedBox(height: 4),
-          if (isDemonstration) ...[
-            const DemoBadge(label: 'Demonstração'),
-            const SizedBox(height: 4),
-          ],
-          Text(
-            'Aplicada: ${fmtData(vaccine.aplicada)}',
-            style: const TextStyle(fontSize: 12),
-          ),
-          Text(
-            vaccine.proxima == null
-                ? 'Próxima dose: não informada'
-                : 'Próxima: ${fmtData(vaccine.proxima!)}',
-            style: const TextStyle(fontSize: 12),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        vaccine.nome,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    StatusChip(label, color, dense: true, textColor: textColor),
+                    if (onEdit != null)
+                      SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: PopupMenuButton<String>(
+                          enabled: enabled,
+                          tooltip: 'Opções da vacina ${vaccine.nome}',
+                          padding: EdgeInsets.zero,
+                          iconSize: 18,
+                          onSelected: (value) =>
+                              value == 'edit' ? onEdit!() : onDelete!(),
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(value: 'edit', child: Text('Editar')),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Excluir'),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                if (isDemonstration) ...[
+                  const DemoBadge(label: 'Demonstração'),
+                  const SizedBox(height: 4),
+                ],
+                Text(
+                  'Aplicada: ${fmtData(vaccine.aplicada)}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                Text(
+                  vaccine.proxima == null
+                      ? 'Próxima dose: não informada'
+                      : 'Próxima: ${fmtData(vaccine.proxima!)}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
           ),
         ],
       ),

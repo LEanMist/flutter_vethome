@@ -7,6 +7,7 @@ import '../models/pet_model.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets.dart';
+import 'auth/registration_actions_footer.dart';
 import '../widgets/figma_action_target.dart';
 import 'pets/pet_avatar.dart';
 import 'pet_photo_button.dart';
@@ -62,13 +63,7 @@ class _PetFormState extends State<PetForm> {
   late final name = TextEditingController(text: widget.pet?.name ?? '');
   late final species = TextEditingController(text: widget.pet?.species ?? '');
   late final sex = TextEditingController(text: widget.pet?.sex ?? '');
-  late final _figmaSex = TextEditingController(
-    text: switch (sex.text) {
-      'Macho' => 'M',
-      'Fêmea' => 'F',
-      final value => value,
-    },
-  );
+  late final _figmaSex = TextEditingController(text: _shortSexLabel(sex.text));
   late final weight = TextEditingController(
     text: _weightInputValue(widget.pet?.weightKg),
   );
@@ -88,7 +83,6 @@ class _PetFormState extends State<PetForm> {
   late String? photo = widget.pet?.photoBase64;
   bool busy = false;
   bool validationFailed = false;
-  bool editExtrasExpanded = false;
   String _previousSpecies = '';
 
   @override
@@ -109,6 +103,13 @@ class _PetFormState extends State<PetForm> {
     'F' => 'Fêmea',
     _ => value,
   };
+
+  String _shortSexLabel(String value) => switch (value) {
+    'Macho' => 'M',
+    'Fêmea' => 'F',
+    _ => value,
+  };
+
   @override
   void dispose() {
     for (final c in [
@@ -196,7 +197,7 @@ class _PetFormState extends State<PetForm> {
       _weightFocusNode,
       _birthFocusNode,
       _breedFocusNode,
-      if (figmaEditModal && editExtrasExpanded) _speciesFocusNode,
+      if (figmaEditModal) _speciesFocusNode,
     ];
 
     for (final focusNode in candidates) {
@@ -237,20 +238,27 @@ class _PetFormState extends State<PetForm> {
     String Function(String)? choiceDisplayLabel,
     String? Function(String)? semanticsValue,
     String? suffixText,
-    bool persistentSuffix = false,
     List<String> suggestions = const [],
     String? Function(String?)? validator,
     ValueChanged<String>? onChanged,
     bool figmaStyle = false,
     bool figmaRegistrationStyle = false,
+    bool registration = false,
     double figmaLabelBottomPadding = 1,
     double figmaLabelHorizontalPadding = 5,
     double? figmaContentPaddingLeft,
     double? figmaContentPaddingRight,
+    double? figmaPrefixWidth,
     TextAlign figmaTextAlign = TextAlign.start,
   }) {
     final size = MediaQuery.sizeOf(context);
     final useFigmaStyle = figmaRegistrationStyle || figmaStyle;
+    final registrationWeight = registration && identical(c, weight);
+    final alignPairLabels =
+        registration &&
+        size.width >= 300 &&
+        MediaQuery.textScalerOf(context).scale(14) <= 18.2 &&
+        (registrationWeight || identical(c, sex));
     return VHField(
       label,
       icon,
@@ -258,10 +266,16 @@ class _PetFormState extends State<PetForm> {
       textAlign: figmaTextAlign,
       figmaContentPaddingLeft: figmaContentPaddingLeft,
       figmaContentPaddingRight: figmaContentPaddingRight,
+      figmaPrefixWidth: figmaPrefixWidth,
       figmaForm: useFigmaStyle,
       showChoiceIndicator: !figmaStyle,
-      labelAbove: useFigmaStyle || size.width >= 900,
-      labelHorizontalPadding: useFigmaStyle
+      labelAbove: registration || useFigmaStyle || size.width >= 900,
+      showErrorBelowSurface: figmaRegistrationStyle,
+      circularPrefix: registration,
+      fullHeightPrefix:
+          figmaRegistrationStyle ||
+          (figmaStyle && (identical(c, name) || identical(c, breed))),
+      labelHorizontalPadding: useFigmaStyle || registration
           ? figmaStyle
                 ? figmaLabelHorizontalPadding
                 : 5
@@ -271,16 +285,21 @@ class _PetFormState extends State<PetForm> {
           : figmaStyle
           ? figmaLabelBottomPadding
           : null,
-      labelFitSingleLine: useFigmaStyle,
+      labelFitSingleLine: useFigmaStyle || alignPairLabels,
       fitSingleLine: figmaStyle && label == 'Raça',
+      wrapText: registration && (identical(c, name) || identical(c, breed)),
       controller: c,
       focusNode: focusNode,
       value: label == 'Castração' ? 'Não informado' : null,
+      inputFormatters: registrationWeight ? const [] : null,
+      keyboardType: registrationWeight
+          ? const TextInputType.numberWithOptions(decimal: true)
+          : null,
       choices: choices,
       choiceDisplayLabel: choiceDisplayLabel,
       semanticsValue: semanticsValue,
       suffixText: suffixText,
-      persistentSuffix: persistentSuffix,
+      persistentSuffix: registrationWeight,
       suggestions: suggestions,
       onChanged: onChanged,
       validator: validator ?? requiredValue,
@@ -291,7 +310,6 @@ class _PetFormState extends State<PetForm> {
     if (busy) return;
     if (widget.modal && widget.pet != null && species.text.trim().isEmpty) {
       setState(() {
-        editExtrasExpanded = true;
         validationFailed = true;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -365,13 +383,20 @@ class _PetFormState extends State<PetForm> {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final small = MediaQuery.sizeOf(context).height < 720;
-      final desktop = constraints.maxWidth >= 700 && !widget.modal;
       final editing = widget.pet != null;
       final petRegistration = widget.onSkip != null && !editing;
+      final shortWideRegistration =
+          petRegistration &&
+          constraints.maxWidth >= 560 &&
+          MediaQuery.sizeOf(context).height <= 420;
+      final desktop =
+          !widget.modal &&
+          (constraints.maxWidth >= 700 || shortWideRegistration);
       final registration = petRegistration && !desktop;
       final figmaRegistration =
           registration &&
           !small &&
+          constraints.maxWidth >= 322 &&
           constraints.maxWidth < 600 &&
           MediaQuery.textScalerOf(context).scale(14) <= 15.4;
       final figmaEditModal =
@@ -380,6 +405,14 @@ class _PetFormState extends State<PetForm> {
           constraints.maxWidth >= 310 &&
           constraints.maxHeight >= 470 &&
           MediaQuery.textScalerOf(context).scale(14) <= 15.4;
+      final textScale = MediaQuery.textScalerOf(context).scale(18) / 18;
+      final pinRegistrationActions =
+          petRegistration &&
+          constraints.maxHeight >= 190 &&
+          constraints.maxHeight <
+              (desktop ? 520 : 730) +
+                  (validationFailed ? 150 : 0) +
+                  (textScale - 1).clamp(0, 3) * 140;
       final saveButton = ElevatedButton(
         onPressed: busy ? null : save,
         style: figmaEditModal
@@ -397,23 +430,17 @@ class _PetFormState extends State<PetForm> {
                   fontWeight: FontWeight.bold,
                 ),
               )
+            : petRegistration
+            ? VH.continueButtonStyle
             : ElevatedButton.styleFrom(
-                backgroundColor: editing ? VetColors.brown : VetColors.rose,
+                backgroundColor: editing ? VH.primary : VetColors.rose,
                 foregroundColor: editing
                     ? Colors.white
                     : VetColors.calendarTextOnRose,
                 minimumSize: const Size.fromHeight(48),
-                shape: registration ? const StadiumBorder() : null,
-                textStyle: registration
-                    ? const TextStyle(
-                        fontFamily: VH.headingFontFamily,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      )
-                    : null,
               ),
         child: Text(
-          registration
+          petRegistration
               ? 'Continuar'
               : editing
               ? widget.modal
@@ -422,6 +449,25 @@ class _PetFormState extends State<PetForm> {
               : 'Cadastrar',
         ),
       );
+      final registrationActions = petRegistration
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 181 + (textScale - 1).clamp(0, 3).toDouble() * 80,
+                  height: constraints.maxHeight < 320 || shortWideRegistration
+                      ? 54
+                      : 65,
+                  child: saveButton,
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: busy ? null : () => _runAction(widget.onSkip),
+                  child: const Text('Pular'),
+                ),
+              ],
+            )
+          : null;
       final standardContent = Padding(
         padding: EdgeInsets.fromLTRB(
           16,
@@ -431,7 +477,7 @@ class _PetFormState extends State<PetForm> {
               ? 5
               : 7,
           16,
-          registration ? 0 : 7,
+          registration || pinRegistrationActions ? 0 : 7,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -492,19 +538,20 @@ class _PetFormState extends State<PetForm> {
               key: figmaRegistration
                   ? const ValueKey('pet-registration-slot')
                   : null,
-              height: registration && !small && !validationFailed ? 480 : null,
               child: Center(
                 child: Transform.translate(
                   offset: figmaRegistration ? const Offset(-1, 0) : Offset.zero,
                   child: SizedBox(
                     width: registration ? 290 : double.infinity,
-                    height: registration && !small && !validationFailed
-                        ? 480
-                        : null,
                     child: Container(
                       key: registration
                           ? const ValueKey('pet-registration-panel')
                           : null,
+                      constraints: BoxConstraints(
+                        minHeight: figmaRegistration && !validationFailed
+                            ? 480
+                            : 0,
+                      ),
                       padding: registration && !small
                           ? const EdgeInsets.fromLTRB(12, 11, 13, 12)
                           : EdgeInsets.symmetric(
@@ -527,6 +574,9 @@ class _PetFormState extends State<PetForm> {
                       ),
                       child: Form(
                         key: key,
+                        autovalidateMode: petRegistration && validationFailed
+                            ? AutovalidateMode.onUserInteraction
+                            : AutovalidateMode.disabled,
                         child: desktop
                             ? LayoutBuilder(
                                 builder: (context, fieldConstraints) {
@@ -537,7 +587,7 @@ class _PetFormState extends State<PetForm> {
                                       'pet-form-desktop-grid',
                                     ),
                                     spacing: 12,
-                                    runSpacing: 10,
+                                    runSpacing: shortWideRegistration ? 6 : 10,
                                     children: [
                                       for (final item in _formFields(
                                         editing,
@@ -554,6 +604,10 @@ class _PetFormState extends State<PetForm> {
                                   editing,
                                   registration: registration,
                                   figmaRegistration: figmaRegistration,
+                                  stackSexAndWeight:
+                                      registration &&
+                                      (constraints.maxWidth < 310 ||
+                                          textScale > 1.3),
                                 ),
                               ),
                       ),
@@ -562,28 +616,28 @@ class _PetFormState extends State<PetForm> {
                 ),
               ),
             ),
-            SizedBox(height: registration ? 44 : 12),
-            registration
-                ? Center(
-                    child: SizedBox(width: 181, height: 65, child: saveButton),
-                  )
-                : Row(
-                    children: [
-                      if (widget.onCancel != null) ...[
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: busy ? null : widget.onCancel,
-                            child: const Text('Cancelar'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      Expanded(child: saveButton),
-                    ],
-                  ),
-            if (widget.onSkip != null)
-              if (registration) const SizedBox(height: 8),
-            if (widget.onSkip != null)
+            if (petRegistration && !pinRegistrationActions) ...[
+              SizedBox(height: registration ? 44 : 12),
+              Center(child: registrationActions),
+            ],
+            if (!petRegistration) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  if (widget.onCancel != null) ...[
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: busy ? null : widget.onCancel,
+                        child: const Text('Cancelar'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(child: saveButton),
+                ],
+              ),
+            ],
+            if (!petRegistration && widget.onSkip != null)
               TextButton(
                 onPressed: busy ? null : () => _runAction(widget.onSkip),
                 child: const Text('Pular'),
@@ -605,12 +659,32 @@ class _PetFormState extends State<PetForm> {
           : standardContent;
       return PopScope(
         canPop: !busy,
-        child:
-            widget.modal ||
-                small ||
-                constraints.maxHeight < 560 ||
-                validationFailed ||
-                MediaQuery.viewInsetsOf(context).bottom > 0
+        child: pinRegistrationActions
+            ? Column(
+                children: [
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(
+                        bottom: RegistrationActionsFooter.contentSpacing,
+                      ),
+                      child: content,
+                    ),
+                  ),
+                  RegistrationActionsFooter(
+                    child: Center(child: registrationActions),
+                  ),
+                ],
+              )
+            : petRegistration && !figmaRegistration
+            ? Align(
+                alignment: Alignment.topCenter,
+                child: SingleChildScrollView(child: content),
+              )
+            : widget.modal ||
+                  small ||
+                  constraints.maxHeight < 560 ||
+                  validationFailed ||
+                  MediaQuery.viewInsetsOf(context).bottom > 0
             ? SingleChildScrollView(child: content)
             : Align(alignment: Alignment.topCenter, child: content),
       );
@@ -719,78 +793,10 @@ class _PetFormState extends State<PetForm> {
                       ],
                     ),
                   ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 22,
-                    height: 48,
-                    child: Center(
-                      child: Transform.translate(
-                        offset: const Offset(5, 0),
-                        child: FigmaActionTarget(
-                          key: const ValueKey('edit-pet-extra-fields-toggle'),
-                          width: 69,
-                          height: 48,
-                          label: editExtrasExpanded
-                              ? 'Menos opções'
-                              : 'Mais opções',
-                          expanded: editExtrasExpanded,
-                          onPressed: busy
-                              ? null
-                              : () => setState(
-                                  () =>
-                                      editExtrasExpanded = !editExtrasExpanded,
-                                ),
-                          child: Transform.translate(
-                            offset: const Offset(-5, 0),
-                            child: OverflowBox(
-                              maxWidth: 160,
-                              maxHeight: 22,
-                              alignment: Alignment.bottomCenter,
-                              child: SizedBox(
-                                height: 22,
-                                child: TextButton(
-                                  onPressed: () {},
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF68442E),
-                                    minimumSize: Size.zero,
-                                    padding: EdgeInsets.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    visualDensity: VisualDensity.compact,
-                                    textStyle: const TextStyle(
-                                      fontFamily: 'Montserrat Alternates',
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        editExtrasExpanded
-                                            ? 'Menos opções'
-                                            : 'Mais opções',
-                                      ),
-                                      Icon(
-                                        editExtrasExpanded
-                                            ? Icons.expand_less
-                                            : Icons.expand_more,
-                                        size: 15,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
-            if (editExtrasExpanded) ...[
+            ...[
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -849,13 +855,18 @@ class _PetFormState extends State<PetForm> {
           : registration
           ? registrationNameLabel
           : 'Nome do Pet',
-      Icons.person_outline,
+      registration ? Icons.badge_outlined : Icons.person_outline,
       name,
       focusNode: _nameFocusNode,
       figmaStyle: figmaEdit,
       figmaRegistrationStyle: figmaRegistration,
-      figmaContentPaddingRight: figmaEdit ? 30 : null,
-      figmaTextAlign: figmaEdit ? TextAlign.center : TextAlign.start,
+      registration: registration,
+      figmaContentPaddingRight: figmaRegistration
+          ? 38
+          : (figmaEdit ? 30 : null),
+      figmaTextAlign: figmaEdit || figmaRegistration
+          ? TextAlign.center
+          : TextAlign.start,
       figmaLabelBottomPadding: 0,
       validator: _validatePetName,
     );
@@ -865,7 +876,9 @@ class _PetFormState extends State<PetForm> {
       species,
       focusNode: _speciesFocusNode,
       figmaRegistrationStyle: figmaRegistration,
+      registration: registration,
       choices: const ['Cachorro', 'Gato'],
+      figmaTextAlign: figmaRegistration ? TextAlign.center : TextAlign.start,
       onChanged: (value) {
         if (value == _previousSpecies) return;
         _previousSpecies = value;
@@ -875,31 +888,38 @@ class _PetFormState extends State<PetForm> {
     final figmaSexField = figmaEdit || figmaRegistration;
     final sexField = field(
       editing && !figmaEdit ? 'Sexo' : 'Gênero/Sexo',
-      Icons.wc,
+      registration ? Icons.wc_outlined : Icons.wc,
       figmaSexField ? _figmaSex : sex,
       focusNode: _sexFocusNode,
       choices: figmaSexField ? const ['M', 'F'] : const ['Macho', 'Fêmea'],
       choiceDisplayLabel: figmaSexField ? _sexLabel : null,
       semanticsValue: figmaSexField ? _sexLabel : null,
-      onChanged: figmaSexField ? (value) => sex.text = _sexLabel(value) : null,
+      onChanged: (value) {
+        if (figmaSexField) {
+          sex.text = _sexLabel(value);
+        } else {
+          _figmaSex.text = _shortSexLabel(value);
+        }
+      },
       figmaStyle: figmaEdit,
       figmaRegistrationStyle: figmaRegistration,
+      registration: registration,
       figmaContentPaddingLeft: figmaEdit ? 18 : null,
       figmaLabelBottomPadding: 0,
     );
     final weightField = field(
       editing && !figmaEdit ? 'Peso (kg)' : 'Peso',
-      Icons.scale_outlined,
+      registration ? Icons.monitor_weight_outlined : Icons.scale_outlined,
       weight,
       focusNode: _weightFocusNode,
       figmaStyle: figmaEdit,
       figmaRegistrationStyle: figmaRegistration,
+      registration: registration,
       figmaLabelHorizontalPadding: 7,
       figmaContentPaddingLeft: figmaRegistration ? 2 : (figmaEdit ? 15 : null),
       figmaContentPaddingRight: figmaRegistration ? 0 : null,
       figmaLabelBottomPadding: 0,
       suffixText: figmaEdit || registration ? 'kg' : null,
-      persistentSuffix: registration,
       validator: _validateWeight,
     );
     final neuteredField = field(
@@ -916,19 +936,23 @@ class _PetFormState extends State<PetForm> {
       focusNode: _birthFocusNode,
       figmaStyle: figmaEdit,
       figmaRegistrationStyle: figmaRegistration,
+      registration: registration,
       figmaContentPaddingRight: figmaEdit ? 30 : null,
+      figmaPrefixWidth: figmaRegistration ? 96 : null,
       figmaTextAlign: figmaEdit ? TextAlign.center : TextAlign.start,
       validator: _validateBirth,
     );
     final breedField = field(
       'Raça',
-      Icons.pets,
+      registration ? Icons.category_outlined : Icons.pets,
       breed,
       focusNode: _breedFocusNode,
       suggestions: breedsFor(species.text),
       figmaStyle: figmaEdit,
       figmaRegistrationStyle: figmaRegistration,
+      registration: registration,
       figmaContentPaddingLeft: figmaEdit ? 18 : null,
+      figmaPrefixWidth: figmaRegistration ? 72 : null,
     );
     return [
       if (registration) speciesField,
@@ -946,6 +970,7 @@ class _PetFormState extends State<PetForm> {
     bool editing, {
     required bool registration,
     required bool figmaRegistration,
+    required bool stackSexAndWeight,
   }) {
     final fields = _formFields(
       editing,
@@ -954,7 +979,7 @@ class _PetFormState extends State<PetForm> {
     );
     final children = <Widget>[];
     for (var i = 0; i < fields.length; i++) {
-      if (i == 2) {
+      if (i == 2 && !stackSexAndWeight) {
         children.add(
           Row(
             key: const ValueKey('pet-sex-weight'),

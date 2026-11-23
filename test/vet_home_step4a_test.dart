@@ -221,8 +221,8 @@ void main() {
     await submit(tester);
     for (final entry in {
       'CEP': '12345678',
-      'Endereço': 'Rua Teste',
-      'Numero': '10',
+      'Logradouro': 'Rua Teste',
+      'Número': '10',
       'Cidade': 'Cidade Teste',
     }.entries) {
       await fill(tester, entry.key, entry.value);
@@ -331,9 +331,9 @@ void main() {
     VetRepository.addAgendamento(pet.id, appointment);
     VetRepository.selectedPetId = pet.id;
     await tester.pumpWidget(MaterialApp(home: DetalhesPetPage(pet: pet)));
-    await tester.ensureVisible(find.byTooltip('Editar'));
+    await tester.tap(find.text('Detalhes'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Editar'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Editar'));
     await tester.pumpAndSettle();
     final nameField = find.descendant(
       of: find.byWidgetPredicate(
@@ -363,6 +363,8 @@ void main() {
     expect(VetRepository.petById(pet.id)?.name, 'Pet modal renomeado 4A');
     expect(VetRepository.selectedPet?.id, pet.id);
     expect(VetRepository.agendamentos(pet.id), contains(appointment));
+    await tester.tap(find.byTooltip('Voltar'));
+    await tester.pumpAndSettle();
     expect(find.text('Pet modal renomeado 4A'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

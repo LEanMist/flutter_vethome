@@ -78,4 +78,24 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Login mostra o aviso da última ação sem esperar a anterior', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Esqueceu sua senha?'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('A recuperação de senha'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Google'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('A recuperação de senha'), findsNothing);
+    expect(find.textContaining('A autenticação com Google'), findsOneWidget);
+  });
 }

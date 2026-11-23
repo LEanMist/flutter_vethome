@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:flutter_vethome/theme.dart';
@@ -40,7 +42,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('LOGIN_PAGE 2783:1465: elementos visuais em 390 x 844', (
+  testWidgets('LOGIN_PAGE 2564:1191: elementos visuais em 390 x 844', (
     tester,
   ) async {
     await showLogin(tester, const Size(390, 844));
@@ -67,7 +69,7 @@ void main() {
     for (final hint in ['Usuário', 'Senha']) {
       expect(
         tester.widget<TextField>(field(hint)).decoration?.hintStyle?.color,
-        VH.foreground,
+        VH.foreground.withValues(alpha: .5),
       );
       final gradientStops = [
         VH.secondary.withValues(alpha: .25),
@@ -109,7 +111,14 @@ void main() {
           ?.resolve(const <WidgetState>{}),
       Colors.white,
     );
-    expect(tester.widget<Icon>(find.byIcon(Icons.login)).color, Colors.white);
+    final enterIcon = find.byKey(const ValueKey('login-enter-icon'));
+    expect(
+      tester.widget<SvgPicture>(enterIcon).bytesLoader,
+      const SvgAssetLoader('assets/imagens/figma/login-enter.svg'),
+    );
+    expect(tester.getSize(enterIcon), const Size(21, 20));
+    expect(tester.getTopLeft(enterIcon).dx, closeTo(227, 1));
+    expect(tester.getCenter(find.text('Entrar')).dx, closeTo(195, 1));
     expect(
       tester
           .widget<ElevatedButton>(loginButton)
@@ -133,7 +142,7 @@ void main() {
     expect(separatorStyle.fontFamily, VH.bodyFontFamily);
     expect(separatorStyle.fontSize, 10);
     expect(separatorStyle.fontWeight, FontWeight.bold);
-    expect(separatorStyle.color, VetColors.brownOnRose);
+    expect(separatorStyle.color, VetColors.brownSecondary);
 
     for (final (name, left) in const [
       ('Google', 73.0),
@@ -151,27 +160,27 @@ void main() {
     expect(registrationStyle.fontFamily, VH.bodyFontFamily);
     expect(registrationStyle.fontSize, 15);
     expect(registrationStyle.fontWeight, FontWeight.bold);
-    expect(registrationStyle.color, VetColors.brownOnRose);
+    expect(registrationStyle.color, VH.secondary);
     expect(
       tester
           .widget<Text>(find.text('Ainda não possui uma conta?'))
           .style
           ?.color,
-      VetColors.brownOnRose,
+      VetColors.brownSecondary,
     );
 
-    // O protótipo usa 8 px nesses rótulos; o app preserva 12 px para leitura.
+    // Os rótulos usam os 8 px da referência e acompanham a escala do sistema.
     expect(
       tester.widget<Text>(find.text('Lembre-se de mim')).style?.fontSize,
-      12,
+      8,
     );
     expect(
       tester.widget<Text>(find.text('Esqueceu sua senha?')).style?.fontSize,
-      12,
+      8,
     );
     expect(
       tester.widget<Text>(find.text('Esqueceu sua senha?')).style?.color,
-      VetColors.brownOnRose,
+      VetColors.brownSecondary,
     );
     expect(tester.takeException(), isNull);
   });
@@ -253,7 +262,9 @@ void main() {
 
     expect(tester.widget<TextField>(passwordField).focusNode!.hasFocus, isTrue);
     expect(
-      find.text('Informe um e-mail válido e uma senha com 6 caracteres.'),
+      find.text(
+        'Informe um e-mail válido e uma senha com pelo menos 6 caracteres.',
+      ),
       findsNothing,
     );
 
@@ -261,7 +272,9 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
     expect(
-      find.text('Informe um e-mail válido e uma senha com 6 caracteres.'),
+      find.text(
+        'Informe um e-mail válido e uma senha com pelo menos 6 caracteres.',
+      ),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
@@ -296,7 +309,7 @@ void main() {
           widget is Image &&
           widget.image is AssetImage &&
           (widget.image as AssetImage).assetName ==
-              'assets/imagens/figma/vethomepng-2.png',
+              'assets/imagens/figma/splash-start-logo.png',
     );
     final userField = find.byWidgetPredicate(
       (widget) =>
@@ -362,6 +375,153 @@ void main() {
     });
   }
 
+  testWidgets('ações auxiliares ficam na mesma linha de base do Login', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      await (FontLoader(VH.bodyFontFamily)..addFont(
+            rootBundle.load('assets/fonts/MontserratAlternatesRegular.ttf'),
+          ))
+          .load();
+    });
+    await showLogin(tester, const Size(390, 844));
+
+    Rect singleLineBounds(String name) {
+      final text = find.text(name);
+      final paragraph = tester.renderObject<RenderParagraph>(text);
+      expect(paragraph.size.height, paragraph.getMaxIntrinsicHeight(300));
+      return tester.getRect(text);
+    }
+
+    final remember = singleLineBounds('Lembre-se de mim');
+    final forgot = singleLineBounds('Esqueceu sua senha?');
+    expect(remember.top, closeTo(forgot.top, .5));
+    expect(remember.bottom, closeTo(forgot.bottom, .5));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Login curto mantém Entrar acima do teclado e o campo focado', (
+    tester,
+  ) async {
+    await showLogin(tester, const Size(320, 640));
+    final password = find.widgetWithText(TextField, 'Senha');
+    await tester.ensureVisible(password);
+    await tester.tap(password);
+    await tester.pump();
+    tester.view.viewInsets = const FakeViewPadding(bottom: 310);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+
+    final fixedSubmit = find.byKey(const ValueKey('login-fixed-submit'));
+    expect(fixedSubmit, findsOneWidget);
+    final submit = find.widgetWithText(ElevatedButton, 'Entrar');
+    expect(tester.getRect(submit).bottom, lessThanOrEqualTo(330));
+    expect(tester.widget<TextField>(password).focusNode!.hasFocus, isTrue);
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('pelo menos 6 caracteres'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('janela baixa mostra os dois campos e Entrar sem rolagem', (
+    tester,
+  ) async {
+    await showLogin(tester, const Size(320, 410));
+    final submit = tester.getRect(
+      find.widgetWithText(ElevatedButton, 'Entrar'),
+    );
+    for (final name in ['Usuário', 'Senha']) {
+      final field = find.widgetWithText(TextField, name);
+      final bounds = tester.getRect(field);
+      expect(bounds.top, greaterThanOrEqualTo(0));
+      expect(bounds.bottom, lessThan(submit.top));
+      expect(field.hitTestable(), findsOneWidget);
+    }
+    expect(submit.bottom, lessThanOrEqualTo(410));
+  });
+
+  testWidgets('Tab e Shift+Tab percorrem Usuário e Senha na ordem', (
+    tester,
+  ) async {
+    await showLogin(tester, const Size(390, 844));
+    final user = find.widgetWithText(TextField, 'Usuário');
+    final password = find.widgetWithText(TextField, 'Senha');
+    await tester.tap(user);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(
+      tester.widget<TextField>(password).focusNode!.hasPrimaryFocus,
+      isTrue,
+    );
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    final userEditor = tester.widget<EditableText>(
+      find.descendant(of: user, matching: find.byType(EditableText)),
+    );
+    expect(userEditor.focusNode.hasPrimaryFocus, isTrue);
+  });
+
+  testWidgets('campos mantêm o nome acessível depois de preenchidos', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await showLogin(tester, const Size(390, 844));
+      for (final (name, value) in const [
+        ('Usuário', 'ana@example.test'),
+        ('Senha', 'exemplo-123'),
+      ]) {
+        final field = find.widgetWithText(TextField, name);
+        final editor = find.descendant(
+          of: field,
+          matching: find.byType(EditableText),
+        );
+        await tester.enterText(field, value);
+        await tester.pumpAndSettle();
+        final data = tester.getSemantics(editor).getSemanticsData();
+        expect(data.label, name);
+        expect(data.flagsCollection.isTextField, isTrue);
+      }
+      expect(find.byTooltip('Mostrar senha'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
+  testWidgets('aviso inteiro permanece legível com texto a 200%', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const LoginPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final notice = find.text('Demonstração · use dados fictícios');
+    final paragraph = tester.renderObject<RenderParagraph>(notice);
+    final bounds = tester.getRect(notice);
+    expect(paragraph.didExceedMaxLines, isFalse);
+    expect(
+      bounds.height,
+      greaterThanOrEqualTo(paragraph.getMaxIntrinsicHeight(bounds.width) - .01),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('LOGIN_PAGE: logotipo, redes e rodapé em 390x844', (
     tester,
   ) async {
@@ -372,7 +532,7 @@ void main() {
           widget is Image &&
           widget.image is AssetImage &&
           (widget.image as AssetImage).assetName ==
-              'assets/imagens/figma/vethomepng-2.png',
+              'assets/imagens/figma/splash-start-logo.png',
     );
     expect(logo, findsOneWidget);
     final logoRect = tester.getRect(logo);

@@ -272,15 +272,15 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     ..showSnackBar(SnackBar(content: Text(text)));
 
   Future<void> _chooseAddress() async {
-    final address = await showDialog<SavedAddress>(
+    final selection = await showDialog<({String? addressId})>(
       context: context,
       builder: (_) => AppointmentAddressDialog(
         addresses: _availableAddresses,
         selectedId: _addressId,
       ),
     );
-    if (address != null && mounted) {
-      setState(() => _addressId = address.id);
+    if (selection != null && mounted) {
+      setState(() => _addressId = selection.addressId);
     }
   }
 
@@ -332,6 +332,10 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
         ),
         now: DateTime.now(),
       );
+    } on PersistenceClearingException {
+      if (!mounted) return;
+      _message('A consulta não foi criada porque os dados locais estão sendo limpos.');
+      return;
     } on PersistenceBlockedException {
       if (!mounted) return;
       _message('Armazenamento local bloqueado. Nenhuma consulta foi criada.');

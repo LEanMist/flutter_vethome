@@ -24,6 +24,8 @@ class VetPageScaffold extends StatelessWidget {
     this.titleSize = 30,
     this.contentMaxWidth = VH.mobileContentMaxWidth,
     this.edgeToEdgeContentOnMobile = false,
+    this.headerOverlap = 0,
+    this.headerAlignTop = false,
   });
 
   final String title;
@@ -40,6 +42,8 @@ class VetPageScaffold extends StatelessWidget {
   final double titleSize;
   final double contentMaxWidth;
   final bool edgeToEdgeContentOnMobile;
+  final double headerOverlap;
+  final bool headerAlignTop;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +77,7 @@ class VetPageScaffold extends StatelessWidget {
       titleSize: titleSize,
       showBack: showBack,
       bottom: headerBottom,
+      alignTop: headerAlignTop,
     );
     final pageContent = Center(
       child: ConstrainedBox(
@@ -111,6 +116,43 @@ class VetPageScaffold extends StatelessWidget {
       backgroundColor: VetColors.pink,
       body: LayoutBuilder(
         builder: (context, constraints) {
+          if (headerOverlap > 0 &&
+              width < VH.desktopBreakpoint &&
+              footer == null) {
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: VH.desktopShellMaxWidth,
+                ),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Stack(
+                          children: [
+                            header,
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                horizontalContentPadding,
+                                (headerHeight - headerOverlap * s).clamp(
+                                  0,
+                                  double.infinity,
+                                ),
+                                horizontalContentPadding,
+                                contentPadding,
+                              ),
+                              child: pageContent,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    navigation,
+                  ],
+                ),
+              ),
+            );
+          }
           final useWholePageScroll =
               constraints.maxHeight < shortViewportThreshold;
           final shell = ConstrainedBox(

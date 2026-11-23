@@ -3,6 +3,7 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
+import 'package:flutter_vethome/pages/editar_pet_page.dart';
 import 'package:flutter_vethome/pages/perfil_page.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/screens/outros.dart';
@@ -237,22 +238,16 @@ void main() {
       MaterialApp(home: DetalhesPetPage(pet: VetRepository.pets.first)),
     );
 
-    await tester.ensureVisible(find.byTooltip('Editar'));
+    await tester.tap(find.text('Detalhes'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Editar'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Editar'));
     await tester.pumpAndSettle();
 
     expect(find.text('Editar pet'), findsNothing);
     expect(find.bySemanticsLabel('Editar pet'), findsOneWidget);
-    expect(find.text('Gênero/Sexo'), findsOneWidget);
-    expect(find.text('Data de Nascimento'), findsOneWidget);
-    await tester.tap(
-      find.byKey(const ValueKey('edit-pet-extra-fields-toggle')),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Espécie'), findsOneWidget);
-    expect(find.text('Castração'), findsOneWidget);
-    expect(find.text('Excluir'), findsOneWidget);
+    for (final label in ['Gênero/Sexo', 'Data de Nascimento', 'Espécie', 'Castração', 'Excluir']) {
+      expect(find.descendant(of: find.byType(EditarPetPage), matching: find.text(label)), findsOneWidget);
+    }
   });
 
   testWidgets('convênio avança imediatamente ao tocar no card', (tester) async {

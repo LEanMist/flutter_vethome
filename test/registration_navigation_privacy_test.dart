@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/cadastro_page.dart';
+import 'package:flutter_vethome/pages/cadastroPet_page.dart';
 import 'package:flutter_vethome/pages/endereco_page.dart';
+import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/widgets.dart';
 
 class _ImmediateStorage extends LocalStorage {
@@ -72,8 +74,8 @@ void main() {
       'Nome Completo': 'Cliente Seguro',
       'Data de Nascimento': '05/02/1995',
       'CPF': '52998224725',
-      'Telefone/Celular': '11999999999',
-      'E-mail': 'cliente@example.test',
+      'Telefone/Celular': '+55 (11) 99999-9999',
+      'E-mail': 'cliente+teste@example.test',
       'Senha': password,
       'Confirmar Senha': password,
     }.entries) {
@@ -82,10 +84,50 @@ void main() {
 
     await tester.ensureVisible(find.text('Continuar'));
     await tester.tap(find.text('Continuar'));
+    await tester.tap(find.text('Continuar'), warnIfMissed: false);
     await tester.pumpAndSettle();
 
     expect(find.text('Endereço aberto'), findsOneWidget);
     expectNoPassword(received);
+    expect(received['client.Telefone/Celular'], '(11) 99999-9999');
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    navigator.pop();
+    await tester.pumpAndSettle();
+    expect(find.byType(CadastroScreen), findsOneWidget);
+    expect(
+      tester.widget<TextFormField>(inputFor('Nome Completo')).controller!.text,
+      'Cliente Seguro',
+    );
+  });
+
+  testWidgets('cadastro rejeita entradas comuns inválidas', (tester) async {
+    useLargeViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: CadastroScreen()));
+
+    for (final (label, value, error) in const [
+      ('Nome Completo', '   ', 'Preencha este campo'),
+      ('Data de Nascimento', '29/02/2023', 'Use uma data válida (DD/MM/AAAA)'),
+      ('Data de Nascimento', '01/01/2999', 'Use uma data válida (DD/MM/AAAA)'),
+      ('CPF', '11111111111', 'Informe um CPF válido'),
+      ('CPF', '52998224726', 'Informe um CPF válido'),
+      ('Telefone/Celular', '1199', 'Informe um telefone com 10 ou 11 dígitos'),
+      ('E-mail', 'teste@dominio..test', 'Informe um e-mail válido'),
+      ('E-mail', 'teste@-dominio.test', 'Informe um e-mail válido'),
+      ('Senha', '12345', 'Use ao menos 6 caracteres'),
+    ]) {
+      await fill(tester, label, value);
+      await tester.ensureVisible(find.text('Continuar'));
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      final field = find.byWidgetPredicate(
+        (widget) => widget is VHField && widget.label == label,
+      );
+      expect(
+        find.descendant(of: field, matching: find.text(error)),
+        findsOneWidget,
+      );
+    }
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('endereço remove senhas recebidas antes de abrir /cadastroPet', (
@@ -203,4 +245,76 @@ void main() {
     expect(find.text('Use ao menos 6 caracteres'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('pular pet pelo link direto apresenta o cadastro do tutor', (
+    tester,
+  ) async {
+    useLargeViewport(tester);
+    await tester.pumpWidget(
+      MaterialApp(initialRoute: '/cadastroPet', routes: AppRoutes.routes),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(CadastroPetScreen), findsOneWidget);
+    expect(find.text('Continuar').hitTestable(), findsOneWidget);
+    expect(find.text('Pular').hitTestable(), findsOneWidget);
+    await tester.tap(find.text('Pular'));
+    await tester.pumpAndSettle();
+    expect(find.byType(CadastroScreen), findsOneWidget);
+    expect(
+      find.text(
+        'Preencha os dados do tutor. Depois, você pode cadastrar ou pular o pet.',
+      ),
+      findsOneWidget,
+    );
+    expect(VetRepository.clientEmail, isEmpty);
+  });
+
+  testWidgets(
+    'pular por link direto recupera Cadastro e permite omitir endereço',
+    (tester) async {
+      tester.view.physicalSize = const Size(656, 667);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(initialRoute: '/endereco', routes: AppRoutes.routes),
+      );
+      await tester.pumpAndSettle();
+      final skip = find.text('Pular').hitTestable();
+      expect(skip, findsOneWidget);
+      await tester.tap(skip);
+      await tester.pumpAndSettle();
+      expect(find.byType(CadastroScreen), findsOneWidget);
+      expect(
+        find.text(
+          'Preencha os dados do tutor. Depois, você pode pular o endereço.',
+        ),
+        findsOneWidget,
+      );
+      expect(VetRepository.clientEmail, isEmpty);
+
+      for (final entry in const {
+        'Nome Completo': 'Tutor Teste',
+        'Data de Nascimento': '05021995',
+        'CPF': '52998224725',
+        'Telefone/Celular': '11999999999',
+        'E-mail': 'tutor@example.test',
+        'Senha': password,
+        'Confirmar Senha': password,
+      }.entries) {
+        await fill(tester, entry.key, entry.value);
+        await tester.pump();
+      }
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      expect(find.byType(EnderecoScreen), findsOneWidget);
+      expect(skip, findsOneWidget);
+      await tester.tap(skip);
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pumpAndSettle();
+      expect(find.byType(CadastroPetScreen), findsOneWidget);
+      expect(VetRepository.clientEmail, 'tutor@example.test');
+      expect(VetRepository.addresses, isEmpty);
+    },
+  );
 }

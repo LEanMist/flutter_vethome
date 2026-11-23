@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/utils/form_fields.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'theme.dart';
+import 'widgets/auth/registration_field_icon.dart';
 import 'widgets/vet/vet_bottom_nav.dart';
 
 BoxDecoration insetBox({
@@ -53,6 +55,13 @@ class VHField extends StatefulWidget {
     this.figmaContentPaddingLeft,
     this.figmaContentPaddingRight,
     this.figmaFillColor,
+    this.figmaPrefixIconAsset,
+    this.circularPrefix = false,
+    this.circularPrefixDiameter,
+    this.circularPrefixWidth,
+    this.fullHeightPrefix = false,
+    this.figmaPrefixWidth,
+    this.showErrorBelowSurface = false,
     this.figmaForm = false,
     this.showChoiceIndicator = true,
     this.compact = false,
@@ -61,6 +70,7 @@ class VHField extends StatefulWidget {
     this.labelBottomPadding,
     this.labelFitSingleLine = false,
     this.fitSingleLine = false,
+    this.wrapText = false,
   });
   final bool figmaForm;
   final bool showChoiceIndicator;
@@ -70,6 +80,7 @@ class VHField extends StatefulWidget {
   final double? labelBottomPadding;
   final bool labelFitSingleLine;
   final bool fitSingleLine;
+  final bool wrapText;
   final String label;
   final IconData icon;
   final String? value;
@@ -92,6 +103,13 @@ class VHField extends StatefulWidget {
   final double? figmaContentPaddingLeft;
   final double? figmaContentPaddingRight;
   final Color? figmaFillColor;
+  final String? figmaPrefixIconAsset;
+  final bool circularPrefix;
+  final double? circularPrefixDiameter;
+  final double? circularPrefixWidth;
+  final bool fullHeightPrefix;
+  final double? figmaPrefixWidth;
+  final bool showErrorBelowSurface;
   @override
   State<VHField> createState() => _VHFieldState();
 }
@@ -103,6 +121,7 @@ class _VHFieldState extends State<VHField> {
   int _activeChoiceIndex = 0;
   bool _keyboardChoiceInteraction = false;
   final ScrollController _choiceScrollController = ScrollController();
+  ScrollController? _textScrollController;
   final ValueNotifier<String?> _validationError = ValueNotifier(null);
   final _link = LayerLink();
   OverlayEntry? _options;
@@ -115,22 +134,30 @@ class _VHFieldState extends State<VHField> {
     super.initState();
     _focus = widget.focusNode ?? FocusNode();
     _ownsFocus = widget.focusNode == null;
-    _focus.addListener(_handleChoiceFocusChange);
+    _focus.addListener(_handleFocusChange);
   }
 
   @override
   void didUpdateWidget(covariant VHField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.focusNode == widget.focusNode) return;
-    _focus.removeListener(_handleChoiceFocusChange);
+    _focus.removeListener(_handleFocusChange);
     if (_ownsFocus) _focus.dispose();
     _focus = widget.focusNode ?? FocusNode();
     _ownsFocus = widget.focusNode == null;
-    _focus.addListener(_handleChoiceFocusChange);
+    _focus.addListener(_handleFocusChange);
   }
 
-  void _handleChoiceFocusChange() {
+  void _handleFocusChange() {
     if (!mounted) return;
+    final scroll = _textScrollController;
+    if (scroll != null && !_focus.hasFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_focus.hasFocus && scroll.hasClients) {
+          scroll.jumpTo(0);
+        }
+      });
+    }
     if (!_focus.hasFocus && isOpen) {
       _closeChoices();
       return;
@@ -184,61 +211,68 @@ class _VHFieldState extends State<VHField> {
         .clamp(0.0, desiredHeight)
         .toDouble();
     _options = OverlayEntry(
-      builder: (ctx) => Positioned(
-        width: width,
-        child: CompositedTransformFollower(
-          link: _link,
-          showWhenUnlinked: false,
-          targetAnchor: _openAbove ? Alignment.topLeft : Alignment.bottomLeft,
-          followerAnchor: _openAbove ? Alignment.bottomLeft : Alignment.topLeft,
-          offset: Offset.zero,
-          child: TapRegion(
-            groupId: this,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 160),
-              builder: (_, value, child) =>
-                  Opacity(opacity: value, child: child),
-              child: Material(
-                color: VH.background,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: _openAbove
-                      ? const BorderRadius.vertical(top: Radius.circular(20))
-                      : const BorderRadius.vertical(
-                          bottom: Radius.circular(20),
-                        ),
-                  side: BorderSide(color: VH.secondary.withValues(alpha: .65)),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: SizedBox(
-                  height: availableHeight,
-                  child: ListView.separated(
-                    controller: _choiceScrollController,
-                    padding: EdgeInsets.zero,
-                    itemCount: widget.choices!.length,
-                    separatorBuilder: (_, _) => Divider(
-                      height: 1,
-                      thickness: .5,
-                      color: VH.secondary.withValues(alpha: .35),
+      builder: (ctx) => Positioned.fill(
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: CompositedTransformFollower(
+            link: _link,
+            showWhenUnlinked: false,
+            targetAnchor: _openAbove ? Alignment.topLeft : Alignment.bottomLeft,
+            followerAnchor: _openAbove
+                ? Alignment.bottomLeft
+                : Alignment.topLeft,
+            offset: Offset.zero,
+            child: TapRegion(
+              groupId: this,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 160),
+                builder: (_, value, child) =>
+                    Opacity(opacity: value, child: child),
+                child: Material(
+                  color: VH.background,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: _openAbove
+                        ? const BorderRadius.vertical(top: Radius.circular(20))
+                        : const BorderRadius.vertical(
+                            bottom: Radius.circular(20),
+                          ),
+                    side: BorderSide(
+                      color: VH.secondary.withValues(alpha: .65),
                     ),
-                    itemBuilder: (_, index) {
-                      final value = widget.choices![index];
-                      return ListTile(
-                        minTileHeight: 48,
-                        dense: true,
-                        title: Text(
-                          widget.choiceDisplayLabel?.call(value) ?? value,
-                        ),
-                        selected: controller.text == value,
-                        tileColor:
-                            _keyboardChoiceInteraction &&
-                                _activeChoiceIndex == index
-                            ? Theme.of(ctx).focusColor
-                            : null,
-                        onTap: () => _selectChoice(index),
-                      );
-                    },
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: SizedBox(
+                    width: width,
+                    height: availableHeight,
+                    child: ListView.separated(
+                      controller: _choiceScrollController,
+                      padding: EdgeInsets.zero,
+                      itemCount: widget.choices!.length,
+                      separatorBuilder: (_, _) => Divider(
+                        height: 1,
+                        thickness: .5,
+                        color: VH.secondary.withValues(alpha: .35),
+                      ),
+                      itemBuilder: (_, index) {
+                        final value = widget.choices![index];
+                        return ListTile(
+                          minTileHeight: 48,
+                          dense: true,
+                          title: Text(
+                            widget.choiceDisplayLabel?.call(value) ?? value,
+                          ),
+                          selected: controller.text == value,
+                          tileColor:
+                              _keyboardChoiceInteraction &&
+                                  _activeChoiceIndex == index
+                              ? Theme.of(ctx).focusColor
+                              : null,
+                          onTap: () => _selectChoice(index),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -343,11 +377,12 @@ class _VHFieldState extends State<VHField> {
   TextEditingController get controller => widget.controller ?? _owned;
   @override
   void dispose() {
-    _focus.removeListener(_handleChoiceFocusChange);
+    _focus.removeListener(_handleFocusChange);
     _closeChoices(rebuild: false);
     _validationError.dispose();
     _owned.dispose();
     _choiceScrollController.dispose();
+    _textScrollController?.dispose();
     if (_ownsFocus) _focus.dispose();
     super.dispose();
   }
@@ -366,6 +401,47 @@ class _VHFieldState extends State<VHField> {
         _ => null,
       };
   Widget _prefix() {
+    final figmaIcon = widget.figmaPrefixIconAsset;
+    if (widget.fullHeightPrefix) {
+      return _figmaPrefixCapsule(
+        Icon(widget.icon, color: VH.foreground, size: 24),
+      );
+    }
+    if (widget.circularPrefix) {
+      return Align(
+        alignment: widget.circularPrefixWidth != null
+            ? Alignment.centerLeft
+            : widget.figmaForm
+            ? Alignment.center
+            : AlignmentDirectional.centerEnd,
+        child: RegistrationFieldIcon(
+          diameter:
+              widget.circularPrefixDiameter ?? (widget.figmaForm ? 48 : 40),
+          child: figmaIcon == null
+              ? Icon(
+                  widget.icon,
+                  color: VH.foreground,
+                  size: widget.figmaForm ? 24 : 20,
+                )
+              : SvgPicture.asset(
+                  figmaIcon,
+                  width: 24,
+                  height: 24,
+                  excludeFromSemantics: true,
+                ),
+        ),
+      );
+    }
+    if (figmaIcon != null) {
+      return _figmaPrefixCapsule(
+        SvgPicture.asset(
+          figmaIcon,
+          width: 24,
+          height: 24,
+          excludeFromSemantics: true,
+        ),
+      );
+    }
     if (widget.compact && !widget.figmaForm) {
       return Icon(widget.icon, color: VH.foreground, size: 18);
     }
@@ -384,7 +460,7 @@ class _VHFieldState extends State<VHField> {
             'Endereço' ||
             'Complemento' ||
             'Nome' => 'address-prefix-home.png',
-            'Numero' => 'address-prefix-number.png',
+            'Numero' || 'Número' => 'address-prefix-number.png',
             _ => null,
           }
         : null;
@@ -438,6 +514,30 @@ class _VHFieldState extends State<VHField> {
     );
   }
 
+  Widget _figmaPrefixCapsule(Widget icon) => Align(
+    alignment: Alignment.centerLeft,
+    child: SizedBox(
+      width: 58,
+      height: 56,
+      child: DecoratedBox(
+        decoration: inset_shadow.BoxDecoration(
+          color: VH.background,
+          borderRadius: VH.pillBorderRadius,
+          border: Border.all(color: VH.secondary, width: 4),
+          boxShadow: const [
+            inset_shadow.BoxShadow(
+              color: VH.shadowSubtle,
+              offset: Offset(2, 2),
+              blurRadius: 5,
+              inset: true,
+            ),
+          ],
+        ),
+        child: Center(child: icon),
+      ),
+    ),
+  );
+
   BorderRadius get fieldRadius => !isOpen
       ? VH.pillBorderRadius
       : _openAbove
@@ -471,20 +571,19 @@ class _VHFieldState extends State<VHField> {
     return (base * available / painter.width).clamp(12.0, base);
   }
 
-  Widget _suffixLabel(double? width) => Text(
-    widget.suffixText!,
-    style: widget.figmaForm
-        ? VH.figmaFieldValueStyle.copyWith(fontSize: _fontSize(width))
-        : null,
-  );
-
   Widget input(
     TextEditingController c,
     FocusNode focus, {
     double? width,
   }) => TextFormField(
+    groupId: widget.choices == null ? EditableText : this,
     controller: c,
     focusNode: focus,
+    minLines: 1,
+    maxLines: widget.wrapText ? 2 : 1,
+    scrollController: widget.showErrorBelowSurface
+        ? _textScrollController ??= ScrollController()
+        : null,
     textInputAction: widget.textInputAction,
     onFieldSubmitted: widget.onFieldSubmitted,
     autovalidateMode: widget.choices == null
@@ -499,7 +598,9 @@ class _VHFieldState extends State<VHField> {
       if (widget.fitSingleLine) setState(() {});
     },
     selectAllOnFocus: const ['Peso', 'Peso (kg)'].contains(widget.label),
-    inputFormatters: formatters,
+    inputFormatters: widget.wrapText
+        ? [FilteringTextInputFormatter.singleLineFormatter, ...?formatters]
+        : formatters,
     keyboardType:
         widget.keyboardType ??
         (widget.label == 'Telefone/Celular'
@@ -511,7 +612,10 @@ class _VHFieldState extends State<VHField> {
             : TextInputType.text),
     validator: widget.choices == null ? widget.validator : _validateChoice,
     style: widget.figmaForm
-        ? VH.figmaFieldValueStyle.copyWith(fontSize: _fontSize(width))
+        ? VH.figmaFieldValueStyle.copyWith(
+            fontSize: _fontSize(width),
+            height: widget.wrapText ? 1.2 : null,
+          )
         : TextStyle(fontSize: _fontSize(width), color: VH.foreground),
     decoration: InputDecoration(
       labelText: widget.compact && !widget.labelAbove
@@ -525,14 +629,29 @@ class _VHFieldState extends State<VHField> {
       labelStyle: const TextStyle(fontSize: 12, color: VH.foreground),
       isDense: widget.compact,
       hintText: widget.value,
+      errorStyle: widget.showErrorBelowSurface || widget.circularPrefix
+          ? const TextStyle(color: Color(0xFF8C242B))
+          : null,
+      errorMaxLines: widget.showErrorBelowSurface || widget.circularPrefix
+          ? 4
+          : null,
       suffix: widget.suffixText == null || widget.persistentSuffix
           ? null
-          : _suffixLabel(width),
+          : Text(
+              widget.suffixText!,
+              style: widget.figmaForm
+                  ? VH.figmaFieldValueStyle.copyWith(fontSize: _fontSize(width))
+                  : null,
+            ),
       filled: true,
       fillColor: Colors.transparent,
       prefixIconConstraints: BoxConstraints.tightFor(
-        width: widget.figmaForm
-            ? 58
+        width: widget.fullHeightPrefix
+            ? (widget.figmaPrefixWidth ?? 58)
+            : widget.circularPrefix
+            ? (widget.circularPrefixWidth ?? (widget.figmaForm ? 56 : 44))
+            : widget.figmaForm
+            ? (widget.figmaPrefixIconAsset == null ? 58 : 71)
             : widget.compact
             ? 32
             : 58,
@@ -546,15 +665,26 @@ class _VHFieldState extends State<VHField> {
         padding: widget.compact || widget.figmaForm
             ? EdgeInsets.zero
             : const EdgeInsets.only(left: 3, right: 10),
-        child: _prefix(),
+        child:
+            widget.showErrorBelowSurface && widget.figmaPrefixIconAsset == null
+            ? ClipRRect(borderRadius: VH.pillBorderRadius, child: _prefix())
+            : _prefix(),
       ),
       suffixIcon: widget.persistentSuffix && widget.suffixText != null
           ? Align(
+              alignment: Alignment.center,
               widthFactor: 1,
               heightFactor: 1,
               child: Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: _suffixLabel(width),
+                child: Text(
+                  widget.suffixText!,
+                  style: widget.figmaForm
+                      ? VH.figmaFieldValueStyle.copyWith(
+                          fontSize: _fontSize(width),
+                        )
+                      : null,
+                ),
               ),
             )
           : widget.choices == null || !widget.showChoiceIndicator
@@ -567,26 +697,40 @@ class _VHFieldState extends State<VHField> {
       contentPadding: EdgeInsets.only(
         left: widget.figmaForm
             ? widget.figmaContentPaddingLeft ?? 8
+            : widget.circularPrefix
+            ? 4
             : widget.compact
             ? 8
             : 14,
         right: widget.figmaForm
             ? widget.figmaContentPaddingRight ?? 8
+            : widget.circularPrefix
+            ? 4
             : widget.compact
             ? 8
             : 14,
-        top: widget.figmaForm
+        top: widget.figmaForm && widget.wrapText
+            ? 7
+            : widget.figmaForm
             ? 16
             : widget.compact
             ? 14
             : 16,
-        bottom: widget.figmaForm
+        bottom: widget.figmaForm && widget.wrapText
+            ? 7
+            : widget.figmaForm
             ? 16
             : widget.compact
             ? 14
             : 16,
       ),
-      suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 48),
+      suffixIconConstraints: BoxConstraints(
+        minWidth:
+            widget.circularPrefix && !widget.figmaForm && widget.choices != null
+            ? 20
+            : 28,
+        minHeight: 48,
+      ),
       border: OutlineInputBorder(
         borderRadius: fieldRadius,
         borderSide: widget.figmaForm
@@ -611,9 +755,6 @@ class _VHFieldState extends State<VHField> {
   Widget build(BuildContext context) {
     final choices = widget.choices ?? const <String>[];
     final hasChoices = choices.isNotEmpty;
-    final hasExternalLabel = !widget.compact || widget.labelAbove;
-    final labelPersistentSuffixField =
-        widget.persistentSuffix && hasExternalLabel;
     final activeRawChoice = hasChoices
         ? choices[_activeChoiceIndex % choices.length]
         : '';
@@ -698,14 +839,14 @@ class _VHFieldState extends State<VHField> {
             ),
             child: fieldInput,
           )
-        : labelPersistentSuffixField
+        : widget.persistentSuffix
         ? Semantics(label: widget.label, child: fieldInput)
         : fieldInput;
     final fieldContent = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (hasExternalLabel)
+        if (!widget.compact || widget.labelAbove)
           Padding(
             padding: EdgeInsets.only(
               left:
@@ -718,7 +859,7 @@ class _VHFieldState extends State<VHField> {
               bottom: widget.labelBottomPadding ?? 5,
             ),
             child: ExcludeSemantics(
-              excluding: hasChoices || labelPersistentSuffixField,
+              excluding: hasChoices || widget.persistentSuffix,
               child: widget.labelFitSingleLine
                   ? SizedBox(
                       height: 20,
@@ -735,7 +876,7 @@ class _VHFieldState extends State<VHField> {
                     )
                   : Text(
                       widget.label,
-                      style: widget.figmaForm
+                      style: widget.figmaForm || widget.circularPrefix
                           ? VH.figmaFieldLabelStyle
                           : const TextStyle(
                               fontWeight: FontWeight.w600,
@@ -750,8 +891,9 @@ class _VHFieldState extends State<VHField> {
           onTapOutside: (_) => _closeChoices(),
           child: CompositedTransformTarget(
             link: _link,
-            child: DecoratedBox(
-              decoration: widget.figmaForm
+            child: _decorateInput(
+              accessibleField,
+              widget.figmaForm || widget.circularPrefix
                   ? inset_shadow.BoxDecoration(
                       color: widget.figmaFillColor,
                       gradient: widget.figmaFillColor == null
@@ -794,7 +936,6 @@ class _VHFieldState extends State<VHField> {
                       ),
                       borderRadius: fieldRadius,
                     ),
-              child: accessibleField,
             ),
           ),
         ),
@@ -803,6 +944,37 @@ class _VHFieldState extends State<VHField> {
     return widget.labelAbove && widget.suffixText == null
         ? MergeSemantics(child: fieldContent)
         : fieldContent;
+  }
+
+  Widget _decorateInput(Widget field, BoxDecoration decoration) {
+    if (!widget.showErrorBelowSurface) {
+      return DecoratedBox(decoration: decoration, child: field);
+    }
+
+    final textStyle = Theme.of(
+      context,
+    ).textTheme.titleMedium!.merge(VH.figmaFieldValueStyle);
+    final line = TextPainter(
+      text: TextSpan(text: 'Ág', style: textStyle),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    );
+    final height = (line.preferredLineHeight + 32).clamp(56.0, double.infinity);
+    line.dispose();
+
+    // A mensagem de validação pertence ao formulário, abaixo da cápsula.
+    return Stack(
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          height: height,
+          child: DecoratedBox(decoration: decoration),
+        ),
+        field,
+      ],
+    );
   }
 }
 

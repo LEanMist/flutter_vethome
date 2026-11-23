@@ -57,6 +57,16 @@ void main() {
     matching: find.byType(TextFormField),
   );
 
+  test('a carteira do gato usa apenas exemplos felinos do catálogo', () {
+    final cat = VetRepository.pets.firstWhere((pet) => pet.species == 'Gato');
+    expect(VetRepository.usesDemoVaccines(cat.id), isTrue);
+    expect(
+      VetRepository.vacinas(cat.id).map((vaccine) => vaccine.nome),
+      unorderedEquals(['Antirrábica', 'V4']),
+    );
+    expect(VetRepository.realVaccines(cat.id), isEmpty);
+  });
+
   for (final viewport in [
     const Size(320, 640),
     const Size(390, 844),
