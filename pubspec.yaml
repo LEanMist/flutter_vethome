@@ -39,8 +39,12 @@ flutter:
     - assets/imagens/
     - assets/imagens/pets/
     - assets/imagens/figma/
+    - assets/fonts/LICENSE-Roboto.txt
 
   fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
     - family: Comfortaa
       fonts:
         - asset: assets/fonts/ComfortaaRegular.ttf
