@@ -52,7 +52,7 @@ class _VetHomeAppState extends State<VetHomeApp> {
             // Chaves distintas recriam o Navigator ao sair do bloqueio.
             key: const ValueKey('vethome-blocked-app'),
             debugShowCheckedModeBanner: false,
-            title: 'Vet Home',
+            title: 'VetHome',
             locale: const Locale('pt', 'BR'),
             supportedLocales: const [Locale('pt', 'BR')],
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
@@ -74,7 +74,7 @@ class _VetHomeAppState extends State<VetHomeApp> {
         return MaterialApp(
           key: const ValueKey('vethome-app'),
           debugShowCheckedModeBanner: false,
-          title: 'Vet Home',
+          title: 'VetHome',
           locale: const Locale('pt', 'BR'),
           supportedLocales: const [Locale('pt', 'BR')],
           localizationsDelegates: GlobalMaterialLocalizations.delegates,
