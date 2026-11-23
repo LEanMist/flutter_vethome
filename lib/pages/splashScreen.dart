@@ -1,12 +1,14 @@
 // ignore_for_file: file_names
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-const _logo = 'assets/imagens/figma/vethomepng-2.png';
+const _logo = 'assets/imagens/figma/splash-start-logo.png';
+const _ring = 'assets/imagens/figma/splash-start-ring.png';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,12 +18,27 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Timer? _loginTimer;
+
   @override
-  void initState() {
-    super.initState();
-    Future<void>.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) Navigator.pushReplacementNamed(context, '/login');
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (ModalRoute.isCurrentOf(context) != true) {
+      _loginTimer?.cancel();
+      _loginTimer = null;
+      return;
+    }
+    _loginTimer ??= Timer(const Duration(milliseconds: 1500), () {
+      if (ModalRoute.isCurrentOf(context) == true) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _loginTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -30,10 +47,10 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: VH.background,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final scale = math
-              .min(constraints.maxWidth / 390, constraints.maxHeight / 844)
-              .clamp(.5, 1.0)
-              .toDouble();
+          final scale = math.min(
+            1.0,
+            math.min(constraints.maxWidth / 390, constraints.maxHeight / 844),
+          );
           return Center(
             child: SizedBox(
               key: const ValueKey('splash-figma-frame'),
@@ -62,9 +79,10 @@ class _SplashScreenState extends State<SplashScreen> {
                               width: 300.158 * scale,
                               height: 300.158 * scale,
                               child: Image.asset(
-                                'assets/imagens/figma/success-logo-ring.png',
+                                _ring,
                                 key: const ValueKey('splash-logo-ring'),
                                 fit: BoxFit.fill,
+                                excludeFromSemantics: true,
                               ),
                             ),
                             ClipRRect(

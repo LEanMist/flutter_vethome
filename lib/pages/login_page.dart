@@ -1,6 +1,10 @@
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/local_data_manager.dart';
@@ -8,6 +12,15 @@ import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/auth/demo_mode_notice.dart';
+import '../widgets/auth/registration_actions_footer.dart';
+
+const _loginActionTextStyle = TextStyle(
+  fontFamily: VH.bodyFontFamily,
+  fontSize: 8,
+  fontWeight: FontWeight.w400,
+  height: 1.25,
+  color: VetColors.brown,
+);
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -25,6 +38,7 @@ class _LoginPageState extends State<LoginPage> {
   bool esconderSenha = true;
   bool lembrarDeMim = false;
   bool _signingIn = false;
+  bool _changedLoginDraft = false;
 
   @override
   void initState() {
@@ -35,8 +49,12 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _restoreRememberedEmail() async {
     try {
       final preferences = await SharedPreferences.getInstance();
+      // SharedPreferences altera o cache antes de confirmar a gravação.
+      // Use o valor persistido ao abrir outro Login após uma falha.
+      await preferences.reload();
       final email = preferences.getString(LocalDataManager.rememberedEmailKey);
       if (!mounted ||
+          _changedLoginDraft ||
           email == null ||
           email.trim().isEmpty ||
           _emailController.text.isNotEmpty) {
@@ -69,10 +87,15 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  ScaffoldMessengerState _clearMessages() {
+    final messenger = ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..removeCurrentSnackBar();
+    return messenger;
+  }
+
   void mostrarMensagem(String mensagem) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(mensagem)));
+    _clearMessages().showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   Future<void> entrar() async {
@@ -84,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
       final message =
           VetRepository.hasDifferentLocalClientEmail(_emailController.text)
           ? 'Este protótipo mantém um perfil local. Use o e-mail salvo neste dispositivo.'
-          : 'Informe um e-mail válido e uma senha com 6 caracteres.';
+          : 'Informe um e-mail válido e uma senha com pelo menos 6 caracteres.';
       mostrarMensagem(message);
       return;
     }
@@ -96,13 +119,19 @@ class _LoginPageState extends State<LoginPage> {
       remember: rememberEmail,
     );
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    Navigator.pushReplacementNamed(context, '/home');
+    if (ModalRoute.isCurrentOf(context) != true) {
+      setState(() => _signingIn = false);
+      return;
+    }
+    final messenger = _clearMessages();
+    Navigator.pushReplacementNamed(context, '/pets');
     if (!emailSaved) {
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Não foi possível lembrar o usuário neste dispositivo.',
+            rememberEmail
+                ? 'Não foi possível lembrar o usuário neste dispositivo.'
+                : 'Não foi possível esquecer o e-mail neste dispositivo.',
           ),
         ),
       );
@@ -133,56 +162,100 @@ class _LoginPageState extends State<LoginPage> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final s = (constraints.maxWidth / 390).clamp(.8, 1.0);
-              final textScale = MediaQuery.textScalerOf(context).scale(1);
+              final textScaler = MediaQuery.textScalerOf(context);
+              final enlarged = textScaler.scale(12) >= 16.8;
+              final stackActions = enlarged || constraints.maxWidth < 300;
+              final actionsWidth = math.min(258.0, constraints.maxWidth - 24);
+              final actionsLeft = math.min(
+                (constraints.maxWidth - 242 * s) / 2,
+                constraints.maxWidth - actionsWidth - 12,
+              );
+              final actionsOffset =
+                  actionsLeft - (constraints.maxWidth - actionsWidth) / 2;
               final rememberControl = _RememberMeControl(
                 value: lembrarDeMim,
                 enabled: !_signingIn,
                 focusNode: _rememberFocusNode,
-                onChanged: (value) => setState(() => lembrarDeMim = value),
+                onToggle: () {
+                  if (_signingIn) return;
+                  setState(() {
+                    _changedLoginDraft = true;
+                    lembrarDeMim = !lembrarDeMim;
+                  });
+                },
               );
               final forgotPassword = TextButton(
                 style: TextButton.styleFrom(
                   alignment: Alignment.centerLeft,
                   minimumSize: const Size(0, 48),
-                  padding: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.only(left: 8, bottom: 9),
                 ),
                 onPressed: _signingIn
                     ? null
                     : () => mostrarMensagem(
                         'A recuperação de senha ainda não está disponível nesta demonstração.',
                       ),
-                child: const Text(
+                child: Text(
                   'Esqueceu sua senha?',
-                  style: TextStyle(fontSize: 12, color: VetColors.brownOnRose),
+                  style: _loginActionTextStyle.copyWith(
+                    color: VetColors.brownSecondary,
+                  ),
                 ),
               );
-              final secondaryActions = textScale >= 1.4
+              final secondaryActions = stackActions
                   ? Column(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(width: 258, child: rememberControl),
-                        SizedBox(width: 258, child: forgotPassword),
-                      ],
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [rememberControl, forgotPassword],
                     )
                   : SizedBox(
                       height: 48,
                       child: Row(
                         children: [
-                          SizedBox(width: 130, child: rememberControl),
+                          SizedBox(width: 148, child: rememberControl),
                           Expanded(child: forgotPassword),
                         ],
                       ),
                     );
-              return SingleChildScrollView(
+              final submitHeight = math.max(54.0, textScaler.scale(14) + 24);
+              final submit = _submitButton(303 * s, submitHeight, enlarged);
+              final submitBottom =
+                  363 * s +
+                  2 * _loginFieldHeight(context) +
+                  (stackActions ? 96 : 48) +
+                  11 +
+                  submitHeight;
+              final pinSubmit =
+                  constraints.maxHeight >= submitHeight + 68 &&
+                  constraints.maxHeight < submitBottom + 8;
+              final availableArtScale = math.min(s, constraints.maxWidth / 390);
+              // Em janelas baixas, ganhe espaço na arte antes de exigir rolagem.
+              // Campos e botões continuam com suas áreas de toque.
+              final artSpace = pinSubmit
+                  ? constraints.maxHeight / 720
+                  : s + (constraints.maxHeight - submitBottom - 220) / 346;
+              final artScale = math.min(
+                availableArtScale,
+                math.max(.42, artSpace),
+              );
+              final artLeft = (constraints.maxWidth - 390 * artScale) / 2;
+              final noticeTop = MediaQuery.viewPaddingOf(context).top + 8 * s;
+              final canGoBack = Navigator.of(context).canPop();
+              final reserveBackSpace =
+                  canGoBack && (constraints.maxWidth - 303 * s) / 2 < 40;
+              final socialSpacing = ((constraints.maxWidth - 192) / 2).clamp(
+                8.0,
+                37.5,
+              );
+              final content = SingleChildScrollView(
                 child: Stack(
                   children: [
                     // Assets exportados do Figma; a almofada ultrapassa o frame.
                     Positioned(
-                      left: 10.25 * s,
-                      top: 190 * s,
-                      width: 369.5 * s,
-                      height: 311.5 * s,
+                      left: artLeft + 10.25 * artScale,
+                      top: 190 * artScale,
+                      width: 369.5 * artScale,
+                      height: 311.5 * artScale,
                       child: Image.asset(
                         'assets/imagens/figma/polygon-2.png',
                         fit: BoxFit.fill,
@@ -196,35 +269,53 @@ class _LoginPageState extends State<LoginPage> {
                       ('frame-37.png', 288.0, 151.0, 95.97, 112.05),
                     ])
                       Positioned(
-                        left: pad.$2 * s,
-                        top: pad.$3 * s,
-                        width: pad.$4 * s,
-                        height: pad.$5 * s,
+                        left: artLeft + pad.$2 * artScale,
+                        top: pad.$3 * artScale,
+                        width: pad.$4 * artScale,
+                        height: pad.$5 * artScale,
                         child: Image.asset(
                           'assets/imagens/figma/${pad.$1}',
                           excludeFromSemantics: true,
                         ),
                       ),
-                    Positioned(
-                      left: 43.5 * s,
-                      top: MediaQuery.viewPaddingOf(context).top + 8 * s,
-                      width: 303 * s,
-                      child: const DemoModeNotice(
-                        compact: true,
-                        message: 'Demonstração · use dados fictícios',
-                        semanticLabel:
-                            'Modo demonstração. Não há contas individuais. As informações ficam neste dispositivo; use apenas dados fictícios.',
-                      ),
-                    ),
                     Column(
                       children: [
-                        SizedBox(height: 180 * s),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: 180 * artScale,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              left: reserveBackSpace ? 56 : 8,
+                              top: noticeTop,
+                              right: kDebugMode ? 64 : 8,
+                              bottom: 12,
+                            ),
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              heightFactor: 1,
+                              child: SizedBox(
+                                width: 303 * s,
+                                child: DemoModeNotice(
+                                  compact: true,
+                                  multiline:
+                                      kDebugMode ||
+                                      stackActions ||
+                                      reserveBackSpace,
+                                  message: 'Demonstração · use dados fictícios',
+                                  semanticLabel:
+                                      'Modo demonstração. Não há contas individuais. As informações ficam neste dispositivo; use apenas dados fictícios.',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                         Transform.translate(
-                          offset: Offset(-1 * s, 0),
+                          offset: Offset(-1 * artScale, 0),
                           child: Image.asset(
-                            'assets/imagens/figma/vethomepng-2.png',
-                            width: 166 * s,
-                            height: 166 * s,
+                            'assets/imagens/figma/splash-start-logo.png',
+                            width: 166 * artScale,
+                            height: 166 * artScale,
                             fit: BoxFit.contain,
                             semanticLabel: 'VetHome',
                           ),
@@ -232,83 +323,51 @@ class _LoginPageState extends State<LoginPage> {
                         // O primeiro campo começa em 333 no frame de referência.
                         Transform.translate(
                           offset: Offset(0, -13 * s),
-                          child: Column(
-                            children: [
-                              _loginField(
-                                'Usuário',
-                                _emailController,
-                                prefix: 'frame-6.png',
-                                scale: s,
-                                enabled: !_signingIn,
-                              ),
-                              SizedBox(height: 17 * s),
-                              _loginField(
-                                'Senha',
-                                _passwordController,
-                                prefix: 'frame-7-5.png',
-                                scale: s,
-                                password: true,
-                                enabled: !_signingIn,
-                              ),
-                            ],
+                          child: FocusTraversalGroup(
+                            policy: WidgetOrderTraversalPolicy(),
+                            child: Column(
+                              children: [
+                                _loginField(
+                                  'Usuário',
+                                  _emailController,
+                                  prefix: 'frame-6.png',
+                                  scale: s,
+                                  enabled: !_signingIn,
+                                ),
+                                SizedBox(height: 17 * s),
+                                _loginField(
+                                  'Senha',
+                                  _passwordController,
+                                  prefix: 'frame-7-5.png',
+                                  scale: s,
+                                  password: true,
+                                  enabled: !_signingIn,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         Transform.translate(
-                          offset: Offset((258 - 242 * s) / 2, -17.5),
-                          child: SizedBox(width: 258, child: secondaryActions),
-                        ),
-                        const SizedBox(height: 11),
-                        SizedBox(
-                          width: 303 * s,
-                          height: 54,
-                          child: ElevatedButton.icon(
-                            onPressed: _signingIn ? null : entrar,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: VetColors.brown,
-                              foregroundColor: Colors.white,
-                              elevation: 2,
-                              shadowColor: Colors.black.withValues(alpha: .25),
-                              shape: const StadiumBorder(),
-                            ),
-                            icon: _signingIn
-                                ? const ExcludeSemantics(
-                                    child: SizedBox.square(
-                                      dimension: 21,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.login,
-                                    size: 21,
-                                    color: Colors.white,
-                                  ),
-                            iconAlignment: IconAlignment.end,
-                            label: Semantics(
-                              liveRegion: _signingIn,
-                              child: Text(
-                                _signingIn ? 'Entrando…' : 'Entrar',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                          // A faixa de toque começa onde termina o campo Senha.
+                          offset: Offset(actionsOffset, -13 * s),
+                          child: SizedBox(
+                            width: actionsWidth,
+                            child: secondaryActions,
                           ),
                         ),
+                        const SizedBox(height: 11),
+                        if (!pinSubmit) submit,
                         const SizedBox(height: 28),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: textScale >= 1.4
+                          child: enlarged || constraints.maxWidth < 300
                               ? const Text(
                                   'Ou continue com',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: VetColors.brownOnRose,
+                                    color: VetColors.brownSecondary,
                                   ),
                                 )
                               : Row(
@@ -329,7 +388,7 @@ class _LoginPageState extends State<LoginPage> {
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
-                                          color: VetColors.brownOnRose,
+                                          color: VetColors.brownSecondary,
                                         ),
                                       ),
                                     ),
@@ -346,15 +405,16 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 22),
                         Transform.translate(
                           offset: const Offset(0, -2),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: socialSpacing,
+                            runSpacing: 12,
                             children: [
-                              for (final (index, social) in const [
+                              for (final social in const [
                                 ('Google', 'icons8-google-logo-96-1.png'),
                                 ('Facebook', 'icons8-facebook-novo-96-1.png'),
                                 ('Instagram', 'icons8-instagram-96-1.png'),
-                              ].indexed) ...[
-                                if (index > 0) const SizedBox(width: 37.5),
+                              ])
                                 Tooltip(
                                   message: social.$1,
                                   child: DecoratedBox(
@@ -373,9 +433,11 @@ class _LoginPageState extends State<LoginPage> {
                                       width: 56,
                                       height: 56,
                                       child: OutlinedButton(
-                                        onPressed: () => mostrarMensagem(
-                                          'A autenticação com ${social.$1} não está disponível nesta demonstração.',
-                                        ),
+                                        onPressed: _signingIn
+                                            ? null
+                                            : () => mostrarMensagem(
+                                                'A autenticação com ${social.$1} não está disponível nesta demonstração.',
+                                              ),
                                         style: OutlinedButton.styleFrom(
                                           backgroundColor: VH.background,
                                           side: BorderSide.none,
@@ -392,7 +454,6 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ),
                                 ),
-                              ],
                             ],
                           ),
                         ),
@@ -402,37 +463,56 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: VetColors.brownOnRose,
+                            color: VetColors.brownSecondary,
                           ),
                         ),
                         TextButton(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/cadastro'),
+                          onPressed: _signingIn
+                              ? null
+                              : () {
+                                  _clearMessages();
+                                  Navigator.pushNamed(context, '/cadastro');
+                                },
                           child: const Text(
                             'CADASTRE-SE',
                             style: TextStyle(
                               fontFamily: VH.bodyFontFamily,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: VetColors.brownOnRose,
+                              color: VH.secondary,
                             ),
                           ),
                         ),
                         const SizedBox(height: 16),
                       ],
                     ),
-                    if (Navigator.of(context).canPop())
+                    if (canGoBack)
                       Positioned(
                         top: MediaQuery.viewPaddingOf(context).top + 4,
                         left: 8,
                         child: IconButton(
                           tooltip: 'Voltar',
-                          onPressed: () => Navigator.maybePop(context),
+                          onPressed: _signingIn
+                              ? null
+                              : () {
+                                  _clearMessages();
+                                  Navigator.maybePop(context);
+                                },
                           icon: const Icon(Icons.arrow_back),
                         ),
                       ),
                   ],
                 ),
+              );
+              return Column(
+                children: [
+                  Expanded(child: content),
+                  if (pinSubmit)
+                    RegistrationActionsFooter(
+                      key: const ValueKey('login-fixed-submit'),
+                      child: Center(child: submit),
+                    ),
+                ],
               );
             },
           ),
@@ -440,6 +520,83 @@ class _LoginPageState extends State<LoginPage> {
       ),
     ),
   );
+
+  Widget _submitButton(double width, double height, bool enlarged) {
+    final label = Semantics(
+      liveRegion: _signingIn,
+      child: Text(
+        _signingIn ? 'Entrando…' : 'Entrar',
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+      ),
+    );
+    final icon = _signingIn
+        ? const ExcludeSemantics(
+            child: SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: VetColors.brown,
+              ),
+            ),
+          )
+        : SvgPicture.asset(
+            'assets/imagens/figma/login-enter.svg',
+            key: const ValueKey('login-enter-icon'),
+            width: 21,
+            height: 20,
+            excludeFromSemantics: true,
+          );
+
+    return SizedBox(
+      width: width,
+      height: height,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: const StadiumBorder(),
+          shadows: _signingIn
+              ? null
+              : const [
+                  BoxShadow(
+                    color: VetColors.shadowDark,
+                    offset: Offset(2, 2),
+                    blurRadius: 2,
+                  ),
+                ],
+        ),
+        child: ElevatedButton(
+          onPressed: _signingIn ? null : entrar,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: VetColors.brown,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: const StadiumBorder(),
+            padding: EdgeInsets.zero,
+          ),
+          child: enlarged || _signingIn
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(child: label),
+                    const SizedBox(width: 8),
+                    icon,
+                  ],
+                )
+              : Stack(
+                  alignment: Alignment.center,
+                  fit: StackFit.expand,
+                  children: [
+                    Center(child: label),
+                    Align(
+                      alignment: Alignment(84 / (width - 21), 0),
+                      child: icon,
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
 
   double _loginFieldHeight(BuildContext context) {
     final scaledFontSize = MediaQuery.textScalerOf(context).scale(15);
@@ -473,73 +630,84 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ],
       ),
-      child: TextField(
-        enabled: enabled,
-        controller: controller,
-        focusNode: password ? _passwordFocusNode : null,
-        obscureText: password && esconderSenha,
-        keyboardType: password
-            ? TextInputType.text
-            : TextInputType.emailAddress,
-        textInputAction: password ? TextInputAction.done : TextInputAction.next,
-        onSubmitted: (_) {
-          if (password) {
-            entrar();
-          } else {
-            FocusScope.of(context).requestFocus(_passwordFocusNode);
-          }
-        },
-        style: const TextStyle(
-          fontFamily: VH.bodyFontFamily,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: VH.foreground,
+      child: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: controller,
+        builder: (context, value, field) => Semantics(
+          // Em um campo vazio o próprio hint já fornece o nome.
+          label: value.text.isEmpty ? null : label,
+          child: field,
         ),
-        decoration: InputDecoration(
-          hintText: label,
-          hintStyle: TextStyle(
+        child: TextField(
+          enabled: enabled,
+          controller: controller,
+          focusNode: password ? _passwordFocusNode : null,
+          obscureText: password && esconderSenha,
+          keyboardType: password
+              ? TextInputType.text
+              : TextInputType.emailAddress,
+          textInputAction: password
+              ? TextInputAction.done
+              : TextInputAction.next,
+          onChanged: password ? null : (_) => _changedLoginDraft = true,
+          onSubmitted: (_) {
+            if (password) {
+              entrar();
+            } else {
+              FocusScope.of(context).requestFocus(_passwordFocusNode);
+            }
+          },
+          style: const TextStyle(
             fontFamily: VH.bodyFontFamily,
-            color: VH.foreground,
             fontSize: 15,
             fontWeight: FontWeight.w500,
+            color: VH.foreground,
           ),
-          filled: false,
-          contentPadding: const EdgeInsets.fromLTRB(14, 17, 8, 13),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(100),
-            borderSide: const BorderSide(color: VH.foreground),
-          ),
-          prefixIconConstraints: const BoxConstraints.tightFor(
-            width: 60,
-            height: 48,
-          ),
-          prefixIcon: Align(
-            alignment: Alignment.centerLeft,
-            child: Image.asset(
-              'assets/imagens/figma/$prefix',
-              width: password ? 50 : 48,
-              height: 48,
-              fit: BoxFit.contain,
-              excludeFromSemantics: true,
+          decoration: InputDecoration(
+            hintText: label,
+            hintStyle: TextStyle(
+              fontFamily: VH.bodyFontFamily,
+              color: VH.foreground.withValues(alpha: .5),
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
             ),
+            filled: false,
+            contentPadding: const EdgeInsets.fromLTRB(14, 17, 8, 13),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(100),
+              borderSide: const BorderSide(color: VH.foreground),
+            ),
+            prefixIconConstraints: const BoxConstraints.tightFor(
+              width: 60,
+              height: 48,
+            ),
+            prefixIcon: Align(
+              alignment: Alignment.centerLeft,
+              child: Image.asset(
+                'assets/imagens/figma/$prefix',
+                width: password ? 50 : 48,
+                height: 48,
+                fit: BoxFit.contain,
+                excludeFromSemantics: true,
+              ),
+            ),
+            suffixIcon: password
+                ? IconButton(
+                    tooltip: esconderSenha ? 'Mostrar senha' : 'Ocultar senha',
+                    onPressed: enabled
+                        ? () => setState(() => esconderSenha = !esconderSenha)
+                        : null,
+                    icon: Icon(
+                      esconderSenha
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      size: 18,
+                      color: VH.foreground,
+                    ),
+                  )
+                : null,
           ),
-          suffixIcon: password
-              ? IconButton(
-                  tooltip: esconderSenha ? 'Mostrar senha' : 'Ocultar senha',
-                  onPressed: enabled
-                      ? () => setState(() => esconderSenha = !esconderSenha)
-                      : null,
-                  icon: Icon(
-                    esconderSenha
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    size: 18,
-                    color: VH.foreground,
-                  ),
-                )
-              : null,
         ),
       ),
     ),
@@ -551,13 +719,13 @@ class _RememberMeControl extends StatefulWidget {
     required this.value,
     required this.enabled,
     required this.focusNode,
-    required this.onChanged,
+    required this.onToggle,
   });
 
   final bool value;
   final bool enabled;
   final FocusNode focusNode;
-  final ValueChanged<bool> onChanged;
+  final VoidCallback onToggle;
 
   @override
   State<_RememberMeControl> createState() => _RememberMeControlState();
@@ -567,7 +735,7 @@ class _RememberMeControlState extends State<_RememberMeControl> {
   bool _focused = false;
 
   void _toggle() {
-    if (widget.enabled) widget.onChanged(!widget.value);
+    if (widget.enabled) widget.onToggle();
   }
 
   @override
@@ -605,11 +773,10 @@ class _RememberMeControlState extends State<_RememberMeControl> {
                 _toggle();
               }
             : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+        child: Container(
           constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.only(left: 5),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(100)),
+          // Alinha o marcador ao y=458 do Figma dentro do alvo de 48 px.
+          padding: const EdgeInsets.only(left: 5, bottom: 9),
           child: Row(
             children: [
               SizedBox(
@@ -619,22 +786,21 @@ class _RememberMeControlState extends State<_RememberMeControl> {
                 child: DecoratedBox(
                   decoration: inset_shadow.BoxDecoration(
                     borderRadius: BorderRadius.circular(100),
-                    border: _focused
-                        ? Border.all(
-                            color: VH.foreground.withValues(alpha: .85),
-                            width: 1.5,
-                          )
+                    color: _focused
+                        ? VetColors.brown
+                        : widget.value
+                        ? VH.secondary
                         : null,
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomLeft,
-                      end: Alignment.topRight,
-                      colors: widget.value
-                          ? const [VH.secondary, VH.secondary]
-                          : [
+                    gradient: widget.value || _focused
+                        ? null
+                        : LinearGradient(
+                            begin: Alignment.bottomLeft,
+                            end: Alignment.topRight,
+                            colors: [
                               Colors.white.withValues(alpha: .01),
                               VH.background.withValues(alpha: .01),
                             ],
-                    ),
+                          ),
                     boxShadow: const [
                       inset_shadow.BoxShadow(
                         color: VetColors.shadowDark,
@@ -655,10 +821,7 @@ class _RememberMeControlState extends State<_RememberMeControl> {
               ),
               const SizedBox(width: 4),
               const Expanded(
-                child: Text(
-                  'Lembre-se de mim',
-                  style: TextStyle(fontSize: 12, color: VetColors.brown),
-                ),
+                child: Text('Lembre-se de mim', style: _loginActionTextStyle),
               ),
             ],
           ),

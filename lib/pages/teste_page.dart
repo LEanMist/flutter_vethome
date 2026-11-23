@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
 import '../pages/addresses_page.dart';
-import '../pages/agendamentos_page.dart';
 import '../pages/agenda_page.dart';
 import '../pages/chat_page.dart';
 import '../pages/config_page.dart';
@@ -13,13 +12,8 @@ import '../pages/login_page.dart';
 import '../pages/nova_consulta_page.dart';
 import '../pages/perfil_page.dart';
 import '../pages/pets_page.dart';
-import '../pages/saude_page.dart';
-import '../pages/sobre_page.dart';
 import '../pages/start_page.dart';
-import '../pages/landing_page.dart';
-import '../pages/home_page.dart';
 import '../pages/sucessoScreen.dart';
-import '../pages/vacinacao_page.dart';
 import 'cadastro_page.dart';
 import 'endereco_page.dart';
 import 'cadastroPet_page.dart';
@@ -44,16 +38,6 @@ class TestePage extends StatelessWidget {
         icone: Icons.play_arrow_outlined,
         pagina: (_) => const StartPage(),
       ),
-      (
-        titulo: 'Apresentação',
-        icone: Icons.web_asset_outlined,
-        pagina: (_) => const LandingPage(),
-      ),
-      (
-        titulo: 'Home',
-        icone: Icons.home_outlined,
-        pagina: (_) => const HomePage(),
-      ),
       (titulo: 'Login', icone: Icons.login, pagina: (_) => const LoginPage()),
       (
         titulo: 'Cadastro',
@@ -73,7 +57,7 @@ class TestePage extends StatelessWidget {
       (
         titulo: 'Sucesso no cadastro',
         icone: Icons.check_circle_outline,
-        pagina: (_) => const SucessoScreen(),
+        pagina: (_) => const SucessoScreen(saved: true),
       ),
       (
         titulo: 'Endereços',
@@ -117,39 +101,14 @@ class TestePage extends StatelessWidget {
         pagina: (_) => const PerfilPage(),
       ),
       (
-        titulo: 'Lista de conversas',
-        icone: Icons.forum_outlined,
-        pagina: (_) => const ChatListScreen(),
-      ),
-      (
         titulo: 'Conversa',
         icone: Icons.chat_bubble_outline,
         pagina: (_) => const ChatScreen(),
       ),
       (
-        titulo: 'Sobre',
-        icone: Icons.info_outline,
-        pagina: (_) => const SobreScreen(),
-      ),
-      (
         titulo: 'Agenda',
         icone: Icons.calendar_month_outlined,
         pagina: (_) => const AgendaScreen(),
-      ),
-      (
-        titulo: 'Saúde do pet',
-        icone: Icons.favorite_border,
-        pagina: (_) => _withSelectedPet((pet) => SaudePage(pet: pet)),
-      ),
-      (
-        titulo: 'Vacinação',
-        icone: Icons.vaccines_outlined,
-        pagina: (_) => _withSelectedPet((pet) => VacinacaoPage(pet: pet)),
-      ),
-      (
-        titulo: 'Agendamentos',
-        icone: Icons.event_note_outlined,
-        pagina: (_) => _withSelectedPet((pet) => AgendamentosPage(pet: pet)),
       ),
       (
         titulo: 'Nova consulta',

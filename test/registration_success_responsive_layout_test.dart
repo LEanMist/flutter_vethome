@@ -36,11 +36,26 @@ void main() {
           .toDouble();
       expect(frame.width, closeTo(390 * scale, .01));
       expect(frame.height, closeTo(844 * scale, .01));
+      final frameClip = tester.widget<ClipRRect>(
+        find.byKey(const ValueKey('registration-success-frame-clip')),
+      );
+      expect(
+        frameClip.borderRadius,
+        BorderRadius.circular(30 * scale),
+        reason: 'O quadro deve manter os cantos arredondados do Figma.',
+      );
       final confirmation = tester.getRect(find.text('Usuário\nCadastrado!'));
       final logoClip = tester.widget<ClipRRect>(
         find.byKey(const ValueKey('registration-success-logo-clip')),
       );
-      expect(logoClip.borderRadius, BorderRadius.circular(200 * scale));
+      final logoFrame = tester.getRect(
+        find.byKey(const ValueKey('registration-success-logo-frame')),
+      );
+      final logoBorderRadius = logoClip.borderRadius.resolve(TextDirection.ltr);
+      expect(
+        logoBorderRadius.topLeft.x,
+        closeTo(200 * logoFrame.width / 350, .01),
+      );
       expect(
         tester
             .widget<Image>(

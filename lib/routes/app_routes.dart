@@ -9,8 +9,6 @@ import '../pages/chat_page.dart';
 import '../pages/config_page.dart';
 import '../models/saved_address.dart';
 import '../models/pet_model.dart';
-import '../pages/home_page.dart';
-import '../pages/agendamentos_page.dart';
 import '../pages/detalhes_pet_page.dart';
 import '../pages/editar_pet_page.dart';
 import '../pages/login_page.dart';
@@ -19,7 +17,6 @@ import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
 import '../pages/sobre_page.dart';
 import '../pages/start_page.dart';
-import '../pages/landing_page.dart';
 import '../pages/sucessoScreen.dart';
 import '../pages/vacinacao_page.dart';
 import '../pages/nova_consulta_page.dart';
@@ -62,8 +59,7 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> get routes => {
     '/': (_) => const StartPage(),
-    '/landing': (_) => const LandingPage(),
-    '/home': (_) => const HomePage(),
+    '/home': (_) => const PetsPage(),
     '/login': (_) => const LoginPage(),
     '/cadastro': (context) => CadastroScreen(
       entry: switch (ModalRoute.of(context)?.settings.arguments) {
@@ -87,21 +83,15 @@ class AppRoutes {
     '/convenio': (_) => const ConvenioScreen(),
     '/perfil': (_) => const PerfilPage(),
     '/chat': (_) => const ChatScreen(),
-    '/chat/lista': (_) => const ChatListScreen(),
-    '/chat/conversa': (_) => const ChatScreen(),
     '/sobre': (_) => const SobreScreen(),
     '/agenda': (context) => AgendaScreen(
       initialDate: ModalRoute.of(context)?.settings.arguments is DateTime
           ? ModalRoute.of(context)!.settings.arguments as DateTime
           : null,
     ),
-    '/detalhes-pet': (context) =>
-        _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
     '/saude': (context) => _petPage(context, (pet) => SaudePage(pet: pet)),
     '/vacinacao': (context) =>
         _petPage(context, (pet) => VacinacaoPage(pet: pet)),
-    '/agendamentos': (context) =>
-        _petPage(context, (pet) => AgendamentosPage(pet: pet)),
     '/nova-consulta': (context) {
       final args = ModalRoute.of(context)?.settings.arguments;
       final values = args is Map ? args : const <String, dynamic>{};

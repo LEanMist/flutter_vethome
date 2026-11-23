@@ -13,7 +13,6 @@ import 'package:flutter_vethome/pages/editar_pet_page.dart';
 import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/saude_page.dart';
 import 'package:flutter_vethome/pages/vacinacao_page.dart';
-import 'package:flutter_vethome/pages/agendamentos_page.dart';
 import 'package:flutter_vethome/pages/nova_consulta_page.dart';
 import 'package:flutter_vethome/pages/perfil_page.dart';
 import 'package:flutter_vethome/screens/auth.dart';
@@ -158,7 +157,7 @@ void main() {
                 )
                 .decoration!
                 .labelText,
-            editing || size.height < 720 ? 'Sexo' : isNull,
+            editing ? 'Sexo' : isNull,
           );
           expect(
             find.descendant(
@@ -312,7 +311,6 @@ void main() {
         DetalhesPetPage(pet: pet),
         SaudePage(pet: pet),
         VacinacaoPage(pet: pet),
-        AgendamentosPage(pet: pet),
         const ServicosScreen(),
         const ConvenioScreen(),
         NovaConsultaPage(pet: pet, service: 'V10', plan: 'Particular'),

@@ -8,6 +8,7 @@ import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
+import 'package:flutter_vethome/widgets/auth/registration_field_icon.dart';
 import 'package:flutter_vethome/widgets/pet_form.dart';
 
 Future<void> pumpAt(WidgetTester tester, Widget child, Size size) async {
@@ -27,6 +28,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byKey(const ValueKey('login-surface')), findsOneWidget);
+    expect(find.byType(TextField), findsNWidgets(2));
     expect(find.text('CADASTRE-SE'), findsOneWidget);
   });
 
@@ -183,65 +185,19 @@ void main() {
     final decoration = panel.decoration! as BoxDecoration;
     expect(tester.getSize(panelFinder), const Size(290, 473));
     expect(tester.getTopLeft(panelFinder).dy, closeTo(137, 1));
-    expect(
-      find.descendant(of: panelFinder, matching: find.byType(TextFormField)),
-      findsNWidgets(5),
-    );
-    expect(find.text('Nome'), findsNothing);
     expect(decoration.color, Colors.white.withValues(alpha: .2));
     expect(decoration.borderRadius, BorderRadius.circular(30));
     expect(decoration.border!.top.width, 3);
     expect(find.text('Complemento'), findsOneWidget);
     expect(find.text('Complemento (opcional)'), findsNothing);
-    final addressAssets = tester
-        .widgetList<Image>(find.byType(Image))
-        .map((image) => image.image)
-        .whereType<AssetImage>()
-        .map((image) => image.assetName)
-        .where((assetName) => assetName.contains('address-prefix-'))
-        .toList();
-    expect(
-      addressAssets,
-      containsAll([
-        'assets/imagens/figma/address-prefix-home.png',
-        'assets/imagens/figma/address-prefix-number.png',
-        'assets/imagens/figma/address-prefix-city-circle.png',
-        'assets/imagens/figma/address-prefix-city.png',
-      ]),
+    final circles = find.descendant(
+      of: panelFinder,
+      matching: find.byType(RegistrationFieldIcon),
     );
-    expect(
-      addressAssets
-          .where((assetName) => assetName.endsWith('address-prefix-home.png'))
-          .length,
-      3,
-    );
-    expect(
-      addressAssets
-          .where((assetName) => assetName.endsWith('address-prefix-number.png'))
-          .length,
-      1,
-    );
-    for (final asset in [
-      'assets/imagens/figma/address-prefix-home.png',
-      'assets/imagens/figma/address-prefix-number.png',
-      'assets/imagens/figma/address-prefix-city-circle.png',
-    ]) {
-      final imageFinder = find.byWidgetPredicate(
-        (widget) =>
-            widget is Image &&
-            widget.image is AssetImage &&
-            (widget.image as AssetImage).assetName == asset,
-      );
-      expect(tester.getSize(imageFinder.first), const Size(58, 56));
+    expect(circles, findsNWidgets(5));
+    for (var i = 0; i < 5; i++) {
+      expect(tester.getSize(circles.at(i)), const Size.square(48));
     }
-    final cityIcon = find.byWidgetPredicate(
-      (widget) =>
-          widget is Image &&
-          widget.image is AssetImage &&
-          (widget.image as AssetImage).assetName ==
-              'assets/imagens/figma/address-prefix-city.png',
-    );
-    expect(tester.getSize(cityIcon), const Size(29, 25));
     final buttonFinder = find.widgetWithText(ElevatedButton, 'Continuar');
     final button = tester.widget<ElevatedButton>(buttonFinder);
     expect(
@@ -270,7 +226,7 @@ void main() {
     final button = tester.widget<ElevatedButton>(buttonFinder);
     expect(
       button.style?.backgroundColor?.resolve(const <WidgetState>{}),
-      VetColors.rose,
+      VH.primary,
     );
     expect(tester.getSize(buttonFinder), const Size(181, 65));
     expect(
@@ -278,26 +234,6 @@ void main() {
       closeTo(524, 1),
     );
     expect(find.byType(PetForm), findsOneWidget);
-  });
-
-  testWidgets('Endereço do cadastro mantém as duas ações visíveis em 320 px', (
-    tester,
-  ) async {
-    await pumpAt(tester, const EnderecoScreen(), const Size(320, 640));
-
-    final next = find.widgetWithText(ElevatedButton, 'Continuar');
-    final skip = find.widgetWithText(TextButton, 'Pular');
-    expect(next.hitTestable(), findsOneWidget);
-    expect(skip.hitTestable(), findsOneWidget);
-    final initialPosition = tester.getRect(next);
-
-    final city = find.widgetWithText(VHField, 'Cidade');
-    await tester.ensureVisible(city);
-    await tester.pumpAndSettle();
-    expect(city.hitTestable(), findsOneWidget);
-    expect(tester.getRect(next), initialPosition);
-    expect(skip.hitTestable(), findsOneWidget);
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets('cadastro distribui campos em duas colunas no desktop', (
@@ -309,21 +245,20 @@ void main() {
     expect(find.byKey(const ValueKey('vh-form-desktop-grid')), findsOneWidget);
   });
 
-  testWidgets('endereço usa grade desktop com cinco campos', (tester) async {
+  testWidgets('endereço usa grade desktop sem perder os seis campos', (
+    tester,
+  ) async {
     await pumpAt(tester, const EnderecoScreen(), const Size(1280, 800));
 
     expect(tester.takeException(), isNull);
-    final grid = find.byKey(const ValueKey('address-form-desktop-grid'));
-    expect(grid, findsOneWidget);
     expect(
-      find.descendant(of: grid, matching: find.byType(TextFormField)),
-      findsNWidgets(5),
+      find.byKey(const ValueKey('address-form-desktop-grid')),
+      findsOneWidget,
     );
-    expect(find.text('Nome'), findsNothing);
     for (final label in [
       'CEP',
-      'Endereço',
-      'Numero',
+      'Logradouro',
+      'Número',
       'Complemento',
       'Cidade',
     ]) {

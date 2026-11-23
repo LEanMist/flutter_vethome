@@ -221,8 +221,8 @@ void main() {
     await submit(tester);
     for (final entry in {
       'CEP': '12345678',
-      'Endereço': 'Rua Teste',
-      'Numero': '10',
+      'Logradouro': 'Rua Teste',
+      'Número': '10',
       'Cidade': 'Cidade Teste',
     }.entries) {
       await fill(tester, entry.key, entry.value);

@@ -82,11 +82,29 @@ class _AppointmentAddressDialogState extends State<AppointmentAddressDialog> {
                             child: ListView.separated(
                               controller: _scrollController,
                               padding: const EdgeInsets.only(right: 26),
-                              itemCount: widget.addresses.length,
+                              itemCount:
+                                  widget.addresses.length +
+                                  (widget.selectedId == null ? 0 : 1),
                               separatorBuilder: (_, _) =>
                                   const SizedBox(height: 19),
                               itemBuilder: (context, index) {
-                                final address = widget.addresses[index];
+                                if (widget.selectedId != null && index == 0) {
+                                  return TextButton(
+                                    onPressed: _selected == null
+                                        ? null
+                                        : () =>
+                                              setState(() => _selected = null),
+                                    child: Text(
+                                      _selected == null
+                                          ? 'Sem endereço selecionado'
+                                          : 'Remover seleção',
+                                    ),
+                                  );
+                                }
+                                final address =
+                                    widget.addresses[widget.selectedId == null
+                                        ? index
+                                        : index - 1];
                                 return _AddressOption(
                                   address: address,
                                   selected: address.id == _selected?.id,
@@ -101,8 +119,12 @@ class _AppointmentAddressDialogState extends State<AppointmentAddressDialog> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 23),
                   child: ElevatedButton(
-                    onPressed: _selected != null || isEmpty
-                        ? () => Navigator.pop(context, _selected)
+                    onPressed:
+                        _selected != null ||
+                            widget.selectedId != null ||
+                            isEmpty
+                        ? () =>
+                              Navigator.pop(context, (addressId: _selected?.id))
                         : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VetColors.brown,

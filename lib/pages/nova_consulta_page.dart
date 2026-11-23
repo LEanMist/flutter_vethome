@@ -272,15 +272,15 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     ..showSnackBar(SnackBar(content: Text(text)));
 
   Future<void> _chooseAddress() async {
-    final address = await showDialog<SavedAddress>(
+    final selection = await showDialog<({String? addressId})>(
       context: context,
       builder: (_) => AppointmentAddressDialog(
         addresses: _availableAddresses,
         selectedId: _addressId,
       ),
     );
-    if (address != null && mounted) {
-      setState(() => _addressId = address.id);
+    if (selection != null && mounted) {
+      setState(() => _addressId = selection.addressId);
     }
   }
 
