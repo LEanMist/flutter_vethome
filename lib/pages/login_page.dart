@@ -7,8 +7,9 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../auth/auth_session.dart';
+import '../auth/authentication.dart';
 import '../data/local_data_manager.dart';
-import '../data/vet_repository.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/auth/demo_mode_notice.dart';
@@ -23,15 +24,7 @@ const _loginActionTextStyle = TextStyle(
 );
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, this.successRoute = '/pets'})
-    : _veterinarianDemo = false;
-
-  const LoginPage.veterinarianDemo({super.key})
-    : successRoute = '/gabriela',
-      _veterinarianDemo = true;
-
-  final String successRoute;
-  final bool _veterinarianDemo;
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -51,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    if (!widget._veterinarianDemo) _restoreRememberedEmail();
+    _restoreRememberedEmail();
   }
 
   Future<void> _restoreRememberedEmail() async {
@@ -108,24 +101,37 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> entrar() async {
     if (_signingIn) return;
-    if (widget._veterinarianDemo) {
-      Navigator.pushReplacementNamed(context, widget.successRoute);
+    final session = AuthScope.maybeOf(context);
+    final authentication = session?.authentication;
+    if (session == null || authentication == null) {
+      mostrarMensagem('A autenticação está indisponível nesta versão.');
       return;
     }
-    if (!VetRepository.authenticate(
-      _emailController.text,
-      _passwordController.text,
-    )) {
-      final message =
-          VetRepository.hasDifferentLocalClientEmail(_emailController.text)
-          ? 'Este protótipo mantém um perfil local. Use o e-mail salvo neste dispositivo.'
-          : 'Informe um e-mail válido e uma senha com pelo menos 6 caracteres.';
-      mostrarMensagem(message);
-      return;
-    }
+
     final email = _emailController.text.trim();
+    final password = _passwordController.text;
     final rememberEmail = lembrarDeMim;
     setState(() => _signingIn = true);
+    AuthenticatedUser? user;
+    try {
+      user = await authentication.signIn(email: email, password: password);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _signingIn = false);
+      if (ModalRoute.isCurrentOf(context) == true) {
+        mostrarMensagem('Não foi possível entrar. Tente novamente.');
+      }
+      return;
+    }
+    if (!mounted) return;
+    if (ModalRoute.isCurrentOf(context) != true || user == null) {
+      setState(() => _signingIn = false);
+      if (ModalRoute.isCurrentOf(context) == true) {
+        mostrarMensagem('E-mail ou senha inválidos.');
+      }
+      return;
+    }
+
     final emailSaved = await _saveRememberedEmail(
       email: email,
       remember: rememberEmail,
@@ -136,7 +142,12 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
     final messenger = _clearMessages();
-    Navigator.pushReplacementNamed(context, widget.successRoute);
+    session.start(user);
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      session.homeRoute!,
+      (_) => false,
+    );
     if (!emailSaved) {
       messenger.showSnackBar(
         SnackBar(
@@ -149,6 +160,26 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
   }
+
+  Future<void> _showDemoAccounts() => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      scrollable: true,
+      title: const Text('Contas da demonstração'),
+      content: const SelectableText(
+        'As permissões são simuladas. Use apenas dados fictícios.\n\n'
+        'Cliente\n${DemoAuthentication.clientEmail}\n\n'
+        'Veterinária\n${DemoAuthentication.veterinarianEmail}\n\n'
+        'Senha fictícia para ambas\n${DemoAuthentication.demoPassword}',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Fechar'),
+        ),
+      ],
+    ),
+  );
 
   @override
   void dispose() {
@@ -173,6 +204,8 @@ class _LoginPageState extends State<LoginPage> {
           constraints: const BoxConstraints(maxWidth: 390),
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final session = AuthScope.maybeOf(context);
+              final demoMode = session?.isDemo ?? false;
               final s = (constraints.maxWidth / 390).clamp(.8, 1.0);
               final textScaler = MediaQuery.textScalerOf(context);
               final enlarged = textScaler.scale(12) >= 16.8;
@@ -205,7 +238,9 @@ class _LoginPageState extends State<LoginPage> {
                 onPressed: _signingIn
                     ? null
                     : () => mostrarMensagem(
-                        'A recuperação de senha ainda não está disponível nesta demonstração.',
+                        demoMode
+                            ? 'A recuperação de senha ainda não está disponível nesta demonstração.'
+                            : 'A recuperação de senha está indisponível nesta versão.',
                       ),
                 child: Text(
                   'Esqueceu sua senha?',
@@ -229,10 +264,7 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ),
                     );
-              final submitHeight = math.max(
-                widget._veterinarianDemo && enlarged ? 76.0 : 54.0,
-                textScaler.scale(14) + 24,
-              );
+              final submitHeight = math.max(54.0, textScaler.scale(14) + 24);
               final submit = _submitButton(303 * s, submitHeight, enlarged);
               final submitBottom =
                   363 * s +
@@ -311,19 +343,22 @@ class _LoginPageState extends State<LoginPage> {
                               heightFactor: 1,
                               child: SizedBox(
                                 width: 303 * s,
-                                child: DemoModeNotice(
-                                  compact: true,
-                                  multiline:
-                                      kDebugMode ||
-                                      stackActions ||
-                                      reserveBackSpace,
-                                  message: widget._veterinarianDemo
-                                      ? 'Demonstração local'
-                                      : 'Demonstração · use dados fictícios',
-                                  semanticLabel: widget._veterinarianDemo
-                                      ? 'Área veterinária em demonstração. Acesso local sem credenciais.'
-                                      : 'Modo demonstração. Não há contas individuais. As informações ficam neste dispositivo; use apenas dados fictícios.',
-                                ),
+                                child:
+                                    !demoMode && session?.authentication != null
+                                    ? null
+                                    : DemoModeNotice(
+                                        compact: true,
+                                        multiline:
+                                            kDebugMode ||
+                                            stackActions ||
+                                            reserveBackSpace,
+                                        message: demoMode
+                                            ? 'Demonstração · use dados fictícios'
+                                            : 'Acesso indisponível nesta versão',
+                                        semanticLabel: demoMode
+                                            ? 'Modo demonstração. Não há contas individuais. As permissões são simuladas. Use apenas dados fictícios.'
+                                            : null,
+                                      ),
                               ),
                             ),
                           ),
@@ -338,197 +373,182 @@ class _LoginPageState extends State<LoginPage> {
                             semanticLabel: 'VetHome',
                           ),
                         ),
-                        if (widget._veterinarianDemo)
-                          SizedBox(
-                            height: 161 * s,
-                            child: Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                ),
-                                child: Semantics(
-                                  header: true,
-                                  child: const Text(
-                                    'Área veterinária',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontFamily: VH.headingFontFamily,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: VetColors.brownOnRose,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          )
-                        else ...[
-                          // O primeiro campo começa em 333 no frame de referência.
-                          Transform.translate(
-                            offset: Offset(0, -13 * s),
-                            child: FocusTraversalGroup(
-                              policy: WidgetOrderTraversalPolicy(),
-                              child: Column(
-                                children: [
-                                  _loginField(
-                                    'Usuário',
-                                    _emailController,
-                                    prefix: 'frame-6.png',
-                                    scale: s,
-                                    enabled: !_signingIn,
-                                  ),
-                                  SizedBox(height: 17 * s),
-                                  _loginField(
-                                    'Senha',
-                                    _passwordController,
-                                    prefix: 'frame-7-5.png',
-                                    scale: s,
-                                    password: true,
-                                    enabled: !_signingIn,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Transform.translate(
-                            // A faixa de toque começa onde termina o campo Senha.
-                            offset: Offset(actionsOffset, -13 * s),
-                            child: SizedBox(
-                              width: actionsWidth,
-                              child: secondaryActions,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 11),
-                        if (!pinSubmit) submit,
-                        if (!widget._veterinarianDemo) ...[
-                          const SizedBox(height: 28),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: enlarged || constraints.maxWidth < 300
-                                ? const Text(
-                                    'Ou continue com',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: VetColors.brownSecondary,
-                                    ),
-                                  )
-                                : Row(
-                                    children: [
-                                      Expanded(
-                                        child: Divider(
-                                          color: VH.foreground.withValues(
-                                            alpha: .5,
-                                          ),
-                                        ),
-                                      ),
-                                      const Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 26,
-                                        ),
-                                        child: Text(
-                                          'Ou continue com',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            color: VetColors.brownSecondary,
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Divider(
-                                          color: VH.foreground.withValues(
-                                            alpha: .5,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                          const SizedBox(height: 22),
-                          Transform.translate(
-                            offset: const Offset(0, -2),
-                            child: Wrap(
-                              alignment: WrapAlignment.center,
-                              spacing: socialSpacing,
-                              runSpacing: 12,
+                        // O primeiro campo começa em 333 no frame de referência.
+                        Transform.translate(
+                          offset: Offset(0, -13 * s),
+                          child: FocusTraversalGroup(
+                            policy: WidgetOrderTraversalPolicy(),
+                            child: Column(
                               children: [
-                                for (final social in const [
-                                  ('Google', 'icons8-google-logo-96-1.png'),
-                                  ('Facebook', 'icons8-facebook-novo-96-1.png'),
-                                  ('Instagram', 'icons8-instagram-96-1.png'),
-                                ])
-                                  Tooltip(
-                                    message: social.$1,
-                                    child: DecoratedBox(
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: VH.background,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: VH.shadowSubtle,
-                                            offset: Offset(2, 2),
-                                            blurRadius: 2,
-                                          ),
-                                        ],
-                                      ),
-                                      child: SizedBox(
-                                        width: 56,
-                                        height: 56,
-                                        child: OutlinedButton(
-                                          onPressed: _signingIn
-                                              ? null
-                                              : () => mostrarMensagem(
-                                                  'A autenticação com ${social.$1} não está disponível nesta demonstração.',
-                                                ),
-                                          style: OutlinedButton.styleFrom(
-                                            backgroundColor: VH.background,
-                                            side: BorderSide.none,
-                                            shape: const CircleBorder(),
-                                            padding: EdgeInsets.zero,
-                                          ),
-                                          child: Image.asset(
-                                            'assets/imagens/figma/${social.$2}',
-                                            width: 39,
-                                            height: 39,
-                                            semanticLabel: social.$1,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                _loginField(
+                                  'Usuário',
+                                  _emailController,
+                                  prefix: 'frame-6.png',
+                                  scale: s,
+                                  enabled: !_signingIn,
+                                ),
+                                SizedBox(height: 17 * s),
+                                _loginField(
+                                  'Senha',
+                                  _passwordController,
+                                  prefix: 'frame-7-5.png',
+                                  scale: s,
+                                  password: true,
+                                  enabled: !_signingIn,
+                                ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 27),
-                          const Text(
-                            'Ainda não possui uma conta?',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: VetColors.brownSecondary,
-                            ),
+                        ),
+                        Transform.translate(
+                          // A faixa de toque começa onde termina o campo Senha.
+                          offset: Offset(actionsOffset, -13 * s),
+                          child: SizedBox(
+                            width: actionsWidth,
+                            child: secondaryActions,
                           ),
-                          TextButton(
-                            onPressed: _signingIn
-                                ? null
-                                : () {
-                                    _clearMessages();
+                        ),
+                        const SizedBox(height: 11),
+                        if (!pinSubmit) submit,
+                        const SizedBox(height: 28),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: enlarged || constraints.maxWidth < 300
+                              ? const Text(
+                                  'Ou continue com',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: VetColors.brownSecondary,
+                                  ),
+                                )
+                              : Row(
+                                  children: [
+                                    Expanded(
+                                      child: Divider(
+                                        color: VH.foreground.withValues(
+                                          alpha: .5,
+                                        ),
+                                      ),
+                                    ),
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 26,
+                                      ),
+                                      child: Text(
+                                        'Ou continue com',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: VetColors.brownSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Divider(
+                                        color: VH.foreground.withValues(
+                                          alpha: .5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                        const SizedBox(height: 22),
+                        Transform.translate(
+                          offset: const Offset(0, -2),
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: socialSpacing,
+                            runSpacing: 12,
+                            children: [
+                              for (final social in const [
+                                ('Google', 'icons8-google-logo-96-1.png'),
+                                ('Facebook', 'icons8-facebook-novo-96-1.png'),
+                                ('Instagram', 'icons8-instagram-96-1.png'),
+                              ])
+                                Tooltip(
+                                  message: social.$1,
+                                  child: DecoratedBox(
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: VH.background,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: VH.shadowSubtle,
+                                          offset: Offset(2, 2),
+                                          blurRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    child: SizedBox(
+                                      width: 56,
+                                      height: 56,
+                                      child: OutlinedButton(
+                                        onPressed: _signingIn
+                                            ? null
+                                            : () => mostrarMensagem(
+                                                demoMode
+                                                    ? 'A autenticação com ${social.$1} não está disponível nesta demonstração.'
+                                                    : 'A autenticação com ${social.$1} está indisponível nesta versão.',
+                                              ),
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor: VH.background,
+                                          side: BorderSide.none,
+                                          shape: const CircleBorder(),
+                                          padding: EdgeInsets.zero,
+                                        ),
+                                        child: Image.asset(
+                                          'assets/imagens/figma/${social.$2}',
+                                          width: 39,
+                                          height: 39,
+                                          semanticLabel: social.$1,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 27),
+                        const Text(
+                          'Ainda não possui uma conta?',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: VetColors.brownSecondary,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _signingIn
+                              ? null
+                              : () {
+                                  _clearMessages();
+                                  if (demoMode) {
                                     Navigator.pushNamed(context, '/cadastro');
-                                  },
-                            child: const Text(
-                              'CADASTRE-SE',
-                              style: TextStyle(
-                                fontFamily: VH.bodyFontFamily,
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: VH.secondary,
-                              ),
+                                  } else {
+                                    mostrarMensagem(
+                                      'O cadastro está indisponível nesta versão.',
+                                    );
+                                  }
+                                },
+                          child: const Text(
+                            'CADASTRE-SE',
+                            style: TextStyle(
+                              fontFamily: VH.bodyFontFamily,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: VH.secondary,
                             ),
                           ),
-                        ],
+                        ),
+                        if (demoMode)
+                          TextButton(
+                            onPressed: _signingIn ? null : _showDemoAccounts,
+                            child: const Text('Contas da demonstração'),
+                          ),
                         const SizedBox(height: 16),
                       ],
                     ),
@@ -571,11 +591,7 @@ class _LoginPageState extends State<LoginPage> {
     final label = Semantics(
       liveRegion: _signingIn,
       child: Text(
-        _signingIn
-            ? 'Entrando…'
-            : widget._veterinarianDemo
-            ? 'Entrar na demonstração'
-            : 'Entrar',
+        _signingIn ? 'Entrando…' : 'Entrar',
         textAlign: TextAlign.center,
         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
       ),
@@ -623,7 +639,7 @@ class _LoginPageState extends State<LoginPage> {
             shape: const StadiumBorder(),
             padding: EdgeInsets.zero,
           ),
-          child: enlarged || _signingIn || widget._veterinarianDemo
+          child: enlarged || _signingIn
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

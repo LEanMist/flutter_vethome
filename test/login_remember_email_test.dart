@@ -1,10 +1,12 @@
+import 'package:flutter_vethome/auth/authentication.dart';
 import 'dart:async';
 import 'dart:ui' show CheckedState, SemanticsAction, Tristate;
+
+import 'support/demo_auth.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
-import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -75,7 +77,7 @@ Future<void> _pumpLogin(
         ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
-      home: const LoginPage(),
+      home: demoLogin(),
       routes: {
         '/pets': (_) => const PetsPage(),
         '/cobrindo': (_) => const Scaffold(body: Text('Outra rota')),
@@ -95,8 +97,11 @@ void main() {
   testWidgets('lembra somente o email após login válido', (tester) async {
     await _pumpLogin(tester);
 
-    await tester.enterText(_field('Usuário'), '  ana@example.test  ');
-    await tester.enterText(_field('Senha'), 'senha-secreta');
+    await tester.enterText(
+      _field('Usuário'),
+      '  ${DemoAuthentication.clientEmail}  ',
+    );
+    await tester.enterText(_field('Senha'), DemoAuthentication.demoPassword);
     await tester.tap(find.byKey(const ValueKey('remember-me-control')));
     await tester.pump();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Entrar'));
@@ -104,7 +109,10 @@ void main() {
 
     expect(find.byType(PetsPage), findsOneWidget);
     final preferences = await SharedPreferences.getInstance();
-    expect(preferences.getString(_rememberedEmailKey), 'ana@example.test');
+    expect(
+      preferences.getString(_rememberedEmailKey),
+      DemoAuthentication.clientEmail,
+    );
     expect(preferences.getKeys(), {_rememberedEmailKey});
   });
 
@@ -121,8 +129,8 @@ void main() {
     );
 
     await _pumpLogin(tester);
-    await tester.enterText(_field('Usuário'), 'ana@example.test');
-    await tester.enterText(_field('Senha'), 'senha-secreta');
+    await tester.enterText(_field('Usuário'), DemoAuthentication.clientEmail);
+    await tester.enterText(_field('Senha'), DemoAuthentication.demoPassword);
     await tester.tap(find.byKey(const ValueKey('remember-me-control')));
     await tester.pump();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Entrar'));
@@ -234,8 +242,8 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('remember-me-control')));
     await tester.pump();
-    await tester.enterText(_field('Usuário'), 'bia@example.test');
-    await tester.enterText(_field('Senha'), 'outra-senha');
+    await tester.enterText(_field('Usuário'), DemoAuthentication.clientEmail);
+    await tester.enterText(_field('Senha'), DemoAuthentication.demoPassword);
     await tester.tap(find.widgetWithText(ElevatedButton, 'Entrar'));
     await tester.pumpAndSettle();
 
@@ -310,8 +318,14 @@ void main() {
         );
         final navigatorKey = GlobalKey<NavigatorState>();
         await _pumpLogin(tester, navigatorKey: navigatorKey);
-        await tester.enterText(_field('Usuário'), 'ana@example.test');
-        await tester.enterText(_field('Senha'), 'senha-secreta');
+        await tester.enterText(
+          _field('Usuário'),
+          DemoAuthentication.clientEmail,
+        );
+        await tester.enterText(
+          _field('Senha'),
+          DemoAuthentication.demoPassword,
+        );
         await tester.tap(find.byKey(const ValueKey('remember-me-control')));
         await tester.pump();
         await tester.tap(find.widgetWithText(ElevatedButton, 'Entrar'));
@@ -327,7 +341,7 @@ void main() {
         );
 
         navigatorKey.currentState!.push(
-          MaterialPageRoute<void>(builder: (_) => const LoginPage()),
+          MaterialPageRoute<void>(builder: (_) => demoLogin()),
         );
         await tester.pumpAndSettle();
         expect(
@@ -345,8 +359,8 @@ void main() {
     SharedPreferencesStorePlatform.instance = store;
     final navigatorKey = GlobalKey<NavigatorState>();
     await _pumpLogin(tester, navigatorKey: navigatorKey);
-    await tester.enterText(_field('Usuário'), 'ana@example.test');
-    await tester.enterText(_field('Senha'), 'senha-secreta');
+    await tester.enterText(_field('Usuário'), DemoAuthentication.clientEmail);
+    await tester.enterText(_field('Senha'), DemoAuthentication.demoPassword);
     await tester.tap(find.byKey(const ValueKey('remember-me-control')));
     await tester.pump();
     final submit = find.widgetWithText(ElevatedButton, 'Entrar');

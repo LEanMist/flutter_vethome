@@ -1,3 +1,4 @@
+import 'package:flutter_vethome/auth/authentication.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,8 @@ import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/widgets/auth/demo_mode_notice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/demo_auth.dart';
 
 Finder field(String name) => find.byWidgetPredicate(
   (widget) => widget is TextField && widget.decoration?.hintText == name,
@@ -46,10 +49,10 @@ Future<void> openLogin(
         child: child!,
       ),
       initialRoute: withPreviousRoute ? '/login' : '/',
-      home: withPreviousRoute ? const Scaffold() : const LoginPage(),
+      home: withPreviousRoute ? const Scaffold() : demoLogin(),
       routes: {
         '/pets': (_) => const Scaffold(body: Text('Pets de teste')),
-        '/login': (_) => const LoginPage(),
+        '/login': (_) => demoLogin(),
         '/cadastro': (_) => const CadastroScreen(),
       },
     ),
@@ -177,8 +180,8 @@ void main() {
       await openLogin(tester, viewport, textScale: 2, safeTop: 44);
       expect(tester.takeException(), isNull);
       final password = field('Senha');
-      await tester.enterText(field('Usuário'), 'qa@example.test');
-      await tester.enterText(password, 'senha-ficticia');
+      await tester.enterText(field('Usuário'), DemoAuthentication.clientEmail);
+      await tester.enterText(password, DemoAuthentication.demoPassword);
       tester.view.viewInsets = FakeViewPadding(bottom: keyboard);
       addTearDown(tester.view.resetViewInsets);
       await tester.pumpAndSettle();

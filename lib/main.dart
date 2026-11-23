@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'auth/auth_session.dart';
+import 'auth/authentication.dart';
 import 'data/local_data_manager.dart';
 import 'data/theme_preferences.dart';
 import 'data/vet_repository.dart';
@@ -16,11 +18,17 @@ Future<void> main() async {
   await VetRepository.initialize();
   await GabrielaProfileRepository.initialize();
   await ThemePreferences.load();
-  runApp(const VetHomeApp());
+  runApp(
+    const VetHomeApp(
+      authentication: DemoAuthentication.enabled ? DemoAuthentication() : null,
+    ),
+  );
 }
 
 class VetHomeApp extends StatefulWidget {
-  const VetHomeApp({super.key});
+  const VetHomeApp({super.key, this.authentication});
+
+  final Authentication? authentication;
 
   @override
   State<VetHomeApp> createState() => _VetHomeAppState();
@@ -29,6 +37,8 @@ class VetHomeApp extends StatefulWidget {
 class _VetHomeAppState extends State<VetHomeApp> {
   final _criticalNavigatorKey = GlobalKey<NavigatorState>();
   final _navigatorKey = GlobalKey<NavigatorState>();
+  late final _session = AuthSession(widget.authentication);
+  late final _routes = AppRoutes(_session);
 
   // Nova leitura (sem gravação); reconstrói o app para refletir o novo status.
   Future<void> _retryStorage() async {
@@ -38,71 +48,64 @@ class _VetHomeAppState extends State<VetHomeApp> {
 
   Future<bool> _clearLocalData() async {
     final cleared = await LocalDataManager.clearUserData();
-    if (cleared && mounted) setState(() {});
+    if (cleared && mounted) {
+      _session.end();
+      setState(() {});
+    }
     return cleared;
   }
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<Color>(
-      valueListenable: VH.themeSeed,
-      builder: (context, themeSeed, _) {
-        if (VetRepository.persistenceBlocked) {
+    return AuthScope(
+      session: _session,
+      child: ValueListenableBuilder<Color>(
+        valueListenable: VH.themeSeed,
+        builder: (context, themeSeed, _) {
+          if (VetRepository.persistenceBlocked) {
+            return MaterialApp(
+              // Chaves distintas recriam o Navigator ao sair do bloqueio.
+              key: const ValueKey('vethome-blocked-app'),
+              debugShowCheckedModeBanner: false,
+              title: 'VetHome',
+              locale: const Locale('pt', 'BR'),
+              supportedLocales: const [Locale('pt', 'BR')],
+              localizationsDelegates: GlobalMaterialLocalizations.delegates,
+              theme: VetTheme.light(themeSeed),
+              navigatorKey: _criticalNavigatorKey,
+              builder: (context, child) => kDebugMode
+                  ? DebugScreenSwitcher(
+                      navigatorKey: _criticalNavigatorKey,
+                      child: child ?? const SizedBox.shrink(),
+                    )
+                  : child ?? const SizedBox.shrink(),
+              home: CriticalStorageErrorPage(
+                status: VetRepository.persistenceStatus,
+                onRetry: _retryStorage,
+                onClear: _clearLocalData,
+              ),
+            );
+          }
           return MaterialApp(
-            // Chaves distintas recriam o Navigator ao sair do bloqueio.
-            key: const ValueKey('vethome-blocked-app'),
+            key: const ValueKey('vethome-app'),
             debugShowCheckedModeBanner: false,
             title: 'VetHome',
             locale: const Locale('pt', 'BR'),
             supportedLocales: const [Locale('pt', 'BR')],
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
             theme: VetTheme.light(themeSeed),
-            navigatorKey: _criticalNavigatorKey,
+            navigatorKey: _navigatorKey,
             builder: (context, child) => kDebugMode
                 ? DebugScreenSwitcher(
-                    navigatorKey: _criticalNavigatorKey,
+                    navigatorKey: _navigatorKey,
                     child: child ?? const SizedBox.shrink(),
                   )
                 : child ?? const SizedBox.shrink(),
-            home: CriticalStorageErrorPage(
-              status: VetRepository.persistenceStatus,
-              onRetry: _retryStorage,
-              onClear: _clearLocalData,
-            ),
+            onGenerateRoute: _routes.generate,
+            onGenerateInitialRoutes: _routes.initialRoutes,
           );
-        }
-        final routes = AppRoutes.routes;
-        final startsAtLogin =
-            WidgetsBinding.instance.platformDispatcher.defaultRouteName ==
-            '/login';
-        return MaterialApp(
-          key: const ValueKey('vethome-app'),
-          debugShowCheckedModeBanner: false,
-          title: 'VetHome',
-          locale: const Locale('pt', 'BR'),
-          supportedLocales: const [Locale('pt', 'BR')],
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          theme: VetTheme.light(themeSeed),
-          navigatorKey: _navigatorKey,
-          builder: (context, child) => kDebugMode
-              ? DebugScreenSwitcher(
-                  navigatorKey: _navigatorKey,
-                  child: child ?? const SizedBox.shrink(),
-                )
-              : child ?? const SizedBox.shrink(),
-          initialRoute: '/',
-          routes: routes,
-          // Um link direto para Login não tem uma tela anterior no app.
-          onGenerateInitialRoutes: startsAtLogin
-              ? (_) => [
-                  MaterialPageRoute<void>(
-                    settings: const RouteSettings(name: '/login'),
-                    builder: routes['/login']!,
-                  ),
-                ]
-              : null,
-        );
-      },
+        },
+      ),
     );
   }
 }

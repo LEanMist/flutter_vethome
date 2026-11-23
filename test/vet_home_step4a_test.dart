@@ -1,3 +1,4 @@
+import 'package:flutter_vethome/auth/authentication.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
@@ -12,6 +13,8 @@ import 'package:flutter_vethome/screens/auth.dart';
 import 'package:flutter_vethome/screens/outros.dart';
 import 'package:flutter_vethome/screens/pets.dart';
 import 'package:flutter_vethome/widgets.dart';
+
+import 'support/demo_auth.dart';
 
 class _TestCep extends CepService {
   @override
@@ -425,7 +428,11 @@ void main() {
     'Catálogo aberto não usa pet antigo depois de excluir todos os pets',
     (tester) async {
       largeViewport(tester);
-      await tester.pumpWidget(const MaterialApp(home: TestePage()));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: withDemoAuth(const TestePage(), role: UserRole.cliente),
+        ),
+      );
       await tester.scrollUntilVisible(find.text('Nova consulta'), 250);
       await tester.ensureVisible(find.text('Nova consulta'));
       await tester.pumpAndSettle();
@@ -453,7 +460,7 @@ void main() {
         const ServicosScreen(),
         const ConvenioScreen(),
         const AgendaScreen(),
-        const TestePage(),
+        withDemoAuth(const TestePage(), role: UserRole.cliente),
       ]) {
         await tester.pumpWidget(MaterialApp(home: screen));
         await tester.pumpAndSettle();

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../auth/auth_session.dart';
+import '../auth/authentication.dart';
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
 import '../pages/addresses_page.dart';
@@ -13,7 +15,6 @@ import '../pages/login_page.dart';
 import '../pages/nova_consulta_page.dart';
 import '../pages/perfil_page.dart';
 import '../pages/gabriela/gabriela_area_page.dart';
-import '../pages/gabriela/gabriela_splash_screen.dart';
 import '../pages/pets_page.dart';
 import '../pages/saude_page.dart';
 import '../pages/sobre_page.dart';
@@ -153,16 +154,6 @@ class TestePage extends StatelessWidget {
         pagina: (_) => const ConfigScreen(),
       ),
       (
-        titulo: 'Gabriela - Splash',
-        icone: Icons.medical_services_outlined,
-        pagina: (_) => const GabrielaSplashScreen(),
-      ),
-      (
-        titulo: 'Gabriela - Login',
-        icone: Icons.lock_outline,
-        pagina: (_) => const LoginPage.veterinarianDemo(),
-      ),
-      (
         titulo: 'Gabriela - Perfil',
         icone: Icons.person_outline,
         pagina: (_) => const GabrielaAreaPage(initialIndex: 0),
@@ -184,14 +175,28 @@ class TestePage extends StatelessWidget {
       ),
     ];
 
+    final session = AuthScope.maybeOf(context);
+    final role = session?.user?.role;
+    final visible = telas.where((tela) {
+      if (tela.titulo.startsWith('Gabriela - ')) {
+        return role == UserRole.veterinaria;
+      }
+      return switch (tela.titulo) {
+        'Splash' || 'Login' => true,
+        'Cadastro' =>
+          role == UserRole.cliente || (role == null && session?.isDemo == true),
+        _ => role == UserRole.cliente,
+      };
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Telas do projeto')),
       body: ListView.separated(
         padding: const EdgeInsets.all(20),
-        itemCount: telas.length,
+        itemCount: visible.length,
         separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          final tela = telas[index];
+          final tela = visible[index];
           return SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -206,8 +211,6 @@ class TestePage extends StatelessWidget {
                   'Login' => '/login',
                   'Pets' => '/pets',
                   'Agenda' => '/agenda',
-                  'Gabriela - Splash' => '/gabriela/splash',
-                  'Gabriela - Login' => '/gabriela/login',
                   'Gabriela - Perfil' => '/gabriela/perfil',
                   'Gabriela - Chat' => '/gabriela/mensagens',
                   'Gabriela - Agenda' => '/gabriela/agenda',

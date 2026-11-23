@@ -79,9 +79,7 @@ void main() {
     );
   });
 
-  testWidgets('permite rolar até Sair e voltar ao login da Gabriela', (
-    tester,
-  ) async {
+  testWidgets('permite rolar até Sair e voltar ao login único', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(320, 260);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -90,10 +88,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: const Scaffold(body: GabrielaSettingsTab()),
-        routes: {
-          '/gabriela/login': (_) =>
-              const Scaffold(body: Text('Login Gabriela')),
-        },
+        routes: {'/login': (_) => const Scaffold(body: Text('Login Gabriela'))},
       ),
     );
     final exit = find.text('Sair');

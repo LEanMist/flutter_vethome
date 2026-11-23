@@ -1,3 +1,5 @@
+import 'package:flutter_vethome/auth/auth_session.dart';
+import 'package:flutter_vethome/auth/authentication.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
@@ -27,6 +29,7 @@ void main() {
     expect(find.text('Início'), findsNothing);
     expect(find.text('Apresentação'), findsNothing);
     expect(find.text('Home'), findsNothing);
+    expect(find.text('Gabriela - Perfil'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -62,13 +65,17 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: const TestePage(),
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(accessibleNavigation: true),
-          child: child ?? const SizedBox.shrink(),
+      AuthScope(
+        session: AuthSession(const DemoAuthentication())
+          ..start(const AuthenticatedUser(id: 'teste', role: UserRole.cliente)),
+        child: MaterialApp(
+          home: const TestePage(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(accessibleNavigation: true),
+            child: child ?? const SizedBox.shrink(),
+          ),
+          routes: {'/pets': (_) => const Scaffold(body: Text('Início'))},
         ),
-        routes: {'/pets': (_) => const Scaffold(body: Text('Início'))},
       ),
     );
     await tester.pumpAndSettle();
@@ -103,12 +110,16 @@ void main() {
     await VetRepository.initialize(storage: _MemoryStorage());
 
     await tester.pumpWidget(
-      MaterialApp(
-        navigatorKey: navigatorKey,
-        home: const Scaffold(body: Text('Tela inicial do teste')),
-        builder: (context, child) => DebugScreenSwitcher(
+      AuthScope(
+        session: AuthSession(const DemoAuthentication())
+          ..start(const AuthenticatedUser(id: 'teste', role: UserRole.cliente)),
+        child: MaterialApp(
           navigatorKey: navigatorKey,
-          child: child ?? const SizedBox.shrink(),
+          home: const Scaffold(body: Text('Tela inicial do teste')),
+          builder: (context, child) => DebugScreenSwitcher(
+            navigatorKey: navigatorKey,
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );
@@ -136,8 +147,6 @@ void main() {
     tester,
   ) async {
     const destinations = {
-      'Gabriela - Splash': '/gabriela/splash',
-      'Gabriela - Login': '/gabriela/login',
       'Gabriela - Perfil': '/gabriela/perfil',
       'Gabriela - Chat': '/gabriela/mensagens',
       'Gabriela - Agenda': '/gabriela/agenda',
@@ -145,12 +154,18 @@ void main() {
     };
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: const TestePage(),
-        routes: {
-          for (final route in destinations.values)
-            route: (_) => Scaffold(body: Text(route)),
-        },
+      AuthScope(
+        session: AuthSession(const DemoAuthentication())
+          ..start(
+            const AuthenticatedUser(id: 'teste', role: UserRole.veterinaria),
+          ),
+        child: MaterialApp(
+          home: const TestePage(),
+          routes: {
+            for (final route in destinations.values)
+              route: (_) => Scaffold(body: Text(route)),
+          },
+        ),
       ),
     );
 

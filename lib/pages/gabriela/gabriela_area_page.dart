@@ -3,12 +3,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../auth/auth_session.dart';
 import '../../core/utils/pet_photo.dart';
 import '../../data/gabriela_profile_repository.dart';
 import '../../data/theme_preferences.dart';
 import '../../theme.dart';
 import '../../theme/vet_colors.dart';
 import '../../widgets.dart' show VHHeader;
+import '../../widgets/auth/demo_mode_notice.dart';
 import '../../widgets/pets/pets_theme.dart';
 import '../../widgets/vet/gabriela_bottom_nav.dart';
 import '../../widgets/vet/vet_centered_dialog.dart';
@@ -50,6 +52,15 @@ class _GabrielaAreaPageState extends State<GabrielaAreaPage> {
                 Expanded(
                   child: IndexedStack(index: _selectedIndex, children: pages),
                 ),
+                if (AuthScope.maybeOf(context)?.isDemo == true)
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(12, 0, 12, 4),
+                    child: DemoModeNotice(
+                      compact: true,
+                      multiline: true,
+                      message: 'Demonstração · permissões simuladas',
+                    ),
+                  ),
                 GabrielaBottomNav(
                   selectedIndex: _selectedIndex,
                   onSelected: (index) => setState(() => _selectedIndex = index),
@@ -460,14 +471,7 @@ class _GabrielaSettingsTabState extends State<GabrielaSettingsTab> {
       (label: 'Tema do Aplicativo', onTap: () => _chooseTheme(context)),
       (label: 'Suporte', onTap: () => _showSupport(context)),
       (label: 'Histórico', onTap: () => _showHistory(context)),
-      (
-        label: 'Sair',
-        onTap: () => Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/gabriela/login',
-          (_) => false,
-        ),
-      ),
+      (label: 'Sair', onTap: () => AuthScope.signOut(context)),
     ];
     return ListView(
       padding: EdgeInsets.zero,

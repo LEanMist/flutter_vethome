@@ -3,11 +3,12 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/auth/demo_mode_notice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/demo_auth.dart';
 
 double _contrastRatio(Color first, Color second) {
   final firstLuminance = first.computeLuminance();
@@ -32,7 +33,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: VetTheme.light(VH.primary),
-        home: const LoginPage(),
+        home: demoLogin(),
         routes: {
           '/pets': (_) => const Scaffold(body: Text('Pets de teste')),
           '/cadastro': (_) => const Scaffold(body: Text('Cadastro de teste')),
@@ -198,7 +199,7 @@ void main() {
     addTearDown(tester.view.resetViewPadding);
 
     await tester.pumpWidget(
-      MaterialApp(theme: VetTheme.light(VH.primary), home: const LoginPage()),
+      MaterialApp(theme: VetTheme.light(VH.primary), home: demoLogin()),
     );
     await tester.pumpAndSettle();
 
@@ -261,22 +262,12 @@ void main() {
     await tester.pump();
 
     expect(tester.widget<TextField>(passwordField).focusNode!.hasFocus, isTrue);
-    expect(
-      find.text(
-        'Informe um e-mail válido e uma senha com pelo menos 6 caracteres.',
-      ),
-      findsNothing,
-    );
+    expect(find.text('E-mail ou senha inválidos.'), findsNothing);
 
     await tester.enterText(passwordField, '123');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-    expect(
-      find.text(
-        'Informe um e-mail válido e uma senha com pelo menos 6 caracteres.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('E-mail ou senha inválidos.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -295,7 +286,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: VetTheme.light(VH.primary),
-        home: const LoginPage(),
+        home: demoLogin(),
         routes: {
           '/pets': (_) => const Scaffold(body: Text('Pets de teste')),
           '/cadastro': (_) => const Scaffold(body: Text('Cadastro de teste')),
@@ -346,7 +337,7 @@ void main() {
               ),
             ),
           ),
-          '/login': (context) => const LoginPage(),
+          '/login': (context) => demoLogin(),
           '/pets': (_) => const Scaffold(body: Text('Pets de teste')),
           '/cadastro': (_) => const Scaffold(body: Text('Cadastro de teste')),
         },
@@ -419,7 +410,7 @@ void main() {
     expect(tester.widget<TextField>(password).focusNode!.hasFocus, isTrue);
     await tester.tap(submit);
     await tester.pumpAndSettle();
-    expect(find.textContaining('pelo menos 6 caracteres'), findsOneWidget);
+    expect(find.text('E-mail ou senha inválidos.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -507,7 +498,7 @@ void main() {
           ).copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
-        home: const LoginPage(),
+        home: demoLogin(),
       ),
     );
     await tester.pumpAndSettle();
@@ -591,7 +582,7 @@ void main() {
               ).copyWith(textScaler: TextScaler.linear(textScale)),
               child: child!,
             ),
-            home: const LoginPage(),
+            home: demoLogin(),
           ),
         );
         await tester.pumpAndSettle();

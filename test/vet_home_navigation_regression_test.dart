@@ -1,3 +1,5 @@
+import 'package:flutter_vethome/auth/authentication.dart';
+import 'package:flutter_vethome/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/core/utils/vet_nav.dart';
@@ -16,6 +18,8 @@ import 'package:flutter_vethome/screens/pets.dart'
     show ConvenioScreen, ServicosScreen;
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/demo_auth.dart';
 
 Widget agendaRoute(BuildContext context) {
   final date = ModalRoute.of(context)?.settings.arguments as DateTime?;
@@ -39,7 +43,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       SharedPreferences.setMockInitialValues({});
-      await tester.pumpWidget(MaterialApp(routes: AppRoutes.routes));
+      await tester.pumpWidget(
+        const VetHomeApp(authentication: DemoAuthentication()),
+      );
       await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
       expect(find.byType(LoginPage), findsOneWidget);
@@ -52,9 +58,9 @@ void main() {
       final password = find.byType(TextField).at(1);
       final login = find.widgetWithText(ElevatedButton, 'Entrar');
       await tester.ensureVisible(email);
-      await tester.enterText(email, 'tutor@example.test');
+      await tester.enterText(email, DemoAuthentication.clientEmail);
       await tester.ensureVisible(password);
-      await tester.enterText(password, 'senha-local');
+      await tester.enterText(password, DemoAuthentication.demoPassword);
       await tester.ensureVisible(login);
       await tester.pumpAndSettle();
       await tester.tap(login);
@@ -443,7 +449,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: const TestePage(),
+        home: withDemoAuth(const TestePage(), role: UserRole.cliente),
         routes: {
           '/pets': (context) =>
               Scaffold(body: Text(ModalRoute.of(context)!.settings.name!)),

@@ -1,3 +1,4 @@
+import 'package:flutter_vethome/auth/authentication.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_storage.dart';
@@ -228,24 +229,33 @@ void main() {
     expect(storage.saveCalls, 0);
   });
 
-  test('login aceita o e-mail do perfil local e rejeita outro', () {
-    seedExistingLocalProfile();
+  test(
+    'login de demonstração valida o perfil local e a senha fictícia',
+    () async {
+      seedExistingLocalProfile();
+      const authentication = DemoAuthentication();
+      final user = await authentication.signIn(
+        email: '  PESSOA-A@example.test  ',
+        password: DemoAuthentication.demoPassword,
+      );
+      expect(user?.role, UserRole.cliente);
 
-    expect(
-      VetRepository.authenticate('PESSOA-A@example.test', '123456'),
-      isTrue,
-    );
-    expect(
-      VetRepository.authenticate('PESSOA-A@example.test', '1234  '),
-      isTrue,
-    );
-    expect(
-      VetRepository.authenticate('PESSOA-A@example.test', '      '),
-      isFalse,
-    );
-    expect(
-      VetRepository.authenticate('pessoa-b@example.test', '123456'),
-      isFalse,
-    );
-  });
+      for (final password in ['123456', '1234  ', '      ']) {
+        expect(
+          await authentication.signIn(
+            email: 'PESSOA-A@example.test',
+            password: password,
+          ),
+          isNull,
+        );
+      }
+      expect(
+        await authentication.signIn(
+          email: 'pessoa-b@example.test',
+          password: DemoAuthentication.demoPassword,
+        ),
+        isNull,
+      );
+    },
+  );
 }

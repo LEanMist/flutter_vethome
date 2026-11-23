@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../auth/auth_session.dart';
 import '../data/local_data_manager.dart';
 import '../data/local_storage.dart';
 import '../data/theme_preferences.dart';
@@ -691,7 +692,7 @@ class ConfigScreen extends StatelessWidget {
     }
 
     if (context.mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+      AuthScope.signOut(context);
     }
   }
 }

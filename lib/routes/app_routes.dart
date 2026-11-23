@@ -1,14 +1,16 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 
+import '../auth/auth_session.dart';
+import '../auth/authentication.dart';
 import '../data/vet_repository.dart';
 import '../pages/addresses_page.dart';
 import '../pages/agenda_page.dart';
 import '../pages/chat_page.dart';
 import '../pages/config_page.dart';
 import '../pages/gabriela/gabriela_area_page.dart';
-import '../pages/gabriela/gabriela_splash_screen.dart';
 import '../models/saved_address.dart';
 import '../models/pet_model.dart';
 import '../pages/agendamentos_page.dart';
@@ -58,15 +60,61 @@ Widget _petPage(BuildContext context, Widget Function(PetModel) builder) {
 }
 
 class AppRoutes {
-  AppRoutes._();
+  AppRoutes(this.session);
 
+  final AuthSession session;
+
+  Route<dynamic>? generate(RouteSettings requested) {
+    final path = switch (requested.name) {
+      '/gabriela/splash' => '/',
+      '/gabriela/login' => '/login',
+      '/home' => '/pets',
+      final name => name,
+    };
+    if (path == null || !_pages.containsKey(path)) return null;
+    final destination = _authorizedDestination(path, requested.arguments);
+    return MaterialPageRoute<dynamic>(
+      settings: RouteSettings(
+        name: destination,
+        arguments: destination == path ? requested.arguments : null,
+      ),
+      builder: _pages[destination]!,
+    );
+  }
+
+  List<Route<dynamic>> initialRoutes(String name) => [
+    generate(RouteSettings(name: name)) ??
+        generate(const RouteSettings(name: '/login'))!,
+  ];
+
+  String _authorizedDestination(String path, Object? arguments) {
+    final home = session.homeRoute;
+    if (path == '/' || path == '/login') return home ?? path;
+
+    final role = session.user?.role;
+    if (path == '/gabriela' || path.startsWith('/gabriela/')) {
+      return role == UserRole.veterinaria ? path : home ?? '/login';
+    }
+    if (role == UserRole.cliente) return path;
+
+    final demoRegistration =
+        session.isDemo &&
+        (path == '/cadastro' ||
+            (path == '/endereco' || path == '/cadastroPet') &&
+                arguments is Map ||
+            path == '/sucesso' && arguments is bool);
+    return role == null && demoRegistration ? path : home ?? '/login';
+  }
+
+  @visibleForTesting
   static Map<String, WidgetBuilder> get routes => {
+    ..._pages,
+    '/home': _pages['/pets']!,
+  };
+
+  static final _pages = <String, WidgetBuilder>{
     '/': (_) => const SplashScreen(),
-    // Mantém links antigos apontando para a primeira aba do Cliente.
-    '/home': (_) => const PetsPage(),
     '/login': (_) => const LoginPage(),
-    '/gabriela/splash': (_) => const GabrielaSplashScreen(),
-    '/gabriela/login': (_) => const LoginPage.veterinarianDemo(),
     '/gabriela': (_) => const GabrielaAreaPage(),
     '/gabriela/perfil': (_) => const GabrielaAreaPage(initialIndex: 0),
     '/gabriela/mensagens': (_) => const GabrielaAreaPage(initialIndex: 1),

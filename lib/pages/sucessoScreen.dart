@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../auth/auth_session.dart';
 import '../data/vet_repository.dart';
 import '../theme.dart';
 
@@ -29,12 +30,24 @@ class _SucessoScreenState extends State<SucessoScreen>
       setState(() => _arrived = true);
       if (MediaQuery.of(context).accessibleNavigation) return;
       await Future<void>.delayed(const Duration(milliseconds: 1400));
-      if (mounted && !MediaQuery.of(context).accessibleNavigation) _goToPets();
+      if (mounted &&
+          ModalRoute.isCurrentOf(context) == true &&
+          !MediaQuery.of(context).accessibleNavigation) {
+        _continueAfterRegistration();
+      }
     });
   }
 
-  void _goToPets() =>
-      Navigator.pushNamedAndRemoveUntil(context, '/pets', (_) => false);
+  String get _continuationRoute {
+    final session = AuthScope.maybeOf(context);
+    return session == null ? '/pets' : session.homeRoute ?? '/login';
+  }
+
+  void _continueAfterRegistration() => Navigator.pushNamedAndRemoveUntil(
+    context,
+    _continuationRoute,
+    (_) => false,
+  );
 
   @override
   void dispose() {
@@ -326,7 +339,7 @@ class _SucessoScreenState extends State<SucessoScreen>
     width: width,
     height: height,
     child: ElevatedButton(
-      onPressed: _goToPets,
+      onPressed: _continueAfterRegistration,
       style: ElevatedButton.styleFrom(
         backgroundColor: VH.primary,
         foregroundColor: Colors.white,
@@ -338,9 +351,13 @@ class _SucessoScreenState extends State<SucessoScreen>
           fontWeight: FontWeight.bold,
         ),
       ),
-      child: const FittedBox(
+      child: FittedBox(
         fit: BoxFit.scaleDown,
-        child: Text('Ir para Pets', maxLines: 1, softWrap: false),
+        child: Text(
+          _continuationRoute == '/login' ? 'Ir para o login' : 'Ir para Pets',
+          maxLines: 1,
+          softWrap: false,
+        ),
       ),
     ),
   );

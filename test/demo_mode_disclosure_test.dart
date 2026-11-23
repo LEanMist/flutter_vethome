@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/cadastro_page.dart';
-import 'package:flutter_vethome/pages/login_page.dart';
 import 'package:flutter_vethome/widgets/auth/demo_mode_notice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/demo_auth.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -16,7 +17,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+    await tester.pumpWidget(MaterialApp(home: demoLogin()));
     await tester.pumpAndSettle();
 
     expect(find.byType(DemoModeNotice), findsOneWidget);
@@ -46,7 +47,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+    await tester.pumpWidget(MaterialApp(home: demoLogin()));
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.byTooltip('Google'));
@@ -87,7 +88,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+    await tester.pumpWidget(MaterialApp(home: demoLogin()));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Esqueceu sua senha?'));
     await tester.pumpAndSettle();
