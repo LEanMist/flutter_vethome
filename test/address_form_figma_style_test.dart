@@ -66,8 +66,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(address: address, modal: true),
@@ -388,8 +389,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(),
@@ -447,8 +449,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(2)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
           child: child!,
         ),
         home: const AddressEditorPage(),
@@ -537,6 +540,11 @@ void main() {
       );
       expect(tester.getSize(circle), const Size.square(48));
       expect(tester.getCenter(glyph), tester.getCenter(circle));
+      final field = find.ancestor(
+        of: glyph,
+        matching: find.byType(TextFormField),
+      );
+      expect(tester.getTopLeft(circle).dx, tester.getTopLeft(field.first).dx);
     }
     expect(tester.takeException(), isNull);
   });

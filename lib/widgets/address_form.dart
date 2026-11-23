@@ -300,6 +300,7 @@ class _AddressFormState extends State<AddressForm> {
       compact: true,
       figmaForm: _registering || editingLayout,
       circularPrefix: _registering,
+      circularPrefixWidth: _registering ? 56 : null,
       figmaFillColor: editingLayout
           ? VH.secondary.withValues(alpha: .25)
           : null,
