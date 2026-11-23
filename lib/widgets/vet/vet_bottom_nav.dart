@@ -50,6 +50,14 @@ class VetBottomNav extends StatelessWidget {
     'Configurações',
   ];
 
+  static const List<IconData?> _symbols = [
+    null,
+    Icons.person,
+    Icons.call,
+    Icons.calendar_month,
+    Icons.settings,
+  ];
+
   @override
   Widget build(BuildContext context) {
     final double s = PetsTheme.scaleOf(context);
@@ -115,10 +123,8 @@ class VetBottomNav extends StatelessWidget {
                     _VetNavDestination(
                       label: _labels[destination.value],
                       icon: _icons[destination.value],
+                      symbol: _symbols[destination.value],
                       selected: destination.value == selectedIndex,
-                      highlighted: destination.value == 0,
-                      figmaPetsSelection:
-                          figmaPetsSelection && destination.value == 0,
                       scale: s,
                       onTap: () => onSelected(destination.value),
                     ),
@@ -152,18 +158,16 @@ class _VetNavDestination extends StatefulWidget {
   const _VetNavDestination({
     required this.label,
     required this.icon,
+    required this.symbol,
     required this.selected,
-    required this.highlighted,
-    required this.figmaPetsSelection,
     required this.scale,
     required this.onTap,
   });
 
   final String label;
   final String icon;
+  final IconData? symbol;
   final bool selected;
-  final bool highlighted;
-  final bool figmaPetsSelection;
   final double scale;
   final VoidCallback onTap;
 
@@ -179,15 +183,14 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
   @override
   Widget build(BuildContext context) {
     final dimension = (50 * widget.scale).clamp(48.0, 50.0);
-    final selectedPets = widget.figmaPetsSelection && widget.selected;
-    final highContrast = selectedPets && MediaQuery.highContrastOf(context);
-    final whitePetsIcon = selectedPets && !highContrast;
+    final highContrast = widget.selected && MediaQuery.highContrastOf(context);
+    final whiteIcon = widget.selected && !highContrast;
     final states = <WidgetState>{
       if (_pressed) WidgetState.pressed,
       if (_focused) WidgetState.focused,
       if (_hovered) WidgetState.hovered,
     };
-    final overlay = whitePetsIcon
+    final overlay = whiteIcon
         ? PetsTheme.figmaListOverlay(states)
         : VH.interactionOverlay(states);
     return Semantics(
@@ -212,65 +215,59 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
               child: Container(
                 key: ValueKey('vet-nav-visual-${widget.label}'),
                 foregroundDecoration: BoxDecoration(
-                  color: widget.selected && !widget.highlighted
-                      ? Color.alphaBlend(
-                          overlay ?? Colors.transparent,
-                          VetColors.rose.withValues(alpha: .28),
-                        )
-                      : overlay,
+                  color: overlay,
                   shape: BoxShape.circle,
-                  border: widget.selected && !widget.highlighted
-                      ? Border.all(color: VetColors.brown, width: 2)
-                      : null,
                 ),
                 child: Center(
-                  child: widget.highlighted
-                      ? Container(
-                          width: 50 * widget.scale,
-                          height: 50 * widget.scale,
-                          alignment: Alignment.center,
-                          decoration: widget.selected
-                              ? inset_shadow.BoxDecoration(
-                                  color: whitePetsIcon
-                                      ? PetsTheme.figmaListAccent
-                                      : VetColors.roseOverlay50,
-                                  shape: BoxShape.circle,
-                                  boxShadow: const [
-                                    inset_shadow.BoxShadow(
-                                      color: VetColors.shadowDark,
-                                      offset: Offset(2, 2),
-                                      blurRadius: 2,
-                                      inset: true,
-                                    ),
-                                  ],
-                                )
-                              : const BoxDecoration(
-                                  color: VetColors.pink,
-                                  shape: BoxShape.circle,
-                                ),
-                          child: ExcludeSemantics(
-                            child: Image.asset(
+                  child: Container(
+                    width: 50 * widget.scale,
+                    height: 50 * widget.scale,
+                    alignment: Alignment.center,
+                    decoration: widget.selected
+                        ? inset_shadow.BoxDecoration(
+                            color: whiteIcon
+                                ? PetsTheme.figmaListAccent
+                                : VetColors.roseOverlay50,
+                            shape: BoxShape.circle,
+                            boxShadow: const [
+                              inset_shadow.BoxShadow(
+                                color: VetColors.shadowDark,
+                                offset: Offset(2, 2),
+                                blurRadius: 2,
+                                inset: true,
+                              ),
+                            ],
+                          )
+                        : const BoxDecoration(
+                            color: VetColors.pink,
+                            shape: BoxShape.circle,
+                          ),
+                    child: ExcludeSemantics(
+                      child: widget.symbol == null
+                          ? Image.asset(
                               widget.icon,
                               width: 35 * widget.scale,
                               height: 35 * widget.scale,
-                              color: whitePetsIcon
+                              color: whiteIcon
                                   ? Colors.white
                                   : highContrast
                                   ? VetColors.calendarTextOnRose
                                   : null,
-                              colorBlendMode: selectedPets
+                              colorBlendMode: widget.selected
                                   ? BlendMode.srcIn
                                   : null,
+                            )
+                          : Icon(
+                              widget.symbol,
+                              size: 30 * widget.scale,
+                              color: whiteIcon
+                                  ? Colors.white
+                                  : highContrast
+                                  ? VetColors.calendarTextOnRose
+                                  : VetColors.brown,
                             ),
-                          ),
-                        )
-                      : ExcludeSemantics(
-                          child: Image.asset(
-                            widget.icon,
-                            width: 50 * widget.scale,
-                            height: 50 * widget.scale,
-                          ),
-                        ),
+                    ),
+                  ),
                 ),
               ),
             ),

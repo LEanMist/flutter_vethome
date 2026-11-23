@@ -420,22 +420,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('D10 keeps Figma brown icons when a destination is selected', (
-    tester,
-  ) async {
+  testWidgets('D10 destaca o ícone selecionado em branco', (tester) async {
     viewport(tester, const Size(390, 844));
     const labels = ['Pets', 'Perfil', 'Conversa', 'Agenda', 'Configurações'];
-    const figmaAssets = [
-      'pets.png',
-      'frame-53.png',
-      'frame-52.png',
-      'frame-50.png',
-      'frame-49-2.png',
-    ];
-
-    Color composite(Color foreground, Color background) =>
-        Color.alphaBlend(foreground, background);
-
     double linearChannel(double normalized) {
       return normalized <= .04045
           ? normalized / 12.92
@@ -459,10 +446,8 @@ void main() {
       return (lighter + .05) / (darker + .05);
     }
 
-    final navSurface = composite(VetColors.roseOverlay50, VetColors.pink);
-    final selectedPetsSurface = composite(VetColors.roseOverlay50, navSurface);
     expect(
-      contrastRatio(VetColors.brown, selectedPetsSurface),
+      contrastRatio(Colors.white, PetsTheme.figmaListAccent),
       greaterThanOrEqualTo(3),
     );
 
@@ -483,13 +468,17 @@ void main() {
         final semantics = tester.widget<Semantics>(destination);
         expect(semantics.properties.selected, i == selected);
         if (i == selected) {
-          final image = tester.widget<Image>(
-            find.descendant(of: destination, matching: find.byType(Image)),
-          );
-          expect(
-            (image.image as AssetImage).assetName,
-            endsWith(figmaAssets[i]),
-          );
+          if (i == 0) {
+            final image = tester.widget<Image>(
+              find.descendant(of: destination, matching: find.byType(Image)),
+            );
+            expect(image.color, Colors.white);
+          } else {
+            final icon = tester.widget<Icon>(
+              find.descendant(of: destination, matching: find.byType(Icon)),
+            );
+            expect(icon.color, Colors.white);
+          }
         }
       }
       expect(tester.takeException(), isNull);
