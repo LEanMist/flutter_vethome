@@ -20,6 +20,10 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
+    for (final category in ['Exames', 'Vacinas']) {
+      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.pumpAndSettle();
+    }
     final optionFinder = find.text('Hemograma');
     expect(optionFinder, findsOneWidget);
     final optionText = tester.widget<Text>(optionFinder);
@@ -66,6 +70,10 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
+    for (final category in ['Exames', 'Vacinas']) {
+      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.pumpAndSettle();
+    }
 
     // SERVICES_PAGE 2564:398; medidas absolutas no frame 390 × 844.
     const categories = [

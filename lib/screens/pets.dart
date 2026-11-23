@@ -313,10 +313,9 @@ class ServicosScreen extends StatefulWidget {
 }
 
 class _ServicosScreenState extends State<ServicosScreen> {
-  final Set<String> _expanded = {'Exames', 'Vacinas'};
-  final Set<String> _interactedCategories = <String>{};
+  final Set<String> _expanded = <String>{};
   final Set<String> _selected = <String>{};
-  String? _desktopExpandedCategory = 'Exames';
+  String? _desktopExpandedCategory;
   final _optionControllers = <String, ScrollController>{
     'Exames': ScrollController(),
     'Vacinas': ScrollController(),
@@ -343,7 +342,6 @@ class _ServicosScreenState extends State<ServicosScreen> {
   }
 
   void _toggleCategory(String name) => setState(() {
-    _interactedCategories.add(name);
     final desktop = MediaQuery.sizeOf(context).width >= VH.desktopBreakpoint;
     if (desktop) {
       if (_desktopExpandedCategory == name && _expanded.contains(name)) {
@@ -595,11 +593,9 @@ class _ServicosScreenState extends State<ServicosScreen> {
     }
 
     final visual = _ServiceCategoryVisual.forName(name);
-    final dynamicArrow = _interactedCategories.contains(name)
-        ? _isCategoryExpanded(name)
-              ? _ServiceCategoryArrow.down
-              : _ServiceCategoryArrow.right
-        : visual.arrow;
+    final dynamicArrow = _isCategoryExpanded(name)
+        ? _ServiceCategoryArrow.down
+        : _ServiceCategoryArrow.right;
     final borderRadius = visual.borderRadius;
     final gradient = LinearGradient(
       begin: Alignment(-1, -visual.gradientAlignmentY),

@@ -75,6 +75,7 @@ void main() {
     Size size = const Size(390, 844),
     double? textScale,
     bool cat = false,
+    bool expandCategories = true,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -118,7 +119,34 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    if (expandCategories && size.width < 900) {
+      for (final category in ['Exames', 'Vacinas']) {
+        final pill = find.byKey(ValueKey('services-pill-$category'));
+        await tester.ensureVisible(pill);
+        await tester.tap(pill);
+        await tester.pumpAndSettle();
+      }
+    }
   }
+
+  testWidgets('Serviços abre com categorias fechadas e permite expandir', (
+    tester,
+  ) async {
+    await openServices(tester, expandCategories: false);
+    expect(find.text('Hemograma'), findsNothing);
+    expect(find.text('V8'), findsNothing);
+    for (final category in ['Exames', 'Vacinas']) {
+      expect(tester.widget<RotatedBox>(find.byKey(ValueKey('services-category-arrow-rotation-$category'))).quarterTurns, 0);
+      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('Hemograma'), findsOneWidget);
+    expect(find.text('V8'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('services-pill-Exames')));
+    await tester.pumpAndSettle();
+    expect(find.text('Hemograma'), findsNothing);
+    expect(find.text('V8'), findsOneWidget);
+  });
 
   Finder selectionMarker(String name) =>
       find.byKey(ValueKey('services-checkbox-$name'));
@@ -365,7 +393,7 @@ void main() {
     expect(categoryArrowAsset(tester, 'Exames'), down);
     expect(categoryArrowAsset(tester, 'Vacinas'), right);
     expect(categoryArrowRotation(tester, 'Exames'), 1);
-    expect(categoryArrowRotation(tester, 'Vacinas'), 0);
+    expect(categoryArrowRotation(tester, 'Vacinas'), 1);
 
     await tester.tap(find.byKey(const ValueKey('services-pill-Exames')));
     await tester.pumpAndSettle();

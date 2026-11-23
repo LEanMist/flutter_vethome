@@ -36,6 +36,10 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
+    for (final category in ['Exames', 'Vacinas']) {
+      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.pumpAndSettle();
+    }
 
     // Navegação global mantida por solicitação do usuário; o frame é usado
     // para validar a geometria e o conteúdo específico de Serviços.
@@ -559,9 +563,7 @@ void main() {
 
       final arrow = find.descendant(
         of: target,
-        matching: screen is ServicosScreen
-            ? find.byType(Icon)
-            : find.byType(VetChevron),
+        matching: find.byType(VetChevron),
       );
       expect(arrow, findsOneWidget);
       expect(
