@@ -87,7 +87,8 @@ jobs:
             android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Preparar SDK e NDK Android
-        run: sdkmanager 'platforms;android-36' 'ndk;28.2.13676358'
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'ndk;28.2.13676358'
 
       - name: Compilar APK de depuração
         run: flutter build apk --debug --no-pub
