@@ -116,7 +116,7 @@ class VetBottomNav extends StatelessWidget {
                       label: _labels[destination.value],
                       icon: _icons[destination.value],
                       selected: destination.value == selectedIndex,
-                      highlighted: destination.key == 0,
+                      highlighted: destination.value == 0,
                       figmaPetsSelection:
                           figmaPetsSelection && destination.value == 0,
                       scale: s,
@@ -210,9 +210,18 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
               customBorder: const CircleBorder(),
               overlayColor: const WidgetStatePropertyAll(Colors.transparent),
               child: Container(
+                key: ValueKey('vet-nav-visual-${widget.label}'),
                 foregroundDecoration: BoxDecoration(
-                  color: overlay,
+                  color: widget.selected && !widget.highlighted
+                      ? Color.alphaBlend(
+                          overlay ?? Colors.transparent,
+                          VetColors.rose.withValues(alpha: .28),
+                        )
+                      : overlay,
                   shape: BoxShape.circle,
+                  border: widget.selected && !widget.highlighted
+                      ? Border.all(color: VetColors.brown, width: 2)
+                      : null,
                 ),
                 child: Center(
                   child: widget.highlighted
