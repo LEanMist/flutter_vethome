@@ -1,5 +1,7 @@
 # VetHome — contexto para continuar o projeto
 
+A [preparação para demonstração](docs/distribuicao.md) reúne a auditoria de distribuição, os resultados do GitHub Actions e a investigação atual do runner Chrome.
+
 ## Entrada do Cliente e seletor de telas
 
 - A rota `/` abre a Splash do Cliente em qualquer tamanho. O login demonstrativo

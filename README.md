@@ -24,10 +24,10 @@ O cadastro também termina em Pets. Links antigos para `/home` abrem a lista de
 pets. Em modo de depuração, o botão de grade abre o seletor de telas, incluindo
 o acesso demonstrativo à área da Gabriela.
 
-Instale o Flutter e as dependências do projeto. Na pasta do projeto:
+Use o Flutter 3.50.1, a versão fixada na integração contínua. Na pasta do projeto:
 
 ```powershell
-flutter pub get
+flutter pub get --enforce-lockfile
 flutter run -d chrome
 ```
 
@@ -39,7 +39,7 @@ Para iniciar em outro dispositivo, consulte os destinos disponíveis com `flutte
 flutter analyze --no-pub
 flutter test --no-pub
 flutter test --no-pub --platform chrome
-flutter build web --no-pub
+flutter build web --no-pub --no-web-resources-cdn
 ```
 
 `--platform chrome` seleciona o runner de widgets no navegador neste SDK.
@@ -50,10 +50,10 @@ o runner local para a suíte de widgets. Os resultados estão em
 
 ## Estado das plataformas
 
-- Web: build de produção aprovado e regressões focadas executadas no Chrome.
-  A suíte completa de widgets no navegador continua pendente.
-- Android e Windows: os builds debug foram interrompidos antes da
-  compilação por toolchain e download de artefatos indisponíveis.
+O workflow [Qualidade Flutter](.github/workflows/qualidade.yml) executa a
+análise estática, os testes no runner local e os builds Web, Android debug e
+Windows debug em `liminha`. A [preparação para demonstração](docs/distribuicao.md)
+registra a auditoria de distribuição, os resultados por plataforma e o checklist.
 
 ## Estrutura útil
 
