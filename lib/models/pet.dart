@@ -5,6 +5,8 @@ enum PetGenero { macho, femea }
 class Pet {
   Pet({
     this.id,
+    this.fotoPerfilPath,
+    required this.usuarioId,
     required this.tipo,
     required this.nome,
     required this.genero,
@@ -14,6 +16,8 @@ class Pet {
   });
 
   final String? id;
+  final String? fotoPerfilPath;
+  final String usuarioId;
   final PetType tipo;
   final String nome;
   final PetGenero genero;
@@ -24,6 +28,9 @@ class Pet {
   List<String> get errors {
     final errors = <String>[];
 
+    if (usuarioId.trim().isEmpty) {
+      errors.add('O pet precisa estar associado a um usuário.');
+    }
     if (tipo == PetType.outro) {
       errors.add('Selecione um tipo de animal válido.');
     }
@@ -45,6 +52,7 @@ class Pet {
 
   Pet copyWith({
     String? id,
+    String? fotoPerfilPath,
     PetType? tipo,
     String? nome,
     PetGenero? genero,
@@ -54,6 +62,8 @@ class Pet {
   }) {
     return Pet(
       id: id ?? this.id,
+      fotoPerfilPath: fotoPerfilPath ?? this.fotoPerfilPath,
+      usuarioId: usuarioId,
       tipo: tipo ?? this.tipo,
       nome: nome ?? this.nome,
       genero: genero ?? this.genero,

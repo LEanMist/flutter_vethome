@@ -6,7 +6,6 @@ import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/widgets/etiqueta_perfil.dart';
 import 'package:flutter_vethome/widgets/opcao.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
-import 'package:image_picker/image_picker.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key, this.usuarioRepository, this.usuarioId});
@@ -19,7 +18,6 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPage extends State<PerfilPage> {
-  final _imagePicker = ImagePicker();
   String? _fotoPerfilPath;
 
   UsuarioRepository get _repository =>
@@ -33,38 +31,8 @@ class _PerfilPage extends State<PerfilPage> {
   }
 
   Future<void> _selecionarFoto() async {
-    final ImageSource? source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      backgroundColor: VetCores.rosaFundo,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.photo_camera, color: VetCores.marrom),
-              title: const Text('Tirar foto'),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: Icon(Icons.photo_library, color: VetCores.marrom),
-              title: const Text('Escolher da galeria'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (source == null || !mounted) return;
-
     try {
-      final XFile? picked = await _imagePicker.pickImage(
-        source: source,
-        maxWidth: 800,
-        imageQuality: 85,
-      );
+      final picked = await selecionarFotoPerfil(context);
       if (picked == null || !mounted) return;
 
       final usuario = _usuarioAtual;
@@ -252,14 +220,14 @@ class _PerfilPage extends State<PerfilPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: compacto ? 70 : 100),
+                SizedBox(height: compacto ? 60 : 100),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Opcao(
-                        texto: 'Mudar Foto de Perfil',
+                        texto: 'Mudar foto de perfil',
                         compacto: compacto,
                         onTap: _selecionarFoto,
                       ),

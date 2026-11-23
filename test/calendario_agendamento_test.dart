@@ -12,6 +12,44 @@ import 'package:flutter_vethome/widgets/calendario.dart';
 import 'package:flutter_vethome/widgets/etiqueta_perfil.dart';
 
 void main() {
+  testWidgets('seletor de agendamento mostra somente pets do usuário', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final usuarios = InMemoryUsuarioRepository(incluirUsuarioTeste: true);
+    final usuarioId = usuarios.findAll().single.id!;
+    final pets = InMemoryPetRepository();
+    Pet criarPet(String usuarioId, String nome) => Pet(
+      usuarioId: usuarioId,
+      nome: nome,
+      tipo: PetType.cachorro,
+      genero: PetGenero.femea,
+      peso: 4,
+      dataNascimento: DateTime(2020),
+      raca: 'Poodle',
+    );
+    pets.save(criarPet(usuarioId, 'Pet próprio'));
+    pets.save(criarPet('outro-usuario', 'Pet de outra conta'));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AgendamentoPage(
+            usuarioId: usuarioId,
+            usuarioRepository: usuarios,
+            petRepository: pets,
+            agendamentoRepository: InMemoryAgendamentoRepository(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Agendar consulta'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pet próprio'), findsOneWidget);
+    expect(find.text('Pet de outra conta'), findsNothing);
+  });
+
   testWidgets(
     'lista apenas os agendamentos do usuário com data, horário e primeiro serviço',
     (tester) async {
@@ -101,13 +139,16 @@ void main() {
         VetCores.branco,
       );
       final caixaServico = tester.widget<Container>(
-        find.ancestor(
-          of: find.text('Hemograma'),
-          matching: find.byWidgetPredicate(
-            (widget) =>
-                widget is Container && widget.decoration is inset.BoxDecoration,
-          ),
-        ).first,
+        find
+            .ancestor(
+              of: find.text('Hemograma'),
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Container &&
+                    widget.decoration is inset.BoxDecoration,
+              ),
+            )
+            .first,
       );
       final decoracao = caixaServico.decoration! as inset.BoxDecoration;
       expect(
@@ -240,9 +281,11 @@ void main() {
         convenio: ConvenioAgendamento.particular,
       ),
     );
+    final usuarios = InMemoryUsuarioRepository(incluirUsuarioTeste: true);
     final pets = InMemoryPetRepository()
       ..save(
         Pet(
+          usuarioId: usuarios.findAll().single.id!,
           nome: 'Luna',
           tipo: PetType.cachorro,
           genero: PetGenero.femea,
@@ -257,9 +300,7 @@ void main() {
         home: Scaffold(
           body: AgendamentoPage(
             petRepository: pets,
-            usuarioRepository: InMemoryUsuarioRepository(
-              incluirUsuarioTeste: true,
-            ),
+            usuarioRepository: usuarios,
             agendamentoRepository: agendamentos,
           ),
         ),

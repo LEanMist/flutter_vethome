@@ -21,26 +21,22 @@ class AgendamentoPage extends StatefulWidget {
     this.usuarioRepository,
     this.usuarioId,
     this.agendamentoRepository,
+    this.atualizacaoAgendamentos,
+    this.onAgendamentoConcluido,
   });
 
   final PetRepository? petRepository;
   final UsuarioRepository? usuarioRepository;
   final String? usuarioId;
   final AgendamentoRepository? agendamentoRepository;
+  final Listenable? atualizacaoAgendamentos;
+  final VoidCallback? onAgendamentoConcluido;
 
   @override
   State<AgendamentoPage> createState() => _AgendamentoPage();
 }
 
 class _AgendamentoPage extends State<AgendamentoPage> {
-  static const _horariosDisponiveis = [
-    '12:00',
-    '13:00',
-    '14:00',
-    '15:00',
-    '16:00',
-  ];
-
   late DateTime _dataSelecionada;
   final List<Agendamento> _agendamentos = [];
   int _versaoCarregamento = 0;
@@ -86,15 +82,15 @@ class _AgendamentoPage extends State<AgendamentoPage> {
       return;
     }
 
-    final pets = _repository.findAll();
-    if (pets.isEmpty) {
-      _mostrarMensagem('Cadastre um pet primeiro para agendar consulta.');
-      return;
-    }
-
     final usuarioId = _usuarioId;
     if (usuarioId == null || usuarioId.trim().isEmpty) {
       _mostrarMensagem('Cadastre um usuário antes de agendar consulta.');
+      return;
+    }
+
+    final pets = _repository.findByUsuarioId(usuarioId);
+    if (pets.isEmpty) {
+      _mostrarMensagem('Cadastre um pet primeiro para agendar consulta.');
       return;
     }
 
@@ -109,27 +105,13 @@ class _AgendamentoPage extends State<AgendamentoPage> {
       return;
     }
 
-    Set<String> horariosOcupados;
-    try {
-      horariosOcupados = await _agendamentoRepository.horariosOcupados(
-        _dataSelecionada,
-      );
-    } catch (error) {
-      if (mounted) _mostrarMensagem('Não foi possível consultar os horários: $error');
-      return;
-    }
-    if (!mounted) return;
-
-    final horario = await showDialog<String>(
-      context: context,
-      builder: (context) => SeletorHorario(
-        data: _dataSelecionada,
-        horarios: _horariosDisponiveis,
-        horariosOcupados: horariosOcupados,
-      ),
+    final horario = await selecionarHorarioAgendamento(
+      context,
+      data: _dataSelecionada,
+      repository: _agendamentoRepository,
     );
     if (!mounted || horario == null) return;
-    if (!_horariosDisponiveis.contains(horario)) {
+    if (!horariosDisponiveisAgendamento.contains(horario)) {
       _mostrarMensagem('Selecione um horário disponível.');
       return;
     }
@@ -162,7 +144,11 @@ class _AgendamentoPage extends State<AgendamentoPage> {
       setState(() {
         _agendamentos.insert(0, agendamento);
       });
-      unawaited(_carregarAgendamentos());
+      if (widget.onAgendamentoConcluido != null) {
+        widget.onAgendamentoConcluido!();
+      } else {
+        unawaited(_carregarAgendamentos());
+      }
     }
     _mostrarMensagem('Agendamento concluído para ${petSelecionado.nome}.');
   }
@@ -178,18 +164,31 @@ class _AgendamentoPage extends State<AgendamentoPage> {
     super.initState();
     final hoje = DateUtils.dateOnly(DateTime.now());
     _dataSelecionada = hoje;
+    widget.atualizacaoAgendamentos?.addListener(_atualizarAgendamentos);
     unawaited(_carregarAgendamentos());
   }
+
+  void _atualizarAgendamentos() => unawaited(_carregarAgendamentos());
 
   @override
   void didUpdateWidget(covariant AgendamentoPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.atualizacaoAgendamentos != widget.atualizacaoAgendamentos) {
+      oldWidget.atualizacaoAgendamentos?.removeListener(_atualizarAgendamentos);
+      widget.atualizacaoAgendamentos?.addListener(_atualizarAgendamentos);
+    }
     if (oldWidget.usuarioId != widget.usuarioId ||
         oldWidget.usuarioRepository != widget.usuarioRepository ||
         oldWidget.agendamentoRepository != widget.agendamentoRepository) {
       _agendamentos.clear();
       unawaited(_carregarAgendamentos());
     }
+  }
+
+  @override
+  void dispose() {
+    widget.atualizacaoAgendamentos?.removeListener(_atualizarAgendamentos);
+    super.dispose();
   }
 
   @override

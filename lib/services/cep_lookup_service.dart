@@ -8,6 +8,25 @@ class EnderecoCep {
   final String cidade;
 }
 
+String? validarEnderecoCep(
+  EnderecoCep? consulta, {
+  required String logradouro,
+  required String cidade,
+}) {
+  if (consulta == null ||
+      consulta.logradouro.trim().isEmpty ||
+      consulta.cidade.trim().isEmpty) {
+    return 'Não foi possível confirmar a rua e a cidade para este CEP.';
+  }
+  String normalizar(String texto) =>
+      texto.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  if (normalizar(consulta.logradouro) != normalizar(logradouro) ||
+      normalizar(consulta.cidade) != normalizar(cidade)) {
+    return 'A rua ou a cidade não corresponde ao CEP informado.';
+  }
+  return null;
+}
+
 abstract interface class CepLookupService {
   Future<EnderecoCep?> consultar(String cep);
 }

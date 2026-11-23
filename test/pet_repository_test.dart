@@ -6,6 +6,7 @@ void main() {
   group('Pet validation', () {
     test('accepts a valid dog registration', () {
       final pet = Pet(
+        usuarioId: 'usuario-1',
         tipo: PetType.cachorro,
         nome: 'Max',
         genero: PetGenero.macho,
@@ -19,6 +20,7 @@ void main() {
 
     test('rejects an unsupported animal type', () {
       final pet = Pet(
+        usuarioId: 'usuario-1',
         tipo: PetType.outro,
         nome: 'Max',
         genero: PetGenero.macho,
@@ -32,6 +34,7 @@ void main() {
 
     test('rejects future birth dates', () {
       final pet = Pet(
+        usuarioId: 'usuario-1',
         tipo: PetType.gato,
         nome: 'Mimi',
         genero: PetGenero.femea,
@@ -48,6 +51,7 @@ void main() {
     test('stores and retrieves registered pets', () {
       final repository = InMemoryPetRepository();
       final pet = Pet(
+        usuarioId: 'usuario-1',
         tipo: PetType.cachorro,
         nome: 'Max',
         genero: PetGenero.macho,
@@ -67,6 +71,7 @@ void main() {
     test('does not save invalid pets', () {
       final repository = InMemoryPetRepository();
       final pet = Pet(
+        usuarioId: 'usuario-1',
         tipo: PetType.gato,
         nome: '',
         genero: PetGenero.femea,
@@ -77,6 +82,38 @@ void main() {
 
       expect(() => repository.save(pet), throwsArgumentError);
       expect(repository.findAll(), isEmpty);
+    });
+
+    test('separa pets por usuário e impede mudança de proprietário', () {
+      final repository = InMemoryPetRepository();
+      Pet pet(String id, String usuario) => Pet(
+        id: id,
+        usuarioId: usuario,
+        tipo: PetType.cachorro,
+        nome: id,
+        genero: PetGenero.macho,
+        peso: 7,
+        dataNascimento: DateTime(2020),
+        raca: 'Labrador',
+      );
+      repository.save(pet('max', 'usuario-1'));
+      repository.save(pet('luna', 'usuario-2'));
+      expect(repository.findByUsuarioId('usuario-1').single.nome, 'max');
+      expect(repository.findByUsuarioId('usuario-2').single.nome, 'luna');
+      expect(repository.findByUsuarioId('usuario-3'), isEmpty);
+      expect(
+        () => repository.save(pet('max', 'usuario-2')),
+        throwsArgumentError,
+      );
+      expect(
+        () => repository.save(pet('sem-usuario', '')),
+        throwsArgumentError,
+      );
+      expect(repository.findById('max')!.usuarioId, 'usuario-1');
+      expect(
+        repository.findById('max')!.copyWith(nome: 'Novo').usuarioId,
+        'usuario-1',
+      );
     });
   });
 }

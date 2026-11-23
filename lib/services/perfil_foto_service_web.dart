@@ -4,6 +4,9 @@ import 'package:image_picker/image_picker.dart';
 Future<String> armazenarFotoPerfil(XFile imagem, String usuarioId) async =>
     imagem.path;
 
+Future<String> armazenarFotoPet(XFile imagem, String petId) async =>
+    imagem.path;
+
 Widget exibirFotoPerfil(String caminho) => Image.network(
   caminho,
   fit: BoxFit.cover,

@@ -96,7 +96,7 @@ class _ContatoPageState extends State<ContatoPage> {
       builder: (context, constraints) {
         final bool compacto =
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
-        final double alturaCabecalho = compacto ? 140 : 160;
+        final double alturaCabecalho = compacto ? 120 : 160;
         return Column(
           children: [
             Container(

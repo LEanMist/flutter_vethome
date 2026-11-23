@@ -7,16 +7,24 @@ import 'package:flutter_vethome/widgets/botao_cadastrar.dart';
 import 'package:flutter_vethome/widgets/campo_cadastro.dart';
 
 class CadastroPetPage extends StatefulWidget {
-  const CadastroPetPage({super.key, required this.destinoBuilder});
+  const CadastroPetPage({
+    super.key,
+    required this.destinoBuilder,
+    required this.usuarioId,
+    this.petRepository,
+  });
 
   final WidgetBuilder destinoBuilder;
+  final String usuarioId;
+  final PetRepository? petRepository;
 
   @override
   State<CadastroPetPage> createState() => _CadastroPetPage();
 }
 
 class _CadastroPetPage extends State<CadastroPetPage> {
-  final repository = InMemoryPetRepository.instance;
+  PetRepository get repository =>
+      widget.petRepository ?? InMemoryPetRepository.instance;
   final nomeController = TextEditingController();
   final tipoController = TextEditingController();
   final generoController = TextEditingController();
@@ -136,6 +144,7 @@ class _CadastroPetPage extends State<CadastroPetPage> {
 
   void _cadastrar() {
     final pet = Pet(
+      usuarioId: widget.usuarioId,
       tipo: _tipo ?? PetType.outro,
       nome: nomeController.text,
       genero: _genero ?? PetGenero.macho,

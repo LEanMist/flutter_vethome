@@ -6,7 +6,10 @@ void main() {
   testWidgets('pet type and gender use bottom sheet selectors', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: CadastroPetPage(destinoBuilder: (_) => const SizedBox.shrink()),
+        home: CadastroPetPage(
+          usuarioId: 'usuario-1',
+          destinoBuilder: (_) => const SizedBox.shrink(),
+        ),
       ),
     );
 

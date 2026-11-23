@@ -5,6 +5,54 @@ import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:flutter_vethome/widgets/etiqueta_perfil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+Future<DateTime?> selecionarDataAgendamento(
+  BuildContext context, {
+  required DateTime dataInicial,
+}) {
+  final hoje = DateUtils.dateOnly(DateTime.now());
+  var dataTemporaria = dataInicial.isBefore(hoje) ? hoje : dataInicial;
+  return showDialog<DateTime>(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: StatefulBuilder(
+          builder: (context, atualizarDialogo) {
+            final alturaDisponivel = MediaQuery.sizeOf(context).height - 110;
+            final escala = math.min(0.85, math.max(0.1, alturaDisponivel / 380));
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    tooltip: 'Fechar calendário',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    color: VetCores.branco,
+                  ),
+                ),
+                CalendarioAgendamento(
+                  dataSelecionada: dataTemporaria,
+                  onDataSelecionada: (data) =>
+                      atualizarDialogo(() => dataTemporaria = data),
+                  onDiaSelecionado: (data) => Navigator.of(context).pop(data),
+                  escala: escala,
+                  mostrarEtiqueta: false,
+                  arredondarTopo: true,
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    ),
+  );
+}
+
 class CalendarioAgendamento extends StatefulWidget {
   const CalendarioAgendamento({
     super.key,

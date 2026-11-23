@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
@@ -17,6 +18,7 @@ class CampoCadastro extends StatelessWidget {
     this.onChanged,
     this.onTap,
     this.keyboardType,
+    this.inputFormatters,
     this.obscureText = false,
     this.textCapitalization = TextCapitalization.none,
   });
@@ -32,6 +34,7 @@ class CampoCadastro extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onTap;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
   final bool obscureText;
   final TextCapitalization textCapitalization;
 
@@ -86,6 +89,7 @@ class CampoCadastro extends StatelessWidget {
                           (titulo == 'Peso'
                               ? TextInputType.number
                               : TextInputType.text),
+                      inputFormatters: inputFormatters,
                       textCapitalization: textCapitalization,
                       textAlignVertical: TextAlignVertical.center,
                       readOnly: onTap != null,

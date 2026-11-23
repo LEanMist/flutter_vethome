@@ -4,6 +4,7 @@ class VetCores {
   VetCores._();
 
   static const Color branco = Color(0xFFFFFFFF);
+  static const Color branco50 = Color(0x80FFFFFF);
   static const Color rosaFundo = Color(0xFFFAD3D5); // FAD3D5 (fundo, botões)
   static const Color rosaCard = Color(0xFFECBEC0);
   static const Color rosaEscuro = Color(0xFFC08081,); // C08081 (cabeçalhos, bordas, cards)

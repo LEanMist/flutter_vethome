@@ -39,16 +39,16 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void entrar() {
-    final identificador = _emailController.text.trim();
+    final email = _emailController.text.trim();
     final senha = _senhaController.text;
-    if (identificador.isEmpty || senha.isEmpty) {
-      mostrarMensagem('Informe seu usuário ou e-mail e sua senha.');
+    if (email.isEmpty || senha.isEmpty) {
+      mostrarMensagem('Informe seu e-mail e sua senha.');
       return;
     }
 
-    final usuario = _repository.autenticar(identificador, senha);
+    final usuario = _repository.autenticar(email, senha);
     if (usuario == null) {
-      mostrarMensagem('Usuário/e-mail ou senha inválidos.');
+      mostrarMensagem('E-mail ou senha inválidos.');
       return;
     }
 
@@ -202,7 +202,7 @@ class _LoginPageState extends State<LoginPage> {
                                           decoration: InputDecoration(
                                             filled: true,
                                             fillColor: Colors.transparent,
-                                            hintText: 'Usuário ou e-mail',
+                                            hintText: 'E-mail',
                                             hintStyle:
                                                 GoogleFonts.montserratAlternates(
                                                   fontWeight: FontWeight.w500,

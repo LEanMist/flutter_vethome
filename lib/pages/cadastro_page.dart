@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_vethome/models/usuario.dart';
@@ -46,6 +47,7 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
   GeneroUsuario? _genero;
   int _cepRequestId = 0;
   bool _consultandoCep = false;
+  bool _validandoCadastro = false;
   String? _cepFeedback;
 
   @override
@@ -179,6 +181,8 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
   }
 
   Future<void> _consultarCep(String cep, int requestId) async {
+    final enderecoAnterior = _enderecoController.text;
+    final cidadeAnterior = _cidadeController.text;
     try {
       final endereco = await _cepLookupService.consultar(cep);
       if (!mounted || requestId != _cepRequestId) return;
@@ -186,27 +190,48 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
       setState(() {
         _consultandoCep = false;
         if (endereco == null) {
-          _cepFeedback = 'CEP não encontrado. Confira ou preencha manualmente.';
+          _cepFeedback = 'CEP não encontrado. Confira o CEP informado.';
           return;
         }
-        if (endereco.logradouro.isNotEmpty) {
+        if (endereco.logradouro.isNotEmpty &&
+            _enderecoController.text == enderecoAnterior) {
           _enderecoController.text = endereco.logradouro;
         }
-        if (endereco.cidade.isNotEmpty) {
+        if (endereco.cidade.isNotEmpty &&
+            _cidadeController.text == cidadeAnterior) {
           _cidadeController.text = endereco.cidade;
         }
-        _cepFeedback = 'Endereço e cidade preenchidos.';
+        _cepFeedback = 'Consulta de CEP concluída.';
       });
     } catch (_) {
       if (!mounted || requestId != _cepRequestId) return;
       setState(() {
         _consultandoCep = false;
-        _cepFeedback = 'Falha na consulta. Você pode preencher manualmente.';
+        _cepFeedback = 'Falha na consulta. Tente novamente.';
       });
     }
   }
 
-  void _cadastrar() {
+  List<String> get _dadosCadastro => [
+    _nomeController.text,
+    _dataNascimentoController.text,
+    _generoController.text,
+    _cpfController.text,
+    _telefoneController.text,
+    _confirmarTelefoneController.text,
+    _cepController.text,
+    _enderecoController.text,
+    _numeroController.text,
+    _cidadeController.text,
+    _complementoController.text,
+    _emailController.text,
+    _confirmarEmailController.text,
+    _senhaController.text,
+    _confirmarSenhaController.text,
+  ];
+
+  Future<void> _cadastrar() async {
+    if (_validandoCadastro) return;
     final usuario = Usuario(
       nome: _nomeController.text,
       dataNascimento: _parseDataNascimento(_dataNascimentoController.text),
@@ -262,6 +287,43 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
       return;
     }
 
+    final dados = _dadosCadastro;
+    final genero = _genero;
+    ++_cepRequestId;
+    setState(() {
+      _validandoCadastro = true;
+      _consultandoCep = false;
+      _cepFeedback = null;
+    });
+    try {
+      final consulta = await _cepLookupService.consultar(usuario.cep);
+      if (!mounted) return;
+      if (!listEquals(dados, _dadosCadastro) || genero != _genero) {
+        _mostrarMensagem('Os dados mudaram. Cadastre novamente.');
+        return;
+      }
+      final erroCep = validarEnderecoCep(
+        consulta,
+        logradouro: usuario.endereco,
+        cidade: usuario.cidade,
+      );
+      if (erroCep != null) {
+        setState(() => _cepFeedback = erroCep);
+        _mostrarMensagem(erroCep);
+        return;
+      }
+    } catch (_) {
+      if (mounted) {
+        const mensagem = 'Não foi possível consultar o CEP. Tente novamente.';
+        setState(() => _cepFeedback = mensagem);
+        _mostrarMensagem(mensagem);
+      }
+      return;
+    } finally {
+      if (mounted) setState(() => _validandoCadastro = false);
+    }
+
+    if (!mounted) return;
     try {
       _repository.save(usuario, senha: senha);
       final usuarioSalvo = _repository.findByEmail(usuario.email);
@@ -559,6 +621,13 @@ class _InformacoesCadastroPageState extends State<InformacoesCadastroPage> {
                         ),
                       ),
                       const SizedBox(height: 30),
+                      if (_validandoCadastro)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 12),
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF68442E),
+                          ),
+                        ),
                       BotaoCadastro(
                         largura: larguraBotao,
                         altura: alturaBotao,

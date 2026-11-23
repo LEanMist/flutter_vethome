@@ -3,6 +3,109 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/widgets/seletor_horario.dart';
 
 void main() {
+  testWidgets('bloqueia horários passados de hoje e mantém os futuros', (
+    tester,
+  ) async {
+    final hoje = DateTime(2030, 1, 15);
+    await _abrirSeletor(
+      tester,
+      data: hoje,
+      agora: () => DateTime(2030, 1, 15, 15),
+      horarios: const ['12:00', '13:00', '14:00', '15:00', '16:00'],
+    );
+    for (final horario in ['12:00', '13:00', '14:00', '15:00']) {
+      expect(
+        tester
+            .widget<ElevatedButton>(find.byKey(ValueKey('horario-$horario')))
+            .onPressed,
+        isNull,
+      );
+    }
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const ValueKey('horario-16:00')))
+          .onPressed,
+      isNotNull,
+    );
+  });
+
+  testWidgets('amanhã mantém horários livres, exceto os já reservados', (
+    tester,
+  ) async {
+    await _abrirSeletor(
+      tester,
+      data: DateTime(2030, 1, 16),
+      agora: () => DateTime(2030, 1, 15, 15),
+      horarios: const ['12:00', '13:00', '14:00', '15:00', '16:00'],
+      horariosOcupados: {'13:00'},
+    );
+    for (final horario in ['12:00', '14:00', '15:00', '16:00']) {
+      expect(
+        tester
+            .widget<ElevatedButton>(find.byKey(ValueKey('horario-$horario')))
+            .onPressed,
+        isNotNull,
+      );
+    }
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const ValueKey('horario-13:00')))
+          .onPressed,
+      isNull,
+    );
+  });
+
+  testWidgets('atualiza o diálogo aberto quando o horário chega', (
+    tester,
+  ) async {
+    var agora = DateTime(2030, 1, 15, 9, 59, 59);
+    await _abrirSeletor(
+      tester,
+      data: DateTime(2030, 1, 15),
+      agora: () => agora,
+      horariosOcupados: {'09:00'},
+    );
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const ValueKey('horario-10:00')))
+          .onPressed,
+      isNotNull,
+    );
+    agora = DateTime(2030, 1, 15, 10);
+    await tester.pump(const Duration(seconds: 1));
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const ValueKey('horario-10:00')))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      find.text('Não há horários disponíveis para esta data.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('não seleciona horário que expirou antes da atualização visual', (
+    tester,
+  ) async {
+    var agora = DateTime(2030, 1, 15, 9, 59, 59);
+    await _abrirSeletor(
+      tester,
+      data: DateTime(2030, 1, 15),
+      agora: () => agora,
+    );
+    agora = DateTime(2030, 1, 15, 10);
+    await tester.tap(find.byKey(const ValueKey('horario-10:00')));
+    await tester.pump();
+    expect(find.byType(SeletorHorario), findsOneWidget);
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const ValueKey('horario-10:00')))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('horários ocupados ficam cinza e não podem ser selecionados', (
     tester,
   ) async {
@@ -78,6 +181,9 @@ Future<void> _abrirSeletor(
   double larguraBotao = 90,
   double alturaBotao = 48,
   Set<String> horariosOcupados = const {},
+  DateTime? data,
+  DateTime Function()? agora,
+  List<String> horarios = const ['09:00', '10:00'],
 }) async {
   await tester.binding.setSurfaceSize(const Size(390, 844));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -94,8 +200,9 @@ Future<void> _abrirSeletor(
                   final selecionado = await showDialog<String>(
                     context: context,
                     builder: (_) => SeletorHorario(
-                      data: DateTime(2024, 1, 15),
-                      horarios: const ['09:00', '10:00'],
+                      data: data ?? DateTime(2024, 1, 15),
+                      agora: agora ?? () => DateTime(2024, 1, 14),
+                      horarios: horarios,
                       horariosOcupados: horariosOcupados,
                       larguraBotao: larguraBotao,
                       alturaBotao: alturaBotao,

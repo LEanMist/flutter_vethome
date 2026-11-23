@@ -14,7 +14,25 @@ enum CategoriaServico {
 
 enum ConvenioAgendamento { petlove, doglife, particular }
 
-enum StatusAgendamento { solicitado, confirmado, cancelado, concluido }
+enum StatusAgendamento { ativo, cancelado, concluido }
+
+DateTime dataHoraAgendamento(DateTime data, String horario) {
+  if (!RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(horario)) {
+    throw FormatException('Horário inválido: $horario');
+  }
+  final partes = horario.split(':');
+  return DateTime(
+    data.year,
+    data.month,
+    data.day,
+    int.parse(partes[0]),
+    int.parse(partes[1]),
+  );
+}
+
+bool horarioJaPassou(DateTime data, String horario, {DateTime? agora}) {
+  return !dataHoraAgendamento(data, horario).isAfter(agora ?? DateTime.now());
+}
 
 class ServicoAgendamento {
   const ServicoAgendamento({
@@ -89,6 +107,8 @@ class AgendamentoRascunho {
     }
     if (!RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(horario)) {
       validationErrors.add('Informe um horário válido no formato HH:mm.');
+    } else if (!data.isBefore(dataSemHora) && horarioJaPassou(data, horario)) {
+      validationErrors.add('Este horário já passou. Escolha outro horário.');
     }
 
     return List<String>.unmodifiable(validationErrors);
@@ -123,7 +143,7 @@ class Agendamento {
     required this.convenio,
     this.endereco = '',
     this.descricao = '',
-    this.status = StatusAgendamento.solicitado,
+    this.status = StatusAgendamento.ativo,
     DateTime? criadoEm,
   }) : data = DateTime(data.year, data.month, data.day),
        servicos = List<ServicoAgendamento>.unmodifiable(servicos),
@@ -140,6 +160,9 @@ class Agendamento {
   final String descricao;
   final StatusAgendamento status;
   final DateTime criadoEm;
+
+  DateTime get dataHoraConclusao =>
+      dataHoraAgendamento(data, horario).add(const Duration(hours: 1));
 
   List<String> get errors {
     final validationErrors = <String>[];
@@ -232,9 +255,10 @@ class Agendamento {
       convenio: ConvenioAgendamento.values.byName(map['convenio'] as String),
       endereco: map['endereco'] as String? ?? '',
       descricao: map['descricao'] as String? ?? '',
-      status: StatusAgendamento.values.byName(
-        map['status'] as String? ?? StatusAgendamento.solicitado.name,
-      ),
+      status: switch (map['status'] as String?) {
+        null || 'solicitado' || 'confirmado' => StatusAgendamento.ativo,
+        final status => StatusAgendamento.values.byName(status),
+      },
       criadoEm: DateTime.parse(map['criadoEm'] as String),
     );
   }

@@ -6,7 +6,7 @@ abstract class UsuarioRepository {
   Usuario? findByEmail(String email);
   Usuario? findByNome(String nome);
   Usuario? findByCpf(String cpf);
-  Usuario? autenticar(String identificador, String senha);
+  Usuario? autenticar(String email, String senha);
   void save(Usuario usuario, {String? senha});
 }
 
@@ -72,8 +72,8 @@ class InMemoryUsuarioRepository implements UsuarioRepository {
   }
 
   @override
-  Usuario? autenticar(String identificador, String senha) {
-    final usuario = findByEmail(identificador) ?? findByNome(identificador);
+  Usuario? autenticar(String email, String senha) {
+    final usuario = findByEmail(email);
     final id = usuario?.id;
     if (id == null || _senhasPorUsuarioId[id] != senha) return null;
     return usuario;
@@ -94,9 +94,13 @@ class InMemoryUsuarioRepository implements UsuarioRepository {
 
   @override
   void save(Usuario usuario, {String? senha}) {
-    if (usuario.errors.isNotEmpty) {
+    final jaCadastrado = usuario.id != null && findById(usuario.id!) != null;
+    final errors = usuario.validar(
+      exigirEndereco: !jaCadastrado || usuario.temEnderecoPrincipal,
+    );
+    if (errors.isNotEmpty) {
       throw ArgumentError(
-        'Usuário inválido: ${usuario.errors.values.join('; ')}',
+        'Usuário inválido: ${errors.values.join('; ')}',
       );
     }
 

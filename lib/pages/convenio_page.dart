@@ -57,6 +57,7 @@ class _ConvenioPageState extends State<ConvenioPage> {
     final continuar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: VetCores.rosaCard,
         title: Text(
           'Confirmar convênio',
           style: GoogleFonts.comfortaa(
@@ -66,15 +67,22 @@ class _ConvenioPageState extends State<ConvenioPage> {
         ),
         content: Text(
           'Deseja continuar com ${_nomeConvenio(convenio)}?',
-          style: GoogleFonts.comfortaa(color: VetCores.marrom),
+          style: GoogleFonts.comfortaa(
+            color: VetCores.marrom
+          ),
         ),
-        backgroundColor: VetCores.rosaCard,
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: VetCores.marrom,
+            ),
             child: Text(
               'Voltar',
-              style: GoogleFonts.comfortaa(color: VetCores.marrom),
+              style: GoogleFonts.comfortaa(
+                color: VetCores.marrom,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           ElevatedButton(
@@ -85,7 +93,10 @@ class _ConvenioPageState extends State<ConvenioPage> {
             ),
             child: Text(
               'Continuar',
-              style: GoogleFonts.comfortaa(),
+              style: GoogleFonts.comfortaa(
+                color: VetCores.branco,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -286,8 +297,6 @@ class _ConvenioPageState extends State<ConvenioPage> {
                                 ),
                                 const SizedBox(width: 4),
                                 IconButton(
-                                  tooltip:
-                                      'Continuar com ${_nomeConvenio(convenio)}',
                                   onPressed: () => _confirmarConvenio(convenio),
                                   icon: const Icon(
                                     Icons.keyboard_double_arrow_right_rounded,

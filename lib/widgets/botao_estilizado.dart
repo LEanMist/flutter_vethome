@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,6 +11,8 @@ class BotaoEstilizado extends StatelessWidget {
     this.largura = 200,
     this.altura = 64,
     this.tamanhoFonte = 24,
+    this.corFundo = VetCores.rosaFundo,
+    this.mostrarSombra = true,
   }) : assert(largura > 0),
        assert(altura > 0),
        assert(tamanhoFonte > 0);
@@ -21,6 +22,8 @@ class BotaoEstilizado extends StatelessWidget {
   final double largura;
   final double altura;
   final double tamanhoFonte;
+  final Color corFundo;
+  final bool mostrarSombra;
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +32,17 @@ class BotaoEstilizado extends StatelessWidget {
       height: altura,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: VetCores.rosaFundo,
+          color: corFundo,
           borderRadius: BorderRadius.circular(1000),
-          boxShadow: const [
-            BoxShadow(
-              color: Color.fromARGB(90, 0, 0, 0),
-              blurRadius: 5,
-              offset: Offset(2, 4),
-            ),
-          ],
+          boxShadow: mostrarSombra
+          ? const [
+              BoxShadow(
+                color: Color.fromARGB(90, 0, 0, 0),
+                blurRadius: 5,
+                offset: Offset(2, 4),
+              ),
+            ]
+          : null,
         ),
         child: CustomPaint(
           foregroundPainter: const _ContornoBotaoPainter(),
@@ -55,10 +60,8 @@ class BotaoEstilizado extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.montserratAlternates(
-                      color: onPressed == null
-                          ? VetCores.marrom50
-                          : VetCores.marrom,
+                    style: GoogleFonts.comfortaa(
+                      color: VetCores.marrom,
                       fontSize: tamanhoFonte,
                       fontWeight: FontWeight.bold,
                     ),
@@ -82,18 +85,18 @@ class _ContornoBotaoPainter extends CustomPainter {
     final paint = Paint()
       ..color = VetCores.branco
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
+      ..strokeWidth = 1
       ..strokeCap = StrokeCap.round;
 
     final superiorEsquerdo = Path()
       ..moveTo(size.width - raio, 0.75)
-      ..lineTo(raio, 0.75)
+      ..lineTo(raio, 0.65)
       ..quadraticBezierTo(0.75, 0.75, 0.75, size.height / 2)
       ..quadraticBezierTo(
         0.75,
         size.height * 0.65,
-        raio * 0.2,
-        size.height * 0.75,
+        raio * 0.1,
+        size.height * 0.65,
       );
     final inferiorDireito = Path()
       ..moveTo(raio, size.height - 0.75)
@@ -107,8 +110,8 @@ class _ContornoBotaoPainter extends CustomPainter {
       ..quadraticBezierTo(
         size.width - 0.75,
         size.height * 0.35,
-        size.width - raio * 0.2,
-        size.height * 0.25,
+        size.width - raio * 0.1,
+        size.height * 0.45,
       );
 
     canvas.drawPath(superiorEsquerdo, paint);

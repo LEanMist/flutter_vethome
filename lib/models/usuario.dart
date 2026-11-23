@@ -15,6 +15,7 @@ class Usuario {
     required this.complemento,
     required this.cidade,
     required this.email,
+    this.nomeEnderecoPrincipal = 'Endereço principal',
     List<EnderecoUsuario> enderecosAdicionais = const [],
   }) : enderecosAdicionais = List.unmodifiable(enderecosAdicionais);
 
@@ -31,9 +32,20 @@ class Usuario {
   final String complemento;
   final String cidade;
   final String email;
+  final String nomeEnderecoPrincipal;
   final List<EnderecoUsuario> enderecosAdicionais;
 
-  Map<String, String> get errors {
+  bool get temEnderecoPrincipal => [
+    cep,
+    endereco,
+    numero,
+    complemento,
+    cidade,
+  ].any((parte) => parte.trim().isNotEmpty);
+
+  Map<String, String> get errors => validar();
+
+  Map<String, String> validar({bool exigirEndereco = true}) {
     final validationErrors = <String, String>{};
     final cpfDigits = _digits(cpf);
     final phoneDigits = _digits(telefone);
@@ -57,16 +69,16 @@ class Usuario {
     if (phoneDigits.length < 10 || phoneDigits.length > 11) {
       validationErrors['telefone'] = 'Informe um telefone válido com DDD.';
     }
-    if (cepDigits.length != 8) {
+    if (exigirEndereco && cepDigits.length != 8) {
       validationErrors['cep'] = 'Informe um CEP com 8 números.';
     }
-    if (endereco.trim().isEmpty) {
+    if (exigirEndereco && endereco.trim().isEmpty) {
       validationErrors['endereco'] = 'Informe seu endereço.';
     }
-    if (numero.trim().isEmpty) {
+    if (exigirEndereco && numero.trim().isEmpty) {
       validationErrors['numero'] = 'Informe o número do endereço.';
     }
-    if (cidade.trim().isEmpty) {
+    if (exigirEndereco && cidade.trim().isEmpty) {
       validationErrors['cidade'] = 'Informe sua cidade.';
     }
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email.trim())) {
@@ -81,6 +93,12 @@ class Usuario {
     String? fotoPerfilPath,
     String? nome,
     DateTime? dataNascimento,
+    String? cep,
+    String? endereco,
+    String? numero,
+    String? complemento,
+    String? cidade,
+    String? nomeEnderecoPrincipal,
     List<EnderecoUsuario>? enderecosAdicionais,
   }) {
     return Usuario(
@@ -91,12 +109,13 @@ class Usuario {
       genero: genero,
       cpf: cpf,
       telefone: telefone,
-      cep: cep,
-      endereco: endereco,
-      numero: numero,
-      complemento: complemento,
-      cidade: cidade,
+      cep: cep ?? this.cep,
+      endereco: endereco ?? this.endereco,
+      numero: numero ?? this.numero,
+      complemento: complemento ?? this.complemento,
+      cidade: cidade ?? this.cidade,
       email: email,
+      nomeEnderecoPrincipal: nomeEnderecoPrincipal ?? this.nomeEnderecoPrincipal,
       enderecosAdicionais: enderecosAdicionais ?? this.enderecosAdicionais,
     );
   }

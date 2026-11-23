@@ -3,42 +3,56 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/repositories/pet_repository.dart';
+import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/widgets/pet_card.dart';
 import 'agendamento_page.dart';
 import 'contato_page.dart';
 import 'configuracoes_page.dart';
 import 'perfil_page.dart';
+import 'pet_perfil_page.dart';
 import 'cadastro_pet_page.dart';
 import '../widgets/circulo_clicavel.dart';
 
+
 class MenuPage extends StatefulWidget {
-  const MenuPage({super.key, this.usuarioRepository, this.usuarioId});
+  const MenuPage({
+    super.key,
+    this.usuarioRepository,
+    this.usuarioId,
+    this.petRepository,
+    this.agendamentoRepository,
+  });
 
   final UsuarioRepository? usuarioRepository;
   final String? usuarioId;
+  final PetRepository? petRepository;
+  final AgendamentoRepository? agendamentoRepository;
 
   @override
   State<MenuPage> createState() => _MenuPage();
 }
 
 class _MenuPage extends State<MenuPage> {
-  final repository = InMemoryPetRepository.instance;
+  late final PetRepository repository;
   late final UsuarioRepository _usuarioRepository;
   late final String? _usuarioId;
   late final List<Widget> telas;
   late List<Pet> _pets;
+  String? _petSelecionadoId;
+  final _atualizacaoAgendamentos = ValueNotifier<int>(0);
   int indiceAtual = 0;
 
   @override
   void initState() {
     super.initState();
-    _pets = repository.findAll();
+    repository = widget.petRepository ?? InMemoryPetRepository.instance;
     _usuarioRepository =
         widget.usuarioRepository ?? InMemoryUsuarioRepository.instance;
     final usuarios = _usuarioRepository.findAll();
     _usuarioId =
         widget.usuarioId ?? (usuarios.isEmpty ? null : usuarios.first.id);
+    _pets = _petsDoUsuario();
     telas = [
       PerfilPage(
         usuarioRepository: _usuarioRepository,
@@ -51,25 +65,56 @@ class _MenuPage extends State<MenuPage> {
       AgendamentoPage(
         usuarioRepository: _usuarioRepository,
         usuarioId: _usuarioId,
+        petRepository: repository,
+        agendamentoRepository: widget.agendamentoRepository,
+        atualizacaoAgendamentos: _atualizacaoAgendamentos,
+        onAgendamentoConcluido: () => _atualizacaoAgendamentos.value++,
       ),
-      const ConfiguracoesPage(),
+      ConfiguracoesPage(
+        usuarioRepository: _usuarioRepository,
+        usuarioId: _usuarioId,
+        petRepository: repository,
+        agendamentoRepository: widget.agendamentoRepository,
+      ),
     ];
   }
 
+  @override
+  void dispose() {
+    _atualizacaoAgendamentos.dispose();
+    super.dispose();
+  }
+
+  List<Pet> _petsDoUsuario() {
+    final id = _usuarioId;
+    return id == null ? [] : repository.findByUsuarioId(id);
+  }
+
   void cadastropet() {
+    final id = _usuarioId;
+    if (id == null || _usuarioRepository.findById(id) == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível identificar o usuário.')),
+      );
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CadastroPetPage(
+          usuarioId: id,
+          petRepository: repository,
           destinoBuilder: (context) => MenuPage(
             usuarioRepository: _usuarioRepository,
             usuarioId: _usuarioId,
+            petRepository: repository,
+            agendamentoRepository: widget.agendamentoRepository,
           ),
         ),
       ),
     ).then((_) => {
       if (mounted) {
-        setState(() => _pets = repository.findAll())
+        setState(() => _pets = _petsDoUsuario())
       }
     });
   }
@@ -79,7 +124,7 @@ class _MenuPage extends State<MenuPage> {
       builder: (context, constraints) {
         final bool compacto =
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
-        final double alturaCabecalho = compacto ? 140 : 160;
+        final double alturaCabecalho = compacto ? 120 : 160;
         final double alturaCampoAnimais = compacto ? 480 : 700;
         final double larguraCampoAnimais = compacto ? 370 : 180;
         final double alturaBotao = compacto ? 50 : 60;
@@ -129,14 +174,20 @@ class _MenuPage extends State<MenuPage> {
                         itemCount: _pets.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
+                          final pet = _pets[index];
                           return PetCard(
-                            pet: _pets[index],
-                            onDetails: () => ScaffoldMessenger.of(context)
-                                .showSnackBar(
+                            pet: pet,
+                            onDetails: () {
+                              if (pet.id == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Detalhes do pet em breve.'),
+                                    content: Text('Não foi possível identificar o pet.'),
                                   ),
-                                ),
+                                );
+                                return;
+                              }
+                              setState(() => _petSelecionadoId = pet.id);
+                            },
                           );
                         },
                       ),
@@ -219,7 +270,26 @@ class _MenuPage extends State<MenuPage> {
       backgroundColor: const Color(0xFFFAD3D5),
       body: IndexedStack(
         index: indiceAtual,
-        children: [_buildPetsPage(), ...telas],
+        children: [
+          if (_petSelecionadoId == null)
+            _buildPetsPage()
+          else
+            PetPerfilPage(
+              key: ValueKey(_petSelecionadoId),
+              petId: _petSelecionadoId!,
+              usuarioId: _usuarioId!,
+              petRepository: repository,
+              usuarioRepository: _usuarioRepository,
+              agendamentoRepository: widget.agendamentoRepository,
+              atualizacaoAgendamentos: _atualizacaoAgendamentos,
+              onAgendamentoConcluido: () => _atualizacaoAgendamentos.value++,
+              onVoltar: () => setState(() {
+                _petSelecionadoId = null;
+                _pets = _petsDoUsuario();
+              }),
+            ),
+          ...telas,
+        ],
       ),
       bottomNavigationBar: _buildNavigationBar(),
     );

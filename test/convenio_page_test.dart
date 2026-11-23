@@ -96,6 +96,7 @@ void main() {
     final petRepository = InMemoryPetRepository()
       ..save(
         Pet(
+          usuarioId: usuarioRepository.findAll().single.id!,
           nome: 'Mimi',
           tipo: PetType.gato,
           genero: PetGenero.femea,
@@ -117,6 +118,16 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    final hoje = DateUtils.dateOnly(DateTime.now());
+    final amanha = hoje.add(const Duration(days: 1));
+    if (amanha.month != hoje.month) {
+      await tester.tap(find.byTooltip('Próximo mês'));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.byKey(ValueKey(
+      'calendar-day-${amanha.year}-${amanha.month}-${amanha.day}',
+    )));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Agendar consulta'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Mimi'));
@@ -136,7 +147,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('salvar-agendamento')));
     await tester.pumpAndSettle();
     expect(await repository.findAll(), hasLength(1));
-    expect(find.text('Mimi - 12:00'), findsWidgets);
+    expect(find.text('12:00'), findsOneWidget);
+    expect(find.text('Microchipagem'), findsOneWidget);
     expect(find.text('Agendamento concluído para Mimi.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -166,7 +178,7 @@ Future<InMemoryAgendamentoRepository> _abrirConvenio(
                         rascunho: AgendamentoRascunho(
                           usuarioId: usuario.id!,
                           petId: 'pet-teste',
-                          data: DateTime.now(),
+                          data: DateTime.now().add(const Duration(days: 1)),
                           horario: '12:00',
                           servicos: const [
                             ServicoAgendamento(

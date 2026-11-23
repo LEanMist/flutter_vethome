@@ -63,15 +63,35 @@ void main() {
       expect(repository.findAll(), isEmpty);
     });
 
-    test('authenticates registered users by name or email', () {
+    test('exige endereço no cadastro, mas permite removê-lo de usuário existente', () {
+      final repository = InMemoryUsuarioRepository();
+      final semEndereco = _usuarioValido().copyWith(
+        cep: '', endereco: '', numero: '', complemento: '', cidade: '',
+      );
+      expect(semEndereco.errors.keys, containsAll(['cep', 'endereco', 'numero', 'cidade']));
+      expect(() => repository.save(semEndereco), throwsArgumentError);
+      repository.save(_usuarioValido(), senha: 'senha');
+      final salvo = repository.findAll().single;
+      repository.save(salvo.copyWith(
+        cep: '', endereco: '', numero: '', complemento: '', cidade: '',
+      ));
+      expect(repository.findAll().single.temEnderecoPrincipal, isFalse);
+      expect(repository.autenticar(salvo.email, 'senha'), isNotNull);
+      expect(
+        () => repository.save(repository.findAll().single.copyWith(cep: '01001000')),
+        throwsArgumentError,
+      );
+    });
+
+    test('authenticates registered users only by email', () {
       final repository = InMemoryUsuarioRepository();
       final usuario = _usuarioValido();
 
       repository.save(usuario, senha: 'SenhaForte1');
 
       expect(
-        repository.autenticar('Ana Souza', 'SenhaForte1')?.email,
-        usuario.email,
+        repository.autenticar('Ana Souza', 'SenhaForte1'),
+        isNull,
       );
       expect(
         repository.autenticar(' ANA@example.com ', 'SenhaForte1')?.email,
