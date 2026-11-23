@@ -69,9 +69,7 @@ void main() {
     final clearing = VetRepository.clearLocalData();
     await storage.clearStarted.future;
 
-    await tester.tap(
-      find.bySemanticsLabel('Editar endereço Casa, Rua Antiga, 12'),
-    );
+    await tester.tap(find.bySemanticsLabel('Editar endereço Rua Antiga, 12'));
     await tester.pumpAndSettle(
       const Duration(milliseconds: 100),
       EnginePhase.sendSemanticsUpdate,

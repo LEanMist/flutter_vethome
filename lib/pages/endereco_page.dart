@@ -6,6 +6,7 @@ import '../core/utils/form_fields.dart';
 import '../widgets/address_form.dart';
 import '../widgets/auth/local_profile_conflict_dialog.dart';
 import '../theme.dart';
+import 'cadastro_page.dart';
 
 class EnderecoScreen extends StatelessWidget {
   const EnderecoScreen({
@@ -30,20 +31,16 @@ class EnderecoScreen extends StatelessWidget {
           r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
         ).hasMatch(VetRepository.clientEmail.trim());
     if (!hasSavedTutor && !hasCompleteTutorRegistrationData(data)) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Conclua os dados obrigatórios do tutor antes de avançar.',
-            ),
-          ),
-        );
+      Navigator.pushReplacementNamed(
+        context,
+        '/cadastro',
+        arguments: CadastroEntry.fromAddress,
+      );
       return;
     }
     VetRepository.registerClient(data);
     final saved = await VetRepository.flush();
-    if (!context.mounted) return;
+    if (!context.mounted || ModalRoute.isCurrentOf(context) != true) return;
     if (!saved) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -86,7 +83,6 @@ class EnderecoScreen extends StatelessWidget {
             ...initialData,
             'client.CEP': address.cep,
             'client.Endereço': address.street,
-            'client.Nome do Endereço': address.name,
             'client.Cidade': address.city,
             'client.Número': address.number,
             'client.Complemento': address.complement,

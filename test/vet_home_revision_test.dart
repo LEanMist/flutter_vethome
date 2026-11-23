@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -203,28 +204,6 @@ void main() {
     expect(VetRepository.clientGender, genderBefore);
     expect(VetRepository.clientGenderCustom, genderCustomBefore);
   });
-  testWidgets('pular endereço sem identidade do tutor permanece bloqueado', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: const EnderecoScreen(),
-        routes: {
-          '/cadastroPet': (_) => const Scaffold(body: Text('Etapa pet')),
-        },
-      ),
-    );
-    await tester.ensureVisible(find.text('Pular'));
-    await tester.tap(find.text('Pular'));
-    await tester.pump();
-    expect(find.text('Etapa pet'), findsNothing);
-    expect(
-      find.text('Conclua os dados obrigatórios do tutor antes de avançar.'),
-      findsOneWidget,
-    );
-    expect(VetRepository.clientEmail, isEmpty);
-    expect(VetRepository.addresses, isEmpty);
-  });
   testWidgets('pular pet funciona com zero pets', (tester) async {
     await tester.runAsync(() async {
       for (final pet in [...VetRepository.pets]) {
@@ -242,6 +221,7 @@ void main() {
     );
     await tester.ensureVisible(find.text('Pular'));
     await tester.tap(find.text('Pular'));
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pumpAndSettle();
     expect(VetRepository.pets, isEmpty);
     expect(find.text('Concluído'), findsOneWidget);
@@ -284,7 +264,7 @@ void main() {
       );
       await fill(tester, 'Endereço', 'Rua editada');
       await fill(tester, 'Numero', '15');
-      await fill(tester, 'Nome', 'Casa da Irmã');
+      expect(find.text('Nome'), findsNothing);
       await tester.ensureVisible(find.text('Salvar endereço'));
       await tester.tap(find.text('Salvar endereço'));
       await tester.pumpAndSettle();
@@ -294,7 +274,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(saved?.street, 'Rua editada');
       expect(saved?.complement, '');
-      expect(saved?.name, 'Casa da Irmã');
+      expect(saved?.name, isEmpty);
     },
   );
   for (final mode in ['inexistente', 'rede']) {
@@ -530,7 +510,11 @@ void main() {
         },
       ),
     );
-    // Vacinas começa expandida; tocar no item apenas seleciona.
+    expect(find.text('V10'), findsNothing);
+    final vaccines = find.byKey(const ValueKey('services-pill-Vacinas'));
+    await tester.ensureVisible(vaccines);
+    await tester.tap(vaccines);
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('V10'));
     await tester.tap(find.text('V10'));
     await tester.pumpAndSettle();

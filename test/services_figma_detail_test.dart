@@ -20,9 +20,10 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
-    // As duas categorias diretas usam o chevron PNG externo do Figma.
-    expect(find.byType(SvgPicture), findsNWidgets(12));
-
+    for (final category in ['Exames', 'Vacinas']) {
+      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.pumpAndSettle();
+    }
     final optionFinder = find.text('Hemograma');
     expect(optionFinder, findsOneWidget);
     final optionText = tester.widget<Text>(optionFinder);
@@ -69,6 +70,10 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: ServicosScreen()));
     await tester.pumpAndSettle();
+    for (final category in ['Exames', 'Vacinas']) {
+      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.pumpAndSettle();
+    }
 
     // SERVICES_PAGE 2564:398; medidas absolutas no frame 390 × 844.
     const categories = [
@@ -76,7 +81,7 @@ void main() {
         'Exames',
         Rect.fromLTWH(0, 190, 263, 59),
         Rect.fromLTWH(15, 209, 30, 30),
-        Rect.fromLTWH(240.075, 215.996, 19.698, 11.124),
+        Rect.fromLTWH(220.45, 215.996, 19.698, 11.124),
       ),
       (
         'Vacinas',
@@ -86,15 +91,15 @@ void main() {
       ),
       (
         'Microchipagem',
-        Rect.fromLTWH(-1, 546, 263, 59),
-        Rect.fromLTWH(13, 560, 30, 30),
-        Rect.fromLTWH(289.5, 569, 17, 19),
+        Rect.fromLTWH(0, 546, 300, 59),
+        Rect.fromLTWH(16, 560, 30, 30),
+        Rect.fromLTWH(259, 567, 16, 16),
       ),
       (
         'Atestados',
-        Rect.fromLTWH(-5, 627, 267, 59),
-        Rect.fromLTWH(8, 641, 32, 32),
-        Rect.fromLTWH(289.5, 650, 17, 19),
+        Rect.fromLTWH(-5, 627, 305, 59),
+        Rect.fromLTWH(18, 642, 26, 29),
+        Rect.fromLTWH(259, 648, 16, 16),
       ),
     ];
 
@@ -109,7 +114,7 @@ void main() {
       final directChoice = name == 'Microchipagem' || name == 'Atestados';
       final actualArrow = directChoice
           ? tester.getRect(
-              find.byKey(ValueKey('services-category-chevron-$name')),
+              find.byKey(ValueKey('services-category-checkbox-$name')),
             )
           : tester.getRect(arrow);
 
@@ -126,19 +131,17 @@ void main() {
       expect(actualArrow.width, closeTo(arrowRect.width, .02), reason: name);
       expect(actualArrow.height, closeTo(arrowRect.height, .02), reason: name);
       if (directChoice) {
-        // O botão acessível envolve o chevron visual, mas não usa a seta SVG
-        // interna que abre listas nas demais categorias.
-        expect(arrow, findsOneWidget);
+        expect(arrow, findsNothing);
         expect(
           find.byKey(ValueKey('services-category-arrow-rotation-$name')),
           findsNothing,
         );
-        final chevron = tester.widget<Image>(
-          find.byKey(ValueKey('services-category-chevron-$name')),
+        final checkbox = tester.widget<SvgPicture>(
+          find.byKey(ValueKey('services-category-checkbox-$name')),
         );
         expect(
-          (chevron.image as AssetImage).assetName,
-          'assets/imagens/figma/convenio-chevron.png',
+          (checkbox.bytesLoader as SvgAssetLoader).assetName,
+          'assets/imagens/figma/services-checkbox-unselected.svg',
         );
       }
     }
@@ -149,17 +152,13 @@ void main() {
       );
       expect(options, Rect.fromLTWH(0, top, 228, 101));
 
-      final indicator = tester.getRect(
+      final indicator = tester.widget<RawScrollbar>(
         find.byKey(ValueKey('services-options-indicator-$name')),
       );
-      expect(
-        indicator.left,
-        closeTo(213.7, .02),
-        reason: 'SERVICES_PAGE 2791:${name == 'Exames' ? '3126' : '3134'}',
-      );
-      expect(indicator.top, closeTo(top + 25.5, .02), reason: name);
-      expect(indicator.width, closeTo(3, .02), reason: name);
-      expect(indicator.height, closeTo(28, .02), reason: name);
+      expect(indicator.thickness, 3);
+      expect(indicator.minThumbLength, 28);
+      expect(indicator.thumbVisibility, isTrue);
+      expect(indicator.controller!.position.maxScrollExtent, greaterThan(0));
     }
 
     final examsDecoration =

@@ -12,12 +12,24 @@ class VetBottomNav extends StatelessWidget {
     required this.onSelected,
     this.compact = false,
     this.showPetsTab = true,
+    this.figmaPetsSelection = false,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onSelected;
   final bool compact;
   final bool showPetsTab;
+  final bool figmaPetsSelection;
+
+  static double compactHeight(BuildContext context) {
+    final scale = PetsTheme.scaleOf(context);
+    return _compactSurfaceHeight(scale) +
+        12 * scale +
+        MediaQuery.paddingOf(context).bottom;
+  }
+
+  static double _compactSurfaceHeight(double scale) =>
+      (50 * scale).clamp(48.0, 50.0);
 
   static const _allDestinationIndices = [0, 1, 2, 3, 4];
   static const _destinationIndicesWithoutPets = [1, 2, 3, 4];
@@ -36,6 +48,14 @@ class VetBottomNav extends StatelessWidget {
     'Conversa',
     'Agenda',
     'Configurações',
+  ];
+
+  static const List<IconData?> _symbols = [
+    null,
+    Icons.person,
+    Icons.call,
+    Icons.calendar_month,
+    Icons.settings,
   ];
 
   @override
@@ -60,9 +80,12 @@ class VetBottomNav extends StatelessWidget {
               .toDouble()
         : standardBottomGap;
     final navigation = Center(
+      // No rodapé do Scaffold, ocupe apenas a altura da barra.
+      heightFactor: 1,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: VH.mobileContentMaxWidth),
         child: Container(
+          key: const ValueKey('vet-bottom-nav-surface'),
           width: compact ? double.infinity : null,
           margin: compact
               ? EdgeInsets.zero
@@ -100,8 +123,8 @@ class VetBottomNav extends StatelessWidget {
                     _VetNavDestination(
                       label: _labels[destination.value],
                       icon: _icons[destination.value],
+                      symbol: _symbols[destination.value],
                       selected: destination.value == selectedIndex,
-                      highlighted: destination.key == 0,
                       scale: s,
                       onTap: () => onSelected(destination.value),
                     ),
@@ -118,7 +141,13 @@ class VetBottomNav extends StatelessWidget {
     );
 
     if (compact) {
-      return SizedBox(height: (50 * s).clamp(48.0, 50.0), child: navigation);
+      return SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(12 * s, 0, 12 * s, standardBottomGap),
+          child: SizedBox(height: _compactSurfaceHeight(s), child: navigation),
+        ),
+      );
     }
 
     return SafeArea(top: false, left: false, right: false, child: navigation);
@@ -129,16 +158,16 @@ class _VetNavDestination extends StatefulWidget {
   const _VetNavDestination({
     required this.label,
     required this.icon,
+    required this.symbol,
     required this.selected,
-    required this.highlighted,
     required this.scale,
     required this.onTap,
   });
 
   final String label;
   final String icon;
+  final IconData? symbol;
   final bool selected;
-  final bool highlighted;
   final double scale;
   final VoidCallback onTap;
 
@@ -154,13 +183,16 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
   @override
   Widget build(BuildContext context) {
     final dimension = (50 * widget.scale).clamp(48.0, 50.0);
-    final overlay = _pressed
-        ? VH.interactionOverlay({WidgetState.pressed})
-        : _focused
-        ? VH.interactionOverlay({WidgetState.focused})
-        : _hovered
-        ? VH.interactionOverlay({WidgetState.hovered})
-        : Colors.transparent;
+    final highContrast = widget.selected && MediaQuery.highContrastOf(context);
+    final whiteIcon = widget.selected && !highContrast;
+    final states = <WidgetState>{
+      if (_pressed) WidgetState.pressed,
+      if (_focused) WidgetState.focused,
+      if (_hovered) WidgetState.hovered,
+    };
+    final overlay = whiteIcon
+        ? PetsTheme.figmaListOverlay(states)
+        : VH.interactionOverlay(states);
     return Semantics(
       button: true,
       selected: widget.selected,
@@ -181,48 +213,61 @@ class _VetNavDestinationState extends State<_VetNavDestination> {
               customBorder: const CircleBorder(),
               overlayColor: const WidgetStatePropertyAll(Colors.transparent),
               child: Container(
+                key: ValueKey('vet-nav-visual-${widget.label}'),
                 foregroundDecoration: BoxDecoration(
                   color: overlay,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: widget.highlighted
-                      ? Container(
-                          width: 50 * widget.scale,
-                          height: 50 * widget.scale,
-                          alignment: Alignment.center,
-                          decoration: widget.selected
-                              ? inset_shadow.BoxDecoration(
-                                  color: VetColors.roseOverlay50,
-                                  shape: BoxShape.circle,
-                                  boxShadow: const [
-                                    inset_shadow.BoxShadow(
-                                      color: VetColors.shadowDark,
-                                      offset: Offset(2, 2),
-                                      blurRadius: 2,
-                                      inset: true,
-                                    ),
-                                  ],
-                                )
-                              : const BoxDecoration(
-                                  color: VetColors.pink,
-                                  shape: BoxShape.circle,
-                                ),
-                          child: ExcludeSemantics(
-                            child: Image.asset(
+                  child: Container(
+                    width: 50 * widget.scale,
+                    height: 50 * widget.scale,
+                    alignment: Alignment.center,
+                    decoration: widget.selected
+                        ? inset_shadow.BoxDecoration(
+                            color: whiteIcon
+                                ? PetsTheme.figmaListAccent
+                                : VetColors.roseOverlay50,
+                            shape: BoxShape.circle,
+                            boxShadow: const [
+                              inset_shadow.BoxShadow(
+                                color: VetColors.shadowDark,
+                                offset: Offset(2, 2),
+                                blurRadius: 2,
+                                inset: true,
+                              ),
+                            ],
+                          )
+                        : const BoxDecoration(
+                            color: VetColors.pink,
+                            shape: BoxShape.circle,
+                          ),
+                    child: ExcludeSemantics(
+                      child: widget.symbol == null
+                          ? Image.asset(
                               widget.icon,
                               width: 35 * widget.scale,
                               height: 35 * widget.scale,
+                              color: whiteIcon
+                                  ? Colors.white
+                                  : highContrast
+                                  ? VetColors.calendarTextOnRose
+                                  : null,
+                              colorBlendMode: widget.selected
+                                  ? BlendMode.srcIn
+                                  : null,
+                            )
+                          : Icon(
+                              widget.symbol,
+                              size: 30 * widget.scale,
+                              color: whiteIcon
+                                  ? Colors.white
+                                  : highContrast
+                                  ? VetColors.calendarTextOnRose
+                                  : VetColors.brown,
                             ),
-                          ),
-                        )
-                      : ExcludeSemantics(
-                          child: Image.asset(
-                            widget.icon,
-                            width: 50 * widget.scale,
-                            height: 50 * widget.scale,
-                          ),
-                        ),
+                    ),
+                  ),
                 ),
               ),
             ),

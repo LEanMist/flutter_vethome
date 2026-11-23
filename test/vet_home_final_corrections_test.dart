@@ -264,6 +264,76 @@ void main() {
     expect(find.text('Nenhuma consulta anterior registrada.'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('Histórico mantém a lista e Fechar acessíveis com texto a 200%', (
+    tester,
+  ) async {
+    viewport(tester, const Size(320, 460));
+    final pet = VetRepository.pets.first;
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    await tester.runAsync(() async {
+      VetRepository.addAgendamento(
+        pet.id,
+        Agendamento(
+          data: tomorrow,
+          tipo: 'Hemograma completo e avaliação de acompanhamento',
+          veterinario: 'Veterinário de teste',
+          local: 'Particular',
+          status: StatusAgendamento.confirmado,
+        ),
+      );
+      await VetRepository.flush();
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.windows),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const ConfigScreen(),
+      ),
+    );
+    final history = find.text('Histórico');
+    await tester.ensureVisible(history);
+    await tester.tap(history);
+    await tester.pumpAndSettle();
+
+    final close = find.widgetWithText(OutlinedButton, 'Fechar');
+    final closePosition = tester.getRect(close);
+    expect(close.hitTestable(), findsOneWidget);
+    expect(closePosition.height, greaterThanOrEqualTo(48));
+    expect(tester.takeException(), isNull);
+
+    final records = find.text('Histórico de agendamentos');
+    await tester.scrollUntilVisible(
+      records,
+      120,
+      scrollable: find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    final list = find.descendant(
+      of: find.byType(BottomSheet),
+      matching: find.byType(ListView),
+    );
+    await tester.pumpAndSettle();
+    final listBounds = tester.getRect(list);
+    final heading = tester.getRect(records);
+    expect(
+      listBounds.contains(heading.center),
+      isTrue,
+      reason: 'O título em $heading deve aparecer na lista em $listBounds.',
+    );
+    expect(tester.getRect(close), closePosition);
+    await tester.tap(close);
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Saúde identifica o conteúdo clínico demonstrativo', (
     tester,
   ) async {

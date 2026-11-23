@@ -131,4 +131,23 @@ void main() {
       );
     }
   });
+
+  test('a lista Pets mantém contraste no tema do Figma e nos realces', () {
+    for (final state in [
+      <WidgetState>{},
+      {WidgetState.hovered},
+      {WidgetState.focused},
+      {WidgetState.pressed},
+    ]) {
+      final surface = Color.alphaBlend(
+        PetsTheme.figmaListOverlay(state) ?? Colors.transparent,
+        PetsTheme.figmaListAccent,
+      );
+      expect(_contrastRatio(Colors.white, surface), greaterThanOrEqualTo(3));
+      expect(
+        _contrastRatio(VetColors.brownOnRose, surface),
+        greaterThanOrEqualTo(3),
+      );
+    }
+  });
 }

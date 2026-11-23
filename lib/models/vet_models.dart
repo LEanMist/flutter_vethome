@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'json_fields.dart';
+import 'saved_address.dart';
 
 class PetProfile {
   const PetProfile({
@@ -96,6 +97,7 @@ class Agendamento {
     required this.status,
     this.descricao,
     this.endDate,
+    this.address,
   });
   final DateTime data; // data + hora
   final String tipo;
@@ -104,6 +106,9 @@ class Agendamento {
   final StatusAgendamento status;
   final String? descricao;
   final DateTime? endDate;
+  final SavedAddress? address;
+
+  String get locationLabel => address?.summary ?? local;
 
   // O proprietário continua sendo a chave por ID no repositório.
   Map<String, dynamic> toJson({required String petId}) => {
@@ -115,10 +120,12 @@ class Agendamento {
     'status': status.name,
     'descricao': descricao,
     if (endDate != null) 'endDate': endDate!.toIso8601String(),
+    if (address != null) 'address': address!.toJson(),
   };
 
   factory Agendamento.fromJson(Map<String, dynamic> json) {
     final statusName = jsonString(json, 'status');
+    final addressJson = json['address'];
     final status = StatusAgendamento.values
         .where((value) => value.name == statusName)
         .firstOrNull;
@@ -131,6 +138,9 @@ class Agendamento {
       status: status,
       descricao: jsonOptionalString(json, 'descricao'),
       endDate: json['endDate'] == null ? null : jsonDate(json, 'endDate'),
+      address: addressJson is Map<String, dynamic>
+          ? SavedAddress.fromJson(addressJson)
+          : null,
     );
   }
 }

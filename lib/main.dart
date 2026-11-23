@@ -71,6 +71,10 @@ class _VetHomeAppState extends State<VetHomeApp> {
             ),
           );
         }
+        final routes = AppRoutes.routes;
+        final startsAtLogin =
+            WidgetsBinding.instance.platformDispatcher.defaultRouteName ==
+            '/login';
         return MaterialApp(
           key: const ValueKey('vethome-app'),
           debugShowCheckedModeBanner: false,
@@ -87,7 +91,16 @@ class _VetHomeAppState extends State<VetHomeApp> {
                 )
               : child ?? const SizedBox.shrink(),
           initialRoute: '/',
-          routes: AppRoutes.routes,
+          routes: routes,
+          // Um link direto para Login não tem uma tela anterior no app.
+          onGenerateInitialRoutes: startsAtLogin
+              ? (_) => [
+                  MaterialPageRoute<void>(
+                    settings: const RouteSettings(name: '/login'),
+                    builder: routes['/login']!,
+                  ),
+                ]
+              : null,
         );
       },
     );

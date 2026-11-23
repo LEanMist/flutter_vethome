@@ -10,13 +10,22 @@ import '../theme/vet_colors.dart';
 import '../widgets.dart';
 import '../widgets/appointment_card.dart';
 
-Widget _withBrownDialogActions(Widget dialog) => TextButtonTheme(
-  data: const TextButtonThemeData(
-    style: ButtonStyle(
-      foregroundColor: WidgetStatePropertyAll<Color?>(VetColors.brown),
-    ),
+Widget _withBrownDialogActions(Widget dialog, {ButtonStyle? actionStyle}) =>
+    TextButtonTheme(
+      data: TextButtonThemeData(
+        style: const ButtonStyle(
+          foregroundColor: WidgetStatePropertyAll<Color?>(VetColors.brown),
+        ).merge(actionStyle),
+      ),
+      child: dialog,
+    );
+
+Widget _withExitDialogActions(Widget dialog) => _withBrownDialogActions(
+  dialog,
+  actionStyle: const ButtonStyle(
+    minimumSize: WidgetStatePropertyAll(Size.square(48)),
+    visualDensity: VisualDensity.standard,
   ),
-  child: dialog,
 );
 
 class _ThemeColorWheel extends StatelessWidget {
@@ -80,6 +89,8 @@ class _ThemeColorWheel extends StatelessWidget {
 
 class ConfigScreen extends StatelessWidget {
   const ConfigScreen({super.key, this.clearLocalUserData});
+
+  static const _supportWidth = 349.0;
 
   final Future<bool> Function()? clearLocalUserData;
 
@@ -151,6 +162,7 @@ class ConfigScreen extends StatelessWidget {
         builder: (context, setDialogState) => _withBrownDialogActions(
           AlertDialog(
             backgroundColor: VH.background,
+            scrollable: true,
             insetPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 24,
@@ -160,7 +172,16 @@ class ConfigScreen extends StatelessWidget {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _ThemeColorWheel(selectedColor: selected),
+                ConstrainedBox(
+                  // Reserve espaço para a paleta quando a janela for baixa.
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(context).height * .44,
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: _ThemeColorWheel(selectedColor: selected),
+                  ),
+                ),
                 const SizedBox(height: 18),
                 Wrap(
                   spacing: 0,
@@ -243,10 +264,13 @@ class ConfigScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 349, minHeight: 289),
+          constraints: const BoxConstraints(
+            maxWidth: _supportWidth,
+            minHeight: 289,
+          ),
           child: Container(
             key: const ValueKey('support-figma-surface'),
-            width: 349,
+            width: _supportWidth,
             decoration: BoxDecoration(
               color: VetColors.pink,
               borderRadius: BorderRadius.circular(30),
@@ -324,18 +348,31 @@ class ConfigScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 13),
-                  const SelectableText(
-                    'Kelvinpro@gmail.com',
-                    semanticsLabel:
-                        'E-mail fictício para demonstração: Kelvinpro@gmail.com',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Comfortaa',
-                      fontSize: 30,
-                      height: 1,
-                      fontWeight: FontWeight.w500,
-                      color: VetColors.brown,
-                    ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final inset = constraints.maxWidth < _supportWidth
+                          ? 8.0
+                          : 0.0;
+                      final availableWidth = constraints.maxWidth - 2 * inset;
+                      final fontSize = (30 * availableWidth / _supportWidth)
+                          .clamp(18.0, 30.0);
+                      return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: inset),
+                        child: SelectableText(
+                          'Kelvinpro@gmail.com',
+                          semanticsLabel:
+                              'E-mail fictício para demonstração: Kelvinpro@gmail.com',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Comfortaa',
+                            fontSize: fontSize,
+                            height: 1,
+                            fontWeight: FontWeight.w500,
+                            color: VetColors.brown,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -477,6 +514,10 @@ class ConfigScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                    visualDensity: VisualDensity.standard,
+                  ),
                   child: const Text('Fechar'),
                 ),
               ],
@@ -490,9 +531,10 @@ class ConfigScreen extends StatelessWidget {
   Future<void> _signOut(BuildContext context) async {
     final action = await showDialog<_ExitAction>(
       context: context,
-      builder: (context) => _withBrownDialogActions(
+      builder: (context) => _withExitDialogActions(
         AlertDialog(
           backgroundColor: VH.background,
+          scrollable: true,
           title: const Text('Sair do VetHome?'),
           content: const Text(
             'Sair volta para a tela de login. Os dados salvos continuam neste dispositivo.',
@@ -521,9 +563,10 @@ class ConfigScreen extends StatelessWidget {
     if (action == _ExitAction.clearData) {
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (context) => _withBrownDialogActions(
+        builder: (context) => _withExitDialogActions(
           AlertDialog(
             backgroundColor: VH.background,
+            scrollable: true,
             title: const Text('Apagar os dados deste dispositivo?'),
             content: const Text(
               'Isso remove o perfil salvo, o e-mail lembrado, pets cadastrados, fotos, endereços, consultas e vacinas. Os dados demonstrativos iniciais continuarão disponíveis; a preferência de tema será mantida.',
@@ -535,6 +578,12 @@ class ConfigScreen extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(
+                  foregroundColor: VetColors.textColorOn(
+                    Theme.of(context).colorScheme.error,
+                    VH.background,
+                  ),
+                ),
                 child: const Text('Apagar dados'),
               ),
             ],
@@ -553,9 +602,10 @@ class ConfigScreen extends StatelessWidget {
           final hasUnsavedChanges = VetRepository.unsavedChanges.value;
           final reload = await showDialog<bool>(
             context: context,
-            builder: (context) => _withBrownDialogActions(
+            builder: (context) => _withExitDialogActions(
               AlertDialog(
                 backgroundColor: VH.background,
+                scrollable: true,
                 title: const Text('Dados atualizados em outra janela'),
                 content: Text(
                   hasUnsavedChanges
@@ -614,9 +664,10 @@ class ConfigScreen extends StatelessWidget {
       if (VetRepository.unsavedChanges.value) {
         final leaveAnyway = await showDialog<bool>(
           context: context,
-          builder: (dialogContext) => _withBrownDialogActions(
+          builder: (dialogContext) => _withExitDialogActions(
             AlertDialog(
               backgroundColor: VH.background,
+              scrollable: true,
               title: const Text('Sair com alterações não salvas?'),
               content: const Text(
                 'Há alterações que ainda não foram salvas neste dispositivo. '

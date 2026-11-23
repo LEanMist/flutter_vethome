@@ -4,6 +4,18 @@
 import 'json_fields.dart';
 import '../core/utils/pet_photo.dart';
 
+enum PetSpecies {
+  dog,
+  cat;
+
+  static PetSpecies? parse(String? value) =>
+      switch (value?.trim().toLowerCase()) {
+        'cachorro' || 'cão' || 'cao' || 'dog' || 'canino' => dog,
+        'gato' || 'cat' || 'felino' => cat,
+        _ => null,
+      };
+}
+
 class PetModel {
   static int _nextId = 0;
 

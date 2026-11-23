@@ -9,6 +9,7 @@ import 'package:flutter_vethome/models/saved_address.dart';
 import 'package:flutter_vethome/pages/endereco_page.dart';
 import 'package:flutter_vethome/pages/addresses_page.dart';
 import 'package:flutter_vethome/widgets/address_form.dart';
+import 'package:flutter_vethome/widgets/auth/registration_field_icon.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 
@@ -54,6 +55,53 @@ void main() {
     cep: '34556-234',
   );
 
+  testWidgets('editor móvel mantém campos e Salvar acessíveis com teclado', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const AddressEditorPage(address: address, modal: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final fields = find.byType(TextFormField);
+    expect(fields, findsNWidgets(5));
+    for (var index = 0; index < 4; index++) {
+      expect(
+        tester.getRect(fields.at(index)).bottom,
+        lessThanOrEqualTo(tester.getRect(fields.at(index + 1)).top),
+      );
+    }
+    final city = fields.last;
+    await tester.ensureVisible(city);
+    await tester.enterText(city, 'Cidade de teste revisada');
+    tester.view.viewInsets = const FakeViewPadding(bottom: 260);
+    await tester.pumpAndSettle();
+    final save = find.byKey(const ValueKey('address-save-target'));
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    expect(save.hitTestable(), findsOneWidget);
+    expect(find.text('Cidade de teste revisada'), findsOneWidget);
+    expect(
+      tester
+          .renderObject<RenderParagraph>(find.text('Salvar'))
+          .didExceedMaxLines,
+      isFalse,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('EDIT_ADRESS_WIDGET mantém campos e ações do Figma', (
     tester,
   ) async {
@@ -65,7 +113,7 @@ void main() {
     addTearDown(tester.view.resetPadding);
 
     await tester.pumpWidget(
-      const MaterialApp(home: AddressEditorPage(address: address)),
+      const MaterialApp(home: AddressEditorPage(address: address, modal: true)),
     );
     await tester.pumpAndSettle();
 
@@ -73,12 +121,13 @@ void main() {
     expect(find.text('Editar endereço'), findsNothing);
     final editorPanel = find.byKey(const ValueKey('address-editor-panel'));
     final editorRect = tester.getRect(editorPanel);
-    expect(editorRect.size, const Size(290, 633));
+    expect(editorRect.size, const Size(290, 546));
     expect(editorRect.left, 50);
-    expect(editorRect.top, 105.5);
+    expect(editorRect.top, 149);
 
     expect(find.text('Numero'), findsOneWidget);
     expect(find.text('Logradouro'), findsOneWidget);
+    expect(find.text('Nome'), findsNothing);
     expect(find.text('Endereço'), findsNothing);
     expect(find.text('Número'), findsNothing);
     expect(find.text('Complemento'), findsOneWidget);
@@ -93,7 +142,6 @@ void main() {
       ('Numero', 199.0, 219.0),
       ('Complemento', 291.0, 311.0),
       ('Cidade', 383.0, 403.0),
-      ('Nome', 475.0, 495.0),
     ]) {
       final labelRect = tester.getRect(find.text(label));
       expect(labelRect.left, closeTo(editorRect.left + 20, 1));
@@ -109,6 +157,23 @@ void main() {
       expect(fieldRect.top, closeTo(editorRect.top + fieldTop, 1));
       expect(fieldRect.width, closeTo(259, 1));
       expect(fieldRect.height, closeTo(56, 1));
+      final editable = tester.widget<EditableText>(
+        find.descendant(of: input, matching: find.byType(EditableText)),
+      );
+      expect(editable.textAlign, TextAlign.center);
+      final fieldSurface = find.ancestor(
+        of: input,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is DecoratedBox &&
+              widget.decoration is inset_shadow.BoxDecoration,
+        ),
+      );
+      final decoration =
+          tester.widget<DecoratedBox>(fieldSurface.first).decoration
+              as inset_shadow.BoxDecoration;
+      expect(decoration.color, VH.secondary.withValues(alpha: .25));
+      expect(decoration.gradient, isNull);
     }
 
     final prefixAssets = _addressAssetNames(tester);
@@ -125,7 +190,7 @@ void main() {
       prefixAssets
           .where((assetName) => assetName.endsWith('address-prefix-home.png'))
           .length,
-      4,
+      3,
     );
     expect(
       prefixAssets
@@ -163,11 +228,8 @@ void main() {
     final saveStyle = tester.widget<ElevatedButton>(saveButton).style!;
     expect(tester.getSize(deleteTarget), const Size(90, 48));
     expect(tester.getSize(saveTarget), const Size(90, 48));
-    expect(
-      tester.getRect(deleteButton),
-      const Rect.fromLTWH(65, 681.5, 90, 34),
-    );
-    expect(tester.getRect(saveButton), const Rect.fromLTWH(234, 681.5, 90, 34));
+    expect(tester.getRect(deleteButton), const Rect.fromLTWH(65, 638, 90, 34));
+    expect(tester.getRect(saveButton), const Rect.fromLTWH(234, 638, 90, 34));
     expect(
       tester.getTopLeft(deleteButton).dy - tester.getTopLeft(deleteTarget).dy,
       14,
@@ -178,6 +240,12 @@ void main() {
     );
     expect(saveStyle.backgroundColor!.resolve({}), VH.primary);
     expect(saveStyle.foregroundColor!.resolve({}), Colors.white);
+    expect(
+      tester
+          .renderObject<RenderParagraph>(find.text('Salvar'))
+          .didExceedMaxLines,
+      isFalse,
+    );
     expect(
       saveStyle.textStyle!.resolve(const <WidgetState>{})!.fontFamily,
       'Comfortaa',
@@ -223,7 +291,7 @@ void main() {
       expect(find.text('Editar endereço'), findsNothing);
       expect(
         tester.getSize(find.byKey(const ValueKey('address-editor-panel'))),
-        const Size(290, 633),
+        const Size(290, 546),
       );
       expect(tester.takeException(), isNull);
     } finally {
@@ -273,6 +341,38 @@ void main() {
     expect(saveButton, findsOneWidget);
     expect(tester.getRect(footer).bottom, lessThanOrEqualTo(616));
     expect(tester.getRect(saveButton).bottom, lessThanOrEqualTo(616));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('novo endereço leva ao primeiro campo inválido ao salvar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 460);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: AddressEditorPage()));
+    await tester.pumpAndSettle();
+
+    final cep = find.byType(TextFormField).first;
+    final save = find.widgetWithText(ElevatedButton, 'Salvar endereço');
+    final savePosition = tester.getRect(save);
+    await tester.ensureVisible(find.text('Cidade'));
+    await tester.pumpAndSettle();
+    expect(cep.hitTestable(), findsNothing);
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    expect(cep.hitTestable(), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('CEP')).dy,
+      greaterThanOrEqualTo(tester.getBottomLeft(find.byType(AppBar)).dy),
+    );
+    expect(
+      find.text('Informe um CEP com 8 números').hitTestable(),
+      findsOneWidget,
+    );
+    expect(tester.getRect(save), savePosition);
     expect(tester.takeException(), isNull);
   });
 
@@ -391,7 +491,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final panel = find.byKey(const ValueKey('address-editor-panel'));
-    expect(tester.getSize(panel), const Size(290, 633));
+    expect(tester.getSize(panel), const Size(290, 546));
     final saveButton = find.widgetWithText(ElevatedButton, 'Salvar');
     await tester.ensureVisible(saveButton);
     await tester.pumpAndSettle();
@@ -399,7 +499,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('REGISTER_ADRESS_PAGE usa os ícones originais do Figma', (
+  testWidgets('Endereço de cadastro usa um ícone distinto para cada campo', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -422,31 +522,59 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final prefixAssets = _addressAssetNames(tester);
     expect(find.text('Logradouro'), findsOneWidget);
-    expect(find.text('Numero'), findsOneWidget);
-    expect(
-      prefixAssets,
-      contains('assets/imagens/figma/address-prefix-home.png'),
+    expect(find.text('Número'), findsOneWidget);
+    expect(find.text('Nome'), findsNothing);
+    expect(find.byType(RegistrationFieldIcon), findsNWidgets(5));
+    for (final icon in const [
+      Icons.location_on,
+      Icons.home_outlined,
+      Icons.numbers,
+      Icons.meeting_room_outlined,
+      Icons.location_city_outlined,
+    ]) {
+      final glyph = find.byIcon(icon);
+      final circle = find.ancestor(
+        of: glyph,
+        matching: find.byType(RegistrationFieldIcon),
+      );
+      expect(tester.getSize(circle), const Size.square(48));
+      expect(tester.getCenter(glyph), tester.getCenter(circle));
+      final field = find.ancestor(
+        of: glyph,
+        matching: find.byType(TextFormField),
+      );
+      expect(tester.getTopLeft(circle).dx, tester.getTopLeft(field.first).dx);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Endereço permite alcançar Pular em uma janela muito baixa', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(319, 100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    var skipped = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AddressForm(
+            title: 'Endereço',
+            onSaved: (_) {},
+            onSkip: () => skipped = true,
+          ),
+        ),
+      ),
     );
-    expect(
-      prefixAssets,
-      contains('assets/imagens/figma/address-prefix-number.png'),
-    );
-    expect(
-      prefixAssets,
-      contains('assets/imagens/figma/address-prefix-city-circle.png'),
-    );
-    expect(
-      prefixAssets,
-      contains('assets/imagens/figma/address-prefix-city.png'),
-    );
-    expect(
-      prefixAssets
-          .where((assetName) => assetName.endsWith('address-prefix-home.png'))
-          .length,
-      4,
-    );
+    await tester.pumpAndSettle();
+    final skip = find.text('Pular');
+    await tester.ensureVisible(skip);
+    await tester.tap(skip);
+    await tester.pumpAndSettle();
+    expect(skipped, isTrue);
     expect(tester.takeException(), isNull);
   });
 
@@ -478,12 +606,12 @@ void main() {
     expect(tester.getTopLeft(title).dy, 31);
     expect(
       tester.getRect(find.byKey(const ValueKey('address-registration-panel'))),
-      const Rect.fromLTWH(49, 88, 290, 565),
+      const Rect.fromLTWH(49, 137, 290, 473),
     );
     final registrationPanel = tester.widget<Container>(
       find.byKey(const ValueKey('address-registration-panel')),
     );
-    expect(registrationPanel.clipBehavior, Clip.antiAlias);
+    expect(registrationPanel.clipBehavior, Clip.none);
     final panelDecoration =
         registrationPanel.decoration! as inset_shadow.BoxDecoration;
     expect(panelDecoration.boxShadow, hasLength(1));
@@ -494,12 +622,11 @@ void main() {
     expect(panelShadow.blurRadius, 5);
     expect(panelShadow.inset, isTrue);
     for (final (label, labelTop, fieldTop) in const [
-      ('CEP', 102.0, 122.0),
-      ('Logradouro', 194.0, 215.0),
-      ('Numero', 287.0, 307.0),
-      ('Complemento', 379.0, 399.0),
-      ('Cidade', 471.0, 491.0),
-      ('Nome', 563.0, 583.0),
+      ('CEP', 151.0, 171.0),
+      ('Logradouro', 243.0, 264.0),
+      ('Número', 336.0, 356.0),
+      ('Complemento', 428.0, 448.0),
+      ('Cidade', 520.0, 540.0),
     ]) {
       final labelRect = tester.getRect(find.text(label));
       expect(labelRect.left, closeTo(69, 1));
@@ -519,24 +646,21 @@ void main() {
     }
     expect(
       tester.getRect(find.widgetWithText(ElevatedButton, 'Continuar')),
-      const Rect.fromLTWH(104.5, 683, 181, 65),
+      const Rect.fromLTWH(104.5, 663, 181, 65),
     );
     final continueButton = tester.widget<ElevatedButton>(
       find.widgetWithText(ElevatedButton, 'Continuar'),
     );
     expect(
       continueButton.style?.backgroundColor?.resolve(const <WidgetState>{}),
-      VH.secondary,
+      VH.primary,
     );
     expect(
       continueButton.style?.foregroundColor?.resolve(const <WidgetState>{}),
-      VetColors.calendarTextOnRose,
+      Colors.white,
     );
-    expect(
-      _contrastRatio(VetColors.calendarTextOnRose, VH.secondary),
-      greaterThanOrEqualTo(4.5),
-    );
-    expect(tester.getTopLeft(find.text('Pular')).dy, closeTo(764, 1));
+    expect(_contrastRatio(Colors.white, VH.primary), greaterThanOrEqualTo(4.5));
+    expect(tester.getTopLeft(find.text('Pular')).dy, closeTo(744, 2));
     final skipStyle = tester
         .renderObject<RenderParagraph>(find.text('Pular'))
         .text

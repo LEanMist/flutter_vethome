@@ -25,12 +25,22 @@ void main() {
     await VetRepository.initialize();
   });
 
-  Future<void> openPicker(WidgetTester tester, Size size) async {
+  Future<void> openPicker(
+    WidgetTester tester,
+    Size size, {
+    double textScale = 1,
+  }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     await tester.pumpWidget(
       MaterialApp(
         theme: VetTheme.light(VH.primary),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: NovaConsultaPage(
           pet: VetRepository.pets.first,
           service: 'Hemograma',
@@ -154,22 +164,35 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('seletor de horários cabe em 320 px sem cortar botões', (
+  testWidgets('horários cabem em 280 e 320 px, inclusive com texto a 200%', (
     tester,
   ) async {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await openPicker(tester, const Size(320, 640));
-    for (final hour in [12, 13, 14, 15, 16]) {
-      final rect = tester.getRect(find.byKey(ValueKey('time-choice-$hour')));
-      expect(rect.left, greaterThanOrEqualTo(0));
-      expect(rect.right, lessThanOrEqualTo(320));
-      expect(rect.width, closeTo(100, .01));
-      expect(rect.height, closeTo(45, .01));
+    for (final (width, scale) in [(320.0, 1.0), (280.0, 2.0)]) {
+      await openPicker(tester, Size(width, 640), textScale: scale);
+      for (final hour in [12, 13, 14, 15, 16]) {
+        final button = find.byKey(ValueKey('time-choice-$hour'));
+        final rect = tester.getRect(button);
+        expect(rect.left, greaterThanOrEqualTo(7.99));
+        expect(rect.right, lessThanOrEqualTo(width - 7.99));
+        expect(rect.width, inInclusiveRange(48, 100));
+        expect(rect.height, closeTo(45, .01));
+        final label = find.descendant(
+          of: button,
+          matching: find.text('$hour:00'),
+        );
+        final labelRect = tester.getRect(label);
+        expect(labelRect.left, greaterThanOrEqualTo(rect.left - .01));
+        expect(labelRect.right, lessThanOrEqualTo(rect.right + .01));
+        expect(labelRect.top, greaterThanOrEqualTo(rect.top - .01));
+        expect(labelRect.bottom, lessThanOrEqualTo(rect.bottom + .01));
+      }
+      await tester.tapAt(Offset(width / 2, 80));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('time-choice-panel')), findsNothing);
+      expect(tester.takeException(), isNull);
     }
-    await tester.tapAt(const Offset(160, 80));
-    await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets('seletor anuncia a rota e cada horário para acessibilidade', (

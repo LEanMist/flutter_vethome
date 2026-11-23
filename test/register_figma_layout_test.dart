@@ -4,9 +4,21 @@ import 'package:flutter_vethome/pages/cadastro_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/auth/vh_form.dart';
+import 'package:flutter_vethome/widgets/auth/registration_field_icon.dart';
 
 void main() {
-  Future<void> showRegistration(WidgetTester tester, Size viewport) async {
+  Finder inputFor(String label) => find.descendant(
+    of: find.byWidgetPredicate(
+      (widget) => widget is VHField && widget.label == label,
+    ),
+    matching: find.byType(TextFormField),
+  );
+
+  Future<void> showRegistration(
+    WidgetTester tester,
+    Size viewport, {
+    double textScale = 1,
+  }) async {
     tester.view.physicalSize = viewport;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -15,11 +27,74 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: VetTheme.light(VH.primary),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: const CadastroScreen(),
       ),
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('e-mail longo volta a mostrar o começo ao perder o foco', (
+    tester,
+  ) async {
+    await showRegistration(tester, const Size(320, 640));
+    final email = inputFor('E-mail');
+    const value = 'nome-de-teste-bastante-longo@example.test';
+    await tester.ensureVisible(email);
+    await tester.enterText(email, value);
+    await tester.pumpAndSettle();
+    final editable = tester.widget<EditableText>(
+      find.descendant(of: email, matching: find.byType(EditableText)),
+    );
+    final scroll = editable.scrollController!;
+    expect(scroll.position.maxScrollExtent, greaterThan(0));
+    scroll.jumpTo(scroll.position.maxScrollExtent);
+    await tester.ensureVisible(inputFor('Senha'));
+    await tester.tap(inputFor('Senha'));
+    await tester.pumpAndSettle();
+    expect(scroll.offset, 0);
+    expect(editable.controller.text, value);
+  });
+
+  testWidgets(
+    'Cadastro mantém erro legível e ação visível com teclado e texto ampliado',
+    (tester) async {
+      await showRegistration(tester, const Size(320, 480), textScale: 2);
+      tester.view.viewInsets = const FakeViewPadding(bottom: 200);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpAndSettle();
+
+      final button = find.text('Continuar');
+      expect(button.hitTestable(), findsOneWidget);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      final decorations = find.byType(InputDecorator);
+      final decorator = decorations.first;
+      final surface = InputDecorator.containerOf(
+        tester.element(
+          find.descendant(of: decorator, matching: find.byType(EditableText)),
+        ),
+      );
+      final error = find.descendant(
+        of: decorator,
+        matching: find.text('Preencha este campo'),
+      );
+      expect(error, findsOneWidget);
+      expect(
+        tester.getTopLeft(error).dy,
+        greaterThanOrEqualTo(
+          surface!.localToGlobal(Offset.zero).dy + surface.size.height,
+        ),
+      );
+      expect(tester.getBottomRight(button).dy, lessThanOrEqualTo(280));
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('REGISTER_PAGE: ícones de CPF e senha correspondem ao Figma', (
     tester,
@@ -28,8 +103,7 @@ void main() {
     final form = tester.widget<VHForm>(find.byType(VHForm));
     final byName = {for (final field in form.fields) field.label: field};
 
-    // Frame 2783:1400, nós wallet-outline 2783:1431,
-    // lock-open 2783:1453 e lock 2783:1459.
+    // Frame 2564:473, da página Telas para IA.
     expect(byName['CPF']!.icon, Icons.account_balance_wallet_outlined);
     expect(byName['Senha']!.icon, Icons.lock_open_outlined);
     expect(byName['Confirmar Senha']!.icon, Icons.lock);
@@ -86,18 +160,19 @@ void main() {
   });
 
   testWidgets('REGISTER_PAGE: geometria no viewport do Figma', (tester) async {
-    await showRegistration(tester, const Size(390, 1035));
+    await showRegistration(tester, const Size(390, 926));
     final panel = find
         .ancestor(of: find.byType(Form), matching: find.byType(Container))
         .first;
     final panelRect = tester.getRect(panel);
-    expect(panelRect.topLeft, const Offset(39, 96));
-    expect(panelRect.width, 312);
+    expect(panelRect.topLeft, const Offset(33, 96));
+    expect(panelRect.width, 324);
     expect(find.text('Gênero/Sexo'), findsNothing);
 
     for (final expected in const [
       ('Nome Completo', 110.0, 130.0),
       ('Data de Nascimento', 202.0, 223.0),
+      ('CPF', 282.0, 303.0),
     ]) {
       final field = find.byWidgetPredicate(
         (widget) => widget is VHField && widget.label == expected.$1,
@@ -108,12 +183,23 @@ void main() {
       );
       expect(
         tester.getTopLeft(find.text(expected.$1)),
-        Offset(77, expected.$2),
+        Offset(56, expected.$2),
       );
       final inputRect = tester.getRect(input);
       expect(inputRect.left, 49);
       expect(inputRect.top, closeTo(expected.$3, 1));
       expect(inputRect.size, const Size(292, 56));
+      final icon = find.descendant(
+        of: field,
+        matching: find.byType(RegistrationFieldIcon),
+      );
+      expect(tester.getSize(icon), const Size(56, 56));
+      expect(tester.getTopLeft(icon).dx, closeTo(inputRect.left, 1));
+      final editable = find.descendant(
+        of: input,
+        matching: find.byType(EditableText),
+      );
+      expect(tester.getTopLeft(editable).dx - inputRect.left, closeTo(75, 1));
     }
     expect(tester.takeException(), isNull);
   });
@@ -121,8 +207,8 @@ void main() {
   testWidgets('cadastro foca e revela o primeiro campo inválido', (
     tester,
   ) async {
-    await showRegistration(tester, const Size(320, 640));
-    await tester.ensureVisible(find.text('Continuar'));
+    await showRegistration(tester, const Size(514, 667));
+    expect(find.text('Continuar').hitTestable(), findsOneWidget);
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
 
@@ -140,14 +226,14 @@ void main() {
     );
     expect(tester.widget<EditableText>(editable).focusNode.hasFocus, isTrue);
     expect(fieldRect.top, greaterThanOrEqualTo(0));
-    expect(fieldRect.bottom, lessThanOrEqualTo(640));
+    expect(fieldRect.bottom, lessThanOrEqualTo(667));
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('erro do Cadastro é removido quando o campo é corrigido', (
     tester,
   ) async {
-    await showRegistration(tester, const Size(390, 1035));
+    await showRegistration(tester, const Size(390, 926));
     final nameField = find.byWidgetPredicate(
       (widget) => widget is VHField && widget.label == 'Nome Completo',
     );
@@ -158,6 +244,7 @@ void main() {
 
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
+    expect(find.text('Continuar').hitTestable(), findsOneWidget);
     expect(
       find.descendant(
         of: nameField,
@@ -342,7 +429,7 @@ void main() {
       final panel = find
           .ancestor(of: find.byType(Form), matching: find.byType(Container))
           .first;
-      expect(tester.getTopLeft(panel), const Offset(39, 96));
+      expect(tester.getTopLeft(panel), const Offset(33, 96));
       expect(find.byType(TextFormField), findsNWidgets(7));
       expect(tester.takeException(), isNull);
     },

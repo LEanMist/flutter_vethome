@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/local_data_manager.dart';
@@ -247,6 +248,75 @@ void main() {
       preferences.containsKey(LocalDataManager.rememberedEmailKey),
       isTrue,
     );
+    expect(VetRepository.clientEmail, 'pessoa@example.test');
+  });
+
+  testWidgets('diálogos de saída mantêm ações acessíveis com texto a 200%', (
+    tester,
+  ) async {
+    useNarrowViewport(tester);
+    tester.view.physicalSize = const Size(320, 460);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.windows),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const ConfigScreen(),
+      ),
+    );
+    final signOut = find.widgetWithText(ListTile, 'Sair');
+    await tester.ensureVisible(signOut);
+    await tester.tap(signOut);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    final clearLocal = find.widgetWithText(TextButton, 'Apagar dados locais');
+    expect(clearLocal.hitTestable(), findsOneWidget);
+    expect(tester.getSize(clearLocal).height, greaterThanOrEqualTo(48));
+    await tester.tap(clearLocal);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    final clear = find.widgetWithText(TextButton, 'Apagar dados');
+    final cancel = find.widgetWithText(TextButton, 'Cancelar');
+    for (final action in [clear, cancel]) {
+      expect(action.hitTestable(), findsOneWidget);
+      expect(tester.getSize(action).height, greaterThanOrEqualTo(48));
+    }
+    final destructiveLabel = tester.element(find.text('Apagar dados'));
+    final deleteColor = DefaultTextStyle.of(destructiveLabel).style.color!;
+    final cancelColor = DefaultTextStyle.of(
+      tester.element(find.text('Cancelar')),
+    ).style.color;
+    expect(deleteColor, isNot(cancelColor));
+    final dialog = tester.widget<AlertDialog>(find.byType(AlertDialog));
+    final contrast =
+        (dialog.backgroundColor!.computeLuminance() + .05) /
+        (deleteColor.computeLuminance() + .05);
+    expect(contrast, greaterThanOrEqualTo(4.5));
+
+    final messageScroll = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(messageScroll).position;
+    expect(position.extentAfter, greaterThan(0));
+    await tester.sendEventToBinding(
+      PointerScrollEvent(
+        position: tester.getCenter(messageScroll),
+        scrollDelta: Offset(0, position.maxScrollExtent),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(position.extentAfter, lessThan(1));
+    expect(cancel.hitTestable(), findsOneWidget);
+    await tester.tap(cancel);
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
     expect(VetRepository.clientEmail, 'pessoa@example.test');
   });
 

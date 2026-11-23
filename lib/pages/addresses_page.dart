@@ -45,6 +45,8 @@ class _AddressesPageState extends State<AddressesPage> {
     radius: Radius.circular(1.5),
   );
 
+  bool get _usesExpandedText => MediaQuery.textScalerOf(context).scale(15) > 18;
+
   Future<void> _edit([SavedAddress? address]) async {
     final compactEditor =
         address != null && MediaQuery.sizeOf(context).width < 900;
@@ -175,8 +177,12 @@ class _AddressesPageState extends State<AddressesPage> {
                         for (var index = 0; index < addresses.length; index++)
                           SizedBox(
                             width: cardWidth,
-                            height: desktop || index == 0 ? 173 : 175,
-                            child: _addressCard(addresses[index]),
+                            child: _addressCard(
+                              addresses[index],
+                              cardWidth: cardWidth,
+                              minimumHeight: desktop || index == 0 ? 173 : 175,
+                              desktop: desktop,
+                            ),
                           ),
                       ],
                     );
@@ -244,8 +250,8 @@ class _AddressesPageState extends State<AddressesPage> {
                       ),
                       child: Center(
                         child: SizedBox(
-                          width: 161,
-                          height: 67,
+                          width: _usesExpandedText ? null : 161,
+                          height: _usesExpandedText ? null : 67,
                           child: ElevatedButton(
                             onPressed: () => _edit(),
                             style: ElevatedButton.styleFrom(
@@ -253,7 +259,15 @@ class _AddressesPageState extends State<AddressesPage> {
                               foregroundColor: Colors.white,
                               elevation: 2,
                               shadowColor: VetColors.shadowDark,
-                              padding: EdgeInsets.zero,
+                              minimumSize: _usesExpandedText
+                                  ? const Size(161, 67)
+                                  : null,
+                              padding: _usesExpandedText
+                                  ? const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    )
+                                  : EdgeInsets.zero,
                               shape: const StadiumBorder(),
                               textStyle: const TextStyle(
                                 fontFamily: PetsTheme.fontMontserratAlternates,
@@ -276,70 +290,87 @@ class _AddressesPageState extends State<AddressesPage> {
     );
   }
 
-  Widget _addressCard(SavedAddress address) => Container(
-    height: 173,
-    decoration: inset_shadow.BoxDecoration(
-      color: VetColors.roseOverlay50,
-      borderRadius: BorderRadius.circular(25),
-      boxShadow: const [
-        inset_shadow.BoxShadow(
-          color: VetColors.shadowDark,
-          offset: Offset(2, 2),
-          blurRadius: 2,
-          inset: true,
-        ),
-      ],
-    ),
-    child: Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(19, 11, 19, 0),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  const SizedBox(
-                    width: 107,
-                    child: Text('Nome:', style: _labelStyle),
-                  ),
-                  Expanded(
-                    child: Text(
-                      address.name.isEmpty ? '—' : address.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: _valueStyle,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(
-                    width: 107,
-                    child: Text('Endereço:', style: _labelStyle),
-                  ),
-                  Expanded(
-                    child: Text(
-                      _addressLines(address),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: _valueStyle,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+  Widget _addressCard(
+    SavedAddress address, {
+    required double cardWidth,
+    required double minimumHeight,
+    required bool desktop,
+  }) {
+    const actionTargetHeight = 48.0;
+    const bottomPadding = 11.0;
+    final stackActions = _usesExpandedText || cardWidth < 204;
+    final stackDetails = _usesExpandedText || cardWidth < 240;
+    final matchesMobileFigmaFrame = !desktop && cardWidth >= 320;
+    final identity = _addressIdentity(address);
+    final actions = [
+      _addressAction(
+        label: 'Editar',
+        background: const Color.fromRGBO(255, 255, 255, .5),
+        foreground: VetColors.brown,
+        semanticsLabel: 'Editar endereço $identity',
+        onPressed: () => _edit(address),
+        compact: !stackActions,
+      ),
+      _addressAction(
+        label: 'Deletar',
+        background: const Color(0xFF940000),
+        foreground: Colors.white,
+        semanticsLabel: 'Deletar endereço $identity',
+        onPressed: () => _delete(address),
+        compact: !stackActions,
+      ),
+    ];
+
+    const caption = Text('Endereço:', style: _labelStyle);
+    final description = Text(_addressLines(address), style: _valueStyle);
+
+    return Container(
+      decoration: inset_shadow.BoxDecoration(
+        color: VetColors.roseOverlay50,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: const [
+          inset_shadow.BoxShadow(
+            color: VetColors.shadowDark,
+            offset: Offset(2, 2),
+            blurRadius: 2,
+            inset: true,
           ),
-        ),
-        const Spacer(),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final matchesMobileFigmaFrame =
-                MediaQuery.sizeOf(context).width < 900 &&
-                constraints.maxWidth >= 320;
-            return Padding(
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: minimumHeight - actionTargetHeight - bottomPadding,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(19, 11, 19, 8),
+              child: stackDetails
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [caption, description],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(width: 107, child: caption),
+                        Expanded(child: description),
+                      ],
+                    ),
+            ),
+          ),
+          if (stackActions)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 19),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 8,
+                children: actions,
+              ),
+            )
+          else
+            Padding(
               padding: matchesMobileFigmaFrame
                   ? const EdgeInsets.only(left: 36, right: 37)
                   : EdgeInsets.zero,
@@ -347,32 +378,14 @@ class _AddressesPageState extends State<AddressesPage> {
                 mainAxisAlignment: matchesMobileFigmaFrame
                     ? MainAxisAlignment.spaceBetween
                     : MainAxisAlignment.spaceAround,
-                children: [
-                  _addressAction(
-                    label: 'Editar',
-                    background: const Color.fromRGBO(255, 255, 255, .5),
-                    foreground: VetColors.brown,
-                    semanticsLabel:
-                        'Editar endereço ${_addressIdentity(address)}',
-                    onPressed: () => _edit(address),
-                  ),
-                  _addressAction(
-                    label: 'Deletar',
-                    background: const Color(0xFF940000),
-                    foreground: Colors.white,
-                    semanticsLabel:
-                        'Deletar endereço ${_addressIdentity(address)}',
-                    onPressed: () => _delete(address),
-                  ),
-                ],
+                children: actions,
               ),
-            );
-          },
-        ),
-        const SizedBox(height: 11),
-      ],
-    ),
-  );
+            ),
+          const SizedBox(height: bottomPadding),
+        ],
+      ),
+    );
+  }
 
   String _addressLines(SavedAddress address) {
     final secondLine = [
@@ -387,9 +400,9 @@ class _AddressesPageState extends State<AddressesPage> {
   }
 
   String _addressIdentity(SavedAddress address) => [
-    address.name.trim(),
     address.street.trim(),
     address.number.trim(),
+    address.complement.trim(),
   ].where((value) => value.isNotEmpty).join(', ');
   Widget _addressAction({
     required String label,
@@ -397,32 +410,44 @@ class _AddressesPageState extends State<AddressesPage> {
     required Color background,
     required Color foreground,
     required VoidCallback onPressed,
-  }) => FigmaActionTarget(
-    width: 90,
-    height: 48,
-    label: semanticsLabel,
-    onPressed: onPressed,
-    child: SizedBox(
-      width: 90,
-      height: 34,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: background,
-          foregroundColor: foreground,
-          elevation: 0,
-          padding: EdgeInsets.zero,
-          shape: const StadiumBorder(),
-          textStyle: TextStyle(
-            fontFamily: PetsTheme.fontComfortaa,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-          ),
+    required bool compact,
+  }) {
+    final button = ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: background,
+        foregroundColor: foreground,
+        elevation: 0,
+        minimumSize: compact ? null : const Size(0, 48),
+        padding: compact
+            ? EdgeInsets.zero
+            : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: const StadiumBorder(),
+        textStyle: const TextStyle(
+          fontFamily: PetsTheme.fontComfortaa,
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
         ),
-        child: Text(label),
       ),
-    ),
-  );
+      child: Text(label),
+    );
+    if (!compact) {
+      return Semantics(
+        button: true,
+        enabled: true,
+        label: semanticsLabel,
+        onTap: onPressed,
+        excludeSemantics: true,
+        child: button,
+      );
+    }
+    return FigmaActionTarget(
+      width: 90,
+      label: semanticsLabel,
+      onPressed: onPressed,
+      child: SizedBox(width: 90, height: 34, child: button),
+    );
+  }
 }
 
 class AddressEditorPage extends StatelessWidget {
@@ -539,21 +564,24 @@ class AddressEditorPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: VetColors.pink,
       appBar: compactEditor ? null : AppBar(backgroundColor: VetColors.pink),
-      bottomNavigationBar: VetBottomNav(
-        key: const ValueKey('address-editor-bottom-navigation'),
-        selectedIndex: 4,
-        compact: !desktop,
-        onSelected: (index) async {
-          final canLeave = await vetConfirmLeavingForm(
-            context,
-            title: 'Sair da edição?',
-            message:
-                'Se você ainda não salvou, as alterações deste formulário '
-                'serão descartadas ao trocar de tela.',
-          );
-          if (!canLeave || !context.mounted) return;
-          vetNavigate(context, index, selected: 4, isTabRoot: false);
-        },
+      bottomNavigationBar: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 88),
+        child: VetBottomNav(
+          key: const ValueKey('address-editor-bottom-navigation'),
+          selectedIndex: 4,
+          compact: !desktop,
+          onSelected: (index) async {
+            final canLeave = await vetConfirmLeavingForm(
+              context,
+              title: 'Sair da edição?',
+              message:
+                  'Se você ainda não salvou, as alterações deste formulário '
+                  'serão descartadas ao trocar de tela.',
+            );
+            if (!canLeave || !context.mounted) return;
+            vetNavigate(context, index, selected: 4, isTabRoot: false);
+          },
+        ),
       ),
       body: Padding(
         padding: EdgeInsets.only(
@@ -582,7 +610,7 @@ class AddressEditorPage extends StatelessWidget {
   Widget _editorPanel(Widget form) => Container(
     key: const ValueKey('address-editor-panel'),
     width: 290,
-    height: 633,
+    constraints: const BoxConstraints(minHeight: 546),
     clipBehavior: Clip.antiAlias,
     decoration: inset_shadow.BoxDecoration(
       color: VetColors.pink,

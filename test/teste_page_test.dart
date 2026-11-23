@@ -55,6 +55,43 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('atalho de sucesso mostra o perfil salvo', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const TestePage(),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(accessibleNavigation: true),
+          child: child ?? const SizedBox.shrink(),
+        ),
+        routes: {'/pets': (_) => const Scaffold(body: Text('Início'))},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final successShortcut = find.text('Sucesso no cadastro');
+    await tester.ensureVisible(successShortcut);
+    await tester.tap(successShortcut);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Usuário\nCadastrado!'), findsOneWidget);
+    expect(
+      find.text(
+        'Perfil salvo neste dispositivo. Esta demonstração não cria contas on-line.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('registration-success-continue')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('seletor global abre uma tela e continua disponível', (
     tester,
   ) async {

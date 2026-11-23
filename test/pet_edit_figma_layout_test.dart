@@ -43,6 +43,20 @@ void main() {
       expect(find.text('Editar pet'), findsNothing);
       expect(find.bySemanticsLabel('Editar pet'), findsOneWidget);
 
+      for (final entry in {
+        'Nome do Cachorro(a)': Icons.person_outline,
+        'Raça': Icons.pets,
+      }.entries) {
+        final field = find.ancestor(
+          of: find.text(entry.key),
+          matching: find.byType(VHField),
+        );
+        expect(
+          find.descendant(of: field, matching: find.byIcon(entry.value)),
+          findsOneWidget,
+        );
+      }
+
       void expectField(
         String label,
         Offset offset,
@@ -161,9 +175,6 @@ void main() {
       final save = find.widgetWithText(ElevatedButton, 'Salvar');
       final cancelTarget = find.byKey(const ValueKey('pet-edit-cancel-target'));
       final saveTarget = find.byKey(const ValueKey('pet-edit-save-target'));
-      final extraOptionsTarget = find.byKey(
-        const ValueKey('edit-pet-extra-fields-toggle'),
-      );
       expect(tester.getTopLeft(cancel) - surfaceOrigin, const Offset(27, 422));
       expect(tester.getSize(cancel), const Size(98, 34));
       expect(tester.getTopLeft(save) - surfaceOrigin, const Offset(194, 422));
@@ -187,49 +198,13 @@ void main() {
             ?.resolve(<WidgetState>{}),
         VetColors.brown,
       );
-      expect(find.text('Castração'), findsNothing);
-      expect(find.byType(PetPhotoButton), findsNothing);
-      final extraOptionsRect = tester.getRect(extraOptionsTarget);
-      expect(extraOptionsRect.size, const Size(69, 48));
-      expect(
-        extraOptionsRect.left,
-        greaterThanOrEqualTo(tester.getRect(cancelTarget).right),
-      );
-      expect(
-        extraOptionsRect.right,
-        lessThanOrEqualTo(tester.getRect(saveTarget).left),
-      );
-      final collapsedSemantics = find.descendant(
-        of: extraOptionsTarget,
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is Semantics && widget.properties.label == 'Mais opções',
-        ),
-      );
-      expect(collapsedSemantics, findsOneWidget);
-      expect(
-        tester.widget<Semantics>(collapsedSemantics).properties.expanded,
-        isFalse,
-      );
-      expect(tester.takeException(), isNull);
-
-      await tester.tap(extraOptionsTarget);
-      await tester.pumpAndSettle();
+      expect(find.text('Mais opções'), findsNothing);
+      expect(find.text('Menos opções'), findsNothing);
       expect(find.text('Espécie'), findsOneWidget);
       expect(find.text('Castração'), findsOneWidget);
       expect(find.byType(PetPhotoButton), findsOneWidget);
-      final expandedSemantics = find.descendant(
-        of: extraOptionsTarget,
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is Semantics && widget.properties.label == 'Menos opções',
-        ),
-      );
-      expect(expandedSemantics, findsOneWidget);
-      expect(
-        tester.widget<Semantics>(expandedSemantics).properties.expanded,
-        isTrue,
-      );
+      await tester.ensureVisible(find.text('Castração'));
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     } finally {
       semantics.dispose();
@@ -313,9 +288,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('edição exige espécie e abre Mais opções quando ela falta', (
-    tester,
-  ) async {
+  testWidgets('edição exige espécie quando ela falta', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);

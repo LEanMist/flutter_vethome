@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/vet_repository.dart';
 import '../widgets.dart';
 
 class SobreScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class SobreScreen extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final identity = _identity();
-            final details = _details();
+            final details = _details(narrow: constraints.maxWidth < 320);
             return constraints.maxWidth >= 900
                 ? Row(
                     key: const ValueKey('about-desktop-layout'),
@@ -46,7 +47,8 @@ class SobreScreen extends StatelessWidget {
           height: 140,
         ),
         const Text(
-          'Gabriella',
+          VetRepository.contactVeterinarianName,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: 'Comfortaa',
             fontSize: 22,
@@ -57,40 +59,49 @@ class SobreScreen extends StatelessWidget {
     ),
   );
 
-  Widget _details() => _card(
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Semantics(
-          header: true,
-          child: const Text(
-            'Sobre mim',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+  Widget _details({required bool narrow}) {
+    final contactPadding = narrow ? EdgeInsets.zero : null;
+    final contactGap = narrow ? 8.0 : null;
+    return _card(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            header: true,
+            child: const Text(
+              'Sobre mim',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'Sou veterinária há mais de 8 anos, apaixonada por cães e gatos. Atendo em domicílio para que seu pet fique tranquilo no lar.',
-        ),
-        const SizedBox(height: 18),
-        ListTile(
-          leading: const Icon(Icons.phone_outlined),
-          title: SelectableText(
-            '11 9793-8918',
-            semanticsLabel: 'Telefone fictício para demonstração: 11 9793-8918',
+          const SizedBox(height: 12),
+          const Text(
+            'Sou veterinária há mais de 8 anos, apaixonada por cães e gatos. Atendo em domicílio para que seu pet fique tranquilo no lar.',
           ),
-        ),
-        ListTile(
-          leading: const Icon(Icons.email_outlined),
-          title: SelectableText(
-            'Kelvinpro@gmail.com',
-            semanticsLabel:
-                'E-mail fictício para demonstração: Kelvinpro@gmail.com',
+          const SizedBox(height: 18),
+          ListTile(
+            contentPadding: contactPadding,
+            horizontalTitleGap: contactGap,
+            leading: const Icon(Icons.phone_outlined),
+            title: SelectableText(
+              '11 9793-8918',
+              semanticsLabel:
+                  'Telefone fictício para demonstração: 11 9793-8918',
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+          ListTile(
+            contentPadding: contactPadding,
+            horizontalTitleGap: contactGap,
+            leading: const Icon(Icons.email_outlined),
+            title: SelectableText(
+              'Kelvinpro@gmail.com',
+              semanticsLabel:
+                  'E-mail fictício para demonstração: Kelvinpro@gmail.com',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _card(Widget child) => Container(
     padding: const EdgeInsets.all(22),

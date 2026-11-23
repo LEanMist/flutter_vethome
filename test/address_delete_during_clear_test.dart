@@ -70,7 +70,7 @@ void main() {
     await storage.clearStarted.future.timeout(const Duration(seconds: 3));
 
     final deleteTarget = find.bySemanticsLabel(
-      'Deletar endereço Casa, Rua Antiga, 12',
+      'Deletar endereço Rua Antiga, 12',
     );
     await tester.ensureVisible(deleteTarget);
     final targetRect = tester.getRect(deleteTarget);

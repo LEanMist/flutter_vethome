@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/chat_page.dart';
+import 'package:flutter_vethome/theme.dart';
 
 void main() {
   const notice =
@@ -31,8 +32,13 @@ void main() {
       find.ancestor(of: banner, matching: find.byType(ListView)),
       findsNothing,
     );
-    final card = tester.getRect(
-      find.byKey(const ValueKey('chat-conversation-card')),
+    final conversation = find.byKey(const ValueKey('chat-conversation-card'));
+    final card = tester.getRect(conversation);
+    final panel = tester.widget<Container>(conversation);
+    expect(panel.clipBehavior, Clip.antiAlias);
+    expect(
+      (panel.decoration! as BoxDecoration).borderRadius,
+      BorderRadius.circular(25),
     );
     expect(tester.getRect(banner).bottom, lessThanOrEqualTo(card.top));
     expect(tester.takeException(), isNull);
@@ -65,9 +71,24 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: ChatScreen()));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.secondary),
+        home: const ChatScreen(),
+      ),
+    );
     final initialCount = VetRepository.chatMessages.length;
     const typed = 'Mensagem somente local de teste';
+    final composerField = find.byType(TextField);
+    expect(tester.getSize(composerField), const Size(261, 47));
+    expect(
+      tester.getCenter(find.text('Mensagem')).dy,
+      closeTo(tester.getCenter(composerField).dy, 2),
+    );
+    final field = tester.widget<TextField>(composerField);
+    expect(field.decoration!.enabledBorder, InputBorder.none);
+    expect(field.decoration!.focusedBorder, isA<OutlineInputBorder>());
+    expect(field.decoration!.filled, isFalse);
 
     await tester.enterText(find.byType(TextField), typed);
     await tester.ensureVisible(find.byTooltip('Enviar mensagem'));

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/utils/formatters.dart';
@@ -9,6 +10,7 @@ import '../models/vet_models.dart';
 import '../theme/vet_colors.dart';
 import 'figma_action_target.dart';
 import 'pets/pet_avatar.dart';
+import 'pets/pets_theme.dart';
 
 class AppointmentDetailDialog extends StatelessWidget {
   const AppointmentDetailDialog({
@@ -25,25 +27,54 @@ class AppointmentDetailDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewport = MediaQuery.sizeOf(context);
-    final scale = math
-        .min(1.0, math.min(viewport.width / 390, viewport.height / 346))
-        .clamp(.7, 1.0)
-        .toDouble();
+    final scale = math.min(
+      1.0,
+      math.min(viewport.width / 390, viewport.height / 381),
+    );
+    final extraHeight = math.min(
+      188 * (1 - scale),
+      math.max(0.0, viewport.height - 381 * scale),
+    );
+    final surfaceHeight = 381 * scale + extraHeight;
+    final detailsHeight = 110 * scale + extraHeight;
+    final deleteBottom = math.min(
+      surfaceHeight,
+      math.max(348 * scale, 288 * scale + 48) + extraHeight,
+    );
     final details = [
       fmtData(appointment.data),
       fmtHorario(appointment.data, appointment.endDate),
       'Veterinário: ${appointment.veterinario}',
+      if (appointment.address != null) 'Endereço: ${appointment.locationLabel}',
       'Local: ${appointment.local}',
       if (appointment.descricao?.trim().isNotEmpty ?? false)
         'Observação: ${appointment.descricao!.trim()}',
     ].join('\n');
+    final detailsFontSize = 10 + ((390 - viewport.width) / 35).clamp(0.0, 2.0);
     final detailsStyle = TextStyle(
       color: VetColors.calendarTextOnRose,
       fontFamily: 'Comfortaa',
-      fontSize: 10 * scale,
+      fontSize: detailsFontSize,
       fontWeight: FontWeight.bold,
       height: 1.35,
     );
+    final titleStyle = TextStyle(
+      color: VetColors.brown,
+      fontFamily: 'MontserratAlternates',
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      height: 1.1,
+    );
+    final titlePainter = TextPainter(
+      text: TextSpan(text: appointment.tipo, style: titleStyle),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 2,
+      ellipsis: '…',
+    )..layout(maxWidth: 151 * scale);
+    final titleOverflowed =
+        titlePainter.didExceedMaxLines || titlePainter.height > 42 * scale;
+    titlePainter.dispose();
     final detailsPainter = TextPainter(
       text: TextSpan(text: details, style: detailsStyle),
       textDirection: Directionality.of(context),
@@ -52,8 +83,16 @@ class AppointmentDetailDialog extends StatelessWidget {
       ellipsis: '…',
     )..layout(maxWidth: 140 * scale);
     final detailsOverflowed =
-        detailsPainter.didExceedMaxLines || detailsPainter.height > 111 * scale;
+        detailsPainter.didExceedMaxLines ||
+        detailsPainter.height > detailsHeight;
     detailsPainter.dispose();
+    final showFullDetails = titleOverflowed || detailsOverflowed;
+    final lineHeight =
+        MediaQuery.textScalerOf(context).scale(detailsFontSize) * 1.35;
+    final visibleLines =
+        ((detailsHeight - (showFullDetails ? 48 : 0)) / lineHeight)
+            .floor()
+            .clamp(1, 7);
     final hasObservation = appointment.descricao?.trim().isNotEmpty ?? false;
     final readFullDetailsLabel = hasObservation
         ? 'Ler observação completa'
@@ -86,7 +125,9 @@ class AppointmentDetailDialog extends StatelessWidget {
                     Expanded(
                       child: SingleChildScrollView(
                         key: const ValueKey('appointment-full-details-scroll'),
-                        child: SelectableText(details),
+                        child: SelectableText(
+                          'Serviço: ${appointment.tipo}\n$details',
+                        ),
                       ),
                     ),
                     Align(
@@ -116,7 +157,7 @@ class AppointmentDetailDialog extends StatelessWidget {
       child: SizedBox(
         key: const ValueKey('appointment-detail-surface'),
         width: 390 * scale,
-        height: 346 * scale,
+        height: surfaceHeight,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(30 * scale),
           child: ColoredBox(
@@ -152,7 +193,7 @@ class AppointmentDetailDialog extends StatelessWidget {
                 ),
                 Positioned(
                   left: 29.5 * scale,
-                  top: 106.5 * scale,
+                  top: 120.5 * scale,
                   width: 141 * scale,
                   height: 141 * scale,
                   child: ExcludeSemantics(
@@ -168,15 +209,30 @@ class AppointmentDetailDialog extends StatelessWidget {
                 ),
                 Positioned(
                   left: 38 * scale,
-                  top: 115 * scale,
+                  top: 129 * scale,
                   width: 123 * scale,
                   height: 123 * scale,
-                  child: Center(
-                    child: PetAvatar(
-                      image: pet.imagePath,
-                      photoBase64: pet.photoBase64,
-                      species: pet.species,
-                      size: 98 * scale,
+                  child: DecoratedBox(
+                    decoration: inset.BoxDecoration(
+                      borderRadius: BorderRadius.circular(100 * scale),
+                      boxShadow: [
+                        inset.BoxShadow(
+                          color: const Color(0x40000000),
+                          offset: Offset(2 * scale, 2 * scale),
+                          blurRadius: 5 * scale,
+                          inset: true,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: PetAvatar(
+                        image: pet.imagePath,
+                        photoBase64: pet.photoBase64,
+                        species: pet.species,
+                        size: 105 * scale / PetsTheme.scaleOf(context),
+                        silhouetteSurface: Colors.transparent,
+                        silhouetteColor: VetColors.brownSecondary,
+                      ),
                     ),
                   ),
                 ),
@@ -184,7 +240,7 @@ class AppointmentDetailDialog extends StatelessWidget {
                   left: 195 * scale,
                   top: 92 * scale,
                   width: 167 * scale,
-                  height: 169 * scale,
+                  height: 188 * scale + extraHeight,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(15 * scale),
                     child: ColoredBox(
@@ -195,25 +251,21 @@ class AppointmentDetailDialog extends StatelessWidget {
                             left: 0,
                             top: 0,
                             width: 167 * scale,
-                            height: 35 * scale,
+                            height: 50 * scale,
                             child: ColoredBox(
                               color: VetColors.chatComposerBackground,
                               child: Center(
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 8 * scale,
+                                    vertical: 4 * scale,
                                   ),
                                   child: Text(
                                     appointment.tipo,
-                                    maxLines: 1,
+                                    maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: VetColors.brown,
-                                      fontFamily: 'Montserrat Alternates',
-                                      fontSize: 12 * scale,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: titleStyle,
                                   ),
                                 ),
                               ),
@@ -224,24 +276,25 @@ class AppointmentDetailDialog extends StatelessWidget {
                               'appointment-detail-text-region',
                             ),
                             left: 13 * scale,
-                            top: 54 * scale,
+                            top: 74 * scale,
                             width: 140 * scale,
-                            height: 111 * scale,
+                            height: detailsHeight,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Expanded(
                                   child: Semantics(
                                     label: details,
+                                    excludeSemantics: true,
                                     child: Text(
                                       details,
-                                      maxLines: detailsOverflowed ? 4 : 7,
+                                      maxLines: visibleLines,
                                       overflow: TextOverflow.ellipsis,
                                       style: detailsStyle,
                                     ),
                                   ),
                                 ),
-                                if (detailsOverflowed)
+                                if (showFullDetails)
                                   FigmaActionTarget(
                                     key: const ValueKey(
                                       'appointment-detail-read-more-target',
@@ -255,10 +308,13 @@ class AppointmentDetailDialog extends StatelessWidget {
                                           ? 'Ler observação'
                                           : 'Ver detalhes',
                                       textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         color: VetColors.calendarTextOnRose,
                                         fontFamily: 'Comfortaa',
-                                        fontSize: 9 * scale,
+                                        fontSize: 12,
+                                        height: 1,
                                         fontWeight: FontWeight.bold,
                                         decoration: TextDecoration.underline,
                                       ),
@@ -274,7 +330,7 @@ class AppointmentDetailDialog extends StatelessWidget {
                 ),
                 Positioned(
                   left: 140 * scale,
-                  top: 324 * scale - 48,
+                  top: deleteBottom - 48,
                   width: 109 * scale,
                   height: 48,
                   child: FigmaActionTarget(

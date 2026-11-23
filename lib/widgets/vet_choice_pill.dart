@@ -143,7 +143,6 @@ class VetPictogram extends StatelessWidget {
     final asset = switch (kind) {
       'Exames' || 'DogLife' => 'coisademedico-1.png',
       'Atestados' => 'atestado-1.png',
-      'Vacinas' => 'services-vaccine.svg',
       'Microchipagem' => 'services-microchip.svg',
       'PetLove' => 'convenio-petlove.png',
       'Particular' => 'convenio-particular.png',

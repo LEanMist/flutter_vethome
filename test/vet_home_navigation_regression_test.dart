@@ -86,6 +86,34 @@ void main() {
     });
   }
 
+  testWidgets('Pets permite trocar para as abas principais', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const PetsPage(),
+        routes: {
+          '/chat': (_) => const Scaffold(body: Text('Conversa destino')),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VetBottomNav), findsOneWidget);
+    final chatTab = find.byWidgetPredicate(
+      (widget) => widget is Semantics && widget.properties.label == 'Conversa',
+    );
+    expect(chatTab, findsOneWidget);
+    await tester.tap(chatTab);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Conversa destino'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('link legado /home abre Pets sem a Splash tomar a rota', (
     tester,
   ) async {
@@ -185,11 +213,14 @@ void main() {
     final appointment = VetRepository.agendamentos(
       pet.id,
     ).singleWhere((item) => item.tipo == 'Consulta');
-    expect(find.text(pet.name), findsWidgets);
     final card = find.byKey(
       ValueKey(
         'agenda-appointment-${appointment.data.microsecondsSinceEpoch}-${appointment.tipo}',
       ),
+    );
+    expect(
+      find.descendant(of: card, matching: find.text('Consulta')),
+      findsOneWidget,
     );
     expect(
       find.ancestor(
@@ -197,7 +228,8 @@ void main() {
         matching: find.byWidgetPredicate(
           (widget) =>
               widget is Semantics &&
-              widget.properties.label?.contains('Consulta') == true,
+              widget.properties.label?.contains('Consulta') == true &&
+              widget.properties.label?.contains(pet.name) == true,
         ),
       ),
       findsOneWidget,
@@ -255,11 +287,14 @@ void main() {
     ];
     expect(find.text(months[date.month - 1]), findsOneWidget);
     expect(find.text('${date.year}'), findsOneWidget);
-    expect(find.text(pet.name), findsWidgets);
     final card = find.byKey(
       ValueKey(
         'agenda-appointment-${date.microsecondsSinceEpoch}-Retorno teste',
       ),
+    );
+    expect(
+      find.descendant(of: card, matching: find.text('Retorno teste')),
+      findsOneWidget,
     );
     expect(
       find.ancestor(
@@ -267,7 +302,8 @@ void main() {
         matching: find.byWidgetPredicate(
           (widget) =>
               widget is Semantics &&
-              widget.properties.label?.contains('Retorno teste') == true,
+              widget.properties.label?.contains('Retorno teste') == true &&
+              widget.properties.label?.contains(pet.name) == true,
         ),
       ),
       findsOneWidget,
@@ -364,6 +400,12 @@ void main() {
         (widget) =>
             widget is Semantics && widget.properties.label == 'Hemograma',
       );
+      expect(hemograma, findsNothing);
+      final exames = find.byKey(const ValueKey('services-pill-Exames'));
+      await tester.ensureVisible(exames);
+      await tester.tap(exames);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(hemograma);
       await tester.tap(hemograma);
       await tester.pumpAndSettle();
       final settingsTab = find.byWidgetPredicate(
@@ -415,6 +457,7 @@ void main() {
       find.widgetWithText(OutlinedButton, 'Pets'),
       300,
     );
+    await tester.ensureVisible(find.text('Pets'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'Pets'));
     await tester.pumpAndSettle();
@@ -426,6 +469,7 @@ void main() {
       find.widgetWithText(OutlinedButton, 'Agenda'),
       300,
     );
+    await tester.ensureVisible(find.text('Agenda'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'Agenda'));
     await tester.pumpAndSettle();

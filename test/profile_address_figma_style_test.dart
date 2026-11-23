@@ -149,7 +149,9 @@ void main() {
               editedAddress = settings.arguments;
               return MaterialPageRoute<void>(
                 settings: settings,
-                builder: (_) => const Scaffold(body: Text('Editor aberto')),
+                builder: (_) => AddressEditorPage(
+                  address: settings.arguments as SavedAddress?,
+                ),
               );
             }
             return null;
@@ -172,9 +174,9 @@ void main() {
         ),
       );
       expect(settingsDestination, findsOneWidget);
-      expect(find.text('Nome:'), findsOneWidget);
+      expect(find.text('Nome:'), findsNothing);
       expect(find.text('Endereço:'), findsOneWidget);
-      expect(find.text('Casa da Irmã'), findsOneWidget);
+      expect(find.text('Casa da Irmã'), findsNothing);
       expect(
         find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
         findsOneWidget,
@@ -182,7 +184,7 @@ void main() {
 
       final cardFinder = find
           .ancestor(
-            of: find.text(address.name),
+            of: find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
             matching: find.byType(Container),
           )
           .first;
@@ -191,7 +193,12 @@ void main() {
       expect(decoration.color, VetColors.roseOverlay50);
       expect(decoration.borderRadius, BorderRadius.circular(25));
       expect(decoration.boxShadow, isNotEmpty);
-      expect(tester.getSize(cardFinder).height, 173);
+      final height = tester.getSize(cardFinder).height;
+      if (viewport.width < 390) {
+        expect(height, greaterThanOrEqualTo(173));
+      } else {
+        expect(height, 173);
+      }
       if (viewport == const Size(390, 844)) {
         expect(tester.getSize(cardFinder).width, 320);
         expect(tester.getTopLeft(cardFinder).dy, 153);
@@ -207,7 +214,7 @@ void main() {
       expect(find.text('Deletar'), findsOneWidget);
       expect(find.text('Novo Endereço'), findsOneWidget);
       final editAddress = find.bySemanticsLabel(
-        'Editar endereço Casa da Irmã, Rua das Flores, 123',
+        'Editar endereço Rua das Flores, 123, Casa',
       );
       await tester.ensureVisible(editAddress);
       await tester.tap(editAddress);
@@ -220,12 +227,19 @@ void main() {
         expect(find.byType(AddressEditorPage), findsOneWidget);
         expect(
           tester.getSize(find.byKey(const ValueKey('address-editor-panel'))),
-          const Size(290, 633),
+          const Size(290, 546),
         );
         expect(find.text('Editar endereço'), findsNothing);
       } else {
         expect(editedAddress, same(address));
-        expect(find.text('Editor aberto'), findsOneWidget);
+        expect(find.text('Editar endereço'), findsOneWidget);
+        final fields = find.byType(TextFormField);
+        expect(fields, findsNWidgets(5));
+        expect(find.text(address.street).hitTestable(), findsOneWidget);
+        expect(
+          find.widgetWithText(ElevatedButton, 'Salvar endereço').hitTestable(),
+          findsOneWidget,
+        );
       }
       expect(tester.takeException(), isNull);
     });

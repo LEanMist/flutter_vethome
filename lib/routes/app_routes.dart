@@ -72,7 +72,12 @@ class AppRoutes {
     '/gabriela/mensagens': (_) => const GabrielaAreaPage(initialIndex: 1),
     '/gabriela/agenda': (_) => const GabrielaAreaPage(initialIndex: 2),
     '/gabriela/configuracoes': (_) => const GabrielaAreaPage(initialIndex: 3),
-    '/cadastro': (_) => const CadastroScreen(),
+    '/cadastro': (context) => CadastroScreen(
+      entry: switch (ModalRoute.of(context)?.settings.arguments) {
+        final CadastroEntry entry => entry,
+        _ => null,
+      },
+    ),
     '/endereco': (context) =>
         EnderecoScreen(initialData: _formDataFromRoute(context)),
     '/cadastroPet': (context) =>
@@ -89,16 +94,12 @@ class AppRoutes {
     '/convenio': (_) => const ConvenioScreen(),
     '/perfil': (_) => const PerfilPage(),
     '/chat': (_) => const ChatScreen(),
-    '/chat/lista': (_) => const ChatListScreen(),
-    '/chat/conversa': (_) => const ChatScreen(),
     '/sobre': (_) => const SobreScreen(),
     '/agenda': (context) => AgendaScreen(
       initialDate: ModalRoute.of(context)?.settings.arguments is DateTime
           ? ModalRoute.of(context)!.settings.arguments as DateTime
           : null,
     ),
-    '/detalhes-pet': (context) =>
-        _petPage(context, (pet) => DetalhesPetPage(pet: pet)),
     '/saude': (context) => _petPage(context, (pet) => SaudePage(pet: pet)),
     '/vacinacao': (context) =>
         _petPage(context, (pet) => VacinacaoPage(pet: pet)),

@@ -17,23 +17,29 @@ class AppointmentBookingCard extends StatelessWidget {
     required this.date,
     required this.start,
     required this.end,
+    required this.addressLabel,
+    required this.addressSummary,
     required this.descriptionController,
     required this.onChooseDate,
     required this.onChooseStart,
     required this.onChooseEnd,
+    required this.onChooseAddress,
     required this.onSave,
     this.saving = false,
     this.showSaveButton = true,
   });
 
   static const double designWidth = 390;
-  static const double designHeight = 461;
-  static const double designHeightWithoutSaveButton = 405;
+  static const double designHeight = 538;
+  static const double designHeightWithoutSaveButton = 469;
+  static const double saveBottom = 511;
   static const double minimumTouchTarget = 48;
 
   static const _calendarIcon = 'assets/imagens/figma/appointment-calendar.svg';
   static const _clockIcon = 'assets/imagens/figma/appointment-clock.svg';
   static const _petIcon = 'assets/imagens/figma/appointment-pet-icon.svg';
+  static const _addressIcon =
+      'assets/imagens/figma/appointment-address-home.svg';
   static const _descriptionIcon =
       'assets/imagens/figma/appointment-text-long.svg';
   static const _timeDivider =
@@ -45,10 +51,13 @@ class AppointmentBookingCard extends StatelessWidget {
   final DateTime date;
   final TimeOfDay? start;
   final TimeOfDay? end;
+  final String addressLabel;
+  final String? addressSummary;
   final TextEditingController descriptionController;
   final VoidCallback onChooseDate;
   final VoidCallback onChooseStart;
   final VoidCallback onChooseEnd;
+  final VoidCallback onChooseAddress;
   final VoidCallback onSave;
   final bool saving;
   final bool showSaveButton;
@@ -94,10 +103,18 @@ class AppointmentBookingCard extends StatelessWidget {
         : fullDateLabel;
     final timeTargetHeight = minimumTouchTarget / scale;
     final narrowLayoutOffset = math.max(0.0, timeTargetHeight - 56.0);
-    final descriptionOffset = math.max(0.0, (timeTargetHeight - 53.0) / 2 + 1);
+    final addressOffset =
+        narrowLayoutOffset + math.max(0.0, timeTargetHeight - 57);
+    final descriptionOffset =
+        addressOffset + math.max(0.0, (timeTargetHeight - 54) / 2);
+    final descriptionLabelHeight = math.max(
+      21.0,
+      MediaQuery.textScalerOf(context).scale(12 * textScale),
+    );
     final saveTargetHeight = math.max(minimumTouchTarget, timeTargetHeight);
-    const saveVisualHeight = 37.0;
-    final saveTargetTop = 408 - (saveTargetHeight - saveVisualHeight);
+    const saveVisualHeight = 51.0;
+    final saveHeight = math.max(saveVisualHeight, saveTargetHeight);
+    final saveTargetTop = saveBottom - saveHeight;
 
     return Container(
       key: const ValueKey('appointment-booking-card'),
@@ -170,16 +187,30 @@ class AppointmentBookingCard extends StatelessWidget {
               ],
             ),
           ),
-          _icon(
-            _descriptionIcon,
-            left: 33,
-            top: 252 + narrowLayoutOffset + descriptionOffset,
+          Positioned(
+            left: 32,
+            top: 248 + addressOffset,
+            child: ExcludeSemantics(child: SvgPicture.asset(_addressIcon)),
           ),
+          _actionPill(
+            key: const ValueKey('appointment-booking-address'),
+            left: 81,
+            top: 244 + addressOffset,
+            label: addressLabel,
+            semanticLabel: addressSummary == null
+                ? addressLabel
+                : 'Endereço: $addressSummary. Alterar endereço.',
+            color: VetColors.rose,
+            textScale: textScale,
+            tapTargetHeight: timeTargetHeight,
+            onTap: onChooseAddress,
+          ),
+          _icon(_descriptionIcon, left: 33, top: 336 + descriptionOffset),
           Positioned(
             left: 85,
-            top: 231 + narrowLayoutOffset + descriptionOffset,
+            top: 319 + descriptionOffset - descriptionLabelHeight,
             width: 270,
-            height: 20,
+            height: descriptionLabelHeight,
             child: ExcludeSemantics(
               child: Text(
                 'Adicionar uma descrição',
@@ -188,14 +219,14 @@ class AppointmentBookingCard extends StatelessWidget {
                   fontFamily: 'MontserratAlternates',
                   fontSize: 12 * textScale,
                   fontWeight: FontWeight.w500,
-                  height: 1.2,
+                  height: 1,
                 ),
               ),
             ),
           ),
           Positioned(
             left: 80,
-            top: 252 + narrowLayoutOffset + descriptionOffset,
+            top: 319 + descriptionOffset,
             width: 285,
             height: 103,
             child: Semantics(
@@ -260,7 +291,7 @@ class AppointmentBookingCard extends StatelessWidget {
           ),
           Positioned(
             left: 33,
-            top: 364.4,
+            top: 426 + descriptionOffset,
             width: 28,
             height: 27.879,
             child: ExcludeSemantics(
@@ -273,7 +304,7 @@ class AppointmentBookingCard extends StatelessWidget {
           ),
           Positioned(
             left: 80,
-            top: 370,
+            top: 430.5 + descriptionOffset,
             width: 150,
             height: 19,
             child: Semantics(
@@ -300,24 +331,27 @@ class AppointmentBookingCard extends StatelessWidget {
           ),
           if (showSaveButton)
             Positioned(
-              left: 265,
+              left: 137,
               top: saveTargetTop,
-              width: 105,
-              height: saveTargetHeight,
+              width: 117,
+              height: saveHeight,
               child: FigmaActionTarget(
                 key: const ValueKey('appointment-booking-save'),
-                width: 105,
-                height: saveTargetHeight,
+                width: 117,
+                height: saveHeight,
                 label: saving ? 'Salvando consulta' : 'Salvar consulta',
                 onPressed: saving ? null : onSave,
                 child: Container(
                   key: const ValueKey('appointment-booking-save-visual'),
-                  width: 105,
+                  width: 117,
                   height: saveVisualHeight,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color.fromRGBO(255, 255, 255, 0.01),
+                    color: VetColors.pink,
                     borderRadius: BorderRadius.circular(100),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: .65),
+                    ),
                     boxShadow: const [
                       BoxShadow(
                         color: Color(0x40000000),
@@ -331,7 +365,7 @@ class AppointmentBookingCard extends StatelessWidget {
                     style: TextStyle(
                       color: VetColors.brown,
                       fontFamily: 'MontserratAlternates',
-                      fontSize: 14 * textScale,
+                      fontSize: 18 * textScale,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

@@ -74,6 +74,8 @@ void main() {
     bool realAppointment = false,
     Size size = const Size(390, 844),
     double? textScale,
+    bool cat = false,
+    bool expandCategories = true,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -81,7 +83,9 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final previousPet = VetRepository.selectedPetId;
     addTearDown(() => VetRepository.selectedPetId = previousPet);
-    VetRepository.selectedPetId = VetRepository.pets.first.id;
+    VetRepository.selectedPetId = cat
+        ? VetRepository.pets.firstWhere((pet) => pet.species == 'Gato').id
+        : VetRepository.pets.first.id;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -115,6 +119,115 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    if (expandCategories && size.width < 900) {
+      for (final category in ['Exames', 'Vacinas']) {
+        final pill = find.byKey(ValueKey('services-pill-$category'));
+        await tester.ensureVisible(pill);
+        await tester.tap(pill);
+        await tester.pumpAndSettle();
+      }
+    }
+  }
+
+  testWidgets('Serviços abre com categorias fechadas e permite expandir', (
+    tester,
+  ) async {
+    await openServices(tester, expandCategories: false);
+    expect(find.text('Hemograma'), findsNothing);
+    expect(find.text('V8'), findsNothing);
+    for (final category in ['Exames', 'Vacinas']) {
+      expect(
+        tester
+            .widget<RotatedBox>(
+              find.byKey(
+                ValueKey('services-category-arrow-rotation-$category'),
+              ),
+            )
+            .quarterTurns,
+        0,
+      );
+      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('Hemograma'), findsOneWidget);
+    expect(find.text('V8'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('services-pill-Exames')));
+    await tester.pumpAndSettle();
+    expect(find.text('Hemograma'), findsNothing);
+    expect(find.text('V8'), findsOneWidget);
+  });
+
+  for (final size in const [
+    Size(320, 640),
+    Size(390, 844),
+    Size(390, 500),
+    Size(800, 900),
+    Size(1280, 800),
+    Size(1543, 900),
+  ]) {
+    testWidgets(
+      'Convênio devolve a seleção das categorias recolhidas em $size',
+      (tester) async {
+        await openServices(tester, size: size, expandCategories: false);
+        for (final (name, option) in [
+          ('Exames', 'Hemograma'),
+          ('Vacinas', 'V8'),
+        ]) {
+          final category = find.byKey(
+            ValueKey('services-category-semantics-$name'),
+          );
+          expect(
+            tester.widget<Semantics>(category).properties.expanded,
+            isFalse,
+          );
+          expect(find.text(option), findsNothing);
+          await tester.ensureVisible(category);
+          await tester.tap(category);
+          await tester.pumpAndSettle();
+          expect(
+            tester.widget<Semantics>(category).properties.expanded,
+            isTrue,
+          );
+          await tester.ensureVisible(find.text(option));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text(option));
+          await tester.pumpAndSettle();
+          await tester.ensureVisible(category);
+          await tester.tap(category);
+          await tester.pumpAndSettle();
+          expect(
+            tester.widget<Semantics>(category).properties.hint,
+            'Selecionados: $option',
+          );
+        }
+        final next = find.byKey(const ValueKey('services-continue'));
+        await tester.ensureVisible(next);
+        await tester.tap(next);
+        await tester.pumpAndSettle();
+        final plan = tester.element(find.byType(ConvenioScreen));
+        final arguments = ModalRoute.of(plan)!.settings.arguments as Map;
+        expect(arguments['service'], 'Hemograma + V8');
+        Navigator.of(plan).pop();
+        await tester.pumpAndSettle();
+        for (final (name, option) in [
+          ('Exames', 'Hemograma'),
+          ('Vacinas', 'V8'),
+        ]) {
+          final category = find.byKey(
+            ValueKey('services-category-semantics-$name'),
+          );
+          expect(
+            tester.widget<Semantics>(category).properties.expanded,
+            isFalse,
+          );
+          expect(
+            tester.widget<Semantics>(category).properties.hint,
+            'Selecionados: $option',
+          );
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   Finder selectionMarker(String name) =>
@@ -132,15 +245,6 @@ void main() {
                   )
                   .bytesLoader
               as SvgAssetLoader)
-          .assetName;
-
-  String categoryChevronAsset(WidgetTester tester, String name) =>
-      (tester
-                  .widget<Image>(
-                    find.byKey(ValueKey('services-category-chevron-$name')),
-                  )
-                  .image
-              as AssetImage)
           .assetName;
 
   String categoryArrowAsset(WidgetTester tester, String name) =>
@@ -162,7 +266,7 @@ void main() {
     const serviceCategories = {
       'Hemograma': 'Exames',
       'Creatinina': 'Exames',
-      'Urina': 'Exames',
+      'Urina tipo 1': 'Exames',
       'V8': 'Vacinas',
       'V10': 'Vacinas',
       'Antirrábica': 'Vacinas',
@@ -247,6 +351,93 @@ void main() {
     }
   });
 
+  testWidgets(
+    'gato tem catálogo próprio e envia opções além da primeira página',
+    (tester) async {
+      await openServices(tester, size: const Size(320, 640), cat: true);
+
+      expect(find.text('GATO'), findsOneWidget);
+      for (final service in [
+        'FIV e FeLV',
+        'Hemograma',
+        'Ureia',
+        'Creatinina',
+        'ALT',
+        'GGT',
+        'Fosfatase alcalina',
+        'Colesterol',
+        'Triglicerídeos',
+        'Urina tipo 1',
+        'Coproparasitológico',
+        'V5',
+        'V4',
+        'V3',
+        'Antirrábica',
+      ]) {
+        expect(find.text(service), findsOneWidget, reason: service);
+      }
+      expect(find.text('V8'), findsNothing);
+      expect(find.text('V10'), findsNothing);
+      expect(find.text('Giardia'), findsNothing);
+
+      final option = find.text('Coproparasitológico');
+      expect(option.hitTestable(), findsNothing);
+      await tester.ensureVisible(option);
+      await tester.pumpAndSettle();
+      expect(option.hitTestable(), findsOneWidget);
+      await tester.tap(option);
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('V5'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('V5'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('services-continue')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Particular'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Particular'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Recebido: Coproparasitológico + V5 / Particular'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('cão recebe somente suas vacinas e os exames comuns', (
+    tester,
+  ) async {
+    await openServices(tester);
+    expect(find.text('CÃO'), findsOneWidget);
+    expect(find.text('FIV e FeLV'), findsNothing);
+    expect(find.text('V5'), findsNothing);
+    expect(find.text('V4'), findsNothing);
+    expect(find.text('V3'), findsNothing);
+    for (final service in [
+      'V8',
+      'V10',
+      'Antirrábica',
+      'Giardia',
+      'Gripe injetável',
+      'Gripe oral ou intranasal',
+    ]) {
+      expect(find.text(service), findsOneWidget, reason: service);
+    }
+    expect(find.text('Urina tipo 1'), findsOneWidget);
+    final lastVaccine = find.text('Gripe oral ou intranasal');
+    await tester.ensureVisible(lastVaccine);
+    await tester.pumpAndSettle();
+    expect(lastVaccine.hitTestable(), findsOneWidget);
+    await tester.tap(lastVaccine);
+    await tester.pumpAndSettle();
+    expect(
+      markerAsset(tester, 'Gripe oral ou intranasal'),
+      'assets/imagens/figma/services-checkbox-selected.svg',
+    );
+  });
+
   testWidgets('cada categoria tem uma ação acessível e um ponto de foco', (
     tester,
   ) async {
@@ -284,7 +475,7 @@ void main() {
     expect(categoryArrowAsset(tester, 'Exames'), down);
     expect(categoryArrowAsset(tester, 'Vacinas'), right);
     expect(categoryArrowRotation(tester, 'Exames'), 1);
-    expect(categoryArrowRotation(tester, 'Vacinas'), 0);
+    expect(categoryArrowRotation(tester, 'Vacinas'), 1);
 
     await tester.tap(find.byKey(const ValueKey('services-pill-Exames')));
     await tester.pumpAndSettle();
@@ -354,10 +545,7 @@ void main() {
     await openServices(tester, size: const Size(1280, 720));
 
     final scrollable = tester.state<ScrollableState>(
-      find.descendant(
-        of: find.byType(SingleChildScrollView),
-        matching: find.byType(Scrollable),
-      ),
+      find.byType(Scrollable).first,
     );
     expect(
       scrollable.position.maxScrollExtent,
@@ -489,14 +677,13 @@ void main() {
       final marker = find.byKey(
         ValueKey('services-category-checkbox-$category'),
       );
-      final arrow = find.byKey(ValueKey('services-category-arrow-$category'));
+      final pill = find.byKey(ValueKey('services-pill-$category'));
       expect(
-        categoryChevronAsset(tester, category),
-        'assets/imagens/figma/convenio-chevron.png',
+        categoryMarkerAsset(tester, category),
+        'assets/imagens/figma/services-checkbox-unselected.svg',
       );
-      expect(marker, findsNothing);
-      expect(arrow, findsOneWidget);
-      await tester.tap(find.byKey(ValueKey('services-pill-$category')));
+      expect(marker, findsOneWidget);
+      await tester.tap(pill);
       await tester.pumpAndSettle();
       expect(
         categoryMarkerAsset(tester, category),
@@ -504,19 +691,14 @@ void main() {
       );
       expect(marker, findsOneWidget);
       expect(
-        find.byKey(ValueKey('services-category-chevron-$category')),
-        findsNothing,
-      );
-      expect(
         tester.widget<ElevatedButton>(continueButton).onPressed,
         isNotNull,
       );
-      await tester.tap(arrow);
+      await tester.tap(pill);
       await tester.pumpAndSettle();
-      expect(marker, findsNothing);
       expect(
-        categoryChevronAsset(tester, category),
-        'assets/imagens/figma/convenio-chevron.png',
+        categoryMarkerAsset(tester, category),
+        'assets/imagens/figma/services-checkbox-unselected.svg',
       );
     }
     expect(tester.takeException(), isNull);
@@ -597,7 +779,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    for (final plan in ['PetLove', 'Doglife', 'Particular']) {
+    for (final plan in ['PetLove', 'Doglife', 'WeVets', 'Particular']) {
       final label = find.text(plan);
       expect(label, findsOneWidget);
       final textWidget = tester.widget<Text>(label);

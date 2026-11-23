@@ -105,11 +105,15 @@ void main() {
 
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('O nome não pode ficar vazio.'), findsOneWidget);
-      final error = tester.widget<Semantics>(
-        find.byKey(const ValueKey('profile-name-validation-error')),
+      final errorFinder = find.byKey(
+        const ValueKey('profile-name-validation-error'),
       );
+      final error = tester.widget<Semantics>(errorFinder);
       expect(error.properties.liveRegion, isTrue);
-      expect(error.properties.label, 'O nome não pode ficar vazio.');
+      expect(
+        tester.getSemantics(errorFinder).label,
+        'O nome não pode ficar vazio.',
+      );
       expect(tester.takeException(), isNull);
 
       await tester.enterText(nameInput, '    ');

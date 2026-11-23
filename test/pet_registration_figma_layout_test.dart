@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_vethome/models/pet_model.dart';
+import 'package:flutter_vethome/pages/cadastro_page.dart';
 import 'package:flutter_vethome/pages/cadastroPet_page.dart';
+import 'package:flutter_vethome/pages/endereco_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';
+import 'package:flutter_vethome/widgets/auth/registration_actions_footer.dart';
 import 'package:flutter_vethome/widgets/pet_photo_button.dart';
 import 'package:flutter_vethome/widgets/pet_form.dart';
 
@@ -79,6 +83,14 @@ void main() {
           .first;
       expect(tester.getTopLeft(input).dy, closeTo(entry.value.$1, 1));
       expect(tester.getSize(input), Size(entry.value.$2, 56));
+      if (entry.key == 'Data de Nascimento' || entry.key == 'Raça') {
+        final editable = find.descendant(
+          of: input,
+          matching: find.byType(EditableText),
+        );
+        final expectedLeft = entry.key == 'Data de Nascimento' ? 164.0 : 140.0;
+        expect(tester.getTopLeft(editable).dx, closeTo(expectedLeft, 1));
+      }
     }
 
     final weightField = find.byWidgetPredicate(
@@ -101,13 +113,10 @@ void main() {
     final continueButton = find.widgetWithText(ElevatedButton, 'Continuar');
     final continueStyle = tester.widget<ElevatedButton>(continueButton).style!;
     expect(tester.getTopLeft(continueButton).dy, closeTo(663, 1));
-    expect(
-      continueStyle.backgroundColor?.resolve(<WidgetState>{}),
-      VetColors.rose,
-    );
+    expect(continueStyle.backgroundColor?.resolve(<WidgetState>{}), VH.primary);
     expect(
       continueStyle.foregroundColor?.resolve(<WidgetState>{}),
-      VetColors.calendarTextOnRose,
+      Colors.white,
     );
     final skip = find.text('Pular');
     expect(skip, findsOneWidget);
@@ -121,6 +130,31 @@ void main() {
     final backgroundLuminance = VetColors.pink.computeLuminance();
     final contrast = (backgroundLuminance + .05) / (textLuminance + .05);
     expect(contrast, greaterThanOrEqualTo(4.5));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Cadastro Pet mantém a posição do Figma sem barra de status', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: VetTheme.light(VH.primary),
+        home: const CadastroPetScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final panel = find.byKey(const ValueKey('pet-registration-panel'));
+    final continueButton = find.widgetWithText(ElevatedButton, 'Continuar');
+    expect(tester.getTopLeft(find.text('Cadastro Pet')).dy, closeTo(60, 1));
+    expect(tester.getTopLeft(panel), const Offset(49, 139));
+    expect(tester.getTopLeft(continueButton).dy, closeTo(663, 1));
+    expect(tester.getBottomRight(find.text('Pular')).dy, lessThan(844));
     expect(tester.takeException(), isNull);
   });
 
@@ -178,6 +212,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Obrigatório'), findsWidgets);
+    final weightError = tester.renderObject<RenderParagraph>(
+      find.text('Peso inválido (kg)'),
+    );
+    expect(weightError.didExceedMaxLines, isFalse);
     expect(tester.takeException(), isNull);
   });
 
@@ -493,7 +531,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('cadastro mostra rótulo e ícones conforme Figma e espécie', (
+  testWidgets('cadastro atualiza o rótulo do nome conforme a espécie', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -519,16 +557,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Nome do Cachorro(a)'), findsOneWidget);
-    expect(
-      find.image(
-        const AssetImage('assets/imagens/figma/register-pet-species.png'),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.image(const AssetImage('assets/imagens/figma/frame-6.png')),
-      findsOneWidget,
-    );
 
     await tester.tap(
       find.byWidgetPredicate(
@@ -536,7 +564,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Gato').last);
+    await tester.tap(find.text('Gato').last, kind: ui.PointerDeviceKind.mouse);
     await tester.pumpAndSettle();
     expect(find.text('Nome do Gato(a)'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -557,10 +585,331 @@ void main() {
     expect(find.byType(PetPhotoButton), findsNothing);
     expect(find.text('Castração'), findsNothing);
     expect(find.text('kg'), findsOneWidget);
+    expect(find.text('Continuar').hitTestable(), findsOneWidget);
     await _expectWeightSuffixWithinInput(tester);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('os seis ícones ficam centralizados em círculos iguais', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    for (final viewport in [
+      const Size(320, 640),
+      const Size(390, 844),
+      const Size(1280, 800),
+    ]) {
+      tester.view.physicalSize = viewport;
+      await tester.pumpWidget(const MaterialApp(home: CadastroPetScreen()));
+      await tester.pumpAndSettle();
+
+      final figma = viewport.width == 390;
+      for (final entry in const {
+        'Tipo de Animal': Icons.pets_outlined,
+        'Nome do Pet': Icons.badge_outlined,
+        'Gênero/Sexo': Icons.wc_outlined,
+        'Peso': Icons.monitor_weight_outlined,
+        'Data de Nascimento': Icons.cake_outlined,
+        'Raça': Icons.category_outlined,
+      }.entries) {
+        final field = find.byWidgetPredicate(
+          (widget) => widget is VHField && widget.label == entry.key,
+        );
+        final icon = find.descendant(
+          of: field,
+          matching: find.byIcon(entry.value),
+        );
+        final circle = find
+            .ancestor(
+              of: icon,
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is DecoratedBox &&
+                    (figma
+                        ? widget.decoration is inset_shadow.BoxDecoration
+                        : widget.decoration is BoxDecoration &&
+                              (widget.decoration as BoxDecoration).shape ==
+                                  BoxShape.circle),
+              ),
+            )
+            .first;
+        expect(
+          tester.getSize(circle),
+          figma ? const Size(58, 56) : const Size.square(40),
+        );
+        final decoration = tester.widget<DecoratedBox>(circle).decoration;
+        if (figma) {
+          final shape = decoration as inset_shadow.BoxDecoration;
+          expect(shape.border, Border.all(color: VH.secondary, width: 4));
+          expect(
+            shape.boxShadow?.single,
+            isA<inset_shadow.BoxShadow>().having(
+              (shadow) => shadow.inset,
+              'inset',
+              isTrue,
+            ),
+          );
+        } else {
+          final shape = decoration as BoxDecoration;
+          expect(shape.border, Border.all(color: VH.secondary, width: 3));
+          expect(shape.boxShadow, isNull);
+        }
+        final ring = tester.getRect(circle);
+        expect(tester.getCenter(icon), ring.center);
+        final input = tester.getRect(_registrationInput(entry.key));
+        final gap = figma ? 0 : 4;
+        expect(ring.left - input.left, closeTo(gap, .1));
+        expect(ring.top - input.top, closeTo(gap, 1));
+        expect(input.bottom - ring.bottom, closeTo(gap, 1));
+      }
+      await _expectWeightSuffixWithinInput(tester);
+      if (viewport.width == 320) {
+        final sex = find.descendant(
+          of: find.byWidgetPredicate(
+            (widget) => widget is VHField && widget.label == 'Gênero/Sexo',
+          ),
+          matching: find.byType(TextFormField),
+        );
+        await tester.tap(sex, kind: ui.PointerDeviceKind.mouse);
+        await tester.pumpAndSettle();
+        final option = find.widgetWithText(ListTile, 'Macho');
+        expect(option.hitTestable(), findsOneWidget);
+        await tester.tap(option, kind: ui.PointerDeviceKind.mouse);
+        await tester.pumpAndSettle();
+        expect(tester.widget<TextFormField>(sex).controller?.text, 'Macho');
+      }
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('as três etapas do cadastro usam o mesmo rodapé', (tester) async {
+    tester.view.physicalSize = const Size(319, 667);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final footer = find.byType(RegistrationActionsFooter);
+    for (final screen in [
+      const CadastroScreen(),
+      const EnderecoScreen(),
+      const CadastroPetScreen(),
+    ]) {
+      await tester.pumpWidget(MaterialApp(home: screen));
+      await tester.pumpAndSettle();
+
+      final decoration =
+          tester
+                  .widget<DecoratedBox>(
+                    find
+                        .descendant(
+                          of: footer,
+                          matching: find.byType(DecoratedBox),
+                        )
+                        .first,
+                  )
+                  .decoration
+              as BoxDecoration;
+      expect(
+        decoration.border,
+        Border(top: BorderSide(color: VH.secondary.withValues(alpha: .35))),
+      );
+      expect(tester.getRect(footer).width, 319);
+      final button = screen is CadastroScreen
+          ? find.widgetWithText(PillButton, 'Continuar')
+          : find.widgetWithText(ElevatedButton, 'Continuar');
+      expect(tester.getRect(button).top - tester.getRect(footer).top, 10);
+      expect(button.hitTestable(), findsOneWidget);
+    }
+    final panel = find.byKey(const ValueKey('pet-registration-panel'));
+    expect(tester.getRect(footer).top - tester.getRect(panel).bottom, 24);
+    expect(find.text('Pular').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cadastro deixa erro de peso legível e aceita decimal', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: CadastroPetScreen()));
+    await tester.pumpAndSettle();
+
+    final weight = find.byWidgetPredicate(
+      (widget) => widget is VHField && widget.label == 'Peso',
+    );
+    final input = find.descendant(
+      of: weight,
+      matching: find.byType(TextFormField),
+    );
+    final field = tester.widget<VHField>(weight);
+    expect(
+      field.keyboardType,
+      const TextInputType.numberWithOptions(decimal: true),
+    );
+    expect(field.showErrorBelowSurface, isTrue);
+    expect(field.persistentSuffix, isTrue);
+    final button = find.text('Continuar');
+    for (final value in ['-4', '4,3,2', '0', '251']) {
+      await tester.ensureVisible(input);
+      await tester.enterText(input, value);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextFormField>(input).controller?.text, value);
+      expect(find.text('Peso inválido (kg)'), findsOneWidget);
+      expect(find.text('Pular').hitTestable(), findsOneWidget);
+    }
+    await tester.ensureVisible(input);
+    await tester.enterText(input, '4,25');
+    await tester.pumpAndSettle();
+    expect(find.text('Peso inválido (kg)'), findsNothing);
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(find.text('Peso inválido (kg)'), findsNothing);
+    expect(find.text('Peso'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cadastro mantém a última opção ao alternar os layouts', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: CadastroPetScreen()));
+    await tester.pumpAndSettle();
+
+    final sex = _registrationInput('Gênero/Sexo');
+    Future<void> select(String label) async {
+      await tester.tap(sex);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ListTile, label));
+      await tester.pumpAndSettle();
+    }
+
+    String selected() => tester.widget<TextFormField>(sex).controller!.text;
+
+    await select('Macho');
+    expect(selected(), 'M');
+    tester.view.physicalSize = const Size(319, 667);
+    await tester.pumpAndSettle();
+    expect(selected(), 'Macho');
+    await select('Fêmea');
+    expect(selected(), 'Fêmea');
+
+    tester.view.physicalSize = const Size(1280, 720);
+    await tester.pumpAndSettle();
+    expect(selected(), 'Fêmea');
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    expect(selected(), 'F');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('nomes e raças longos ocupam duas linhas sem esconder ações', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: CadastroPetScreen()));
+    await tester.pumpAndSettle();
+
+    for (final entry in const {
+      'Nome do Pet': 'Aurora da Bela Luz',
+      'Raça': 'Lulu da Pomerânia',
+    }.entries) {
+      final input = _registrationInput(entry.key);
+      await tester.enterText(input, entry.value);
+      await tester.pumpAndSettle();
+      final editable = tester
+          .state<EditableTextState>(
+            find.descendant(of: input, matching: find.byType(EditableText)),
+          )
+          .renderEditable;
+      final first = editable.getLocalRectForCaret(
+        const TextPosition(offset: 0),
+      );
+      final last = editable.getLocalRectForCaret(
+        TextPosition(offset: entry.value.length),
+      );
+      expect(last.top, greaterThan(first.top), reason: entry.key);
+      expect(last.bottom, lessThanOrEqualTo(editable.size.height + 1));
+    }
+    expect(find.text('Continuar').hitTestable(), findsOneWidget);
+    expect(find.text('Pular').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cadastro em paisagem aproveita duas colunas e fixa ações', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(667, 375);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: CadastroPetScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('pet-form-desktop-grid')), findsOneWidget);
+    expect(_registrationInput('Peso').hitTestable(), findsOneWidget);
+    final continueButton = find.text('Continuar');
+    final skip = find.text('Pular');
+    expect(continueButton.hitTestable(), findsOneWidget);
+    expect(skip.hitTestable(), findsOneWidget);
+    await tester.ensureVisible(_registrationInput('Raça'));
+    await tester.pumpAndSettle();
+    expect(_registrationInput('Raça').hitTestable(), findsOneWidget);
+    expect(continueButton.hitTestable(), findsOneWidget);
+    expect(skip.hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cadastro cabe com texto a 200% e teclado', (tester) async {
+    tester.view.physicalSize = const Size(280, 480);
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 180);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const CadastroPetScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Continuar').hitTestable(), findsOneWidget);
+    expect(find.text('Pular').hitTestable(), findsOneWidget);
+    expect(find.byKey(const ValueKey('pet-sex-weight')), findsNothing);
+    await tester.ensureVisible(find.text('Raça'));
+    await tester.pumpAndSettle();
+    expect(find.text('Raça').hitTestable(), findsOneWidget);
+    expect(find.text('Continuar').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
+
+Finder _registrationInput(String label) => find.descendant(
+  of: find.byWidgetPredicate(
+    (widget) => widget is VHField && widget.label == label,
+  ),
+  matching: find.byType(TextFormField),
+);
 
 Future<void> _expectWeightSuffixWithinInput(WidgetTester tester) async {
   final weightField = find.byWidgetPredicate(

@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/pets_page.dart';
 import 'package:flutter_vethome/pages/login_page.dart';
+import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
+import 'package:shared_preferences_platform_interface/types.dart';
 
 const _rememberedEmailKey = 'vethome.login.rememberedEmail.v1';
 
@@ -16,16 +18,49 @@ class _GatedPreferencesStore extends InMemorySharedPreferencesStore {
 
   final Completer<void> writeStarted;
   final Completer<void> releaseWrite;
+  int writeCount = 0;
 
   @override
   Future<bool> setValue(String valueType, String key, Object value) async {
-    writeStarted.complete();
+    writeCount++;
+    if (!writeStarted.isCompleted) writeStarted.complete();
     await releaseWrite.future;
     return super.setValue(valueType, key, value);
   }
 }
 
-Future<void> _pumpLogin(WidgetTester tester, {double textScale = 1}) async {
+class _DelayedReadStore extends InMemorySharedPreferencesStore {
+  _DelayedReadStore(this.releaseRead)
+    : super.withData({'flutter.$_rememberedEmailKey': 'salvo@example.test'});
+
+  final Completer<void> releaseRead;
+
+  @override
+  Future<Map<String, Object>> getAllWithParameters(
+    GetAllParameters parameters,
+  ) async {
+    await releaseRead.future;
+    return super.getAllWithParameters(parameters);
+  }
+}
+
+class _FailedRememberStore extends InMemorySharedPreferencesStore {
+  _FailedRememberStore(String? recordedEmail)
+    : super.withData({'flutter.$_rememberedEmailKey': ?recordedEmail});
+
+  @override
+  Future<bool> setValue(String valueType, String key, Object value) async =>
+      false;
+
+  @override
+  Future<bool> remove(String key) async => false;
+}
+
+Future<void> _pumpLogin(
+  WidgetTester tester, {
+  double textScale = 1,
+  GlobalKey<NavigatorState>? navigatorKey,
+}) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -33,6 +68,7 @@ Future<void> _pumpLogin(WidgetTester tester, {double textScale = 1}) async {
 
   await tester.pumpWidget(
     MaterialApp(
+      navigatorKey: navigatorKey,
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(
           context,
@@ -40,7 +76,10 @@ Future<void> _pumpLogin(WidgetTester tester, {double textScale = 1}) async {
         child: child!,
       ),
       home: const LoginPage(),
-      routes: {'/pets': (_) => const PetsPage()},
+      routes: {
+        '/pets': (_) => const PetsPage(),
+        '/cobrindo': (_) => const Scaffold(body: Text('Outra rota')),
+      },
     ),
   );
   await tester.pumpAndSettle();
@@ -106,6 +145,12 @@ void main() {
     );
     expect(tester.widget<TextField>(_field('Usuário')).enabled, isFalse);
     expect(tester.widget<TextField>(_field('Senha')).enabled, isFalse);
+    expect(
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, 'CADASTRE-SE'))
+          .onPressed,
+      isNull,
+    );
     final rememberSemantics = tester
         .getSemantics(find.byKey(const ValueKey('remember-me-control')))
         .getSemanticsData();
@@ -134,7 +179,7 @@ void main() {
     }
   });
 
-  testWidgets('foco do lembrete fica no marcador, sem contornar o texto', (
+  testWidgets('foco do lembrete indica o círculo sem simular seleção', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -147,41 +192,19 @@ void main() {
     await _pumpLogin(tester);
 
     final control = find.byKey(const ValueKey('remember-me-control'));
-    final controlDecoration =
-        tester
-                .widget<AnimatedContainer>(
-                  find
-                      .ancestor(
-                        of: find.text('Lembre-se de mim'),
-                        matching: find.byType(AnimatedContainer),
-                      )
-                      .first,
-                )
-                .decoration!
-            as BoxDecoration;
-    expect(controlDecoration.border, isNull);
+    final label = find.text('Lembre-se de mim');
+    expect(tester.widget<Text>(label).style?.decoration, isNull);
 
     final focusNode = tester
         .widget<FocusableActionDetector>(control)
         .focusNode!;
-    await tester.tap(control);
-    await tester.pump();
+    focusNode.requestFocus();
+    await tester.pumpAndSettle();
     expect(focusNode.hasPrimaryFocus, isTrue);
     expect(FocusManager.instance.highlightMode, FocusHighlightMode.traditional);
 
-    final focusedControlDecoration =
-        tester
-                .widget<AnimatedContainer>(
-                  find
-                      .ancestor(
-                        of: find.text('Lembre-se de mim'),
-                        matching: find.byType(AnimatedContainer),
-                      )
-                      .first,
-                )
-                .decoration!
-            as BoxDecoration;
-    expect(focusedControlDecoration.border, isNull);
+    expect(tester.widget<Text>(label).style?.decoration, isNull);
+    expect(find.byIcon(Icons.check_rounded), findsNothing);
 
     final marker = tester.widget<DecoratedBox>(
       find.descendant(
@@ -190,7 +213,9 @@ void main() {
       ),
     );
     expect(marker.decoration, isA<inset_shadow.BoxDecoration>());
-    expect((marker.decoration as inset_shadow.BoxDecoration).border, isNotNull);
+    final decoration = marker.decoration as inset_shadow.BoxDecoration;
+    expect(decoration.color, VetColors.brown);
+    expect(decoration.border, isNull);
   });
 
   testWidgets('restaura email e permite removê-lo desmarcando a opção', (
@@ -226,10 +251,120 @@ void main() {
 
     final rememberLabel = find.text('Lembre-se de mim');
     final forgotPasswordLabel = find.text('Esqueceu sua senha?');
-    expect(tester.widget<Text>(rememberLabel).style?.fontSize, 12);
-    expect(tester.widget<Text>(forgotPasswordLabel).style?.fontSize, 12);
-    expect(tester.getSize(rememberLabel).height, greaterThan(20));
-    expect(tester.getSize(forgotPasswordLabel).height, greaterThan(20));
+    expect(tester.widget<Text>(rememberLabel).style?.fontSize, 8);
+    expect(tester.widget<Text>(forgotPasswordLabel).style?.fontSize, 8);
+    expect(tester.getSize(rememberLabel).height, greaterThan(16));
+    expect(tester.getSize(forgotPasswordLabel).height, greaterThan(16));
     expect(tester.takeException(), isNull);
+  });
+
+  for (final touchRemember in [false, true]) {
+    testWidgets(
+      'leitura atrasada não desfaz escolha local: marcador=$touchRemember',
+      (tester) async {
+        final releaseRead = Completer<void>();
+        SharedPreferencesStorePlatform.instance = _DelayedReadStore(
+          releaseRead,
+        );
+        await _pumpLogin(tester);
+        final user = _field('Usuário');
+        if (touchRemember) {
+          final remember = find.byKey(const ValueKey('remember-me-control'));
+          await tester.tap(remember);
+          await tester.pump();
+          await tester.tap(remember);
+          await tester.pump();
+        } else {
+          await tester.enterText(user, 'novo');
+          await tester.enterText(user, '');
+        }
+        releaseRead.complete();
+        await tester.pumpAndSettle();
+        expect(tester.widget<TextField>(user).controller!.text, isEmpty);
+        expect(find.byIcon(Icons.check_rounded), findsNothing);
+      },
+    );
+  }
+
+  testWidgets('dois acionamentos rápidos alternam o marcador duas vezes', (
+    tester,
+  ) async {
+    await _pumpLogin(tester);
+    final control = find.byKey(const ValueKey('remember-me-control'));
+    final gesture = tester.widget<GestureDetector>(
+      find.descendant(of: control, matching: find.byType(GestureDetector)),
+    );
+    gesture.onTap!();
+    gesture.onTap!();
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.check_rounded), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final recordedEmail in [null, 'salvo@example.test']) {
+    testWidgets(
+      'falha de persistência mantém a preferência gravada: $recordedEmail',
+      (tester) async {
+        SharedPreferencesStorePlatform.instance = _FailedRememberStore(
+          recordedEmail,
+        );
+        final navigatorKey = GlobalKey<NavigatorState>();
+        await _pumpLogin(tester, navigatorKey: navigatorKey);
+        await tester.enterText(_field('Usuário'), 'ana@example.test');
+        await tester.enterText(_field('Senha'), 'senha-secreta');
+        await tester.tap(find.byKey(const ValueKey('remember-me-control')));
+        await tester.pump();
+        await tester.tap(find.widgetWithText(ElevatedButton, 'Entrar'));
+        await tester.pumpAndSettle();
+        expect(find.byType(PetsPage), findsOneWidget);
+        expect(
+          find.textContaining(
+            recordedEmail == null
+                ? 'Não foi possível lembrar o usuário'
+                : 'Não foi possível esquecer o e-mail',
+          ),
+          findsOneWidget,
+        );
+
+        navigatorKey.currentState!.push(
+          MaterialPageRoute<void>(builder: (_) => const LoginPage()),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<TextField>(_field('Usuário')).controller!.text,
+          recordedEmail ?? '',
+        );
+      },
+    );
+  }
+
+  testWidgets('envio repetido grava uma vez e não troca a rota sobreposta', (
+    tester,
+  ) async {
+    final store = _GatedPreferencesStore(Completer<void>(), Completer<void>());
+    SharedPreferencesStorePlatform.instance = store;
+    final navigatorKey = GlobalKey<NavigatorState>();
+    await _pumpLogin(tester, navigatorKey: navigatorKey);
+    await tester.enterText(_field('Usuário'), 'ana@example.test');
+    await tester.enterText(_field('Senha'), 'senha-secreta');
+    await tester.tap(find.byKey(const ValueKey('remember-me-control')));
+    await tester.pump();
+    final submit = find.widgetWithText(ElevatedButton, 'Entrar');
+    final activate = tester.widget<ElevatedButton>(submit).onPressed!;
+    activate();
+    activate();
+    await tester.pump();
+    expect(store.writeCount, 1);
+
+    navigatorKey.currentState!.pushNamed('/cobrindo');
+    await tester.pump();
+    store.releaseWrite.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('Outra rota'), findsOneWidget);
+    expect(find.byType(PetsPage), findsNothing);
+    navigatorKey.currentState!.pop();
+    await tester.pumpAndSettle();
+    expect(tester.widget<ElevatedButton>(submit).onPressed, isNotNull);
+    expect(store.writeCount, 1);
   });
 }

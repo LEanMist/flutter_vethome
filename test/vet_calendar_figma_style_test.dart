@@ -1,6 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show RenderParagraph;
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/pages/agenda_page.dart';
@@ -454,35 +454,34 @@ void main() {
       expect(rect.right, lessThanOrEqualTo(390));
     }
 
-    // CALENDAR_PAGE 2783:950, na página de entrega atual: cabeçalho 390×344,
-    // grade x=31/y=65, faixa selecionada em y=323 e cartões a partir de x=102.
+    // CALENDAR_PAGE 2576:323 de "Telas para IA".
     expect(
       tester.getRect(find.byKey(const ValueKey('vet-calendar'))),
-      const Rect.fromLTWH(0, 0, 390, 344),
+      const Rect.fromLTWH(0, 0, 390, 378),
     );
     expect(
-      find.byKey(const ValueKey('agenda-calendar-inner-panel')),
-      findsNothing,
+      tester.getRect(find.byKey(const ValueKey('agenda-calendar-inner-panel'))),
+      const Rect.fromLTWH(22, 17, 347, 327),
     );
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-calendar-month-slot'))),
-      const Rect.fromLTWH(126, 17, 71, 35),
+      const Rect.fromLTWH(133, 23, 71, 35),
     );
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-calendar-year-slot'))),
-      const Rect.fromLTWH(207, 17, 35, 35),
+      const Rect.fromLTWH(214, 23, 35, 35),
     );
     final monthGrid = tester.getRect(
       find.byKey(const ValueKey('agenda-calendar-month-grid')),
     );
-    expect(monthGrid, const Rect.fromLTWH(31, 65, 327, 230));
+    expect(monthGrid, const Rect.fromLTWH(42, 69, 305, 260));
     final januaryFirst = tester.getRect(
       find.byKey(const ValueKey('calendar-date-semantics-2026-1-1')),
     );
     // O protótipo coloca 1º de janeiro no domingo; o app mantém o calendário
     // gregoriano correto, quinta-feira, e preserva o mesmo tamanho de toque.
-    expect(januaryFirst.left, closeTo(223.57, .02));
-    expect(januaryFirst.top, closeTo(105, .01));
+    expect(januaryFirst.left, closeTo(222, .02));
+    expect(januaryFirst.top, closeTo(114, .01));
     expect(januaryFirst.width, closeTo(35, .01));
     expect(januaryFirst.height, closeTo(35, .01));
     expect(
@@ -491,35 +490,35 @@ void main() {
       reason: 'A grade deve exibir os dias do mês adjacente.',
     );
     final cardTopByLabel = {
-      'Hemograma': 399.0,
-      'Urina': 483.0,
-      'Creatinina': 567.0,
+      'Hemograma': 430.0,
+      'Urina': 514.0,
+      'Creatinina': 598.0,
     };
     for (final entry in cardTopByLabel.entries) {
       final card = find
           .ancestor(of: find.text(entry.key), matching: find.byType(Container))
           .first;
-      expect(tester.getRect(card), Rect.fromLTWH(102, entry.value, 195, 50));
+      expect(tester.getRect(card), Rect.fromLTWH(97, entry.value, 195, 50));
     }
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-selected-date'))),
-      const Rect.fromLTWH(67, 323, 258, 41),
+      const Rect.fromLTWH(62, 350, 268, 55),
     );
     for (var index = 0; index < 2; index++) {
       final line = tester.getRect(
         find.byKey(ValueKey('agenda-divider-$index')),
       );
-      expect(line.left, closeTo(88, .5));
+      expect(line.left, closeTo(83, .5));
       expect(line.width, closeTo(221, .5));
-      expect(line.center.dy, closeTo(466 + 85 * index, .5));
+      expect(line.center.dy, closeTo(497 + 85 * index, .5));
     }
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-chevron-up'))),
-      const Rect.fromLTWH(345, 435, 20, 20),
+      const Rect.fromLTWH(343, 466, 20, 20),
     );
     expect(
       tester.getRect(find.byKey(const ValueKey('agenda-chevron-down'))),
-      const Rect.fromLTWH(345, 560, 20, 20),
+      const Rect.fromLTWH(343, 592, 20, 20),
     );
     final newAppointmentButton = find
         .ancestor(
@@ -527,10 +526,10 @@ void main() {
           matching: find.byType(Container),
         )
         .first;
-    expect(
-      tester.getRect(newAppointmentButton),
-      const Rect.fromLTWH(145.5, 651.5, 99, 41),
-    );
+    final buttonRect = tester.getRect(newAppointmentButton);
+    expect(buttonRect.left, 145.5);
+    expect(buttonRect.top, closeTo(666, .1));
+    expect(buttonRect.size, const Size(99, 41));
     final newAppointmentTarget = tester.getRect(
       find.byKey(const ValueKey('agenda-new-appointment-target')),
     );
@@ -578,6 +577,63 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Agenda mostra nomes de meses longos dentro do cabeçalho', (
+    tester,
+  ) async {
+    for (final (month, title) in const [
+      (9, 'Setembro'),
+      (11, 'Novembro'),
+      (12, 'Dezembro'),
+    ]) {
+      await pumpCalendar(
+        tester,
+        viewport: const Size(390, 844),
+        month: DateTime(2026, month),
+        agendaPageStyle: true,
+      );
+      final heading = find.text(title);
+      final slot = find.byKey(const ValueKey('agenda-calendar-month-slot'));
+      final scaleDown = find.ancestor(
+        of: heading,
+        matching: find.byType(FittedBox),
+      );
+      expect(tester.widget<FittedBox>(scaleDown).fit, BoxFit.scaleDown);
+      expect(
+        tester.renderObject<RenderParagraph>(heading).didExceedMaxLines,
+        isFalse,
+      );
+      expect(
+        tester.getRect(scaleDown).width,
+        lessThanOrEqualTo(tester.getRect(slot).width),
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets(
+    'setas da Agenda navegam entre meses e preservam a lista do dia',
+    (tester) async {
+      await pumpAgenda(tester, const Size(320, 640));
+      final previous = find.byKey(const ValueKey('agenda-previous-month'));
+      final next = find.byKey(const ValueKey('agenda-next-month'));
+      expect(tester.getSize(previous), const Size(48, 48));
+      expect(tester.getSize(next), const Size(48, 48));
+      expect(find.text('Janeiro'), findsOneWidget);
+      expect(find.text('Hemograma'), findsOneWidget);
+
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+      expect(find.text('Fevereiro'), findsOneWidget);
+      expect(find.text('Não há consultas neste dia.'), findsOneWidget);
+
+      await tester.tap(previous);
+      await tester.pumpAndSettle();
+      expect(find.text('Janeiro'), findsOneWidget);
+      expect(find.text('Hemograma'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('Agenda vazia oculta as setas dos cartões', (tester) async {
     await pumpAgenda(
       tester,
@@ -610,7 +666,7 @@ void main() {
     final expectedScale = viewport.width / 390;
 
     expect(lastWeekDay.bottom, lessThanOrEqualTo(selectedDate.top));
-    expect(selectedDate.bottom, lessThanOrEqualTo(403 * expectedScale));
+    expect(selectedDate.bottom, lessThanOrEqualTo(405 * expectedScale + .01));
     expect(tester.takeException(), isNull);
   });
 
@@ -650,7 +706,7 @@ void main() {
           : appointmentCard.first;
       final followingContentRect = tester.getRect(followingContent);
 
-      expect(selectedDate.height, greaterThan(41 * scale));
+      expect(selectedDate.height, greaterThanOrEqualTo(55 * scale));
       expect(label.left, greaterThanOrEqualTo(selectedDate.left + 5 * scale));
       expect(label.right, lessThanOrEqualTo(selectedDate.right - 5 * scale));
       expect(label.top, greaterThanOrEqualTo(selectedDate.top + 5 * scale));
@@ -724,7 +780,7 @@ void main() {
     expect(target.height, greaterThanOrEqualTo(48));
     expect(target.width, greaterThanOrEqualTo(48));
     expect(button.height, closeTo(41 * (320 / 390), .01));
-    expect(target.center, button.center);
+    expect((target.center - button.center).distance, lessThan(.01));
     expect(
       target.bottom,
       lessThanOrEqualTo(tester.getRect(find.byTooltip('Configurações')).top),

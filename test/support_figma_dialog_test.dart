@@ -149,6 +149,22 @@ void main() {
     }
   });
 
+  testWidgets('e-mail de Suporte cabe em uma linha em 320 px', (tester) async {
+    await openSupport(tester, viewport: const Size(320, 640));
+
+    final surface = find.byKey(const ValueKey('support-figma-surface'));
+    final email = find.ancestor(
+      of: find.text('Kelvinpro@gmail.com'),
+      matching: find.byType(SelectableText),
+    );
+    expect(tester.getSize(email).height, lessThan(40));
+    final emailRect = tester.getRect(email);
+    final surfaceRect = tester.getRect(surface);
+    expect(emailRect.left, greaterThanOrEqualTo(surfaceRect.left + 8));
+    expect(emailRect.right, lessThanOrEqualTo(surfaceRect.right - 8));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Suporte se adapta a tela estreita com texto ampliado', (
     tester,
   ) async {
@@ -160,7 +176,11 @@ void main() {
     expect(size.height, greaterThanOrEqualTo(289));
     expect(size.height, lessThanOrEqualTo(592));
     expect(find.text('11 9793-8918'), findsOneWidget);
-    expect(find.text('Kelvinpro@gmail.com'), findsOneWidget);
+    final email = find.ancestor(
+      of: find.text('Kelvinpro@gmail.com'),
+      matching: find.byType(SelectableText),
+    );
+    expect(tester.getSize(email).height, greaterThan(40));
     expect(tester.takeException(), isNull);
   });
 

@@ -1,7 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
@@ -13,6 +14,12 @@ import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 import 'package:flutter_vethome/widgets/vet/vet_header.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    final comfortaa = FontLoader(PetsTheme.fontComfortaa)
+      ..addFont(rootBundle.load('assets/fonts/ComfortaaBold.ttf'));
+    await comfortaa.load();
+  });
   const address = SavedAddress(
     id: 'figma-address-visual',
     name: 'Casa da Irmã',
@@ -59,7 +66,7 @@ void main() {
 
     final card = find
         .ancestor(
-          of: find.text('Casa da Irmã'),
+          of: find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
           matching: find.byWidgetPredicate(
             (widget) =>
                 widget is Container &&
@@ -118,7 +125,9 @@ void main() {
       expect(textStyle.fontWeight, FontWeight.bold);
     }
 
-    for (final (label, size) in [('Nome:', 18.0), ('Endereço:', 18.0)]) {
+    expect(find.text('Nome:'), findsNothing);
+    expect(find.text('Casa da Irmã'), findsNothing);
+    for (final (label, size) in [('Endereço:', 18.0)]) {
       final text = tester.widget<Text>(find.text(label));
       expect(text.style?.fontFamily, PetsTheme.fontComfortaa);
       expect(text.style?.fontWeight, FontWeight.bold);
@@ -126,7 +135,6 @@ void main() {
       expect(text.style?.color, VetColors.brownOnRoseCard);
     }
     for (final valueFinder in [
-      find.text('Casa da Irmã'),
       find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
     ]) {
       final text = tester.widget<Text>(valueFinder);
@@ -145,7 +153,7 @@ void main() {
       _contrastRatio(cardTextColor, cardBackground),
       greaterThanOrEqualTo(4.5),
     );
-    for (final label in ['Nome:', 'Endereço:']) {
+    for (final label in ['Endereço:']) {
       final text = tester.widget<Text>(find.text(label));
       expect(
         _contrastRatio(text.style!.color!, cardBackground),
@@ -208,10 +216,10 @@ void main() {
         await showAddresses(tester, const Size(390, 844));
 
         for (final (action, description) in [
-          ('Editar', 'Casa da Irmã, Rua das Flores, 123'),
-          ('Deletar', 'Casa da Irmã, Rua das Flores, 123'),
-          ('Editar', 'Trabalho, Rua do Trabalho, 22'),
-          ('Deletar', 'Trabalho, Rua do Trabalho, 22'),
+          ('Editar', 'Rua das Flores, 123, Casa'),
+          ('Deletar', 'Rua das Flores, 123, Casa'),
+          ('Editar', 'Rua do Trabalho, 22'),
+          ('Deletar', 'Rua do Trabalho, 22'),
         ]) {
           final target = find.bySemanticsLabel('$action endereço $description');
           expect(target, findsOneWidget);
@@ -235,7 +243,7 @@ void main() {
         await showAddresses(tester, viewport);
 
         for (final action in ['Editar', 'Deletar']) {
-          final label = '$action endereço Casa da Irmã, Rua das Flores, 123';
+          final label = '$action endereço Rua das Flores, 123, Casa';
           final target = find.bySemanticsLabel(label);
           final targetRect = tester.getRect(target);
           final visual = find.widgetWithText(ElevatedButton, action);
@@ -283,10 +291,10 @@ void main() {
       tester.getRect(find.byType(VetHeader)),
       const Rect.fromLTWH(0, 0, 390, 125),
     );
-    expect(tester.getTopLeft(find.text('Endereços')).dy, closeTo(46, 3.1));
+    expect(tester.getCenter(find.text('Endereços')).dy, closeTo(62.5, 5));
     final card = find
         .ancestor(
-          of: find.text('Casa da Irmã'),
+          of: find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
           matching: find.byWidgetPredicate(
             (widget) =>
                 widget is Container &&
@@ -323,7 +331,7 @@ void main() {
 
     final thirdCard = find
         .ancestor(
-          of: find.text('Outro endereço'),
+          of: find.text('Rua da Praça\n73\nPerus'),
           matching: find.byWidgetPredicate(
             (widget) =>
                 widget is Container &&
@@ -361,7 +369,7 @@ void main() {
       if (viewport.width >= 900) {
         final card = find
             .ancestor(
-              of: find.text('Casa da Irmã'),
+              of: find.text('Rua das Flores\nCasa - 123\nSão Paulo'),
               matching: find.byWidgetPredicate(
                 (widget) =>
                     widget is Container &&
@@ -371,6 +379,70 @@ void main() {
             .first;
         expect(tester.getSize(card).height, 173);
       }
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final textScale in [1.0, 2.0]) {
+    testWidgets('Endereços completos em 320 px com texto ${textScale}x', (
+      tester,
+    ) async {
+      const longAddress = SavedAddress(
+        id: 'address-long',
+        name: 'Endereço de trabalho da família',
+        street: 'Avenida das Flores do Jardim da Serra',
+        number: '1430',
+        complement: 'Bloco Primavera, apartamento 205',
+        city: 'São José dos Campos',
+        cep: '01234-567',
+      );
+      VetRepository.addresses
+        ..clear()
+        ..add(longAddress);
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
+          home: const AddressesPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      for (final value in [
+        '${longAddress.street}\n${longAddress.complement} - '
+            '${longAddress.number}\n${longAddress.city}',
+      ]) {
+        final render = tester.renderObject<RenderParagraph>(find.text(value));
+        expect(render.didExceedMaxLines, isFalse, reason: value);
+      }
+      final create = find.widgetWithText(ElevatedButton, 'Novo Endereço');
+      final createPosition = tester.getRect(create);
+      final delete = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label ==
+                'Deletar endereço ${longAddress.street}, '
+                    '${longAddress.number}, ${longAddress.complement}',
+      );
+      await tester.ensureVisible(delete);
+      await tester.pumpAndSettle();
+      expect(create.hitTestable(), findsOneWidget);
+      expect(tester.getRect(create), createPosition);
+      expect(delete.hitTestable(), findsOneWidget);
+      await tester.tap(delete);
+      await tester.pumpAndSettle();
+      expect(find.text('Excluir endereço?'), findsOneWidget);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      expect(VetRepository.addresses.single, longAddress);
       expect(tester.takeException(), isNull);
     });
   }

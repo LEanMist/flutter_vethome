@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
+import '../models/saved_address.dart';
+import '../models/service_catalog.dart';
 import '../models/vet_models.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
+import '../widgets/appointment_address_dialog.dart';
 import '../widgets/appointment_booking_card.dart';
 import '../widgets/pets/pets_theme.dart';
 import '../widgets/pet_summary.dart';
@@ -70,6 +74,16 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   late DateTime _calendarMonth;
   TimeOfDay? _time = const TimeOfDay(hour: 12, minute: 0);
   TimeOfDay? _end = const TimeOfDay(hour: 13, minute: 0);
+  String? _addressId;
+  List<SavedAddress> get _availableAddresses => VetRepository.addresses
+      .where((address) => address.summary.trim().isNotEmpty)
+      .toList();
+  SavedAddress? get _address => VetRepository.addresses
+      .where(
+        (address) =>
+            address.id == _addressId && address.summary.trim().isNotEmpty,
+      )
+      .firstOrNull;
   bool _saving = false;
   final _description = TextEditingController();
   DateTime _at(TimeOfDay t) =>
@@ -149,6 +163,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   Future<void> _chooseDate() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final firstMonth = DateTime(today.year, today.month);
     var selected = _date.isBefore(today) ? today : _date;
     var month = DateTime(selected.year, selected.month);
     final date = await showDialog<DateTime>(
@@ -156,11 +171,10 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+          insetPadding: const EdgeInsets.symmetric(vertical: 12),
           child: Container(
             key: const ValueKey('mobile-calendar-dialog'),
-            constraints: const BoxConstraints(maxWidth: 390),
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+            width: 390,
             decoration: BoxDecoration(
               color: VetColors.pink,
               borderRadius: BorderRadius.circular(30),
@@ -175,35 +189,47 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                VetCalendar(
-                  month: month,
-                  selected: selected,
-                  firstDate: today,
-                  onPreviousMonth: () => setDialogState(() {
-                    final previous = DateTime(month.year, month.month - 1);
-                    final firstMonth = DateTime(today.year, today.month);
-                    if (!previous.isBefore(firstMonth)) month = previous;
-                  }),
-                  onNextMonth: () => setDialogState(() {
-                    month = DateTime(month.year, month.month + 1);
-                  }),
-                  onSelected: (value) => setDialogState(() {
-                    selected = value;
-                    month = DateTime(value.year, value.month);
-                  }),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: VetCalendar(
+                      month: month,
+                      selected: selected,
+                      firstDate: today,
+                      datePickerStyle: true,
+                      canGoToPreviousMonth: month.isAfter(firstMonth),
+                      onPreviousMonth: () => setDialogState(() {
+                        final previous = DateTime(month.year, month.month - 1);
+                        if (!previous.isBefore(firstMonth)) month = previous;
+                      }),
+                      onNextMonth: () => setDialogState(() {
+                        month = DateTime(month.year, month.month + 1);
+                      }),
+                      onSelected: (value) => setDialogState(() {
+                        selected = value;
+                        month = DateTime(value.year, value.month);
+                      }),
+                    ),
+                  ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      child: const Text('Cancelar'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: const Text('Cancelar'),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.pop(dialogContext, selected),
+                          child: const Text('Confirmar'),
+                        ),
+                      ],
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogContext, selected),
-                      child: const Text('Confirmar'),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -244,8 +270,28 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
   void _message(String text) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(text)));
+
+  Future<void> _chooseAddress() async {
+    final selection = await showDialog<({String? addressId})>(
+      context: context,
+      builder: (_) => AppointmentAddressDialog(
+        addresses: _availableAddresses,
+        selectedId: _addressId,
+      ),
+    );
+    if (selection != null && mounted) {
+      setState(() => _addressId = selection.addressId);
+    }
+  }
+
   Future<void> _schedule() async {
     if (_saving) return;
+    final address = _address;
+    if (_addressId != null && address == null) {
+      setState(() => _addressId = null);
+      _message('O endereço escolhido não está mais disponível.');
+      return;
+    }
     if (_time == null) {
       _message('Escolha uma data e horário futuros.');
       return;
@@ -282,9 +328,16 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
           local: 'VetHome · ${widget.plan}',
           status: StatusAgendamento.pendente,
           descricao: _description.text.trim(),
+          address: address,
         ),
         now: DateTime.now(),
       );
+    } on PersistenceClearingException {
+      if (!mounted) return;
+      _message(
+        'A consulta não foi criada porque os dados locais estão sendo limpos.',
+      );
+      return;
     } on PersistenceBlockedException {
       if (!mounted) return;
       _message('Armazenamento local bloqueado. Nenhuma consulta foi criada.');
@@ -340,6 +393,8 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     final media = MediaQuery.of(context);
     final isMobile = media.size.width < VH.desktopBreakpoint;
     final compactMobileAction = isMobile && _needsCompactConfirmButton(context);
+    final address = _address;
+    final addressLabel = address?.summary ?? 'Escolher endereço';
     final page = VetPageScaffold(
       title: 'Novo agendamento',
       pet: pet,
@@ -388,10 +443,13 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
                 date: _date,
                 start: _time,
                 end: _end,
+                addressLabel: addressLabel,
+                addressSummary: address?.summary,
                 descriptionController: _description,
                 onChooseDate: _chooseDate,
                 onChooseStart: () => _chooseTime(),
                 onChooseEnd: () => _chooseTime(end: true),
+                onChooseAddress: _chooseAddress,
                 onSave: _schedule,
                 saving: _saving,
                 showSaveButton: !compactMobileAction,
@@ -446,7 +504,7 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
         pagePadding +
         noticeHeight +
         12 +
-        AppointmentBookingCard.designHeight * cardScale;
+        AppointmentBookingCard.saveBottom * cardScale;
     final usableViewportHeight = media.size.height - media.viewInsets.bottom;
     return actionBottom > usableViewportHeight - navigationHeight;
   }
@@ -511,6 +569,8 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
     );
   }
 
+  String? get _serviceType => ServiceCatalog.detailType(widget.service);
+
   Widget _form(
     BuildContext context,
     PetModel pet, {
@@ -536,21 +596,11 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Serviço: ${const ['V8', 'V10', 'Antirrábica'].contains(widget.service)
-                  ? 'Vacina'
-                  : const ['Hemograma', 'Creatinina', 'Urina'].contains(widget.service)
-                  ? 'Exames'
-                  : widget.service}',
+              'Serviço: ${_serviceType == 'Exame' ? 'Exames' : _serviceType ?? widget.service}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            if (const ['V8', 'V10', 'Antirrábica'].contains(widget.service))
-              Text('Vacina: ${widget.service}')
-            else if (const [
-              'Hemograma',
-              'Creatinina',
-              'Urina',
-            ].contains(widget.service))
-              Text('Exame: ${widget.service}'),
+            if (_serviceType case final detailType?)
+              Text('$detailType: ${widget.service}'),
             const SizedBox(height: 6),
             Text('Convênio: ${widget.plan}'),
           ],
@@ -596,6 +646,16 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
             ),
           ),
         ],
+      ),
+      const SizedBox(height: 12),
+      _selectionPill(
+        ListTile(
+          leading: const Icon(Icons.home),
+          title: const Text('Endereço'),
+          subtitle: Text(_address?.summary ?? 'Escolher endereço'),
+          trailing: const Icon(Icons.expand_more),
+          onTap: _chooseAddress,
+        ),
       ),
       const SizedBox(height: 12),
       TextField(
@@ -687,16 +747,19 @@ class _TimeChoicesState extends State<_TimeChoices> {
         ? [12, 13, 14, 15, 16]
         : [13, 14, 15, 16, 17];
     final width = math.min(390.0, MediaQuery.sizeOf(context).width);
+    final buttonWidth = math.min(100.0, math.max(0.0, (width - 36) / 3));
     final firstRowGap = ((width - 300) / 2).clamp(10.0, 28.0).toDouble();
     final secondRowGap = ((width - 300) / 2).clamp(10.0, 26.0).toDouble();
-    final firstRowLeft = (width - 300 - firstRowGap - secondRowGap) / 2;
-    final secondRowLeft = (width - 200 - secondRowGap) / 2 + 4 * width / 390;
+    final firstRowLeft =
+        (width - 3 * buttonWidth - firstRowGap - secondRowGap) / 2;
+    final secondRowLeft =
+        (width - 2 * buttonWidth - secondRowGap) / 2 + 4 * width / 390;
     final buttonLefts = [
       firstRowLeft,
-      firstRowLeft + 100 + firstRowGap,
-      firstRowLeft + 200 + firstRowGap + secondRowGap,
+      firstRowLeft + buttonWidth + firstRowGap,
+      firstRowLeft + 2 * buttonWidth + firstRowGap + secondRowGap,
       secondRowLeft,
-      secondRowLeft + 100 + secondRowGap,
+      secondRowLeft + buttonWidth + secondRowGap,
     ];
     final buttonTops = [28.0, 28.0, 28.0, 95.0, 95.0];
     final hasAvailableTime = options.any(_available);
@@ -733,7 +796,7 @@ class _TimeChoicesState extends State<_TimeChoices> {
                   Positioned(
                     left: buttonLefts[index],
                     top: buttonTops[index],
-                    width: 100,
+                    width: buttonWidth,
                     height: 45,
                     child: Semantics(
                       key: ValueKey('time-choice-semantics-${options[index]}'),
@@ -810,8 +873,11 @@ class _TimeChoicesState extends State<_TimeChoices> {
                                   : null,
                             ),
                           ),
-                          child: Text(
-                            '${options[index].toString().padLeft(2, '0')}:00',
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '${options[index].toString().padLeft(2, '0')}:00',
+                            ),
                           ),
                         ),
                       ),

@@ -103,3 +103,19 @@ Já existem testes de [isolamento das rotas](../test/veterinarian_login_separati
 [pets]: https://github.com/LEanMist/flutter_vethome/blob/3b4e0e6d0704d9e0016ed61564057d8a49a6b937/lib/repositories/pet_repository.dart
 [pet]: https://github.com/LEanMist/flutter_vethome/blob/3b4e0e6d0704d9e0016ed61564057d8a49a6b937/lib/models/pet.dart
 [finalizacao]: https://github.com/LEanMist/flutter_vethome/blob/3b4e0e6d0704d9e0016ed61564057d8a49a6b937/lib/pages/finalizar_agendamento_page.dart
+
+## Auditoria de Nicolly em 23/11/2026
+
+Revisão de leitura em [62679a4](https://github.com/LEanMist/flutter_vethome/tree/62679a45a089b720d9543cf22b216d1ab7f4d03e/lib). Há 34 commits exclusivos em relação a Kelvin, com ancestral comum em `743e3e9`. As operações abaixo foram verificadas no cliente Flutter. A equipe do servidor ainda precisa confirmar rotas, formatos e regras de acesso.
+
+| Área | Implementação observada na Nicolly | Decisão para a integração |
+| --- | --- | --- |
+| Cadastro e login | `ClienteService` envia nome, nascimento, CPF, telefone, e-mail e senha a `POST /cliente`. O login envia e-mail e senha a `POST /login`, distingue 401 e limita a espera a 10 s. | Manter o transporte experimental existente. Confirmar o DTO de resposta, a autenticação das requisições posteriores, validade da sessão, papel e logout. |
+| Sessão | `Session` mantém campos estáticos em memória e considera um CPF preenchido suficiente para indicar login local. | CPF identifica o cadastro. O servidor precisa verificar titularidade e emitir a identidade autenticada. O login demonstrativo da Gabriela continua separado. |
+| Pets | `GET /pet?cpfCliente=…&size=100` lista pets e `POST /pet` cadastra. O transporte experimental de Liminha usa `POST /cliente/pet`. | Confirmar a rota canônica, paginação, IDs retornados, espécies e como associar IDs locais aos do servidor. |
+| Endereços | Lista por CPF, cadastra com POST, edita com PUT em `/endereco` e exclui por ID numérico. A lista exibida usa cache em memória. O contrato experimental de Liminha usa `/cliente/endereco`. | Preservar o snapshot e os endereços locais existentes. Pactuar paginação, atualização, confirmação de escrita e mapeamento de IDs. |
+| Horários | `GET /consulta/horarios-disponiveis?data=AAAA-MM-DD` espera uma lista de strings HH:mm. Nova Consulta consulta a disponibilidade e oferece seleção de endereço pelo diálogo. | Confirmar fuso, duração, profissional, indisponibilidade e conflito concorrente no ato de criar a reserva. |
+| Consulta | `POST /consulta` requer ID de pet como texto e ID numérico de endereço. Envia CPF, serviços, convênio, data, início, fim e descrição. Também envia aliases para data, horário e descrição. A tela não preenche o horário final. | Definir tipos, campos obrigatórios, formato da seleção múltipla, resposta com ID, estado e regras para repetição de uma requisição interrompida. |
+| Configuração e erros | `API_URL` possui defaults HTTP de desenvolvimento. Há serviços que incluem o corpo bruto no erro, outros leem `mensagem`. Consulta aceita 200/201. | Preservar `VETHOME_API_BASE_URL` com HTTPS e os erros tipados da Liminha. Confirmar respostas de erro e expor somente mensagens apropriadas ao usuário. |
+
+O commit `62679a4` integra a escolha do endereço à tela de consulta. Sua UI depende dos endereços do cliente e de um ID aceito pelo servidor. A seleção local de Kelvin atende ao agendamento demonstrativo. Nenhuma chamada a servidor foi feita nesta auditoria, e `lib.zip` ficou fora da integração.

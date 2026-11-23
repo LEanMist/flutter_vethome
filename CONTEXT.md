@@ -1,5 +1,26 @@
 # VetHome — contexto para continuar o projeto
 
+## Integração Kelvin em 23/11/2026
+
+Base Liminha `d3ccbc2`, Kelvin `4870f27`, ancestral comum `e98c2e1`. A comparação identificou 54 commits exclusivos de Liminha e 36 de Kelvin.
+
+| Classificação | Decisão |
+| --- | --- |
+| Novidades | Catálogo de serviços e vacinas por espécie, seleção de endereço no agendamento, indicação da aba ativa e categorias de Serviços inicialmente recolhidas em mobile e desktop. No mobile, Microchipagem e Atestados continuam opções de seleção direta. |
+| Correções incorporadas | Proteção do agendamento durante limpeza local, foco e feedback de login, controles de formulário, alvos de toque, texto ampliado, histórico, navegação, agenda e chat local do Cliente. |
+| Equivalências | Ambas as branches já direcionavam login e cadastro a Pets e removiam Landing e Home antigas. A rota de compatibilidade `/home` abre Pets. |
+| Incompatibilidades e código obsoleto | Kelvin mantinha StartPage e removia Agendamentos. A entrada continua em Splash. Agendamentos, sua rota, atalho e testes foram preservados. O catálogo usa a conversa atual. |
+| Conciliação manual | Login combina o formulário e o tratamento de navegação de Kelvin com o acesso demonstrativo veterinário. O seletor de depuração conserva os atalhos da Gabriela. Em detalhes do pet, a fonte da Liminha combina com o tamanho de toque de Kelvin. Os testes de navegação preservam o link legado e a matriz de seis tamanhos. |
+
+A área Gabriela, o workflow de qualidade, o snapshot `vethome.state.v1` e a proteção de concorrência permanecem na base Liminha. A [auditoria de Nicolly](docs/integration_contracts_pending.md#auditoria-de-nicolly-em-23112026) registra as diferenças entre os contratos HTTP.
+
+### Validação do merge
+
+- A primeira execução local passou em 752 testes e falhou em quatro. Dois testes tentavam selecionar serviços antes de abrir a categoria. Os outros dois esperavam encontrar Saúde na tela inicial do pet e cinco imagens PNG no rodapé. A regressão revisada percorre Detalhes até Saúde, verifica a fonte do botão e confere o ícone de cada uma das cinco abas.
+- A segunda execução completa com Flutter 3.50.1 passou em 756 testes e pulou cinco exclusivos da Web. Incluiu os três arquivos de regressão de Serviços e os fluxos do Cliente e da Gabriela. Um teste de edição de pet registrou aviso de toque encoberto em Voltar. As asserções sobre o novo nome, o ID e o agendamento passaram. Esse toque final permanece sem comprovação nesse cenário.
+- A análise estática retornou código zero com os critérios do workflow, com 214 informações, zero avisos e zero erros. A formatação dos 100 arquivos Dart alterados e a verificação de espaços do Git passaram. O build Web de release com recursos locais e o dry run Wasm passaram.
+- O runner Chrome integrado encontrou o erro de conexão local 10057 antes das asserções. A suíte Chrome completa permanece pendente. Os frames `SERVICES_PAGE` e `CONVENIO_PAGE` do Figma foram consultados em 390 × 844. O estado inicial recolhido segue o commit `4870f27`. A matriz de seis tamanhos foi exercitada pelos testes de navegação.
+
 A [preparação para demonstração](docs/distribuicao.md) reúne a auditoria de distribuição, os resultados do GitHub Actions e a investigação atual do runner Chrome.
 
 ## Entrada do Cliente e seletor de telas

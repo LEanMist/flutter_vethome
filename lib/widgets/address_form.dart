@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+
 import '../data/cep_service.dart';
 import '../models/saved_address.dart';
 import '../core/utils/form_fields.dart';
@@ -9,6 +10,7 @@ import '../widgets/figma_action_target.dart';
 import '../widgets.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
+import 'auth/registration_actions_footer.dart';
 
 class AddressForm extends StatefulWidget {
   const AddressForm({
@@ -42,7 +44,6 @@ class AddressForm extends StatefulWidget {
 
 class _AddressFormState extends State<AddressForm> {
   final _key = GlobalKey<FormState>();
-  late final _name = TextEditingController(text: widget.initial?.name ?? '');
   late final _cep = TextEditingController(text: widget.initial?.cep ?? '');
   late final _street = TextEditingController(
     text: widget.initial?.street ?? '',
@@ -55,14 +56,23 @@ class _AddressFormState extends State<AddressForm> {
     text: widget.initial?.complement ?? '',
   );
   CepResult? _result;
+  CepResult? _autofilled;
   String _status = '';
   int _request = 0;
   bool _loading = false;
   bool _saving = false;
   bool _validationAttempted = false;
+  bool get _registering => widget.onSkip != null;
+  late final _registrationFocus = <TextEditingController, FocusNode>{
+    for (final field in [_cep, _street, _number, _complement, _city])
+      field: FocusNode(),
+  };
   @override
   void dispose() {
-    for (final c in [_name, _cep, _street, _city, _number, _complement]) {
+    for (final focus in _registrationFocus.values) {
+      focus.dispose();
+    }
+    for (final c in [_cep, _street, _city, _number, _complement]) {
       c.dispose();
     }
     super.dispose();
@@ -71,6 +81,11 @@ class _AddressFormState extends State<AddressForm> {
   Future<void> _lookup(String text) async {
     final request = ++_request;
     _result = null;
+    if (_autofilled case final previous? when _registering) {
+      if (_street.text == previous.street) _street.clear();
+      if (_city.text == previous.city) _city.clear();
+      _autofilled = null;
+    }
     if (text.replaceAll(RegExp(r'\D'), '').length != 8) {
       setState(() {
         _status = '';
@@ -89,12 +104,29 @@ class _AddressFormState extends State<AddressForm> {
       setState(() {
         _result = result;
         _loading = false;
-        _status = result == null
-            ? 'CEP não encontrado. Confira ou preencha manualmente.'
-            : 'CEP consultado.';
+        _status = switch (result) {
+          null => 'CEP não encontrado. Confira ou preencha manualmente.',
+          CepResult(street: '', city: _) when _registering =>
+            'Informe o logradouro.',
+          _ when _registering => '',
+          _ => 'CEP consultado.',
+        };
         if (result != null) {
-          if (_street.text == streetBefore) _street.text = result.street;
-          if (_city.text == cityBefore) _city.text = result.city;
+          final fillStreet =
+              _street.text == streetBefore &&
+              (!_registering ||
+                  (_street.text.isEmpty && result.street.isNotEmpty));
+          final fillCity =
+              _city.text == cityBefore &&
+              (!_registering || (_city.text.isEmpty && result.city.isNotEmpty));
+          if (fillStreet) _street.text = result.street;
+          if (fillCity) _city.text = result.city;
+          if (_registering) {
+            _autofilled = CepResult(
+              fillStreet ? result.street : '',
+              fillCity ? result.city : '',
+            );
+          }
         }
       });
     } catch (_) {
@@ -109,9 +141,28 @@ class _AddressFormState extends State<AddressForm> {
 
   Future<void> _save() async {
     if (_loading || _saving) return;
-    if (!_key.currentState!.validate()) {
+    final invalidFields = _key.currentState!.validateGranularly();
+    if (invalidFields.isNotEmpty) {
       if (mounted && !_validationAttempted) {
         setState(() => _validationAttempted = true);
+      }
+      if (_registering) {
+        final invalid = _cepError(_cep.text) != null
+            ? _cep
+            : [
+                _street,
+                _number,
+                _city,
+              ].firstWhere((field) => _required(field.text) != null);
+        _registrationFocus[invalid]?.requestFocus();
+      } else if (widget.initial == null && widget.onSkip == null) {
+        final firstInvalid = invalidFields.first;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (firstInvalid.mounted) {
+            // Mantenha o rótulo acima do campo dentro da área visível.
+            Scrollable.ensureVisible(firstInvalid.context, alignment: .12);
+          }
+        });
       }
       return;
     }
@@ -124,8 +175,11 @@ class _AddressFormState extends State<AddressForm> {
           widget.initial != null && initialCep != currentCep && result == null;
       final addressDoesNotMatchResult =
           result != null &&
-          (normalizedText(_street.text) != normalizedText(result.street) ||
-              normalizedText(_city.text) != normalizedText(result.city));
+          ((!_registering || result.street.isNotEmpty) &&
+                  normalizedText(_street.text) !=
+                      normalizedText(result.street) ||
+              (!_registering || result.city.isNotEmpty) &&
+                  normalizedText(_city.text) != normalizedText(result.city));
       if (changedCepWithoutResult || addressDoesNotMatchResult) {
         final proceed = await showDialog<bool>(
           context: context,
@@ -158,7 +212,7 @@ class _AddressFormState extends State<AddressForm> {
               widget.initial?.id ??
               'address-${DateTime.now().microsecondsSinceEpoch}',
           street: _street.text.trim(),
-          name: _name.text.trim(),
+          name: widget.initial?.name ?? '',
           city: _city.text.trim(),
           number: _number.text.trim(),
           complement: _complement.text.trim(),
@@ -242,9 +296,27 @@ class _AddressFormState extends State<AddressForm> {
     return VHField(
       label,
       icon,
+      key: ValueKey(label),
       compact: true,
-      figmaForm: registrationLayout || editingLayout,
+      figmaForm: _registering || editingLayout,
+      circularPrefix: _registering,
+      circularPrefixWidth: _registering ? 56 : null,
+      figmaFillColor: editingLayout
+          ? VH.secondary.withValues(alpha: .25)
+          : null,
+      textAlign: editingLayout ? TextAlign.center : TextAlign.start,
+      figmaContentPaddingRight: editingLayout ? 34 : null,
       labelAbove: true,
+      showErrorBelowSurface: _registering,
+      focusNode: _registering ? _registrationFocus[controller] : null,
+      textInputAction: !_registering
+          ? null
+          : identical(controller, _city)
+          ? TextInputAction.done
+          : TextInputAction.next,
+      onFieldSubmitted: _registering && identical(controller, _city)
+          ? (_) => _save()
+          : null,
       labelHorizontalPadding: registrationLayout || editingLayout ? 5 : null,
       labelBottomPadding: registrationLayout || editingLayout ? 0 : null,
       fitSingleLine: true,
@@ -253,6 +325,11 @@ class _AddressFormState extends State<AddressForm> {
       onChanged: onChanged,
     );
   }
+
+  String? _cepError(String? value) =>
+      (value ?? '').replaceAll(RegExp(r'\D'), '').length == 8
+      ? null
+      : 'Informe um CEP com 8 números';
 
   @override
   Widget build(BuildContext context) {
@@ -266,27 +343,37 @@ class _AddressFormState extends State<AddressForm> {
         : editing
         ? 'Salvar'
         : 'Salvar endereço';
-    final saveBackgroundColor = editing ? VH.primary : VH.secondary;
-    final saveForegroundColor = editing
+    final saveBackgroundColor = editing || _registering
+        ? VH.primary
+        : VH.secondary;
+    final saveForegroundColor = editing || _registering
         ? Colors.white
         : VetColors.calendarTextOnRose;
+    final saveText = Text(
+      _saving ? 'Salvando…' : saveLabel,
+      maxLines: 1,
+      softWrap: false,
+    );
     final saveButton = ElevatedButton(
       onPressed: _loading || _saving ? null : _save,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: saveBackgroundColor,
-        foregroundColor: saveForegroundColor,
-        shape: const StadiumBorder(),
-        textStyle: TextStyle(
-          fontFamily: VH.headingFontFamily,
-          fontSize: registration ? 18 : 15,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      child: Text(
-        _saving ? 'Salvando…' : saveLabel,
-        maxLines: 1,
-        softWrap: false,
-      ),
+      style: _registering
+          ? VH.continueButtonStyle
+          : ElevatedButton.styleFrom(
+              backgroundColor: saveBackgroundColor,
+              foregroundColor: saveForegroundColor,
+              padding: figmaEditing
+                  ? const EdgeInsets.symmetric(horizontal: 5)
+                  : null,
+              shape: const StadiumBorder(),
+              textStyle: const TextStyle(
+                fontFamily: VH.headingFontFamily,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+      child: figmaEditing
+          ? FittedBox(fit: BoxFit.scaleDown, child: saveText)
+          : saveText,
     );
     final deleteButton = editing
         ? SizedBox(
@@ -308,7 +395,12 @@ class _AddressFormState extends State<AddressForm> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              child: const Text('Excluir'),
+              child: figmaEditing
+                  ? const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Excluir'),
+                    )
+                  : const Text('Excluir'),
             ),
           )
         : null;
@@ -328,6 +420,36 @@ class _AddressFormState extends State<AddressForm> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final compactHeight = !registration && constraints.maxHeight < 680;
+            final textScale = MediaQuery.textScalerOf(context).scale(15) / 15;
+            final compactRegistration =
+                _registering &&
+                constraints.maxHeight <
+                    (desktop ? 570 : 793) + (textScale - 1).clamp(0, 3) * 150;
+            final pinRegistrationActions =
+                constraints.maxHeight >= 190 &&
+                (compactRegistration ||
+                    (_registering &&
+                        constraints.maxHeight <
+                            (desktop ? 570 : 793) +
+                                (_validationAttempted ? 80 : 0) +
+                                (_status.isNotEmpty ? 40 : 0)));
+            final skipButton = TextButton(
+              style: widget.skipButtonStyle,
+              onPressed: _saving ? null : _skip,
+              child: const Text('Pular'),
+            );
+            final registrationActions = Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 181 + (textScale - 1).clamp(0, 3).toDouble() * 80,
+                  height: constraints.maxHeight < 320 ? 54 : 65,
+                  child: saveButton,
+                ),
+                if (pinRegistrationActions) const SizedBox(height: 8),
+                skipButton,
+              ],
+            );
             final pinPrimaryAction =
                 widget.pinSaveAction &&
                 !desktop &&
@@ -349,7 +471,7 @@ class _AddressFormState extends State<AddressForm> {
                     ? 12
                     : 16,
                 16,
-                registration ? 0 : 16,
+                registration || pinRegistrationActions ? 0 : 16,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -363,11 +485,12 @@ class _AddressFormState extends State<AddressForm> {
                       fontSize: registration ? 30 : 24,
                       height: registration ? 1.2 : null,
                       fontWeight: FontWeight.bold,
+                      color: VH.foreground,
                     ),
                   ),
                   SizedBox(
                     height: registration
-                        ? 21
+                        ? (compactRegistration ? 16 : 70)
                         : compactHeight
                         ? 12
                         : 16,
@@ -376,25 +499,13 @@ class _AddressFormState extends State<AddressForm> {
                     alignment: Alignment(registrationPanelAlignment, 0),
                     child: SizedBox(
                       width: registration ? 290 : double.infinity,
-                      // Preserve the measured Figma panel before interaction.
-                      // CEP feedback can add another line to the form; let the
-                      // panel grow for that state instead of clipping fields.
-                      height:
-                          registration &&
-                              _status.isEmpty &&
-                              !_validationAttempted
-                          ? 565
-                          : null,
                       child: Container(
                         key: registration
                             ? const ValueKey('address-registration-panel')
                             : null,
-                        clipBehavior:
-                            registration &&
-                                _status.isEmpty &&
-                                !_validationAttempted
-                            ? Clip.antiAlias
-                            : Clip.none,
+                        constraints: registration
+                            ? const BoxConstraints(minHeight: 473)
+                            : null,
                         padding: EdgeInsets.fromLTRB(
                           registration ? 11 : 10,
                           registration
@@ -409,7 +520,7 @@ class _AddressFormState extends State<AddressForm> {
                               ? 8
                               : 10,
                         ),
-                        decoration: registration
+                        decoration: _registering
                             ? inset_shadow.BoxDecoration(
                                 color: Colors.white.withValues(alpha: .2),
                                 borderRadius: BorderRadius.circular(30),
@@ -436,11 +547,15 @@ class _AddressFormState extends State<AddressForm> {
                               ),
                         child: Form(
                           key: _key,
+                          autovalidateMode: _registering && _validationAttempted
+                              ? AutovalidateMode.onUserInteraction
+                              : AutovalidateMode.disabled,
                           child: LayoutBuilder(
                             builder: (context, constraints) {
                               final half = (constraints.maxWidth - 12) / 2;
                               Widget slot(Widget child, {bool full = false}) =>
                                   SizedBox(
+                                    key: child.key,
                                     width: desktop && !full
                                         ? half
                                         : constraints.maxWidth,
@@ -462,26 +577,25 @@ class _AddressFormState extends State<AddressForm> {
                                   slot(
                                     _field(
                                       'CEP',
-                                      Icons.home_outlined,
+                                      _registering
+                                          ? Icons.location_on
+                                          : Icons.home_outlined,
                                       _cep,
                                       onChanged: _lookup,
-                                      validator: (v) =>
-                                          (v ?? '')
-                                                  .replaceAll(RegExp(r'\D'), '')
-                                                  .length ==
-                                              8
-                                          ? null
-                                          : 'Informe um CEP com 8 números',
+                                      validator: _cepError,
                                     ),
                                   ),
                                   if (_status.isNotEmpty)
                                     slot(
                                       Semantics(
+                                        key: const ValueKey(
+                                          'address-cep-status',
+                                        ),
                                         liveRegion: true,
                                         child: Padding(
-                                          padding: const EdgeInsets.fromLTRB(
+                                          padding: EdgeInsets.fromLTRB(
                                             12,
-                                            28,
+                                            _registering ? 0 : 28,
                                             12,
                                             0,
                                           ),
@@ -496,7 +610,7 @@ class _AddressFormState extends State<AddressForm> {
                                     ),
                                   slot(
                                     _field(
-                                      registration || editing
+                                      _registering || editing
                                           ? 'Logradouro'
                                           : 'Endereço',
                                       Icons.home_outlined,
@@ -507,7 +621,7 @@ class _AddressFormState extends State<AddressForm> {
                                   ),
                                   slot(
                                     _field(
-                                      'Numero',
+                                      _registering ? 'Número' : 'Numero',
                                       Icons.numbers,
                                       _number,
                                       validator: _required,
@@ -516,7 +630,9 @@ class _AddressFormState extends State<AddressForm> {
                                   slot(
                                     _field(
                                       'Complemento',
-                                      Icons.home_outlined,
+                                      _registering
+                                          ? Icons.meeting_room_outlined
+                                          : Icons.home_outlined,
                                       _complement,
                                     ),
                                   ),
@@ -527,9 +643,7 @@ class _AddressFormState extends State<AddressForm> {
                                       _city,
                                       validator: _required,
                                     ),
-                                  ),
-                                  slot(
-                                    _field('Nome', Icons.home_outlined, _name),
+                                    full: true,
                                   ),
                                 ],
                               );
@@ -539,14 +653,12 @@ class _AddressFormState extends State<AddressForm> {
                       ),
                     ),
                   ),
-                  if (!pinPrimaryAction) ...[
-                    SizedBox(
-                      height: registration
-                          ? 30
-                          : compactHeight
-                          ? 12
-                          : 16,
-                    ),
+                  if (_registering && !pinRegistrationActions) ...[
+                    SizedBox(height: registration ? 53 : 16),
+                    Center(child: registrationActions),
+                  ],
+                  if (!pinPrimaryAction && !_registering) ...[
+                    SizedBox(height: compactHeight ? 12 : 16),
                     editing
                         ? Center(
                             child: SizedBox(
@@ -566,28 +678,29 @@ class _AddressFormState extends State<AddressForm> {
                               ),
                             ),
                           )
-                        : registration
-                        ? Center(
-                            child: SizedBox(
-                              width: 181,
-                              height: 65,
-                              child: saveButton,
-                            ),
-                          )
                         : SizedBox(height: 48, child: saveButton),
-                    if (widget.onSkip != null) ...[
-                      const SizedBox(height: 2),
-                      TextButton(
-                        style: widget.skipButtonStyle,
-                        onPressed: _saving ? null : _skip,
-                        child: Text(_saving ? 'Salvando…' : 'Pular'),
-                      ),
-                    ],
                   ],
                 ],
               ),
             );
 
+            if (pinRegistrationActions) {
+              return Column(
+                children: [
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(
+                        bottom: RegistrationActionsFooter.contentSpacing,
+                      ),
+                      child: content,
+                    ),
+                  ),
+                  RegistrationActionsFooter(
+                    child: Center(child: registrationActions),
+                  ),
+                ],
+              );
+            }
             if (pinPrimaryAction) {
               return Column(
                 children: [
@@ -605,7 +718,8 @@ class _AddressFormState extends State<AddressForm> {
               );
             }
 
-            return !desktop ||
+            return _registering ||
+                    !desktop ||
                     constraints.maxHeight < 700 ||
                     MediaQuery.viewInsetsOf(context).bottom > 0
                 ? SingleChildScrollView(child: content)
@@ -627,24 +741,36 @@ class _AddressFormState extends State<AddressForm> {
       TextEditingController controller, {
       FormFieldValidator<String>? validator,
       ValueChanged<String>? onChanged,
-      required double top,
-    }) => Positioned(
-      left: 15,
-      top: top,
-      width: 259,
-      child: _field(
-        label,
-        icon,
-        controller,
-        validator: validator,
-        onChanged: onChanged,
+      double minHeight = 92,
+      Widget? status,
+    }) => ConstrainedBox(
+      constraints: BoxConstraints(minHeight: minHeight),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _field(
+              label,
+              icon,
+              controller,
+              validator: validator,
+              onChanged: onChanged,
+            ),
+            ?status,
+          ],
+        ),
       ),
     );
 
-    return SizedBox.expand(
-      child: Form(
-        key: _key,
-        child: Stack(
+    return Form(
+      key: _key,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(15, 14, 16, 23),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             field(
               'CEP',
@@ -655,76 +781,55 @@ class _AddressFormState extends State<AddressForm> {
                   (value ?? '').replaceAll(RegExp(r'\D'), '').length == 8
                   ? null
                   : 'Informe um CEP com 8 números',
-              top: 14,
+              status: _status.isEmpty
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.only(left: 5),
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          _status,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ),
             ),
             field(
               'Logradouro',
               Icons.home_outlined,
               _street,
               validator: _required,
-              top: 106,
+              minHeight: 93,
             ),
-            field(
-              'Numero',
-              Icons.numbers,
-              _number,
-              validator: _required,
-              top: 199,
-            ),
-            field('Complemento', Icons.home_outlined, _complement, top: 291),
+            field('Numero', Icons.numbers, _number, validator: _required),
+            field('Complemento', Icons.home_outlined, _complement),
             field(
               'Cidade',
               Icons.location_city_outlined,
               _city,
               validator: _required,
-              top: 383,
             ),
-            field('Nome', Icons.home_outlined, _name, top: 475),
-            if (_status.isNotEmpty)
-              Positioned(
-                left: 20,
-                top: 90,
-                width: 254,
-                height: 14,
-                child: Semantics(
-                  liveRegion: true,
-                  label: _status,
-                  child: ExcludeSemantics(
-                    child: Text(
-                      _status,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                  ),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              runSpacing: 8,
+              children: [
+                FigmaActionTarget(
+                  key: const ValueKey('address-delete-target'),
+                  width: 90,
+                  label: 'Excluir endereço',
+                  onPressed: _saving ? null : _delete,
+                  child: deleteButton,
                 ),
-              ),
-            Positioned(
-              left: 15,
-              top: 562,
-              child: FigmaActionTarget(
-                key: const ValueKey('address-delete-target'),
-                width: 90,
-                label: 'Excluir endereço',
-                onPressed: _saving ? null : _delete,
-                child: deleteButton,
-              ),
+                ?routeButton,
+                FigmaActionTarget(
+                  key: const ValueKey('address-save-target'),
+                  width: 90,
+                  label: 'Salvar endereço',
+                  onPressed: _loading || _saving ? null : _save,
+                  child: SizedBox(width: 90, height: 34, child: saveButton),
+                ),
+              ],
             ),
-            Positioned(
-              left: 184,
-              top: 562,
-              width: 90,
-              height: 48,
-              child: FigmaActionTarget(
-                key: const ValueKey('address-save-target'),
-                width: 90,
-                label: 'Salvar endereço',
-                onPressed: _loading || _saving ? null : _save,
-                child: SizedBox(width: 90, height: 34, child: saveButton),
-              ),
-            ),
-            if (routeButton != null)
-              Positioned(left: 121, top: 562, child: routeButton),
           ],
         ),
       ),

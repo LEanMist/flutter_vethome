@@ -63,7 +63,7 @@ class TestePage extends StatelessWidget {
       (
         titulo: 'Sucesso no cadastro',
         icone: Icons.check_circle_outline,
-        pagina: (_) => const SucessoScreen(),
+        pagina: (_) => const SucessoScreen(saved: true),
       ),
       (
         titulo: 'Endereços',
@@ -105,11 +105,6 @@ class TestePage extends StatelessWidget {
         titulo: 'Perfil',
         icone: Icons.person_outline,
         pagina: (_) => const PerfilPage(),
-      ),
-      (
-        titulo: 'Lista de conversas',
-        icone: Icons.forum_outlined,
-        pagina: (_) => const ChatListScreen(),
       ),
       (
         titulo: 'Conversa',

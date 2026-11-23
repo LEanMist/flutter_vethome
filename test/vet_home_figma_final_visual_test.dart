@@ -43,7 +43,7 @@ void main() {
           )
           .first,
     );
-    expect(firstListImage.color, VetColors.brownOnRose);
+    expect(firstListImage.color, Colors.white);
 
     await pumpAt(tester, const EscolhaPetScreen());
     expect(find.byKey(const ValueKey('pets-list-panel')), findsNothing);
@@ -53,6 +53,13 @@ void main() {
     expect(find.text('Escolha seu Pet'), findsOneWidget);
     final choiceList = find.byKey(const ValueKey('pet-choice-mobile-list'));
     expect(tester.getSize(choiceList), const Size(275, 262));
+    final firstChoiceName = tester.widget<Text>(
+      find.descendant(
+        of: choiceList,
+        matching: find.text(VetRepository.pets.first.name),
+      ),
+    );
+    expect(firstChoiceName.style?.color, VetColors.brownOnRose);
     expect(tester.takeException(), isNull);
   });
 
