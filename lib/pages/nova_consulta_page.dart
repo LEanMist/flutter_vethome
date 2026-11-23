@@ -332,6 +332,12 @@ class _NovaConsultaPageState extends State<NovaConsultaPage> {
         ),
         now: DateTime.now(),
       );
+    } on PersistenceClearingException {
+      if (!mounted) return;
+      _message(
+        'A consulta não foi criada porque os dados locais estão sendo limpos.',
+      );
+      return;
     } on PersistenceBlockedException {
       if (!mounted) return;
       _message('Armazenamento local bloqueado. Nenhuma consulta foi criada.');
@@ -767,7 +773,9 @@ class _TimeChoicesState extends State<_TimeChoices> {
         scopesRoute: true,
         namesRoute: true,
         explicitChildNodes: true,
-        label: hasAvailableTime ? 'Escolha o horário' : 'Escolha o horário. Nenhum horário disponível para a data escolhida.',
+        label: hasAvailableTime
+            ? 'Escolha o horário'
+            : 'Escolha o horário. Nenhum horário disponível para a data escolhida.',
         child: Container(
           key: const ValueKey('time-choice-panel'),
           width: width,
