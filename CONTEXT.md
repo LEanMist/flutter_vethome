@@ -23,17 +23,27 @@ A área Gabriela, o workflow de qualidade, o snapshot `vethome.state.v1` e a pro
 
 A [preparação para demonstração](docs/distribuicao.md) reúne a auditoria de distribuição, os resultados do GitHub Actions e a investigação atual do runner Chrome.
 
-## Entrada do Cliente e seletor de telas
+## Login único e sessão local
 
-- A rota `/` abre a Splash do Cliente em qualquer tamanho. O login demonstrativo
-  e a conclusão do cadastro levam a `/pets`. A rota legada `/home` abre a mesma
-  tela de Pets.
-- A apresentação institucional, a seleção de entrada por largura e a Home
-  antiga foram removidas. O seletor de depuração oferece a Splash e os atalhos
-  das telas funcionais.
-- Cliente e Gabriela usarão uma única tela de login quando o backend puder
-  identificar o papel autenticado e autorizar a área correspondente. Os
-  acessos demonstrativos continuam disponíveis durante o desenvolvimento.
+- `/` abre a Splash principal. O Login usa a resposta de `Authentication.signIn`
+  para encaminhar Cliente a `/pets` e Veterinária a `/gabriela`.
+- O provedor fictício fica disponível com `VETHOME_DEMO_MODE=true` no build.
+  Sem provedor, o Login informa que o acesso está indisponível.
+- As rotas antigas `/gabriela/splash`, `/gabriela/login` e `/home` convergem
+  nas rotas principais. O papel da sessão governa o acesso por link direto.
+  O logout de ambos os perfis limpa a sessão em memória e a pilha de telas.
+- O cadastro de demonstração grava o perfil local e volta ao Login. O
+  seletor de depuração apresenta os atalhos de acordo com o papel atual.
+- O formato `vethome.state.v1` e os dados locais da Gabriela continuam em
+  seus armazenamentos atuais. A sessão só existe durante a execução do app.
+  O [guia do APK](docs/distribuicao.md#apk-android) descreve a distribuição.
+
+A validação local com Flutter 3.50.1 registrou 114 testes focados aprovados,
+767 testes aprovados na suíte completa e cinco casos exclusivos de outras
+plataformas ignorados pelo runner. A análise registrou zero erros, zero
+avisos e 214 informações. O build Web de demonstração com recursos locais
+e o dry run Wasm passaram. O APK de demonstração local depende de um
+ambiente com SDK Android instalado.
 
 ## Validação multiplataforma do frontend (22/11/2026)
 

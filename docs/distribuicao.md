@@ -10,6 +10,50 @@
 
 A versão do projeto continua em `1.0.0+1`. O Roboto usado como fallback do motor Web é distribuído em `assets/fonts/` com a licença Apache 2.0. O build Web precisa estar em uma origem acessível, por exemplo, um servidor local. A validação com internet bloqueada confirma a abertura com recursos locais. Abrir uma URL remota sem acesso ao servidor depende da estratégia de hospedagem e cache.
 
+## APK Android
+
+Para gerar um APK de demonstração com o Flutter 3.50.1 e o SDK Android configurados, execute na raiz do projeto:
+
+```powershell
+flutter pub get --enforce-lockfile
+flutter build apk --debug --no-pub --dart-define=VETHOME_DEMO_MODE=true
+```
+
+O APK fica em `build/app/outputs/flutter-apk/app-debug.apk` e usa a assinatura
+debug do ambiente de build. As contas fictícias ficam no
+[README](../README.md#executar) e no Login. O workflow de qualidade compila
+sem a opção de demonstração. Seu artefato verifica a compilação da variante
+debug, com o acesso indisponível até haver um provedor.
+
+O rótulo é VetHome, com o ícone `@mipmap/ic_launcher` do modelo Flutter.
+O `LaunchTheme` aponta para o fundo nativo de inicialização. Após a
+inicialização do Flutter, a Splash principal abre o Login único.
+
+### Release assinado após integração e testes em dispositivos
+
+1. Confirme com a equipe o `applicationId`, a identidade visual final e
+   o certificado que deve assinar a distribuição. Identifique instalações
+   existentes antes de qualquer mudança.
+2. Configure a assinatura da variante `release` em
+   `android/app/build.gradle.kts` com a chave aprovada. Guarde o keystore
+   e as credenciais fora do Git. O projeto já ignora `android/key.properties`
+   e os arquivos `*.jks` e `*.keystore` sob `android/`.
+3. Atualize a versão do build (`versionCode`) e execute
+   `flutter build apk --release` com a integração disponível e os testes
+   em dispositivos aprovados. Verifique o certificado do APK final com
+   `apksigner verify --print-certs` e teste a atualização de uma instalação
+   anterior que use o certificado aprovado.
+
+Para atualizar uma instalação no mesmo pacote, o Android exige o mesmo
+`applicationId` e um certificado compatível. Um APK release assinado com
+outra chave geralmente não atualiza um APK debug instalado. Alterar o
+`applicationId` cria uma instalação separada, com armazenamento próprio.
+Registre como os dados locais serão preservados antes de trocar a identidade
+ou pedir que alguém desinstale a versão existente.
+[Flutter](https://docs.flutter.dev/deployment/android) ·
+[Regras de atualização do Android](https://developer.android.com/google/play/app-updates)
+
+
 ## GitHub Actions
 
 O workflow [Qualidade Flutter](../.github/workflows/qualidade.yml) usa Flutter 3.50.1 e valida o lockfile. Ele roda em pushes para `liminha` que alteram código, testes, assets ou configuração de build. No Ubuntu, verifica a formatação dos arquivos Dart alterados, bloqueia diagnósticos de nível erro ou aviso, roda os testes no runner local e compila Web e APK debug. No Windows, compila o bundle x64 debug. Os jobs têm limites de 35 e 25 minutos. Os artefatos publicados em **Artifacts** ficam disponíveis por sete dias.
@@ -39,7 +83,11 @@ A suíte automatizada cobre navegação entre abas durante edição, operações
 
 ### Teste manual em Android e Windows
 
-Use os artefatos do merge `1ce51c8`. Baixe o APK de depuração e instale em um dispositivo de teste. No Windows x64, extraia o ZIP inteiro e abra o executável na pasta extraída. O build Web também está disponível na mesma execução. Os artefatos têm retenção de sete dias. [Execução e downloads](https://github.com/LEanMist/flutter_vethome/actions/runs/45184103395)
+Gere o APK com a opção de demonstração descrita acima e instale em um
+dispositivo de teste. No Windows x64, compile com
+`flutter build windows --debug --dart-define=VETHOME_DEMO_MODE=true`
+e execute o aplicativo na pasta `build/windows/x64/runner/Debug/`.
+
 
 Em cada plataforma, use dados fictícios e anote o dispositivo, a versão do sistema e o resultado de cada passo.
 
@@ -48,7 +96,7 @@ Em cada plataforma, use dados fictícios e anote o dispositivo, a versão do sis
 3. Inicie uma consulta local. Abra Exames e Vacinas, selecione mais de um serviço e confira se as escolhas chegam a Convênio. Selecione um endereço salvo e confirme a consulta na Agenda.
 4. Feche o processo e reabra o aplicativo. Confira pet, alterações, foto e consulta.
 5. Digite nos formulários, percorra os campos com teclado ou toque e confira a rolagem e o botão Confirmar com a janela reduzida ou o teclado na tela.
-6. Abra a entrada demonstrativa da Gabriela e percorra Perfil e foto, Agenda, Mensagens e Configurações.
+6. Saia do Cliente, use o mesmo Login com a conta fictícia da Veterinária e percorra Perfil e foto, Agenda, Mensagens e Configurações. Saia novamente e confira se a área exige login.
 7. Registre travamentos, cortes de texto, sobreposições ou ações encobertas, com a tela e os passos para reproduzir.
 
 - [x] Exibir VetHome no Android, Windows e Web.

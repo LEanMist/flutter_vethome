@@ -19,16 +19,29 @@ O projeto ainda não usa autenticação real nem sincroniza dados com um servido
 
 ## Executar
 
-A entrada do Cliente segue Splash → Login → Pets em celular, tablet e desktop.
-O cadastro também termina em Pets. Links antigos para `/home` abrem a lista de
-pets. Em modo de depuração, o botão de grade abre o seletor de telas, incluindo
-o acesso demonstrativo à área da Gabriela.
+A Splash principal leva ao Login único. A sessão encaminha Cliente para Pets
+e Veterinária para Gabriela. As rotas protegidas conferem o papel da sessão.
+O cadastro local leva de volta ao Login após salvar o perfil.
+
+A demonstração é ativada com `--dart-define=VETHOME_DEMO_MODE=true`. Ela usa
+permissões simuladas e dados fictícios. Sem essa opção, o login permanece
+indisponível até a integração com o backend.
+
+| Perfil | E-mail fictício | Senha fictícia |
+| --- | --- | --- |
+| Cliente | `cliente@vethome.example` | `VetHomeDemo` |
+| Veterinária | `gabriela@vethome.example` | `VetHomeDemo` |
+
+Na demonstração, o Cliente também pode entrar com o e-mail cadastrado
+localmente e a senha fictícia da tabela. O botão **Contas da demonstração**
+no Login exibe as instruções. Use dados fictícios no cadastro e nas duas áreas.
+
 
 Use o Flutter 3.50.1, a versão fixada na integração contínua. Na pasta do projeto:
 
 ```powershell
 flutter pub get --enforce-lockfile
-flutter run -d chrome
+flutter run -d chrome --dart-define=VETHOME_DEMO_MODE=true
 ```
 
 Para iniciar em outro dispositivo, consulte os destinos disponíveis com `flutter devices` e troque `chrome` pelo destino desejado.
@@ -58,6 +71,7 @@ registra a auditoria de distribuição, os resultados por plataforma e o checkli
 ## Estrutura útil
 
 - `lib/pages/`: telas do aplicativo.
+- `lib/auth/`: contrato de autenticação, provedor de demonstração e sessão em memória.
 - `lib/data/`: repositório local, persistência e transporte HTTP experimental.
 - `lib/models/`: modelos e serialização dos dados.
 - `lib/widgets/`: componentes reutilizados.
