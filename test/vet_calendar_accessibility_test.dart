@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/agenda_page.dart';
+import 'package:flutter_vethome/pages/cliente/consulta/agenda_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';

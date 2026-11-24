@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/local_storage.dart';
+import 'package:flutter_vethome/data/local/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
-import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/gabriela/gabriela_area_page.dart';
-import 'package:flutter_vethome/pages/login_page.dart';
-import 'package:flutter_vethome/pages/splashScreen.dart';
+import 'package:flutter_vethome/pages/cliente/login_page.dart';
+import 'package:flutter_vethome/pages/splash/splashScreen.dart';
 import 'package:flutter_vethome/pages/teste_page.dart';
 import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/widgets/debug_screen_switcher.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_vethome/data/vet_repository.dart';
-import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/pages/cliente/consulta/nova_consulta_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';

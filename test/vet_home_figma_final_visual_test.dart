@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
-import 'package:flutter_vethome/pages/editar_pet_page.dart';
-import 'package:flutter_vethome/pages/nova_consulta_page.dart';
-import 'package:flutter_vethome/pages/perfil_page.dart';
-import 'package:flutter_vethome/pages/pets_page.dart';
-import 'package:flutter_vethome/pages/sucessoScreen.dart';
+import 'package:flutter_vethome/pages/cliente/pet/editar_pet_page.dart';
+import 'package:flutter_vethome/pages/cliente/consulta/nova_consulta_page.dart';
+import 'package:flutter_vethome/pages/cliente/perfil_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/pets_page.dart';
+import 'package:flutter_vethome/pages/splash/sucessoScreen.dart';
 import 'package:flutter_vethome/screens/pets.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/vet_calendar.dart';

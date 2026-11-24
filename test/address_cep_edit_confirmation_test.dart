@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/cep_service.dart';
+import 'package:flutter_vethome/service/cep_service.dart';
 import 'package:flutter_vethome/models/saved_address.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/address_form.dart';

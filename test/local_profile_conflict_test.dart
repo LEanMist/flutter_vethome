@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/local_storage.dart';
+import 'package:flutter_vethome/data/local/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/saved_address.dart';
-import 'package:flutter_vethome/pages/cadastroPet_page.dart';
-import 'package:flutter_vethome/pages/endereco_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/cadastroPet_page.dart';
+import 'package:flutter_vethome/pages/cliente/endereco/endereco_page.dart';
 
 class _ProfileStorage extends LocalStorage {
   int saveCalls = 0;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/pet_model.dart';
-import 'package:flutter_vethome/pages/saude_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/saude_page.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pet_avatar.dart';
 import 'package:flutter_vethome/widgets/pet_summary.dart';

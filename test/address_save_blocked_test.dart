@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/local_storage.dart';
+import 'package:flutter_vethome/data/local/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/saved_address.dart';
-import 'package:flutter_vethome/pages/addresses_page.dart';
+import 'package:flutter_vethome/pages/cliente/endereco/addresses_page.dart';
 import 'package:flutter_vethome/widgets.dart';
 
 const _address = SavedAddress(

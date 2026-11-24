@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../data/local_storage.dart';
+import '../data/local/local_storage.dart';
 import '../theme/vet_colors.dart';
 
 class CriticalStorageErrorPage extends StatefulWidget {

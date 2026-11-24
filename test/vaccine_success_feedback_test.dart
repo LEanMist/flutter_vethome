@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/local_storage.dart';
+import 'package:flutter_vethome/data/local/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
-import 'package:flutter_vethome/pages/vacinacao_page.dart';
+import 'package:flutter_vethome/pages/cliente/consulta/vacinacao_page.dart';
 import 'package:flutter_vethome/widgets.dart';
 
 class _VaccineStorage extends LocalStorage {

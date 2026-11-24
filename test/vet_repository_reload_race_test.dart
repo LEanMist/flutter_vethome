@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/local_storage.dart';
+import 'package:flutter_vethome/data/local/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

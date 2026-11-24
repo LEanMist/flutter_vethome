@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
-import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/pages/cliente/consulta/nova_consulta_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';

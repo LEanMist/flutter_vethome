@@ -3,7 +3,7 @@ import 'dart:ui' show SemanticsAction;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/sobre_page.dart';
+import 'package:flutter_vethome/pages/veterinario/sobre_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';
 

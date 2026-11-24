@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/chat_page.dart';
-import 'package:flutter_vethome/pages/pets_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/pets_page.dart';
 import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';

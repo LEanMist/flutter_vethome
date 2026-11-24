@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/sucessoScreen.dart';
+import 'package:flutter_vethome/pages/splash/sucessoScreen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -5,9 +5,9 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_vethome/data/local_storage.dart';
+import 'package:flutter_vethome/data/local/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
-import 'package:flutter_vethome/pages/nova_consulta_page.dart';
+import 'package:flutter_vethome/pages/cliente/consulta/nova_consulta_page.dart';
 import 'package:flutter_vethome/screens/pets.dart'
     show ConvenioScreen, ServicosScreen;
 import 'package:flutter_vethome/widgets/vet/vet_bottom_nav.dart';

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'data/local_data_manager.dart';
+import 'data/local/local_data_manager.dart';
 import 'data/theme_preferences.dart';
 import 'data/vet_repository.dart';
-import 'data/gabriela_profile_repository.dart';
+import 'data/veterinario/gabriela_profile_repository.dart';
 import 'pages/critical_storage_error_page.dart';
 import 'routes/app_routes.dart';
 import 'theme.dart';

@@ -8,7 +8,7 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/models/pet_model.dart';
-import 'package:flutter_vethome/pages/pets_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/pets_page.dart';
 import 'package:flutter_vethome/screens/pets.dart' show EscolhaPetScreen;
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets/pets/pet_card_widget.dart';

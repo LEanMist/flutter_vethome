@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../data/local_data_manager.dart';
-import '../data/local_storage.dart';
+import '../data/local/local_data_manager.dart';
+import '../data/local/local_storage.dart';
 import '../data/theme_preferences.dart';
 import '../data/vet_repository.dart';
 import '../theme.dart';

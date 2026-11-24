@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
-import '../data/cep_service.dart';
+import '../service/cep_service.dart';
 import '../models/saved_address.dart';
 import '../core/utils/form_fields.dart';
 import '../widgets/figma_action_target.dart';
@@ -49,6 +49,9 @@ class _AddressFormState extends State<AddressForm> {
     text: widget.initial?.street ?? '',
   );
   late final _city = TextEditingController(text: widget.initial?.city ?? '');
+  late final _neighborhood = TextEditingController(
+    text: widget.initial?.neighborhood ?? '',
+  );
   late final _number = TextEditingController(
     text: widget.initial?.number ?? '',
   );
@@ -64,7 +67,7 @@ class _AddressFormState extends State<AddressForm> {
   bool _validationAttempted = false;
   bool get _registering => widget.onSkip != null;
   late final _registrationFocus = <TextEditingController, FocusNode>{
-    for (final field in [_cep, _street, _number, _complement, _city])
+    for (final field in [_cep, _street, _number, _complement, _city, _neighborhood])
       field: FocusNode(),
   };
   @override
@@ -72,7 +75,7 @@ class _AddressFormState extends State<AddressForm> {
     for (final focus in _registrationFocus.values) {
       focus.dispose();
     }
-    for (final c in [_cep, _street, _city, _number, _complement]) {
+    for (final c in [_cep, _street, _city, _neighborhood, _number, _complement]) {
       c.dispose();
     }
     super.dispose();
@@ -84,6 +87,7 @@ class _AddressFormState extends State<AddressForm> {
     if (_autofilled case final previous? when _registering) {
       if (_street.text == previous.street) _street.clear();
       if (_city.text == previous.city) _city.clear();
+      if (_neighborhood.text == previous.neighborhood) _neighborhood.clear();
       _autofilled = null;
     }
     if (text.replaceAll(RegExp(r'\D'), '').length != 8) {
@@ -93,7 +97,7 @@ class _AddressFormState extends State<AddressForm> {
       });
       return;
     }
-    final streetBefore = _street.text, cityBefore = _city.text;
+    final streetBefore = _street.text, cityBefore = _city.text, neighborhoodBefore = _neighborhood.text;
     setState(() {
       _loading = true;
       _status = 'Consultando CEP…';
@@ -119,11 +123,16 @@ class _AddressFormState extends State<AddressForm> {
           final fillCity =
               _city.text == cityBefore &&
               (!_registering || (_city.text.isEmpty && result.city.isNotEmpty));
+          final fillNeighborhood =
+              _neighborhood.text == neighborhoodBefore &&
+              (!_registering || (_neighborhood.text.isEmpty && result.neighborhood.isNotEmpty));
           if (fillStreet) _street.text = result.street;
           if (fillCity) _city.text = result.city;
+          if (fillNeighborhood) _neighborhood.text = result.neighborhood;
           if (_registering) {
             _autofilled = CepResult(
               fillStreet ? result.street : '',
+              fillNeighborhood ? result.neighborhood : '',
               fillCity ? result.city : '',
             );
           }
@@ -214,6 +223,7 @@ class _AddressFormState extends State<AddressForm> {
           street: _street.text.trim(),
           name: widget.initial?.name ?? '',
           city: _city.text.trim(),
+          neighborhood: _neighborhood.text.trim(),
           number: _number.text.trim(),
           complement: _complement.text.trim(),
           cep: _cep.text.trim(),
@@ -645,6 +655,15 @@ class _AddressFormState extends State<AddressForm> {
                                     ),
                                     full: true,
                                   ),
+                                  slot(
+                                    _field(
+                                      'Bairro',
+                                      Icons.location_city_outlined,
+                                      _neighborhood,
+                                      validator: _required,
+                                    ),
+                                    full: true,
+                                  ),
                                 ],
                               );
                             },
@@ -807,6 +826,12 @@ class _AddressFormState extends State<AddressForm> {
               'Cidade',
               Icons.location_city_outlined,
               _city,
+              validator: _required,
+            ),
+            field(
+              'Bairro',
+              Icons.location_city_outlined,
+              _neighborhood,
               validator: _required,
             ),
             Wrap(

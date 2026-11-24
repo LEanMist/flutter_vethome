@@ -64,20 +64,41 @@ class PetModel {
   };
 
   factory PetModel.fromJson(Map<String, dynamic> json) {
-    final id = jsonString(json, 'id');
+    // A API Spring usa nome/id/dataNasc/especie/raca; snapshots locais
+    // antigos usam name/id/birthDate/species/breed.
+    final rawId = json['id'];
+    final id = rawId?.toString() ?? '';
     if (id.trim().isEmpty) throw const FormatException('ID do pet vazio');
+
+    final name = (json['nome'] ?? json['name'] ?? '').toString();
+    final species = (json['especie'] ?? json['species'])?.toString();
+    final sex = (json['sexo'] ?? json['sex'])?.toString();
+    final breed = (json['raca'] ?? json['breed'])?.toString();
+    final rawWeight = json['peso'] ?? json['weightKg'];
+    final weight = rawWeight is num
+        ? rawWeight.toDouble()
+        : double.tryParse(rawWeight?.toString().replaceAll(',', '.') ?? '');
+    final rawBirth = json['dataNasc'] ?? json['birthDate'];
+    final birth = rawBirth == null
+        ? null
+        : DateTime.tryParse(rawBirth.toString());
+
     return PetModel(
       id: id,
-      name: jsonString(json, 'name'),
-      imagePath: jsonString(json, 'imagePath'),
-      description: jsonString(json, 'description'),
+      name: name,
+      imagePath: (json['imagePath'] ??
+              'assets/imagens/pets/img_cachorroegato_png.png')
+          .toString(),
+      description: (json['description'] ??
+              [species, breed, sex].where((v) => v != null && v.toString().trim().isNotEmpty).join(' • '))
+          .toString(),
       photoBase64: _photo(json),
-      species: jsonOptionalString(json, 'species'),
-      sex: jsonOptionalString(json, 'sex'),
-      weightKg: jsonOptionalDouble(json, 'weightKg'),
-      birthDate: json['birthDate'] == null ? null : jsonDate(json, 'birthDate'),
-      breed: jsonOptionalString(json, 'breed'),
-      neutered: jsonOptionalBool(json, 'neutered'),
+      species: species,
+      sex: sex,
+      weightKg: weight,
+      birthDate: birth,
+      breed: breed,
+      neutered: json['neutered'] is bool ? json['neutered'] as bool : null,
       ageYears: jsonOptionalInt(json, 'ageYears'),
     );
   }

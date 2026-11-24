@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/login_page.dart';
-import 'package:flutter_vethome/pages/splashScreen.dart';
+import 'package:flutter_vethome/pages/cliente/login_page.dart';
+import 'package:flutter_vethome/pages/splash/splashScreen.dart';
 import 'package:flutter_vethome/routes/app_routes.dart';
 import 'package:flutter_vethome/theme.dart';
 

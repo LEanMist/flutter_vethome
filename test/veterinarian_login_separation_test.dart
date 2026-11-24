@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/local_data_manager.dart';
+import 'package:flutter_vethome/data/local/local_data_manager.dart';
 import 'package:flutter_vethome/pages/gabriela/gabriela_area_page.dart';
 import 'package:flutter_vethome/pages/gabriela/gabriela_splash_screen.dart';
 import 'package:flutter_vethome/routes/app_routes.dart';

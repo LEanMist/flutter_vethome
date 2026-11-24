@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/local_storage.dart';
+import 'package:flutter_vethome/data/local/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
-import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/detalhes_pet_page.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 
 class _BlockedPhotoStorage extends LocalStorage {

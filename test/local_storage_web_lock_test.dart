@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/local_storage_write_lock.dart';
+import 'package:flutter_vethome/data/local/local_storage_write_lock.dart';
 
 void main() {
   test(

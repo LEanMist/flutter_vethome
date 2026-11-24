@@ -6,8 +6,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
-import 'package:flutter_vethome/pages/perfil_page.dart';
-import 'package:flutter_vethome/pages/login_page.dart';
+import 'package:flutter_vethome/pages/cliente/perfil_page.dart';
+import 'package:flutter_vethome/pages/cliente/login_page.dart';
 import 'package:flutter_vethome/widgets/vet/vet_header.dart';
 
 void main() {

@@ -8,7 +8,7 @@ import '../core/utils/vet_nav.dart';
 import '../data/vet_repository.dart';
 import '../models/pet_model.dart';
 import '../models/service_catalog.dart';
-import '../pages/pets_page.dart';
+import '../pages/cliente/pet/pets_page.dart';
 import '../theme.dart';
 import '../theme/vet_colors.dart';
 import '../widgets/pet_summary.dart';

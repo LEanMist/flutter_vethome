@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/cadastro_page.dart';
+import 'package:flutter_vethome/pages/cliente/cadastro_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/widgets.dart';
 import 'package:flutter_vethome/widgets/auth/vh_form.dart';

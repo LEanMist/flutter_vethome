@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/gabriela_demo_chat.dart';
+import 'package:flutter_vethome/data/veterinario/gabriela_demo_chat.dart';
 import 'package:flutter_vethome/models/vet_models.dart';
 import 'package:flutter_vethome/pages/gabriela/gabriela_messages_tab.dart';
 

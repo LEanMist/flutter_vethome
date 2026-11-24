@@ -3,8 +3,8 @@ import 'dart:ui' show CheckedState, SemanticsAction, Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/pets_page.dart';
-import 'package:flutter_vethome/pages/login_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/pets_page.dart';
+import 'package:flutter_vethome/pages/cliente/login_page.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 import 'package:shared_preferences/shared_preferences.dart';

@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/gabriela_profile_repository.dart';
+import 'package:flutter_vethome/data/veterinario/gabriela_profile_repository.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
 import 'package:flutter_vethome/pages/gabriela/gabriela_area_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';

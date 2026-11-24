@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/cadastroPet_page.dart';
-import 'package:flutter_vethome/pages/cadastro_page.dart';
-import 'package:flutter_vethome/pages/endereco_page.dart';
-import 'package:flutter_vethome/pages/login_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/cadastroPet_page.dart';
+import 'package:flutter_vethome/pages/cliente/cadastro_page.dart';
+import 'package:flutter_vethome/pages/cliente/endereco/endereco_page.dart';
+import 'package:flutter_vethome/pages/cliente/login_page.dart';
 import 'package:flutter_vethome/theme.dart';
 import 'package:flutter_vethome/theme/vet_colors.dart';
 import 'package:flutter_vethome/widgets.dart';

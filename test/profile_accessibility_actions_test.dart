@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/perfil_page.dart';
+import 'package:flutter_vethome/pages/cliente/perfil_page.dart';
 
 Future<void> _focusActionWithTab(WidgetTester tester, String actionKey) async {
   final actionElement = tester.element(find.byKey(ValueKey(actionKey)));

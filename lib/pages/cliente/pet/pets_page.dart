@@ -1,0 +1,308 @@
+// lib/pages/pets_page.dart
+import 'package:flutter/material.dart';
+
+import '../../../core/utils/vet_nav.dart';
+import '../../../data/vet_repository.dart';
+import '../../../data/session.dart';
+import '../../../service/pet_service.dart';
+import '../../../theme/vet_colors.dart';
+import '../../../widgets/figma_action_target.dart';
+import '../../../widgets/pets/pet_card_widget.dart';
+import '../../../widgets/pets/pets_theme.dart';
+import '../../../widgets/vet/vet_bottom_nav.dart';
+
+class PetsPage extends StatefulWidget {
+  const PetsPage({super.key});
+
+  @override
+  State<PetsPage> createState() => _PetsPageState();
+}
+
+class _PetsPageState extends State<PetsPage> {
+  final _listScroll = ScrollController();
+  bool _loadingPets = false;
+  String? _loadError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPets();
+  }
+
+  Future<void> _loadPets() async {
+    final cpf = Session.clientCpf.trim();
+    if (cpf.isEmpty) return;
+    setState(() { _loadingPets = true; _loadError = null; });
+    try {
+      final pets = await PetService.listarPets(cpfCliente: cpf);
+      if (!mounted) return;
+      VetRepository.pets
+        ..clear()
+        ..addAll(pets);
+      if (VetRepository.selectedPetId != null &&
+          !pets.any((pet) => pet.id == VetRepository.selectedPetId)) {
+        VetRepository.selectedPetId = pets.isEmpty ? null : pets.first.id;
+      }
+    } catch (error) {
+      if (mounted) _loadError = error.toString();
+    } finally {
+      if (mounted) setState(() => _loadingPets = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _listScroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double s = PetsTheme.scaleOf(context);
+    final double top = MediaQuery.paddingOf(context).top;
+
+    return Scaffold(
+      backgroundColor: VetColors.pink,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            children: [
+              _buildHeader(s, top),
+              Expanded(child: _buildPetListSection(context, s)),
+              SafeArea(
+                top: false,
+                child: VetBottomNav(
+                  selectedIndex: 0,
+                  figmaPetsSelection: true,
+                  onSelected: (i) =>
+                      vetNavigate(context, i, selected: 0, isTabRoot: true),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(double s, double topInset) {
+    return Container(
+      width: double.infinity,
+      height: 125 + topInset,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: VetColors.rose,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
+      ),
+      padding: EdgeInsets.only(top: topInset),
+      child: SizedBox(
+        width: 134 * s,
+        child: Semantics(
+          key: const ValueKey('pets-page-heading'),
+          header: true,
+          child: Text(
+            'Pets',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 30 * s,
+              fontWeight: FontWeight.w700,
+              fontFamily: PetsTheme.fontComfortaa,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPetListSection(BuildContext context, double s) => LayoutBuilder(
+    builder: (context, constraints) {
+      final desktop = MediaQuery.sizeOf(context).width >= 900;
+      final top = 57 * s;
+      final gap = 33 * s;
+      // A lista rola internamente; o botão permanece fora dela em telas pequenas.
+      // O alvo do botão tem 48 px; os 23 px finais preservam o espaço da navegação.
+      final height = (constraints.maxHeight - top - gap - 48 - 23)
+          .clamp(0.0, 428 * s)
+          .toDouble();
+      Future<void> addPet() async {
+        final created = await Navigator.pushNamed(
+          context,
+          '/cadastroPet',
+          arguments: {'flow': 'addPet'},
+        );
+        if (!mounted) return;
+        await _loadPets();
+        if (mounted) setState(() {});
+        if (created != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _listScroll.hasClients) {
+              _listScroll.animateTo(
+                _listScroll.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+          ScaffoldMessenger.of(
+            this.context,
+          ).showSnackBar(const SnackBar(content: Text('Pet cadastrado.')));
+        }
+      }
+
+      return Column(
+        children: [
+          SizedBox(height: top),
+          SizedBox(
+            height: height,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: desktop ? 34 : 22 * s),
+              child: Container(
+                key: const ValueKey('pets-list-panel'),
+                padding: desktop
+                    ? EdgeInsets.symmetric(horizontal: 20, vertical: 21 * s)
+                    : EdgeInsets.fromLTRB(12 * s, 21 * s, 13 * s, 21 * s),
+                decoration: BoxDecoration(
+                  color: VetColors.roseOverlay25,
+                  borderRadius: BorderRadius.circular(25 * s),
+                ),
+                child: _loadingPets
+                    ? const Center(child: CircularProgressIndicator())
+                    : _loadError != null
+                    ? Center(child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          Text('Não foi possível carregar os pets. $_loadError', textAlign: TextAlign.center),
+                          const SizedBox(height: 10),
+                          TextButton(onPressed: _loadPets, child: const Text('Tentar novamente')),
+                        ]),
+                      ))
+                    : VetRepository.pets.isEmpty
+                    ? _emptyPetsState(s)
+                    : desktop
+                    ? GridView.builder(
+                        key: const ValueKey('pets-desktop-grid'),
+                        controller: _listScroll,
+                        padding: EdgeInsets.zero,
+                        itemCount: VetRepository.pets.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 22,
+                              mainAxisSpacing: 18,
+                              childAspectRatio: 5.2,
+                            ),
+                        itemBuilder: (context, i) => _petCard(context, i),
+                      )
+                    : ListView.separated(
+                        key: const ValueKey('pets-mobile-list'),
+                        controller: _listScroll,
+                        padding: EdgeInsets.zero,
+                        itemCount: VetRepository.pets.length,
+                        separatorBuilder: (_, _) => SizedBox(height: 18 * s),
+                        itemBuilder: (context, i) => _petCard(context, i),
+                      ),
+              ),
+            ),
+          ),
+          SizedBox(height: gap),
+          FigmaActionTarget(
+            key: const ValueKey('pets-add-target'),
+            width: 107,
+            label: 'Adicionar pet',
+            onPressed: addPet,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Tooltip(
+                message: 'Adicionar pet',
+                child: SizedBox(
+                  width: 107,
+                  height: 47,
+                  child: OverflowBox(
+                    // A exportação mede 111 × 51 px com a sombra do botão.
+                    alignment: Alignment.topLeft,
+                    minWidth: 111,
+                    maxWidth: 111,
+                    minHeight: 51,
+                    maxHeight: 51,
+                    child: Ink.image(
+                      image: const AssetImage(
+                        'assets/imagens/figma/pets-add-button.png',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+
+  Widget _emptyPetsState(double scale) => Center(
+    key: const ValueKey('pets-empty-state'),
+    child: SingleChildScrollView(
+      primary: false,
+      padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 62 * scale,
+            height: 62 * scale,
+            decoration: const BoxDecoration(
+              color: VetColors.pinkOverlay50,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.pets_outlined,
+              size: 31 * scale,
+              color: VetColors.brownOnRose,
+            ),
+          ),
+          SizedBox(height: 14 * scale),
+          Text(
+            'Nenhum pet cadastrado',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: VetColors.brownOnRose,
+              fontSize: 17 * scale,
+              fontWeight: FontWeight.w700,
+              fontFamily: PetsTheme.fontComfortaa,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          Text(
+            'Cadastre seu primeiro pet pelo botão + abaixo.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: VetColors.brownOnRose,
+              fontSize: 13 * scale,
+              height: 1.35,
+              fontFamily: PetsTheme.fontMontserratAlternates,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _petCard(BuildContext context, int index) => PetCardWidget(
+    pet: VetRepository.pets[index],
+    figmaList: true,
+    maxNameLines: 2,
+    semanticLabel: 'Abrir detalhes de ${VetRepository.pets[index].name}',
+    onTap: () async {
+      VetRepository.selectedPetId = VetRepository.pets[index].id;
+      await Navigator.pushNamed(
+        context,
+        '/pet',
+        arguments: VetRepository.pets[index],
+      );
+      if (mounted) setState(() {});
+    },
+  );
+}

@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/data/local_storage.dart';
+import 'package:flutter_vethome/data/local/local_storage.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
-import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
-import 'package:flutter_vethome/pages/editar_pet_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/detalhes_pet_page.dart';
+import 'package:flutter_vethome/pages/cliente/pet/editar_pet_page.dart';
 
 class _DelayedStorage extends LocalStorage {
   Completer<void>? pendingWrite;

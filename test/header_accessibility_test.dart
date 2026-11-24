@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_vethome/pages/sobre_page.dart';
+import 'package:flutter_vethome/pages/veterinario/sobre_page.dart';
 import 'package:flutter_vethome/widgets.dart';
 
 void main() {

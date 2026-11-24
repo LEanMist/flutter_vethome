@@ -9,12 +9,14 @@ class SavedAddress {
     this.complement = '',
     this.city = '',
     this.cep = '',
+    this.neighborhood = '',
   });
-  final String id, street, name, number, complement, city, cep;
+  final String id, street, name, number, complement, city, cep, neighborhood;
   String get summary => [
     street,
     number,
     complement,
+    neighborhood,
     city,
     cep,
   ].where((v) => v.isNotEmpty).join(', ');
@@ -26,6 +28,7 @@ class SavedAddress {
     'complement': complement,
     'city': city,
     'cep': cep,
+    'neighborhood': neighborhood,
   };
   factory SavedAddress.fromJson(Map<String, dynamic> json) => SavedAddress(
     id: jsonString(json, 'id'),
@@ -35,5 +38,6 @@ class SavedAddress {
     complement: jsonString(json, 'complement'),
     city: jsonString(json, 'city'),
     cep: jsonString(json, 'cep'),
+    neighborhood: jsonString(json, 'neighborhood'),
   );
 }

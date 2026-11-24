@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/data/vet_repository.dart';
-import 'package:flutter_vethome/pages/login_page.dart';
+import 'package:flutter_vethome/pages/cliente/login_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

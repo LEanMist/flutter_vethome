@@ -4,7 +4,7 @@ import 'dart:js_interop';
 import 'package:test/test.dart';
 import 'package:web/web.dart' as web;
 
-import 'package:flutter_vethome/data/local_storage_write_lock.dart';
+import 'package:flutter_vethome/data/local/local_storage_write_lock.dart';
 
 void main() {
   test('Web Lock serializa gravações entre documentos da mesma origem', () async {
