@@ -100,6 +100,20 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Compilar APK demonstrativo
+        run: |
+          flutter build apk --debug --no-pub --dart-define=VETHOME_DEMO_MODE=true
+          mkdir -p "$RUNNER_TEMP/vethome-demo"
+          cp build/app/outputs/flutter-apk/app-debug.apk "$RUNNER_TEMP/vethome-demo/vethome-demo-debug.apk"
+          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/vethome-demo/commit.txt"
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: vethome-android-demo-${{ github.sha }}
+          path: ${{ runner.temp }}/vethome-demo/
+          if-no-files-found: error
+          retention-days: 7
+
   windows:
     name: Windows x64 debug
     runs-on: windows-2022

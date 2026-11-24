@@ -19,11 +19,29 @@ flutter pub get --enforce-lockfile
 flutter build apk --debug --no-pub --dart-define=VETHOME_DEMO_MODE=true
 ```
 
-O APK fica em `build/app/outputs/flutter-apk/app-debug.apk` e usa a assinatura
-debug do ambiente de build. As contas fictícias ficam no
-[README](../README.md#executar) e no Login. O workflow de qualidade compila
-sem a opção de demonstração. Seu artefato verifica a compilação da variante
-debug, com o acesso indisponível até haver um provedor.
+O APK local fica em `build/app/outputs/flutter-apk/app-debug.apk`. O
+[GitHub Actions](https://github.com/LEanMist/flutter_vethome/actions) gera
+também o artefato **vethome-android-demo-<SHA>**. Abra a execução de
+**Qualidade Flutter** na branch `liminha`, baixe o ZIP em **Artifacts** e
+extraia `vethome-demo-debug.apk`. O SHA completo está no nome do artefato e
+no arquivo `commit.txt`. A variante `vethome-android-debug` continua sendo
+compilada sem a opção de demonstração.
+
+Transfira o APK para o celular de teste e abra o arquivo. Se o Android
+pedir, permita a instalação para o aplicativo com que abriu o APK. Uma
+instalação anterior com o mesmo pacote e outro certificado pode impedir a
+atualização. Use um dispositivo de teste separado se precisar preservar os
+dados locais da instalação anterior.
+
+| Perfil fictício | E-mail | Senha |
+| --- | --- | --- |
+| Cliente | `cliente@vethome.example` | `VetHomeDemo` |
+| Veterinária | `gabriela@vethome.example` | `VetHomeDemo` |
+
+A demonstração usa permissões simuladas e armazenamento local. Autenticação
+real, sincronização e chat entre contas dependem do backend. Use dados
+fictícios. A geração do APK no CI valida a compilação. A instalação, a
+navegação e os recursos nativos precisam ser verificados no aparelho.
 
 O rótulo é VetHome, com o ícone `@mipmap/ic_launcher` do modelo Flutter.
 O `LaunchTheme` aponta para o fundo nativo de inicialização. Após a
