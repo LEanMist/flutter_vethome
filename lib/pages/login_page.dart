@@ -534,13 +534,16 @@ class _LoginPageState extends State<LoginPage> {
                                     );
                                   }
                                 },
-                          child: const Text(
+                          child: Text(
                             'CADASTRE-SE',
                             style: TextStyle(
                               fontFamily: VH.bodyFontFamily,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: VH.secondary,
+                              color: VetColors.textColorOn(
+                                VH.secondary,
+                                VH.background,
+                              ),
                             ),
                           ),
                         ),

@@ -161,7 +161,10 @@ void main() {
     expect(registrationStyle.fontFamily, VH.bodyFontFamily);
     expect(registrationStyle.fontSize, 15);
     expect(registrationStyle.fontWeight, FontWeight.bold);
-    expect(registrationStyle.color, VH.secondary);
+    final registrationContrast =
+        (VH.background.computeLuminance() + 0.05) /
+        (registrationStyle.color!.computeLuminance() + 0.05);
+    expect(registrationContrast, greaterThanOrEqualTo(4.5));
     expect(
       tester
           .widget<Text>(find.text('Ainda não possui uma conta?'))
