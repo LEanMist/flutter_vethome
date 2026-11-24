@@ -16,7 +16,7 @@ import 'package:flutter_vethome/widgets.dart';
 class _TestCep extends CepService {
   @override
   Future<CepResult?> lookup(String cep) async =>
-      const CepResult('Rua Teste', 'Cidade Teste');
+      const CepResult('Rua Teste', 'Bairro Teste', 'Cidade Teste');
 }
 
 void main() {

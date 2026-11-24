@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
 
 import '../../../data/session.dart';
+import '../../../data/vet_repository.dart'
+    show PersistenceBlockedException, PersistenceClearingException;
 import '../../../service/endereco_service.dart';
 import '../../../models/saved_address.dart';
 import '../../../theme/vet_colors.dart';

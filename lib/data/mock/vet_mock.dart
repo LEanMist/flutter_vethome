@@ -1,7 +1,7 @@
 import '../../models/vet_models.dart';
 import '../pet_repository.dart';
 
-/// Dados de exemplo (saúde, vacinas, despesas, agenda e chat) enquanto o backend
+/// Dados de exemplo (saúde, vacinas, agenda e chat) enquanto o backend
 /// não tem esses endpoints. Cada grupo sai daqui quando ganhar uma API.
 class VetMock {
   VetMock._();
@@ -121,39 +121,6 @@ class VetMock {
       proxima: _hoje.add(const Duration(days: 20)),
     ),
   ];
-
-  static List<Despesa> despesas(String pet) {
-    final n = DateTime.now();
-    final inicio = DateTime(n.year, n.month, 1);
-    final lista = [
-      Despesa(
-        data: inicio.add(const Duration(days: 2)),
-        descricao: 'Consulta Veterinária',
-        valor: 150.00,
-        categoria: CategoriaDespesa.saude,
-      ),
-      Despesa(
-        data: inicio.add(const Duration(days: 1)),
-        descricao: 'Ração premium',
-        valor: 95.60,
-        categoria: CategoriaDespesa.alimentacao,
-      ),
-      Despesa(
-        data: inicio,
-        descricao: 'Antipulgas',
-        valor: 68.90,
-        categoria: CategoriaDespesa.saude,
-      ),
-      Despesa(
-        data: DateTime(n.year, n.month - 1, 20),
-        descricao: 'Banho e tosa',
-        valor: 80.00,
-        categoria: CategoriaDespesa.higiene,
-      ),
-    ];
-    lista.sort((a, b) => b.data.compareTo(a.data));
-    return lista;
-  }
 
   static List<Agendamento> agendamentos(String pet) => [
     ...?_novosAgendamentos[pet],

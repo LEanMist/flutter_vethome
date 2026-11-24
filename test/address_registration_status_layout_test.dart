@@ -13,8 +13,8 @@ class _MissingCepService extends CepService {
 class _RegistrationCepService extends CepService {
   @override
   Future<CepResult?> lookup(String cep) async => switch (cep) {
-    '01001-000' => const CepResult('Praça da Sé', 'São Paulo'),
-    '12345-678' => const CepResult('', 'Cidade de teste'),
+    '01001-000' => const CepResult('Praça da Sé', 'Sé', 'São Paulo'),
+    '12345-678' => const CepResult('', '', 'Cidade de teste'),
     _ => null,
   };
 }
@@ -46,7 +46,7 @@ void main() {
 
       await tester.tap(find.widgetWithText(ElevatedButton, 'Continuar'));
       await tester.pumpAndSettle();
-      expect(find.text('Preencha este campo'), findsNWidgets(3));
+      expect(find.text('Preencha este campo'), findsNWidgets(4));
 
       await tester.enterText(field('CEP'), '01001000');
       await tester.pumpAndSettle();
@@ -167,7 +167,7 @@ void main() {
     final panelRect = tester.getRect(panel);
     expect(panelRect.height, greaterThan(initialHeight));
     expect(find.text('Informe um CEP com 8 números'), findsOneWidget);
-    expect(find.text('Preencha este campo'), findsNWidgets(3));
+    expect(find.text('Preencha este campo'), findsNWidgets(4));
     await tester.ensureVisible(field('Cidade'));
     final lastError = find.text('Preencha este campo').last;
     await tester.ensureVisible(lastError);

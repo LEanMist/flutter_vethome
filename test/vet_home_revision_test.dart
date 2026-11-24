@@ -28,7 +28,7 @@ class TestCep extends CepService {
   @override
   Future<CepResult?> lookup(String cep) async {
     if (fail) throw StateError('Rede indisponível');
-    return missing ? null : const CepResult('Praça da Sé', 'São Paulo');
+    return missing ? null : const CepResult('Praça da Sé', 'Sé', 'São Paulo');
   }
 }
 
