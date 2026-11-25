@@ -11,6 +11,7 @@ import 'package:flutter_vethome/repositories/pet_repository.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/services/perfil_foto_service.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
+import 'package:flutter_vethome/widgets/barra_rolagem.dart';
 import 'package:flutter_vethome/widgets/botao_estilizado.dart';
 import 'package:flutter_vethome/widgets/calendario.dart';
 import 'package:flutter_vethome/widgets/etiqueta_perfil.dart';
@@ -45,6 +46,8 @@ class PetPerfilPage extends StatefulWidget {
 }
 
 class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
+  static const _recuoAgendamentos = 48.0;
+  final _scrollAgendamentos = ScrollController();
   bool _selecionandoFoto = false;
   bool _agendandoConsulta = false;
   bool _carregandoAgendamentos = true;
@@ -94,6 +97,7 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     _timerConclusao?.cancel();
+    _scrollAgendamentos.dispose();
     widget.atualizacaoAgendamentos?.removeListener(_atualizarAgendamentos);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -211,6 +215,7 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
             rascunho: rascunho,
             petNome: pet.nome,
             petTipo: pet.tipo,
+            petFotoPerfilPath: pet.fotoPerfilPath,
             usuarioRepository: usuarios,
             agendamentoRepository: agendamentos,
           ),
@@ -290,7 +295,7 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
               size: 32,
               color: VetCores.marrom,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: _recuoAgendamentos - 32),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,6 +314,13 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
                   const SizedBox(height: 4),
                   if (semAgendamentos)
                     Text('Nenhum Agendamento Futuro', style: estilo)
+                  else if (_erroAgendamentos)
+                    Text(
+                      'Não foi possível carregar os agendamentos.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: estilo.copyWith(fontSize: 13),
+                    ),
                 ],
               ),
             ),
@@ -340,14 +352,19 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
             !_erroAgendamentos) ...[
           const SizedBox(height: 8),
           Expanded(
-            child: ListView.separated(
-              key: const ValueKey('agendamentos-do-pet'),
-              padding: EdgeInsets.zero,
-              itemCount: _agendamentosAtivos.length,
-              separatorBuilder: (_, _) =>
-                  const Divider(color: VetCores.marrom25),
-              itemBuilder: (context, index) =>
-                  _itemAgendamento(_agendamentosAtivos[index], estilo),
+            child: BarraRolagem(
+              controller: _scrollAgendamentos,
+              child: ListView.separated(
+                controller: _scrollAgendamentos,
+                physics: const ClampingScrollPhysics(),
+                key: const ValueKey('agendamentos-do-pet'),
+                padding: EdgeInsets.zero,
+                itemCount: _agendamentosAtivos.length,
+                separatorBuilder: (_, _) =>
+                    const Divider(color: VetCores.marrom25),
+                itemBuilder: (context, index) =>
+                    _itemAgendamento(_agendamentosAtivos[index], estilo),
+              ),
             ),
           ),
         ],
@@ -385,7 +402,7 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
         ? 'Serviço não informado'
         : agendamento.servicos.first.nome;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.fromLTRB(_recuoAgendamentos, 4, 0, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -427,7 +444,7 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
         final alturaBotaoConsulta = compacto ? 50.0 : 60.0;
         final larguraBotaoConsulta = compacto ? 150.0 : 250.0;
         const alturaBotoesPerfil = 52.0;
-        final espacamento = telaBaixa ? 4.0 : (compacto ? 16.0 : 24.0);
+        final espacamento = telaBaixa ? 2.0 : (compacto ? 16.0 : 24.0);
 
         return Column(
           children: [
@@ -540,7 +557,7 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
                       child: LayoutBuilder(
                         builder: (context, areaCartao) {
                           final alturaCartao = math.min(
-                            210.0,
+                            250.0,
                             areaCartao.maxHeight,
                           );
                           return Align(

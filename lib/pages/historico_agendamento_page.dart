@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 import 'package:flutter_vethome/models/agendamento.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
@@ -56,86 +57,119 @@ class _HistoricoAgendamentoPageState extends State<HistoricoAgendamentoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final insets = MediaQuery.paddingOf(context);
     return Scaffold(
       backgroundColor: VetCores.rosaFundo,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compacto =
-                constraints.maxWidth < 500 || constraints.maxHeight < 700;
-            return Column(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final compacto =
+            constraints.maxWidth < 500 || constraints.maxHeight < 700;
+          final double alturaCabecalho = compacto ? 120 : 160;
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: const SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: Brightness.light,
+              statusBarBrightness: Brightness.dark,
+            ),
+            child: Column(
               children: [
                 Container(
                   width: double.infinity,
-                  height: compacto ? 120 : 160,
+                  height: alturaCabecalho,
                   decoration: const BoxDecoration(
                     color: VetCores.rosaEscuro,
                     borderRadius: BorderRadius.vertical(
                       bottom: Radius.circular(20),
                     ),
                   ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 56),
-                        child: Text(
-                          'Histórico',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.comfortaa(
-                            color: VetCores.branco,
-                            fontSize: compacto ? 30 : 35,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 30),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 50,
+                              ),
+                              child: Text(
+                                'Histórico',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.comfortaa(
+                                  color: VetCores.branco,
+                                  fontSize: compacto ? 30 : 35,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 8,
+                              child: IconButton(
+                                tooltip: 'Voltar',
+                                onPressed: () => Navigator.of(context).pop(),
+                                icon: const Icon(Icons.arrow_back_rounded),
+                                color: VetCores.branco,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Positioned(
-                        left: 8,
-                        child: IconButton(
-                          tooltip: 'Voltar',
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.arrow_back_rounded),
-                          color: VetCores.branco,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
                 SizedBox(height: compacto ? 10 : 24),
                 Expanded(
-                  child: FutureBuilder<List<_ItemHistorico>>(
-                    future: _historico,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState != ConnectionState.done) {
-                        return const Center(
-                          child: CircularProgressIndicator(
-                            color: VetCores.marrom,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: insets.left,
+                      right: insets.right,
+                      bottom: insets.bottom,
+                    ),
+                    child: FutureBuilder<List<_ItemHistorico>>(
+                      future: _historico,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: VetCores.marrom,
+                            ),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return _mensagem(
+                            'Não foi possível carregar o histórico de agendamentos.',
+                          );
+                        }
+                        final historico = snapshot.requireData;
+                        if (historico.isEmpty) {
+                          return _mensagem('Nenhum agendamento encontrado.');
+                        }
+                        return ScrollConfiguration(
+                          behavior: ScrollConfiguration.of(
+                            context,
+                          ).copyWith(overscroll: false),
+                          child: ListView.separated(
+                            physics: const ClampingScrollPhysics(),
+                            padding: const EdgeInsets.all(20),
+                            itemCount: historico.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 14),
+                            itemBuilder: (context, index) =>
+                                _cartao(historico[index], compacto),
                           ),
                         );
-                      }
-                      if (snapshot.hasError) {
-                        return _mensagem(
-                          'Não foi possível carregar o histórico de agendamentos.',
-                        );
-                      }
-                      final historico = snapshot.requireData;
-                      if (historico.isEmpty) {
-                        return _mensagem('Nenhum agendamento encontrado.');
-                      }
-                      return ListView.separated(
-                        padding: const EdgeInsets.all(20),
-                        itemCount: historico.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 14),
-                        itemBuilder: (context, index) =>
-                            _cartao(historico[index], compacto),
-                      );
-                    },
+                      },
+                    ),
                   ),
                 ),
               ],
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }

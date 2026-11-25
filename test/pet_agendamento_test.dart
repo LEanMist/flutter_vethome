@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/models/agendamento.dart';
@@ -82,6 +84,12 @@ void main() {
     tester,
   ) async {
     final repositorios = _Repositorios();
+    final foto = File(
+      ['assets', 'imagens', 'cachorro.png'].join(Platform.pathSeparator),
+    ).absolute.path;
+    repositorios.pets.save(
+      repositorios.pets.findById('max')!.copyWith(fotoPerfilPath: foto),
+    );
     final data = _diaProximoMes();
     await repositorios.agendamentos.save(
       Agendamento(
@@ -123,15 +131,39 @@ void main() {
     expect(servicos.rascunho.data, data);
     expect(servicos.rascunho.horario, '13:00');
     expect(servicos.petNome, 'Max');
+    final fotoServicos = tester.widget<Image>(
+      find.descendant(
+        of: find.byKey(const ValueKey('foto-pet')),
+        matching: find.byType(Image),
+      ),
+    );
+    expect((fotoServicos.image as FileImage).file.path, foto);
 
     await tester.tap(find.byKey(const ValueKey('servico-microchipagem')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
+    final fotoConvenio = tester.widget<Image>(
+      find.descendant(
+        of: find.byKey(const ValueKey('foto-pet')),
+        matching: find.byType(Image),
+      ),
+    );
+    expect((fotoConvenio.image as FileImage).file.path, foto);
     await tester.tap(find.byKey(const ValueKey('convenio-particular')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
+    final resumoPet = find.byKey(const ValueKey('resumo-Pet'));
+    expect(find.descendant(of: resumoPet, matching: find.text('Max')), findsOneWidget);
+    final imagem = tester.widget<Image>(
+      find.descendant(of: resumoPet, matching: find.byType(Image)),
+    );
+    expect((imagem.image as FileImage).file.path, foto);
+    expect(
+      tester.getSize(find.descendant(of: resumoPet, matching: find.byType(Image))),
+      const Size(56, 56),
+    );
     await tester.ensureVisible(
       find.byKey(const ValueKey('salvar-agendamento')),
     );

@@ -15,7 +15,6 @@ class InMemoryUsuarioRepository implements UsuarioRepository {
     if (incluirUsuarioTeste) _criarUsuarioTeste();
   }
 
-  static const usuarioTesteNome = 'Usuario Teste';
   static const usuarioTesteEmail = 'teste@vethome.com';
   static const usuarioTesteSenha = 'Teste123';
 
@@ -29,7 +28,7 @@ class InMemoryUsuarioRepository implements UsuarioRepository {
   void _criarUsuarioTeste() {
     save(
       Usuario(
-        nome: usuarioTesteNome,
+        nome: 'UsuarioTeste',
         dataNascimento: DateTime(1990, 1, 1),
         genero: GeneroUsuario.prefiroNaoInformar,
         cpf: '529.982.247-25',

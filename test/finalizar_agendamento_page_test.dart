@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show PointerDeviceKind;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_vethome/pages/finalizar_agendamento_page.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/services/cep_lookup_service.dart';
+import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:flutter_vethome/widgets/botao_estilizado.dart';
 import 'package:flutter_vethome/widgets/calendario.dart';
 import 'package:flutter_vethome/widgets/campo_cadastro.dart';
@@ -17,6 +19,105 @@ import 'package:flutter_vethome/widgets/endereco.dart';
 import 'package:flutter_vethome/widgets/seletor_horario.dart';
 
 void main() {
+  for (final tipo in [PetType.cachorro, PetType.gato]) {
+    testWidgets('resumo mostra nome e ícone de $tipo sem foto', (tester) async {
+      await _abrirFinalizacao(tester, petTipo: tipo);
+      final resumo = find.byKey(const ValueKey('resumo-Pet'));
+      expect(find.descendant(of: resumo, matching: find.text('Luna')), findsOneWidget);
+      expect(
+        tester.getRect(resumo).bottom,
+        lessThanOrEqualTo(tester.getRect(find.byKey(const ValueKey('resumo-Serviços'))).top),
+      );
+      final imagem = tester.widget<Image>(
+        find.descendant(of: resumo, matching: find.byType(Image)),
+      );
+      expect(
+        tester.getSize(find.descendant(of: resumo, matching: find.byType(Image))),
+        const Size(56, 56),
+      );
+      final asset = imagem.image as AssetImage;
+      expect(
+        asset.assetName,
+        tipo == PetType.gato
+            ? 'assets/imagens/gato.png'
+            : 'assets/imagens/cachorro.png',
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+    testWidgets('rolagem da finalização respeita os limites em $platform', (tester) async {
+      await _abrirFinalizacao(
+        tester,
+        platform: platform,
+        tamanhoTela: const Size(320, 640),
+      );
+      final lista = find.descendant(
+        of: find.byType(FinalizarAgendamentoPage),
+        matching: find.byType(ListView),
+      );
+      final scroll = tester.state<ScrollableState>(
+        find.descendant(of: lista, matching: find.byType(Scrollable)),
+      );
+      expect(scroll.position.maxScrollExtent, greaterThan(0));
+      final barra = find.ancestor(of: lista, matching: find.byType(Scrollbar));
+      expect(tester.widget<Scrollbar>(barra).thumbVisibility, isTrue);
+      expect(tester.widget<Scrollbar>(barra).interactive, isTrue);
+      final tema = tester.widget<ScrollbarTheme>(
+        find.ancestor(of: barra, matching: find.byType(ScrollbarTheme)).first,
+      );
+      expect(tema.data.thumbColor!.resolve({}), VetCores.marrom);
+      final area = tester.getRect(lista);
+      final customPaint = find.ancestor(
+        of: lista,
+        matching: find.byWidgetPredicate(
+          (widget) => widget is CustomPaint && widget.foregroundPainter is ScrollbarPainter,
+        ),
+      );
+      final painter = tester.widget<CustomPaint>(customPaint).foregroundPainter! as ScrollbarPainter;
+      expect(
+        painter.hitTestOnlyThumbInteractive(
+          Offset(area.width - 2, 10),
+          PointerDeviceKind.touch,
+        ),
+        isTrue,
+      );
+      await tester.dragFrom(
+        Offset(area.right - 2, area.top + 10),
+        const Offset(0, 80),
+      );
+      await tester.pumpAndSettle();
+      expect(scroll.position.pixels, greaterThan(0));
+      scroll.position.jumpTo(scroll.position.minScrollExtent);
+      await tester.pumpAndSettle();
+      expect(find.byType(StretchingOverscrollIndicator), findsNothing);
+      expect(find.byType(GlowingOverscrollIndicator), findsNothing);
+
+      final inicio = await tester.startGesture(tester.getCenter(lista));
+      await inicio.moveBy(const Offset(0, 300));
+      await tester.pump();
+      expect(scroll.position.pixels, scroll.position.minScrollExtent);
+      await inicio.up();
+      await tester.pumpAndSettle();
+
+      await tester.drag(lista, const Offset(0, -3000));
+      await tester.pumpAndSettle();
+      await tester.drag(lista, const Offset(0, -300));
+      await tester.pumpAndSettle();
+      expect(scroll.position.pixels, scroll.position.maxScrollExtent);
+      final fim = await tester.startGesture(tester.getCenter(lista));
+      await fim.moveBy(const Offset(0, -300));
+      await tester.pump();
+      expect(scroll.position.pixels, scroll.position.maxScrollExtent);
+      await fim.up();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('descricao-agendamento')), findsOneWidget);
+      expect(find.byKey(const ValueKey('salvar-agendamento')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('número do endereço aceita apenas dígitos', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -748,14 +849,18 @@ Future<InMemoryAgendamentoRepository> _abrirFinalizacao(
   CepLookupService? cepLookupService,
   DateTime? data,
   String horario = '12:00',
+  PetType petTipo = PetType.cachorro,
+  TargetPlatform? platform,
+  Size tamanhoTela = const Size(390, 844),
 }) async {
-  await tester.binding.setSurfaceSize(const Size(390, 844));
+  await tester.binding.setSurfaceSize(tamanhoTela);
   addTearDown(() => tester.binding.setSurfaceSize(null));
   final usuarios =
       usuarioRepository ?? InMemoryUsuarioRepository(incluirUsuarioTeste: true);
   final repository = InMemoryAgendamentoRepository();
   await tester.pumpWidget(
     MaterialApp(
+      theme: ThemeData(platform: platform),
       home: Builder(
         builder: (context) => Scaffold(
           body: ElevatedButton(
@@ -776,7 +881,7 @@ Future<InMemoryAgendamentoRepository> _abrirFinalizacao(
                     ],
                   ),
                   petNome: 'Luna',
-                  petTipo: PetType.cachorro,
+                  petTipo: petTipo,
                   convenio: ConvenioAgendamento.petlove,
                   usuarioRepository: usuarios,
                   agendamentoRepository: repository,

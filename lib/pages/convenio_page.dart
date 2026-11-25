@@ -5,6 +5,7 @@ import 'package:flutter_vethome/pages/finalizar_agendamento_page.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
+import 'package:flutter_vethome/widgets/foto_pet.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ConvenioPage extends StatefulWidget {
@@ -13,6 +14,7 @@ class ConvenioPage extends StatefulWidget {
     required this.rascunho,
     required this.petNome,
     required this.petTipo,
+    this.petFotoPerfilPath,
     this.usuarioRepository,
     this.agendamentoRepository,
   });
@@ -20,6 +22,7 @@ class ConvenioPage extends StatefulWidget {
   final AgendamentoRascunho rascunho;
   final String petNome;
   final PetType petTipo;
+  final String? petFotoPerfilPath;
   final UsuarioRepository? usuarioRepository;
   final AgendamentoRepository? agendamentoRepository;
 
@@ -110,6 +113,7 @@ class _ConvenioPageState extends State<ConvenioPage> {
           rascunho: widget.rascunho,
           petNome: widget.petNome,
           petTipo: widget.petTipo,
+          petFotoPerfilPath: widget.petFotoPerfilPath,
           convenio: convenio,
           usuarioRepository: widget.usuarioRepository,
           agendamentoRepository: widget.agendamentoRepository,
@@ -140,10 +144,6 @@ class _ConvenioPageState extends State<ConvenioPage> {
 
   @override
   Widget build(BuildContext context) {
-    final imagemPet = widget.petTipo == PetType.gato
-      ? 'assets/imagens/gato.png'
-      : 'assets/imagens/cachorro.png';
-
     return Scaffold(
       backgroundColor: VetCores.rosaFundo,
       body: LayoutBuilder(
@@ -216,12 +216,10 @@ class _ConvenioPageState extends State<ConvenioPage> {
                           ),
                         ),
                         const SizedBox(width: 13),
-                        Image.asset(
-                          imagemPet,
-                          key: ValueKey('icone-pet-${widget.petTipo.name}'),
-                          width: tamanhoImagemPet,
-                          height: tamanhoImagemPet,
-                          fit: BoxFit.contain,
+                        FotoPet(
+                          tipo: widget.petTipo,
+                          fotoPerfilPath: widget.petFotoPerfilPath,
+                          tamanho: tamanhoImagemPet,
                         ),
                       ],
                     ),

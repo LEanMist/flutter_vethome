@@ -1,3 +1,5 @@
+import 'dart:ui' show PointerDeviceKind;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +14,243 @@ import 'package:flutter_vethome/widgets/calendario.dart';
 import 'package:flutter_vethome/widgets/etiqueta_perfil.dart';
 
 void main() {
+  testWidgets('remove concluídos automaticamente e mantém o histórico', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final usuarios = InMemoryUsuarioRepository(incluirUsuarioTeste: true);
+    final usuarioId = usuarios.findAll().single.id!;
+    var agora = DateTime.now();
+    final repository = InMemoryAgendamentoRepository(agora: () => agora);
+    final data = DateUtils.dateOnly(agora).add(const Duration(days: 1));
+    Agendamento novo(String horario, String nome, StatusAgendamento status) =>
+        Agendamento(
+          usuarioId: usuarioId,
+          petId: 'pet',
+          data: data,
+          horario: horario,
+          servicos: [
+            ServicoAgendamento(
+              id: nome,
+              categoria: CategoriaServico.exames,
+              nome: nome,
+            ),
+          ],
+          convenio: ConvenioAgendamento.particular,
+          status: status,
+        );
+    final primeiro = await repository.save(
+      novo('12:00', 'Primeiro', StatusAgendamento.ativo),
+    );
+    final segundo = await repository.save(
+      novo('13:00', 'Segundo', StatusAgendamento.ativo),
+    );
+    await repository.save(novo('14:00', 'Cancelado', StatusAgendamento.cancelado));
+    await repository.save(novo('15:00', 'Concluído', StatusAgendamento.concluido));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AgendamentoPage(
+            usuarioId: usuarioId,
+            usuarioRepository: usuarios,
+            agendamentoRepository: repository,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Primeiro'), findsOneWidget);
+    expect(find.text('Segundo'), findsOneWidget);
+    expect(find.text('Cancelado'), findsNothing);
+    expect(find.text('Concluído'), findsNothing);
+
+    agora = primeiro.dataHoraConclusao;
+    await tester.pump(
+      primeiro.dataHoraConclusao.difference(DateTime.now()) +
+          const Duration(seconds: 1),
+    );
+    await tester.pump();
+    expect(find.text('Primeiro'), findsNothing);
+    expect(find.text('Segundo'), findsOneWidget);
+    expect((await repository.findById(primeiro.id!))!.status, StatusAgendamento.concluido);
+    expect(await repository.findByUsuarioId(usuarioId), hasLength(4));
+    agora = segundo.dataHoraConclusao;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(find.text('Segundo'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+    testWidgets('lista de agendamentos limita a rolagem em $platform', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final usuarios = InMemoryUsuarioRepository(incluirUsuarioTeste: true);
+      final id = usuarios.findAll().single.id!;
+      final repository = InMemoryAgendamentoRepository();
+      final data = DateUtils.dateOnly(DateTime.now()).add(const Duration(days: 1));
+      for (var i = 0; i < 10; i++) {
+        await repository.save(
+          Agendamento(
+            usuarioId: id,
+            petId: 'pet',
+            data: data.add(Duration(days: i)),
+            horario: '12:00',
+            servicos: [
+              ServicoAgendamento(
+                id: '$i',
+                categoria: CategoriaServico.exames,
+                nome: 'Exame $i',
+              ),
+            ],
+            convenio: ConvenioAgendamento.particular,
+          ),
+        );
+      }
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: platform),
+          home: Scaffold(
+            body: AgendamentoPage(
+              usuarioId: id,
+              usuarioRepository: usuarios,
+              agendamentoRepository: repository,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final lista = find.byKey(const ValueKey('lista-agendamentos'));
+      final scroll = tester.state<ScrollableState>(
+        find.descendant(of: lista, matching: find.byType(Scrollable)),
+      );
+      expect(
+        find.descendant(of: lista, matching: find.byType(StretchingOverscrollIndicator)),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: lista, matching: find.byType(GlowingOverscrollIndicator)),
+        findsNothing,
+      );
+      final inicio = await tester.startGesture(tester.getCenter(lista));
+      await inicio.moveBy(const Offset(0, 300));
+      await tester.pump();
+      expect(scroll.position.pixels, scroll.position.minScrollExtent);
+      await inicio.up();
+      await tester.pumpAndSettle();
+      await tester.drag(lista, const Offset(0, -3000));
+      await tester.pumpAndSettle();
+      final fim = await tester.startGesture(tester.getCenter(lista));
+      await fim.moveBy(const Offset(0, -300));
+      await tester.pump();
+      expect(scroll.position.pixels, scroll.position.maxScrollExtent);
+      await fim.up();
+      await tester.pumpAndSettle();
+      expect(scroll.position.maxScrollExtent, greaterThan(0));
+      expect(find.text('Exame 0'), findsOneWidget);
+      final barra = find.ancestor(of: lista, matching: find.byType(Scrollbar));
+      final scrollbar = tester.widget<Scrollbar>(barra);
+      expect(scrollbar.thumbVisibility, isTrue);
+      expect(scrollbar.interactive, isTrue);
+      final tema = tester.widget<ScrollbarTheme>(
+        find.ancestor(of: barra, matching: find.byType(ScrollbarTheme)).first,
+      );
+      expect(tema.data.thumbColor!.resolve({}), VetCores.marrom);
+      scroll.position.jumpTo(scroll.position.minScrollExtent);
+      await tester.pumpAndSettle();
+      final area = tester.getRect(lista);
+      final customPaint = find.ancestor(
+        of: lista,
+        matching: find.byWidgetPredicate(
+          (widget) => widget is CustomPaint && widget.foregroundPainter is ScrollbarPainter,
+        ),
+      );
+      final painter = tester.widget<CustomPaint>(customPaint).foregroundPainter! as ScrollbarPainter;
+      expect(
+        painter.hitTestOnlyThumbInteractive(
+          Offset(area.width - 2, 10),
+          PointerDeviceKind.touch,
+        ),
+        isTrue,
+      );
+      await tester.dragFrom(
+        Offset(area.right - 2, area.top + 10),
+        const Offset(0, 60),
+      );
+      await tester.pumpAndSettle();
+      expect(scroll.position.pixels, greaterThan(0));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('oculta barra sem rolagem e atualiza lista ao cancelar', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final usuarios = InMemoryUsuarioRepository(incluirUsuarioTeste: true);
+    final id = usuarios.findAll().single.id!;
+    final repository = InMemoryAgendamentoRepository();
+    final atualizacao = ValueNotifier<int>(0);
+    addTearDown(atualizacao.dispose);
+    final agendamento = await repository.save(
+      Agendamento(
+        usuarioId: id,
+        petId: 'pet',
+        data: DateUtils.dateOnly(DateTime.now()).add(const Duration(days: 1)),
+        horario: '12:00',
+        servicos: const [
+          ServicoAgendamento(
+            id: 'teste',
+            categoria: CategoriaServico.exames,
+            nome: 'Exame cancelado',
+          ),
+        ],
+        convenio: ConvenioAgendamento.particular,
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AgendamentoPage(
+            usuarioId: id,
+            usuarioRepository: usuarios,
+            agendamentoRepository: repository,
+            atualizacaoAgendamentos: atualizacao,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final lista = find.byKey(const ValueKey('lista-agendamentos'));
+    final scroll = tester.state<ScrollableState>(
+      find.descendant(of: lista, matching: find.byType(Scrollable)),
+    );
+    expect(scroll.position.maxScrollExtent, 0);
+    final customPaint = find.ancestor(
+      of: lista,
+      matching: find.byWidgetPredicate(
+        (widget) => widget is CustomPaint && widget.foregroundPainter is ScrollbarPainter,
+      ),
+    );
+    final painter = tester.widget<CustomPaint>(customPaint).foregroundPainter! as ScrollbarPainter;
+    expect(
+      painter.hitTestOnlyThumbInteractive(
+        Offset(tester.getSize(lista).width - 2, 10),
+        PointerDeviceKind.touch,
+      ),
+      isFalse,
+    );
+    expect(find.text('Exame cancelado'), findsOneWidget);
+
+    await repository.save(agendamento.copyWith(status: StatusAgendamento.cancelado));
+    atualizacao.value++;
+    await tester.pumpAndSettle();
+    expect(find.text('Exame cancelado'), findsNothing);
+    expect((await repository.findById(agendamento.id!))!.status, StatusAgendamento.cancelado);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('seletor de agendamento mostra somente pets do usuário', (
     tester,
   ) async {

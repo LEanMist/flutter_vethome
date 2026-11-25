@@ -282,19 +282,98 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            padding: const EdgeInsets.only(top: 24, bottom: 32),
+            viewPadding: const EdgeInsets.only(top: 24, bottom: 32),
+          ),
+          child: child!,
+        ),
         home: ListaEnderecos(
           usuarioRepository: repository,
           usuarioId: usuario.id,
         ),
       ),
     );
+    final botao = find.widgetWithText(ElevatedButton, 'Novo Endereço');
+    final posicao = tester.getRect(botao);
+    expect(posicao.bottom, lessThanOrEqualTo(640 - 32));
+    expect(tester.getRect(find.byType(ListView)).bottom, lessThan(posicao.top));
     await tester.scrollUntilVisible(
       find.text('Casa 8'),
       200,
       scrollable: find.byType(Scrollable),
     );
     expect(find.text('Casa 8'), findsOneWidget);
+    expect(tester.getRect(botao), posicao);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('adiciona endereço ao usuário e permite cancelar', (tester) async {
+    final repository = InMemoryUsuarioRepository(incluirUsuarioTeste: true);
+    final usuario = repository.findAll().single;
+    await _abrirLista(tester, repository, cepLookupService: _CepTeste());
+
+    await tester.tap(find.text('Novo Endereço'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(repository.findById(usuario.id!)!.enderecosAdicionais, isEmpty);
+
+    await tester.tap(find.text('Novo Endereço'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('salvar-novo-endereco')));
+    await tester.pumpAndSettle();
+    expect(find.text('Campo obrigatório'), findsWidgets);
+    expect(repository.findById(usuario.id!)!.enderecosAdicionais, isEmpty);
+
+    await _preencherNovoEndereco(tester);
+    await tester.tap(find.byKey(const ValueKey('salvar-novo-endereco')));
+    await tester.pumpAndSettle();
+    final salvo = repository.findById(usuario.id!)!;
+    expect(salvo.endereco, usuario.endereco);
+    expect(salvo.enderecosAdicionais.single.nome, 'Trabalho');
+    expect(salvo.enderecosAdicionais.single.logradouro, 'Rua Nova');
+    expect(find.text('Trabalho'), findsOneWidget);
+    expect(find.text('Endereço adicionado.'), findsOneWidget);
+  });
+
+  testWidgets('novo endereço vira principal quando não há endereço', (tester) async {
+    final repository = InMemoryUsuarioRepository(incluirUsuarioTeste: true);
+    final usuario = repository.findAll().single;
+    repository.save(usuario.copyWith(
+      cep: '',
+      endereco: '',
+      numero: '',
+      complemento: '',
+      cidade: '',
+    ));
+    await _abrirLista(tester, repository, cepLookupService: _CepTeste());
+    expect(find.text('Nenhum endereço cadastrado.'), findsOneWidget);
+    await tester.tap(find.text('Novo Endereço'));
+    await tester.pumpAndSettle();
+    await _preencherNovoEndereco(tester);
+    await tester.tap(find.byKey(const ValueKey('salvar-novo-endereco')));
+    await tester.pumpAndSettle();
+    final salvo = repository.findById(usuario.id!)!;
+    expect(salvo.nomeEnderecoPrincipal, 'Trabalho');
+    expect(salvo.endereco, 'Rua Nova');
+    expect(salvo.enderecosAdicionais, isEmpty);
+    expect(find.text('Trabalho'), findsOneWidget);
+  });
+
+  testWidgets('informa falha ao salvar novo endereço', (tester) async {
+    final repository = _RepositorioComErroAoSalvar();
+    await _abrirLista(tester, repository, cepLookupService: _CepTeste());
+    await tester.tap(find.text('Novo Endereço'));
+    await tester.pumpAndSettle();
+    await _preencherNovoEndereco(tester);
+    repository.falhar = true;
+    await tester.tap(find.byKey(const ValueKey('salvar-novo-endereco')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Não foi possível salvar o endereço:'), findsOneWidget);
+    expect(repository.findAll().single.enderecosAdicionais, isEmpty);
+    expect(find.text('Endereço adicionado.'), findsNothing);
   });
 
   testWidgets('endereço comprido quebra linhas sem sair do cartão', (
@@ -378,6 +457,22 @@ void main() {
   });
 }
 
+Future<void> _preencherNovoEndereco(WidgetTester tester) async {
+  Future<void> preencher(String nome, String valor) async {
+    final campo = find.descendant(
+      of: find.byKey(ValueKey('novo-endereco-$nome')),
+      matching: find.byType(TextField),
+    );
+    await tester.ensureVisible(campo);
+    await tester.enterText(campo, valor);
+    await tester.pumpAndSettle();
+  }
+
+  await preencher('nome do endereço', 'Trabalho');
+  await preencher('cep', '01001000');
+  await preencher('número', '42');
+}
+
 Future<void> _abrirLista(
   WidgetTester tester,
   InMemoryUsuarioRepository repository, {
@@ -416,4 +511,16 @@ class _CepTeste implements CepLookupService {
   @override
   Future<EnderecoCep?> consultar(String cep) async =>
       const EnderecoCep(logradouro: 'Rua Nova', cidade: 'São Paulo');
+}
+
+class _RepositorioComErroAoSalvar extends InMemoryUsuarioRepository {
+  _RepositorioComErroAoSalvar() : super(incluirUsuarioTeste: true);
+
+  bool falhar = false;
+
+  @override
+  void save(Usuario usuario, {String? senha}) {
+    if (falhar) throw StateError('Falha ao salvar');
+    super.save(usuario, senha: senha);
+  }
 }

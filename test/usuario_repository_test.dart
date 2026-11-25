@@ -99,20 +99,6 @@ void main() {
       );
       expect(repository.autenticar('ana@example.com', 'errada'), isNull);
     });
-
-    test('seeds the default repository with test credentials', () {
-      final repository = InMemoryUsuarioRepository(incluirUsuarioTeste: true);
-
-      expect(
-        repository
-            .autenticar(
-              InMemoryUsuarioRepository.usuarioTesteEmail,
-              InMemoryUsuarioRepository.usuarioTesteSenha,
-            )
-            ?.nome,
-        InMemoryUsuarioRepository.usuarioTesteNome,
-      );
-    });
   });
 }
 

@@ -127,7 +127,6 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 ),
                               ),
-
                               Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [

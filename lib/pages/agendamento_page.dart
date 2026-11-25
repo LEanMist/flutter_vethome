@@ -9,6 +9,7 @@ import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/repositories/pet_repository.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
+import 'package:flutter_vethome/widgets/barra_rolagem.dart';
 import 'package:flutter_vethome/widgets/calendario.dart';
 import 'package:flutter_vethome/widgets/pet_card.dart';
 import 'package:flutter_vethome/widgets/seletor_horario.dart';
@@ -36,9 +37,11 @@ class AgendamentoPage extends StatefulWidget {
   State<AgendamentoPage> createState() => _AgendamentoPage();
 }
 
-class _AgendamentoPage extends State<AgendamentoPage> {
+class _AgendamentoPage extends State<AgendamentoPage> with WidgetsBindingObserver {
   late DateTime _dataSelecionada;
   final List<Agendamento> _agendamentos = [];
+  final _scrollController = ScrollController();
+  Timer? _timerConclusao;
   int _versaoCarregamento = 0;
 
   PetRepository get _repository =>
@@ -55,6 +58,7 @@ class _AgendamentoPage extends State<AgendamentoPage> {
 
   Future<void> _carregarAgendamentos() async {
     final versao = ++_versaoCarregamento;
+    _timerConclusao?.cancel();
     final usuarioId = _usuarioId;
     if (usuarioId == null || usuarioId.trim().isEmpty) {
       if (mounted) setState(() => _agendamentos.clear());
@@ -64,11 +68,24 @@ class _AgendamentoPage extends State<AgendamentoPage> {
     try {
       final agendamentos = await _agendamentoRepository.findByUsuarioId(usuarioId);
       if (!mounted || versao != _versaoCarregamento) return;
+      final ativos = agendamentos.where(
+        (agendamento) => agendamento.status == StatusAgendamento.ativo,
+      ).toList();
       setState(() {
         _agendamentos
           ..clear()
-          ..addAll(agendamentos.reversed);
+          ..addAll(ativos.reversed);
       });
+      if (ativos.isNotEmpty) {
+        final proximaConclusao = ativos
+            .map((agendamento) => agendamento.dataHoraConclusao)
+            .reduce((a, b) => a.isBefore(b) ? a : b);
+        final restante = proximaConclusao.difference(DateTime.now());
+        _timerConclusao = Timer(
+          restante > Duration.zero ? restante : const Duration(minutes: 1),
+          _atualizarAgendamentos,
+        );
+      }
     } catch (error) {
       if (mounted && versao == _versaoCarregamento) {
         _mostrarMensagem('Não foi possível carregar os agendamentos: $error');
@@ -133,6 +150,7 @@ class _AgendamentoPage extends State<AgendamentoPage> {
           rascunho: rascunho,
           petNome: petSelecionado.nome,
           petTipo: petSelecionado.tipo,
+          petFotoPerfilPath: petSelecionado.fotoPerfilPath,
           usuarioRepository: _usuarioRepository,
           agendamentoRepository: _agendamentoRepository,
         ),
@@ -141,13 +159,9 @@ class _AgendamentoPage extends State<AgendamentoPage> {
     if (!mounted || agendamento == null) return;
 
     if (_usuarioId == usuarioId) {
-      setState(() {
-        _agendamentos.insert(0, agendamento);
-      });
+      unawaited(_carregarAgendamentos());
       if (widget.onAgendamentoConcluido != null) {
         widget.onAgendamentoConcluido!();
-      } else {
-        unawaited(_carregarAgendamentos());
       }
     }
     _mostrarMensagem('Agendamento concluído para ${petSelecionado.nome}.');
@@ -164,11 +178,17 @@ class _AgendamentoPage extends State<AgendamentoPage> {
     super.initState();
     final hoje = DateUtils.dateOnly(DateTime.now());
     _dataSelecionada = hoje;
+    WidgetsBinding.instance.addObserver(this);
     widget.atualizacaoAgendamentos?.addListener(_atualizarAgendamentos);
     unawaited(_carregarAgendamentos());
   }
 
   void _atualizarAgendamentos() => unawaited(_carregarAgendamentos());
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _atualizarAgendamentos();
+  }
 
   @override
   void didUpdateWidget(covariant AgendamentoPage oldWidget) {
@@ -187,7 +207,10 @@ class _AgendamentoPage extends State<AgendamentoPage> {
 
   @override
   void dispose() {
+    _timerConclusao?.cancel();
+    _scrollController.dispose();
     widget.atualizacaoAgendamentos?.removeListener(_atualizarAgendamentos);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -200,6 +223,9 @@ class _AgendamentoPage extends State<AgendamentoPage> {
         final alturaCalendario = math
             .min(compacto ? 380.0 : 500.0, constraints.maxHeight * 0.68)
             .toDouble();
+        final double larguraTotalListaAgendamentos = compacto ? 350 : 450;
+        final double larguraListaAgendamentos = compacto ? 100 : 150;
+        final double alturaListaAgendamentos = compacto ? 65 : 65;
         return Column(
           children: [
             CalendarioAgendamento(
@@ -211,7 +237,11 @@ class _AgendamentoPage extends State<AgendamentoPage> {
             ),
             SizedBox(height: compacto ? 20 : 24),
             Expanded(
-              child: ListView.separated(
+              child: BarraRolagem(
+                controller: _scrollController,
+                child: ListView.separated(
+                controller: _scrollController,
+                physics: const ClampingScrollPhysics(),
                 key: const ValueKey('lista-agendamentos'),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 itemCount: _agendamentos.length,
@@ -240,11 +270,11 @@ class _AgendamentoPage extends State<AgendamentoPage> {
                       
                   return Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 350, maxHeight: 60),
+                      constraints: BoxConstraints(maxWidth: larguraTotalListaAgendamentos, maxHeight: alturaListaAgendamentos),
                       child: Row(
                         children: [
                           SizedBox(
-                            width: 100,
+                            width: larguraListaAgendamentos,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -308,6 +338,7 @@ class _AgendamentoPage extends State<AgendamentoPage> {
                   );
                   
                 },
+                ),
               ),
             ),
             SizedBox(height: compacto ? 16 : 24),

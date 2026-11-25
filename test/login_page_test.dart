@@ -68,10 +68,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: LoginPage(usuarioRepository: repository)),
     );
-    await tester.enterText(
-      find.byType(TextField).at(0),
-      InMemoryUsuarioRepository.usuarioTesteNome,
-    );
+    
     await tester.enterText(
       find.byType(TextField).at(1),
       InMemoryUsuarioRepository.usuarioTesteSenha,

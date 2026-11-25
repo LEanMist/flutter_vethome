@@ -1,3 +1,5 @@
+import 'dart:ui' show PointerDeviceKind;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/models/agendamento.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/pages/pet_perfil_page.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/repositories/pet_repository.dart';
+import 'package:flutter_vethome/themes/vet_cores.dart';
 
 Pet _pet(String id) => Pet(
   id: id,
@@ -123,6 +126,9 @@ void main() {
         '${amanha.month.toString().padLeft(2, '0')}/${amanha.year} - 13:00';
     expect(find.text(data), findsOneWidget);
     expect(find.text(nomeLongo), findsOneWidget);
+    final titulo = tester.getTopLeft(find.text('Próximo Agendamento')).dx;
+    expect(tester.getTopLeft(find.text(data)).dx, closeTo(titulo, 0.1));
+    expect(tester.getTopLeft(find.text(nomeLongo)).dx, closeTo(titulo, 0.1));
     expect(tester.getSize(find.text(nomeLongo)).height, greaterThan(40));
     expect(find.text('Segundo serviço'), findsNothing);
     expect(find.text('Outro pet'), findsNothing);
@@ -252,6 +258,29 @@ void main() {
         final botao = find.text('Nova Consulta');
         final alturaInicial = tester.getSize(cartao).height;
         final posicaoBotao = tester.getCenter(botao);
+        if (alturaTela == 900) {
+          final lista = find.byKey(const ValueKey('agendamentos-do-pet'));
+          final scroll = tester.state<ScrollableState>(
+            find.descendant(of: lista, matching: find.byType(Scrollable)),
+          );
+          expect(scroll.position.maxScrollExtent, 0);
+          final customPaint = find.ancestor(
+            of: lista,
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is CustomPaint && widget.foregroundPainter is ScrollbarPainter,
+            ),
+          );
+          final painter =
+              tester.widget<CustomPaint>(customPaint).foregroundPainter! as ScrollbarPainter;
+          expect(
+            painter.hitTestOnlyThumbInteractive(
+              Offset(tester.getSize(lista).width - 2, 10),
+              PointerDeviceKind.touch,
+            ),
+            isFalse,
+          );
+        }
 
         for (var i = 1; i < 10; i++) {
           await repository.save(
@@ -269,6 +298,9 @@ void main() {
           find.descendant(of: lista, matching: find.byType(Scrollable)).first,
         );
         expect(tester.getSize(cartao).height, closeTo(alturaInicial, 0.1));
+        if (alturaTela == 900) {
+          expect(tester.getSize(cartao).height, 250);
+        }
         expect(find.byType(Scrollable), findsOneWidget);
         expect(scrollLista.position.maxScrollExtent, greaterThan(0));
         expect(tester.getCenter(botao), posicaoBotao);
@@ -278,9 +310,57 @@ void main() {
           lessThan(tester.getTopLeft(botao).dy),
         );
 
+        final barra = find.ancestor(of: lista, matching: find.byType(Scrollbar));
+        final tema = tester.widget<ScrollbarTheme>(
+          find.ancestor(of: barra, matching: find.byType(ScrollbarTheme)).first,
+        );
+        expect(tema.data.thumbColor!.resolve({}), VetCores.marrom);
+        final customPaint = find.ancestor(
+          of: lista,
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is CustomPaint && widget.foregroundPainter is ScrollbarPainter,
+          ),
+        );
+        final painter =
+            tester.widget<CustomPaint>(customPaint).foregroundPainter! as ScrollbarPainter;
+        final area = tester.getRect(lista);
+        expect(
+          painter.hitTestOnlyThumbInteractive(
+            Offset(area.width - 2, 10),
+            PointerDeviceKind.touch,
+          ),
+          isTrue,
+        );
+        await tester.dragFrom(
+          Offset(area.right - 2, area.top + 10),
+          const Offset(0, 60),
+        );
+        await tester.pumpAndSettle();
+        expect(scrollLista.position.pixels, greaterThan(0));
+        scrollLista.position.jumpTo(0);
+        await tester.pumpAndSettle();
+        final inicio = await tester.startGesture(tester.getCenter(lista));
+        await inicio.moveBy(const Offset(0, 200));
+        await tester.pump();
+        expect(scrollLista.position.pixels, 0);
+        await inicio.up();
+        await tester.pumpAndSettle();
         await tester.drag(lista, const Offset(0, -180));
         await tester.pumpAndSettle();
         expect(scrollLista.position.pixels, greaterThan(0));
+        await tester.drag(lista, const Offset(0, -3000));
+        await tester.pumpAndSettle();
+        final fim = await tester.startGesture(tester.getCenter(lista));
+        await fim.moveBy(const Offset(0, -200));
+        await tester.pump();
+        expect(scrollLista.position.pixels, scrollLista.position.maxScrollExtent);
+        await fim.up();
+        await tester.pumpAndSettle();
+        expect(find.descendant(
+          of: lista,
+          matching: find.byType(StretchingOverscrollIndicator),
+        ), findsNothing);
         expect(tester.getCenter(botao), posicaoBotao);
         expect(tester.takeException(), isNull);
       },

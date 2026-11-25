@@ -5,6 +5,7 @@ import 'package:flutter_vethome/pages/convenio_page.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
+import 'package:flutter_vethome/widgets/foto_pet.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ServicosPage extends StatefulWidget {
@@ -13,6 +14,7 @@ class ServicosPage extends StatefulWidget {
     required this.rascunho,
     required this.petNome,
     required this.petTipo,
+    this.petFotoPerfilPath,
     this.usuarioRepository,
     this.agendamentoRepository,
   });
@@ -20,6 +22,7 @@ class ServicosPage extends StatefulWidget {
   final AgendamentoRascunho rascunho;
   final String petNome;
   final PetType petTipo;
+  final String? petFotoPerfilPath;
   final UsuarioRepository? usuarioRepository;
   final AgendamentoRepository? agendamentoRepository;
 
@@ -238,6 +241,7 @@ class _ServicosPageState extends State<ServicosPage> {
           rascunho: rascunho,
           petNome: widget.petNome,
           petTipo: widget.petTipo,
+          petFotoPerfilPath: widget.petFotoPerfilPath,
           usuarioRepository: widget.usuarioRepository,
           agendamentoRepository: _repository,
         ),
@@ -269,6 +273,9 @@ class _ServicosPageState extends State<ServicosPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: VetCores.marrom,
+            ),
             child: Text(
               'Não',
               style: GoogleFonts.comfortaa(
@@ -279,10 +286,14 @@ class _ServicosPageState extends State<ServicosPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VetCores.marrom,
+              foregroundColor: VetCores.branco,
+            ),
             child: Text(
               'Sim',
               style: GoogleFonts.comfortaa(
-                color: VetCores.marrom,
+                color: VetCores.branco,
                 fontWeight: FontWeight.w900,
               ),
             )
@@ -558,10 +569,6 @@ class _ServicosPageState extends State<ServicosPage> {
 
   @override
   Widget build(BuildContext context) {
-    final imagemPet = widget.petTipo == PetType.gato
-      ? 'assets/imagens/gato.png'
-      : 'assets/imagens/cachorro.png';
-
     return Scaffold(
       backgroundColor: VetCores.rosaFundo,
       body: LayoutBuilder(
@@ -570,7 +577,7 @@ class _ServicosPageState extends State<ServicosPage> {
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
           final double alturaCabecalho = compacto ? 140 : 160;
           final larguraCategoria = constraints.maxWidth * 0.86;
-          final double tamanhoImagemPet = compacto ? 37 : 34;
+          final double tamanhoImagemPet = compacto ? 40 : 34;
           final double larguraBotao = compacto ? 150 : 250;
           final double alturaBotao = compacto ? 50 : 60;
           return Column(
@@ -614,7 +621,7 @@ class _ServicosPageState extends State<ServicosPage> {
                         SizedBox(width: compacto ? 47 : 80),
                       ],
                     ),
-                    SizedBox(height: compacto ? 20 : 12),
+                    SizedBox(height: compacto ? 15 : 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -634,12 +641,10 @@ class _ServicosPageState extends State<ServicosPage> {
                           ),
                         ),
                         const SizedBox(width: 13),
-                        Image.asset(
-                          imagemPet,
-                          key: ValueKey('icone-pet-${widget.petTipo.name}'),
-                          width: tamanhoImagemPet,
-                          height: tamanhoImagemPet,
-                          fit: BoxFit.contain,
+                        FotoPet(
+                          tipo: widget.petTipo,
+                          fotoPerfilPath: widget.petFotoPerfilPath,
+                          tamanho: tamanhoImagemPet,
                         ),
                       ],
                     ),

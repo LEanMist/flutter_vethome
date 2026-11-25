@@ -7,7 +7,9 @@ import 'package:flutter_vethome/repositories/usuario_repository.dart';
 import 'package:flutter_vethome/services/cep_lookup_service.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:flutter_vethome/widgets/calendario.dart';
+import 'package:flutter_vethome/widgets/barra_rolagem.dart';
 import 'package:flutter_vethome/widgets/endereco.dart';
+import 'package:flutter_vethome/widgets/foto_pet.dart';
 import 'package:flutter_vethome/widgets/seletor_horario.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -17,6 +19,7 @@ class FinalizarAgendamentoPage extends StatefulWidget {
 		required this.rascunho,
 		required this.petNome,
 		required this.petTipo,
+		this.petFotoPerfilPath,
 		required this.convenio,
 		this.usuarioRepository,
 		this.agendamentoRepository,
@@ -26,6 +29,7 @@ class FinalizarAgendamentoPage extends StatefulWidget {
 	final AgendamentoRascunho rascunho;
 	final String petNome;
 	final PetType petTipo;
+	final String? petFotoPerfilPath;
 	final ConvenioAgendamento convenio;
 	final UsuarioRepository? usuarioRepository;
 	final AgendamentoRepository? agendamentoRepository;
@@ -42,6 +46,7 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
 	late DateTime _data;
 	late String _horario;
 	final _descricaoController = TextEditingController();
+	final _scrollController = ScrollController();
 	Usuario? _usuario;
 	String? _enderecoSelecionadoId;
 	bool _salvando = false;
@@ -66,6 +71,7 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
 	@override
 	void dispose() {
 		_descricaoController.dispose();
+		_scrollController.dispose();
 		super.dispose();
 	}
 
@@ -238,6 +244,7 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
 		required IconData icone,
 		required String titulo,
 		required String valor,
+		Widget? imagem,
 		VoidCallback? onTap,
 	}) {
 		return Padding(
@@ -253,7 +260,11 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
 						padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
 						child: Row(
 							children: [
-								Icon(icone, color: VetCores.marrom),
+								imagem ?? Icon(
+                  icone, 
+                  color: VetCores.marrom,
+                  size: 25,
+                ),
 								const SizedBox(width: 12),
 								Expanded(
 									child: Column(
@@ -263,7 +274,8 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
 												titulo,
 												style: GoogleFonts.montserratAlternates(
 													color: VetCores.marrom,
-													fontSize: 12,
+													fontSize: 13,
+                          fontWeight: FontWeight.w500,
 												),
 											),
 											const SizedBox(height: 3),
@@ -303,49 +315,58 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
             children: [
               Container(
                 width: double.infinity,
-                height: alturaCabecalho,
-                padding: EdgeInsets.fromLTRB(
-                  10,
-                  compacto ? 29 : 30,
-                  8,
-                  compacto ? 11 : 16,
-                ),
-                decoration: const BoxDecoration(
-                  color: VetCores.rosaEscuro,
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(20)
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          tooltip: 'Voltar para serviços',
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.arrow_back),
-                          color: VetCores.branco,
-                        ),
-                        Expanded(
-                          child: Text(
-                            'Finalizar',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.comfortaa(
-                              color: VetCores.branco,
-                              fontSize: compacto ? 30 : 35,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: compacto ? 47 : 80),
-                      ],
+                  height: alturaCabecalho,
+                  decoration: const BoxDecoration(
+                    color: VetCores.rosaEscuro,
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(20),
                     ),
-                    SizedBox(height: compacto ? 20 : 12),
-                  ],
-                ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 30),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 50,
+                              ),
+                              child: Text(
+                                'Finalizar',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.comfortaa(
+                                  color: VetCores.branco,
+                                  fontSize: compacto ? 30 : 35,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 8,
+                              child: IconButton(
+                                tooltip: 'Voltar',
+                                onPressed: () => Navigator.of(context).pop(),
+                                icon: const Icon(Icons.arrow_back_rounded),
+                                color: VetCores.branco,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ),
               Expanded(
-                child: ListView(
+                child: BarraRolagem(
+                  controller: _scrollController,
+                  child: ListView(
+                  controller: _scrollController,
+                  physics: const ClampingScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                   children: [
                     Text(
@@ -357,6 +378,16 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
                       ),
                     ),
                     const SizedBox(height: 10),
+                    _campoResumo(
+                      icone: Icons.pets,
+                      titulo: 'Pet',
+                      valor: widget.petNome,
+                      imagem: FotoPet(
+                        tipo: widget.petTipo,
+                        fotoPerfilPath: widget.petFotoPerfilPath,
+                        tamanho: 56,
+                      ),
+                    ),
                     _campoResumo(
                       icone: Icons.medical_services_outlined,
                       titulo: 'Serviços',
@@ -465,14 +496,24 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
                       child: OutlinedButton.icon(
                         key: const ValueKey('adicionar-endereco'),
                         onPressed: _adicionarEndereco,
-                        icon: const Icon(Icons.add_location_alt_outlined),
+                        icon: const Icon(
+                          Icons.add_location_alt_outlined,
+                          color: VetCores.marrom,
+                          size: 20,
+                        ),
                         label: Text(
                           'Adicionar mais endereço',
-                          style: GoogleFonts.montserratAlternates(),
+                          style: GoogleFonts.montserratAlternates(
+                            color: VetCores.marrom,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: VetCores.marrom,
-                          side: const BorderSide(color: VetCores.rosaEscuro),
+                          foregroundColor: VetCores.branco,
+                          side: const BorderSide(
+                            color: VetCores.marrom,
+                          ),
                         ),
                       ),
                     ),
@@ -502,6 +543,7 @@ class _FinalizarAgendamentoPageState extends State<FinalizarAgendamentoPage> {
                       ),
                     ),
                   ],
+                  ),
                 ),
               ),
             ],

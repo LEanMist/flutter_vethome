@@ -111,6 +111,15 @@ Future<void> _abrirCategoria(
     find.byKey(ValueKey('icone-pet-${petTipo.name}')),
     findsOneWidget,
   );
+  final imagem = tester.widget<Image>(
+    find.byKey(ValueKey('icone-pet-${petTipo.name}')),
+  );
+  expect(
+    (imagem.image as AssetImage).assetName,
+    petTipo == PetType.gato
+        ? 'assets/imagens/gato.png'
+        : 'assets/imagens/cachorro.png',
+  );
   expect(find.text(petTipo == PetType.gato ? 'Mimi' : 'Rex'), findsOneWidget);
   expect(tester.takeException(), isNull, reason: 'initial render');
   await tester.tap(find.byKey(ValueKey('categoria-${categoria.name}')));
