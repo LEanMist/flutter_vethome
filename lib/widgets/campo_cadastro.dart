@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset_shadow;
+import 'package:flutter_vethome/themes/vet_cores.dart';
 
 class CampoCadastro extends StatelessWidget {
   const CampoCadastro({
@@ -21,7 +22,15 @@ class CampoCadastro extends StatelessWidget {
     this.inputFormatters,
     this.obscureText = false,
     this.textCapitalization = TextCapitalization.none,
-  });
+    this.valorExibicao,
+    this.tamanhoFonteValor,
+    this.corIcone = const Color(0xFFC08081),
+    this.corTexto = const Color(0xFF68442E),
+    this.alinhamentoTexto = TextAlign.start,
+  }) : assert(
+         valorExibicao == null ||
+             (controller == null && onTap == null && onChanged == null),
+       );
   final String titulo;
   final IconData icone;
   final double altura;
@@ -37,6 +46,11 @@ class CampoCadastro extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final bool obscureText;
   final TextCapitalization textCapitalization;
+  final String? valorExibicao;
+  final double? tamanhoFonteValor;
+  final Color corIcone;
+  final Color corTexto;
+  final TextAlign alinhamentoTexto;
 
   @override
   Widget build(BuildContext context) {
@@ -71,14 +85,38 @@ class CampoCadastro extends StatelessWidget {
                       borderRadius: BorderRadius.all(Radius.circular(80)),
                       boxShadow: [
                         inset_shadow.BoxShadow(
-                          color: Color.fromARGB(60, 0, 0, 0),
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
+                          color: VetCores.sombra,
+                          blurRadius: 1,
+                          offset: Offset(2, 2),
                           inset: true,
                         ),
                       ],
                     ),
-                    child: TextField(
+                    child: valorExibicao != null
+                        ? Padding(
+                            padding: EdgeInsets.only(
+                              left: tamanhoIcone + 12,
+                              right: 8,
+                            ),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: Text(
+                                  valorExibicao!,
+                                  textAlign: alinhamentoTexto,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.montserratAlternates(
+                                    color: corTexto,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: tamanhoFonteValor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : TextField(
                       controller: controller,
                       expands: !obscureText,
                       maxLines: obscureText ? 1 : null,
@@ -91,11 +129,12 @@ class CampoCadastro extends StatelessWidget {
                               : TextInputType.text),
                       inputFormatters: inputFormatters,
                       textCapitalization: textCapitalization,
+                      textAlign: alinhamentoTexto,
                       textAlignVertical: TextAlignVertical.center,
                       readOnly: onTap != null,
                       onTap: onTap,
                       style: GoogleFonts.montserratAlternates(
-                        color: const Color(0xFF68442E),
+                        color: corTexto,
                         fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
@@ -162,7 +201,7 @@ class CampoCadastro extends StatelessWidget {
                     ),
                     child: Icon(
                       icone,
-                      color: const Color(0xFFC08081),
+                      color: corIcone,
                       size: tamanhoIconeInterno,
                     ),
                   ),

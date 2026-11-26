@@ -7,6 +7,7 @@ import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:flutter_vethome/widgets/botao_estilizado.dart';
+import 'package:flutter_vethome/widgets/campo_cadastro.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class DetalhesPetPage extends StatefulWidget {
@@ -123,13 +124,15 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compacto =
+        final bool compacto =
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
+        final double alturaCabecalho = compacto ? 120 : 160;
+        final double larguraCartao = compacto ? constraints.maxWidth - 65 : constraints.maxWidth - 40;
         return Column(
           children: [
             Container(
               width: double.infinity,
-              height: compacto ? 100 : 120,
+              height: alturaCabecalho,
               decoration: const BoxDecoration(
                 color: VetCores.rosaEscuro,
                 borderRadius: BorderRadius.vertical(
@@ -146,7 +149,7 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
                       textAlign: TextAlign.center,
                       style: GoogleFonts.comfortaa(
                         color: VetCores.branco,
-                        fontSize: compacto ? 28 : 32,
+                        fontSize: compacto ? 30 : 32,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -165,7 +168,10 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(20, compacto ? 14 : 20, 20, 0),
-              child: _cartaoDados(compacto),
+              child: _cartaoDados(
+                compacto, 
+                larguraCartao
+              ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(22, 16, 20, 8),
@@ -199,19 +205,20 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
     );
   }
 
-  Widget _cartaoDados(bool compacto) {
+  Widget _cartaoDados(bool compacto, double largura) {
     final genero = widget.pet.genero == PetGenero.macho ? 'Macho' : 'Fêmea';
+
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(compacto ? 12 : 16),
+      width: largura,
+      padding: EdgeInsets.all(compacto ? 14 : 16),
       decoration: inset.BoxDecoration(
         color: VetCores.rosaEscuro25,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           inset.BoxShadow(
-            color: Color.fromARGB(45, 70, 40, 41),
+            color: VetCores.sombra,
             blurRadius: 1,
-            offset: Offset(2, 3),
+            offset: Offset(2.5, 2.5),
             inset: true,
           ),
         ],
@@ -221,7 +228,7 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
           Row(
             children: [
               Expanded(child: _campo('Gênero/Sexo', genero, Icons.wc_rounded)),
-              const SizedBox(width: 12),
+              SizedBox(width: compacto ? 40 : 40),
               Expanded(
                 child: _campo(
                   'Peso',
@@ -245,59 +252,19 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
   }
 
   Widget _campo(String titulo, String valor, IconData icone) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: Text(
-            titulo,
-            style: GoogleFonts.montserratAlternates(
-              color: VetCores.marrom,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(height: 3),
-        Container(
-          height: 38,
-          decoration: BoxDecoration(
-            color: VetCores.rosaEscuro50,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: VetCores.rosaFundo,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: VetCores.rosaEscuro, width: 2),
-                ),
-                child: Icon(icone, color: VetCores.marrom, size: 19),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Text(
-                    valor,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.comfortaa(
-                      color: VetCores.branco,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+    return CampoCadastro(
+      titulo: titulo,
+      icone: icone,
+      altura: 38,
+      largura: double.infinity,
+      tamanhoIcone: 32,
+      tamanhoIconeInterno: 19,
+      corIcone: VetCores.marrom,
+      corTexto: VetCores.branco,
+      alinhamentoTexto: TextAlign.center,
+      fonteLabel: 11,
+      valorExibicao: valor,
+      tamanhoFonteValor: 11,
     );
   }
 

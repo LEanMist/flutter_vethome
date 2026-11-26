@@ -4,6 +4,7 @@ class VetCores {
   VetCores._();
 
   static const Color branco = Color(0xFFFFFFFF);
+  static const Color sombra = Color(0x40000000); // Preto com 25% de opacidade
   static const Color branco50 = Color(0x80FFFFFF);
   static const Color rosaFundo = Color(0xFFFAD3D5); // FAD3D5 (fundo, botões)
   static const Color rosaCard = Color(0xFFECBEC0);

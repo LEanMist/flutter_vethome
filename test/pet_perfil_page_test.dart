@@ -6,11 +6,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_vethome/models/agendamento.dart';
 import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/pages/menu_page.dart';
+import 'package:flutter_vethome/pages/detalhes_pet_page.dart';
 import 'package:flutter_vethome/pages/pet_perfil_page.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
 import 'package:flutter_vethome/repositories/pet_repository.dart';
 import 'package:flutter_vethome/repositories/usuario_repository.dart';
+import 'package:flutter_vethome/themes/vet_cores.dart';
 import 'package:flutter_vethome/widgets/etiqueta_perfil.dart';
+import 'package:flutter_vethome/widgets/campo_cadastro.dart';
 
 Pet _pet(String id, String nome, String usuarioId) => Pet(
   id: id,
@@ -24,6 +27,61 @@ Pet _pet(String id, String nome, String usuarioId) => Pet(
 );
 
 void main() {
+  testWidgets('detalhes exibem dados atualizados sem campos editáveis', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = InMemoryAgendamentoRepository();
+    Widget pagina(Pet pet) => MaterialApp(
+      home: Scaffold(
+        body: DetalhesPetPage(
+          pet: pet,
+          usuarioId: 'usuario-1',
+          agendamentoRepository: repository,
+          onVoltar: () {},
+        ),
+      ),
+    );
+
+    final pet = _pet('max', 'Max', 'usuario-1');
+    await tester.pumpWidget(pagina(pet));
+    await tester.pumpAndSettle();
+    expect(find.byType(CampoCadastro), findsNWidgets(4));
+    for (final campo in tester.widgetList<CampoCadastro>(find.byType(CampoCadastro))) {
+      final icone = find.descendant(
+        of: find.byWidget(campo),
+        matching: find.byIcon(campo.icone),
+      );
+      expect(tester.widget<Icon>(icone).color, VetCores.marrom);
+    }
+    expect(find.byType(TextField), findsNothing);
+    for (final valor in ['Macho', '7 kg', '01/01/2020', 'Labrador']) {
+      expect(find.text(valor), findsOneWidget);
+      final texto = tester.widget<Text>(find.text(valor));
+      expect(texto.style!.color, VetCores.branco);
+      expect(texto.textAlign, TextAlign.center);
+    }
+    await tester.tap(find.text('7 kg'));
+    await tester.pumpAndSettle();
+    expect(tester.testTextInput.isVisible, isFalse);
+
+    await tester.pumpWidget(
+      pagina(pet.copyWith(
+        genero: PetGenero.femea,
+        peso: 4.5,
+        dataNascimento: DateTime(2021, 2, 3),
+        raca: 'Poodle',
+      )),
+    );
+    await tester.pumpAndSettle();
+    for (final valor in ['Fêmea', '4.5 kg', '03/02/2021', 'Poodle']) {
+      expect(find.text(valor), findsOneWidget);
+    }
+    expect(find.byType(TextField), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('mantém o pet selecionado ao trocar de aba e volta à lista', (
     tester,
   ) async {

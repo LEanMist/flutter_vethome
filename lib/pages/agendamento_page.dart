@@ -312,7 +312,7 @@ class _AgendamentoPage extends State<AgendamentoPage> with WidgetsBindingObserve
                                 borderRadius: BorderRadius.circular(14),
                                 boxShadow: const [
                                   inset.BoxShadow(
-                                    color: Color.fromARGB(55, 0, 0, 0),
+                                    color: VetCores.sombra,
                                     blurRadius: 3,
                                     offset: Offset(2, 3),
                                     inset: true,
