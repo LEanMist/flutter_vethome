@@ -4,17 +4,18 @@ import 'package:flutter/foundation.dart'
     show ValueListenable, ValueNotifier, debugPrint;
 
 import '../models/pet_model.dart';
-import '../models/service_catalog.dart';
 import '../models/vet_models.dart';
 import '../models/saved_address.dart';
 import '../core/utils/pet_images.dart';
 import '../core/utils/pet_photo.dart';
 import '../core/utils/form_fields.dart';
 import '../core/utils/formatters.dart';
-import '../core/utils/date_parse.dart';
+import '../core/utils/date_parser.dart';
+import 'agendamento_repository.dart';
 import 'local/local_storage.dart';
 import 'pet_repository.dart';
 import 'session.dart';
+import 'vacina_repository.dart';
 
 class LocalProfileConflictException implements Exception {
   const LocalProfileConflictException();
@@ -123,8 +124,9 @@ class VetRepository {
     _lastLocal = local;
     _lastValid = null;
     final state = result.state;
-    clientName = state?.client.name ?? 'Liminha';
-    clientBirthDate = state?.client.birthDate ?? DateTime(2007, 2, 5);
+    clientName = state?.client.name ?? Session.defaultClientName;
+    clientBirthDate =
+        state?.client.birthDate ?? Session.defaultClientBirthDate;
     clientAddress = state?.client.address ?? '';
     clientPhone = state?.client.phone ?? '';
     clientEmail = state?.client.email ?? '';
@@ -139,16 +141,14 @@ class VetRepository {
     selectedPetId = null;
     pets
       ..clear()
-      ..addAll(state?.pets ?? _demoPets());
-    _novosAgendamentos
-      ..clear()
-      ..addAll(state?.appointments ?? {});
-    _vaccines
-      ..clear()
-      ..addAll(state?.vaccinations ?? {});
-    _vaccinationDemoDismissedPetIds
-      ..clear()
-      ..addAll(state?.vaccinationDemoDismissedPetIds ?? const {});
+      ..addAll(state?.pets ?? PetRepository.demoPets());
+    AgendamentoRepository.restore(
+      state?.appointments ?? <String, List<Agendamento>>{},
+    );
+    VacinaRepository.restore(
+      state?.vaccinations ?? <String, List<Vacina>>{},
+      state?.vaccinationDemoDismissedPetIds ?? const <String>{},
+    );
     _persistenceStatus = result.status;
     lastPersistenceError = persistenceBlocked ? result.error : null;
     _pendingSave = Future.value(!persistenceBlocked);
@@ -187,24 +187,11 @@ class VetRepository {
         return false;
       }
 
-      clientName = 'Liminha';
-      clientBirthDate = DateTime(2007, 2, 5);
-      clientAddress = '';
-      clientPhone = '';
-      clientEmail = '';
-      clientGender = '';
-      clientGenderCustom = '';
-      clientPhotoBase64 = null;
-      clientPhotoPath = null;
-      clientPhotoBytes = null;
+      Session.resetLocalClient();
       addresses.clear();
-      selectedPetId = null;
-      pets
-        ..clear()
-        ..addAll(_demoPets());
-      _novosAgendamentos.clear();
-      _vaccines.clear();
-      _vaccinationDemoDismissedPetIds.clear();
+      PetRepository.resetToDemo();
+      AgendamentoRepository.clear();
+      VacinaRepository.clear();
 
       _storage = storage;
       _lastValid = null;
@@ -256,14 +243,9 @@ class VetRepository {
       addresses: List.of(addresses),
     ),
     pets: List.of(pets),
-    appointments: {
-      for (final entry in _novosAgendamentos.entries)
-        entry.key: List.of(entry.value),
-    },
-    vaccinations: {
-      for (final entry in _vaccines.entries) entry.key: List.of(entry.value),
-    },
-    vaccinationDemoDismissedPetIds: Set.of(_vaccinationDemoDismissedPetIds),
+    appointments: AgendamentoRepository.snapshot(),
+    vaccinations: VacinaRepository.snapshot(),
+    vaccinationDemoDismissedPetIds: VacinaRepository.demoDispensadasSnapshot(),
   );
 
   static void _restore(LocalState state) {
@@ -281,21 +263,11 @@ class VetRepository {
     pets
       ..clear()
       ..addAll(state.pets);
-    _novosAgendamentos
-      ..clear()
-      ..addAll({
-        for (final entry in state.appointments.entries)
-          entry.key: List.of(entry.value),
-      });
-    _vaccines
-      ..clear()
-      ..addAll({
-        for (final entry in state.vaccinations.entries)
-          entry.key: List.of(entry.value),
-      });
-    _vaccinationDemoDismissedPetIds
-      ..clear()
-      ..addAll(state.vaccinationDemoDismissedPetIds);
+    AgendamentoRepository.restore(state.appointments);
+    VacinaRepository.restore(
+      state.vaccinations,
+      state.vaccinationDemoDismissedPetIds,
+    );
   }
 
   static void _save() {
@@ -356,96 +328,61 @@ class VetRepository {
     });
   }
 
-  static String clientName = 'Liminha';
-  static DateTime clientBirthDate = DateTime(2007, 2, 5);
-  static String clientEmail = '';
-  static String clientAddress = '';
-  static String clientPhone = '';
-  static String clientGender = '';
-  static String clientGenderCustom = '';
-  static String? clientPhotoBase64;
-  static final List<SavedAddress> addresses = [];
-  static String? clientPhotoPath;
+  // Dados do cliente: a fonte única é [Session]. Estes acessos existem para
+  // as telas e testes que ainda usam VetRepository.
+  static String get clientName => Session.clientName;
+  static set clientName(String value) => Session.clientName = value;
+
+  static DateTime get clientBirthDate => Session.clientBirthDate;
+  static set clientBirthDate(DateTime value) =>
+      Session.clientBirthDate = value;
+
+  static String get clientEmail => Session.clientEmail;
+  static set clientEmail(String value) => Session.clientEmail = value;
+
+  static String get clientAddress => Session.clientAddress;
+  static set clientAddress(String value) => Session.clientAddress = value;
+
+  static String get clientPhone => Session.clientPhone;
+  static set clientPhone(String value) => Session.clientPhone = value;
+
+  static String get clientGender => Session.clientGender;
+  static set clientGender(String value) => Session.clientGender = value;
+
+  static String get clientGenderCustom => Session.clientGenderCustom;
+  static set clientGenderCustom(String value) =>
+      Session.clientGenderCustom = value;
+
+  static String? get clientPhotoBase64 => Session.clientPhotoBase64;
+  static set clientPhotoBase64(String? value) =>
+      Session.clientPhotoBase64 = value;
+
+  static String? get clientPhotoPath => Session.clientPhotoPath;
+  static set clientPhotoPath(String? value) => Session.clientPhotoPath = value;
+
   // No Web, o caminho do picker é temporário; conserva a foto nesta sessão.
-  static Uint8List? clientPhotoBytes;
-  static String? selectedPetId;
+  static Uint8List? get clientPhotoBytes => Session.clientPhotoBytes;
+  static set clientPhotoBytes(Uint8List? value) =>
+      Session.clientPhotoBytes = value;
 
-  static PetModel? petById(String id) =>
-      pets.where((pet) => pet.id == id).firstOrNull;
+  static final List<SavedAddress> addresses = [];
 
-  static PetModel? get selectedPet =>
-      (selectedPetId == null ? null : petById(selectedPetId!)) ??
-      pets.firstOrNull;
+  // Pets: a fonte única é [PetRepository].
+  static List<PetModel> get pets => PetRepository.pets;
+
+  static String? get selectedPetId => PetRepository.selectedPetId;
+  static set selectedPetId(String? value) =>
+      PetRepository.selectedPetId = value;
+
+  static PetModel? petById(String id) => PetRepository.petById(id);
+
+  static PetModel? get selectedPet => PetRepository.selectedPet;
 
   // Compatibilidade com as telas antigas; a seleção é armazenada por ID.
-  static int get selectedPetIndex =>
-      pets.indexWhere((pet) => pet.id == selectedPet?.id);
+  static int get selectedPetIndex => PetRepository.selectedPetIndex;
+  static set selectedPetIndex(int index) =>
+      PetRepository.selectedPetIndex = index;
 
-  static set selectedPetIndex(int index) {
-    selectedPetId = index >= 0 && index < pets.length ? pets[index].id : null;
-  }
-
-  static final List<PetModel> pets = _demoPets();
-
-  static List<PetModel> _demoPets() => [
-    PetModel(
-      id: 'pet-demo-1',
-      name: 'Fernando',
-      imagePath: PetImages.dog,
-      description: _petSummary('Cachorro', 14, true),
-      species: 'Cachorro',
-      sex: 'M',
-      weightKg: 24,
-      birthDate: DateTime(2012, 3, 23),
-      breed: 'Lulu-da-Pomerânia',
-      neutered: true,
-    ),
-    PetModel(
-      id: 'pet-demo-2',
-      name: 'Kelly',
-      imagePath: PetImages.cat,
-      description: _petSummary('Gato', 2, false),
-      species: 'Gato',
-      sex: 'Fêmea',
-      weightKg: 4.2,
-      breed: 'Sem raça definida',
-      neutered: false,
-      ageYears: 2,
-    ),
-    PetModel(
-      id: 'pet-demo-3',
-      name: 'Escarola',
-      imagePath: PetImages.dog,
-      description: _petSummary('Cachorro', 6, true),
-      species: 'Cachorro',
-      sex: 'Fêmea',
-      weightKg: 18,
-      breed: 'Sem raça definida',
-      neutered: true,
-      ageYears: 6,
-    ),
-    PetModel(
-      id: 'pet-demo-4',
-      name: 'Eduardido',
-      imagePath: PetImages.cat,
-      description: _petSummary('Gato', 1, false),
-      species: 'Gato',
-      sex: 'Macho',
-      weightKg: 3.4,
-      breed: 'Sem raça definida',
-      neutered: false,
-      ageYears: 1,
-    ),
-  ];
-
-  static const PetProfile _padrao = PetProfile(
-    especie: 'Cachorro',
-    idadeAnos: 4,
-    castrado: true,
-    pesoKg: 12.5,
-  );
-
-  static final Map<String, List<Agendamento>> _novosAgendamentos = {};
 
   static const contactVeterinarianName = 'Gabriela Falcão';
   static final List<ChatMessage> chatMessages = [
@@ -479,25 +416,12 @@ class VetRepository {
       !hasDifferentLocalClientEmail(email);
 
   /// Esta demonstração mantém um único perfil local por instalação.
-  static bool hasDifferentLocalClientEmail(String? email) {
-    final current = clientEmail.trim().toLowerCase();
-    final incoming = email?.trim().toLowerCase() ?? '';
-    return current.isNotEmpty && incoming.isNotEmpty && current != incoming;
-  }
+  static bool hasDifferentLocalClientEmail(String? email) =>
+      Session.hasDifferentLocalClientEmail(email);
 
   /// Detecta uma tentativa de trocar o perfil sem fornecer o e-mail salvo.
-  /// Atualizações parciais sem nome continuam permitidas para o perfil atual.
-  static bool hasLocalClientIdentityConflict({String? email, String? name}) {
-    if (hasDifferentLocalClientEmail(email)) return true;
-
-    final currentEmail = clientEmail.trim();
-    final incomingEmail = email?.trim() ?? '';
-    final incomingName = name?.trim() ?? '';
-    return currentEmail.isNotEmpty &&
-        incomingEmail.isEmpty &&
-        incomingName.isNotEmpty &&
-        incomingName.toLowerCase() != clientName.trim().toLowerCase();
-  }
+  static bool hasLocalClientIdentityConflict({String? email, String? name}) =>
+      Session.hasLocalClientIdentityConflict(email: email, name: name);
 
   static void registerClient(Map<String, String> values) {
     _ensurePersistenceWritable();
@@ -543,7 +467,9 @@ class VetRepository {
       clientAddress = address.summary;
     }
     final birth = values['client.Data de Nascimento'];
-    if (birth != null) clientBirthDate = _parseDate(birth) ?? clientBirthDate;
+    if (birth != null) {
+      clientBirthDate = parseFlexibleDate(birth) ?? clientBirthDate;
+    }
     _save();
   }
 
@@ -601,9 +527,7 @@ class VetRepository {
   }
 
   static List<Agendamento> realAppointments(String petId) =>
-      petById(petId) == null
-      ? []
-      : List.unmodifiable(_novosAgendamentos[petId] ?? []);
+      AgendamentoRepository.reais(petId);
 
   static void _checkPhoto(
     String? photo, {
@@ -711,9 +635,8 @@ class VetRepository {
     final previousSelectedPetId = selectedPetId;
     final selectedId = selectedPet?.id;
     pets.removeWhere((item) => item.id == pet.id);
-    _novosAgendamentos.remove(pet.id);
-    _vaccines.remove(pet.id);
-    _vaccinationDemoDismissedPetIds.remove(pet.id);
+    AgendamentoRepository.removeDoPet(pet.id);
+    VacinaRepository.removeDoPet(pet.id);
     selectedPetId = selectedId == pet.id ? pets.firstOrNull?.id : selectedId;
     try {
       _save();
@@ -725,10 +648,7 @@ class VetRepository {
 
   static void addAgendamento(String petId, Agendamento agendamento) {
     _ensurePersistenceWritable();
-    if (petById(petId) == null) {
-      throw ArgumentError('Pet não encontrado.');
-    }
-    _novosAgendamentos.putIfAbsent(petId, () => []).add(agendamento);
+    AgendamentoRepository.adicionar(petId, agendamento);
     _save();
   }
 
@@ -739,213 +659,47 @@ class VetRepository {
     required String veterinarian,
     required DateTime start,
     required DateTime end,
-  }) {
-    if (!end.isAfter(start)) return true;
-    final requestedVeterinarian = veterinarian.trim().toLowerCase();
-    for (final entry in _novosAgendamentos.entries) {
-      for (final existing in entry.value) {
-        final samePet = entry.key == petId;
-        final sameVeterinarian =
-            existing.veterinario.trim().toLowerCase() == requestedVeterinarian;
-        if (!samePet && !sameVeterinarian) continue;
-        final existingEnd =
-            existing.endDate ?? existing.data.add(const Duration(hours: 1));
-        if (start.isBefore(existingEnd) && existing.data.isBefore(end)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
+  }) => AgendamentoRepository.temConflito(
+    petId: petId,
+    veterinarian: veterinarian,
+    start: start,
+    end: end,
+  );
 
   /// Remove somente a mesma consulta salva; eventos de demonstração ficam fora
   /// da lista do repositório.
   static bool removeAgendamento(String petId, Agendamento agendamento) {
     _ensurePersistenceWritable();
-    final appointments = _novosAgendamentos[petId];
-    if (appointments == null) return false;
-    final index = appointments.indexWhere(
-      (candidate) => identical(candidate, agendamento),
-    );
-    if (index < 0) return false;
-    appointments.removeAt(index);
-    if (appointments.isEmpty) _novosAgendamentos.remove(petId);
+    if (!AgendamentoRepository.remover(petId, agendamento)) return false;
     _save();
     return true;
   }
 
-  static DateTime? _parseDate(String value) {
-    final parts = value.trim().split(RegExp(r'[/.-]'));
-    if (parts.length != 3) return DateTime.tryParse(value);
-    final a = int.tryParse(parts[0]);
-    final b = int.tryParse(parts[1]);
-    final c = int.tryParse(parts[2]);
-    if (a == null || b == null || c == null) return null;
-    final yearFirst = a > 31;
-    final date = yearFirst ? DateTime(a, b, c) : DateTime(c, b, a);
-    final expectedDay = yearFirst ? c : a;
-    if (date.year < 1900 ||
-        date.month != b ||
-        date.day != expectedDay ||
-        date.isAfter(DateTime.now())) {
-      return null;
-    }
-    return date;
-  }
+  static List<Consulta> consultas(String petId) =>
+      AgendamentoRepository.consultas(petId);
 
-  static String _petSummary(String species, int age, bool neutered) {
-    return '$species • $age ${age == 1 ? 'ano' : 'anos'} • '
-        '${neutered ? 'Castrado' : 'Não castrado'}';
-  }
-
-  static DateTime get _hoje {
-    final n = DateTime.now();
-    return DateTime(n.year, n.month, n.day);
-  }
-
-  static List<Consulta> consultas(String petId) => [
-    Consulta(
-      data: _hoje.subtract(const Duration(days: 15)),
-      tipo: 'Consulta Geral',
-      veterinario: 'Dra. Ana Silva',
-      descricao: 'Checkup completo. Tudo normal.',
-      isDemonstration: true,
-    ),
-    Consulta(
-      data: _hoje.subtract(const Duration(days: 60)),
-      tipo: 'Vermifugação',
-      veterinario: 'Dr. João Mendes',
-      descricao: 'Tratamento realizado com sucesso.',
-      isDemonstration: true,
-    ),
-    Consulta(
-      data: _hoje.subtract(const Duration(days: 95)),
-      tipo: 'Pesagem e avaliação',
-      veterinario: 'Dra. Clara Lima',
-      descricao: 'Peso estável e bem hidratado.',
-      isDemonstration: true,
-    ),
-  ];
-
-  static final Map<String, List<Vacina>> _vaccines = {};
-  static final Set<String> _vaccinationDemoDismissedPetIds = {};
-  static int _vaccineCounter = 0;
+  static List<Agendamento> agendamentos(String petId) =>
+      AgendamentoRepository.listar(petId);
 
   static List<Vacina> realVaccines(String petId) =>
-      petById(petId) == null ? [] : List.unmodifiable(_vaccines[petId] ?? []);
+      VacinaRepository.reais(petId);
 
   static void saveVaccine(String petId, Vacina vaccine) {
     _ensurePersistenceWritable();
-    if (petById(petId) == null) throw ArgumentError('Pet não encontrado.');
-    if (vaccine.id != null &&
-        (vaccine.id!.trim().isEmpty ||
-            _vaccines.entries.any(
-              (entry) =>
-                  entry.key != petId &&
-                  entry.value.any((v) => v.id == vaccine.id),
-            ))) {
-      throw const FormatException(
-        'Vacina pertence a outro pet ou possui ID inválido.',
-      );
-    }
-    final today = DateTime.now();
-    final endToday = DateTime(today.year, today.month, today.day + 1);
-    if (vaccine.nome.trim().isEmpty ||
-        vaccine.aplicada.year < 1900 ||
-        !vaccine.aplicada.isBefore(endToday) ||
-        (vaccine.proxima != null &&
-            vaccine.proxima!.isBefore(vaccine.aplicada))) {
-      throw const FormatException('Confira as datas e o nome da vacina.');
-    }
-    final records = _vaccines.putIfAbsent(petId, () => []);
-    final id =
-        vaccine.id ??
-        'vaccine-${DateTime.now().microsecondsSinceEpoch}-${_vaccineCounter++}';
-    final index = records.indexWhere((v) => v.id == id);
-    final record = Vacina(
-      id: id,
-      nome: vaccine.nome.trim(),
-      aplicada: vaccine.aplicada,
-      proxima: vaccine.proxima,
-    );
-    if (index < 0) {
-      records.add(record);
-    } else {
-      records[index] = record;
-    }
+    VacinaRepository.salvar(petId, vaccine);
     _save();
   }
 
   static void removeVaccine(String petId, String vaccineId) {
     _ensurePersistenceWritable();
-    final vaccines = _vaccines[petId];
-    final previousLength = vaccines?.length ?? 0;
-    vaccines?.removeWhere((v) => v.id == vaccineId);
-    if (vaccines != null &&
-        vaccines.isEmpty &&
-        vaccines.length < previousLength) {
-      _vaccinationDemoDismissedPetIds.add(petId);
-    }
+    VacinaRepository.remover(petId, vaccineId);
     _save();
   }
 
   static bool usesDemoVaccines(String petId) =>
-      PetSpecies.parse(petById(petId)?.species) != null &&
-      realVaccines(petId).isEmpty &&
-      !_vaccinationDemoDismissedPetIds.contains(petId);
+      VacinaRepository.usaDemonstracao(petId);
 
-  static List<Vacina> vacinas(String petId) => usesDemoVaccines(petId)
-      ? _demoVaccines(PetSpecies.parse(petById(petId)?.species))
-      : realVaccines(petId);
-
-  static List<Vacina> _demoVaccines(PetSpecies? species) =>
-      [
-            Vacina(
-              nome: 'V10',
-              aplicada: _hoje.subtract(const Duration(days: 200)),
-              proxima: _hoje.add(const Duration(days: 165)),
-            ),
-            Vacina(
-              nome: 'Antirrábica',
-              aplicada: _hoje.subtract(const Duration(days: 120)),
-              proxima: _hoje.add(const Duration(days: 245)),
-            ),
-            Vacina(
-              nome: 'Giardia',
-              aplicada: _hoje.subtract(const Duration(days: 150)),
-              proxima: _hoje.add(const Duration(days: 20)),
-            ),
-            Vacina(
-              nome: 'V4',
-              aplicada: _hoje.subtract(const Duration(days: 150)),
-              proxima: _hoje.add(const Duration(days: 20)),
-            ),
-          ]
-          .where(
-            (sample) =>
-                ServiceCatalog.vaccinesFor(species).contains(sample.nome),
-          )
-          .toList();
-
-  static List<Agendamento> agendamentos(String petId) => petById(petId) == null
-      ? []
-      : [
-          Agendamento(
-            data: _hoje.add(const Duration(days: 5, hours: 14, minutes: 30)),
-            tipo: 'Consulta Geral',
-            veterinario: 'Dra. Ana Silva',
-            local: 'Clínica VetHome',
-            status: StatusAgendamento.confirmado,
-          ),
-          Agendamento(
-            data: _hoje.add(const Duration(days: 20, hours: 10)),
-            tipo: 'Vacinação',
-            veterinario: 'Dr. João Mendes',
-            local: 'Unidade Central',
-            status: StatusAgendamento.pendente,
-          ),
-          ...?_novosAgendamentos[petId],
-        ];
+  static List<Vacina> vacinas(String petId) => VacinaRepository.listar(petId);
 }
 
 class PersistenceBlockedException implements Exception {
