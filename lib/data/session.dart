@@ -2,16 +2,25 @@ import 'dart:typed_data';
 
 import '../service/cliente_service.dart';
 
+/// Dados do cliente da sessão atual: login no backend ou perfil local de
+/// demonstração. É a fonte única; o [VetRepository] apenas repassa para cá.
 class Session {
   Session._();
 
-  static String clientName = 'Liminha';
+  static const defaultClientName = 'Liminha';
+  static final defaultClientBirthDate = DateTime(2007, 2, 5);
+
+  static String clientName = defaultClientName;
   static String clientCpf = '';
-  static DateTime clientBirthDate = DateTime(2007, 2, 5);
+  static DateTime clientBirthDate = defaultClientBirthDate;
   static String clientEmail = '';
   static String clientAddress = '';
   static String clientPhone = '';
+  static String clientGender = '';
+  static String clientGenderCustom = '';
+  static String? clientPhotoBase64;
   static String? clientPhotoPath;
+  // No Web, o caminho do picker é temporário; conserva a foto nesta sessão.
   static Uint8List? clientPhotoBytes;
 
   static bool get isLoggedIn => clientCpf.trim().isNotEmpty;
@@ -37,55 +46,39 @@ class Session {
     clientPhotoPath = null;
   }
 
-  /// Guarda os dados do cliente recém-cadastrado.
-  static void registerClient(Map<String, String> values) {
-    clientName = values['Nome Completo']?.trim().isNotEmpty == true
-        ? values['Nome Completo']!.trim()
-        : clientName;
-    clientCpf = values['CPF']?.trim().isNotEmpty == true
-        ? values['CPF']!.replaceAll(RegExp(r'[^0-9]'), '')
-        : clientCpf;
-    clientEmail = values['E-mail']?.trim() ?? clientEmail;
-    clientPhone = values['Telefone/Celular']?.trim() ?? clientPhone;
-    clientAddress = [
-      values['Endereço'],
-      values['Número'],
-      values['Complemento'],
-      values['Cidade'],
-      values['CEP'],
-    ].where((part) => part != null && part.trim().isNotEmpty).join(', ');
-    final birth = values['Data de Nascimento'];
-    if (birth != null) clientBirthDate = _parseDate(birth) ?? clientBirthDate;
+  /// Volta o perfil local ao padrão de demonstração.
+  /// Não mexe no CPF, que pertence ao login.
+  static void resetLocalClient() {
+    clientName = defaultClientName;
+    clientBirthDate = defaultClientBirthDate;
+    clientAddress = '';
+    clientPhone = '';
+    clientEmail = '';
+    clientGender = '';
+    clientGenderCustom = '';
+    clientPhotoBase64 = null;
+    clientPhotoPath = null;
+    clientPhotoBytes = null;
   }
 
-  static void updateClient({
-    String? name,
-    DateTime? birthDate,
-    String? address,
-    String? phone,
-  }) {
-    if (name != null) clientName = name;
-    if (birthDate != null) clientBirthDate = birthDate;
-    if (address != null) clientAddress = address;
-    if (phone != null) clientPhone = phone;
+  /// Esta demonstração mantém um único perfil local por instalação.
+  static bool hasDifferentLocalClientEmail(String? email) {
+    final current = clientEmail.trim().toLowerCase();
+    final incoming = email?.trim().toLowerCase() ?? '';
+    return current.isNotEmpty && incoming.isNotEmpty && current != incoming;
   }
 
-  static DateTime? _parseDate(String value) {
-    final parts = value.trim().split(RegExp(r'[/.-]'));
-    if (parts.length != 3) return DateTime.tryParse(value);
-    final a = int.tryParse(parts[0]);
-    final b = int.tryParse(parts[1]);
-    final c = int.tryParse(parts[2]);
-    if (a == null || b == null || c == null) return null;
-    final yearFirst = a > 31;
-    final date = yearFirst ? DateTime(a, b, c) : DateTime(c, b, a);
-    final expectedDay = yearFirst ? c : a;
-    if (date.year < 1900 ||
-        date.month != b ||
-        date.day != expectedDay ||
-        date.isAfter(DateTime.now())) {
-      return null;
-    }
-    return date;
+  /// Detecta uma tentativa de trocar o perfil sem fornecer o e-mail salvo.
+  /// Atualizações parciais sem nome continuam permitidas para o perfil atual.
+  static bool hasLocalClientIdentityConflict({String? email, String? name}) {
+    if (hasDifferentLocalClientEmail(email)) return true;
+
+    final currentEmail = clientEmail.trim();
+    final incomingEmail = email?.trim() ?? '';
+    final incomingName = name?.trim() ?? '';
+    return currentEmail.isNotEmpty &&
+        incomingEmail.isEmpty &&
+        incomingName.isNotEmpty &&
+        incomingName.toLowerCase() != clientName.trim().toLowerCase();
   }
 }

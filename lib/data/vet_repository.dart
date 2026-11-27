@@ -11,7 +11,10 @@ import '../core/utils/pet_images.dart';
 import '../core/utils/pet_photo.dart';
 import '../core/utils/form_fields.dart';
 import '../core/utils/formatters.dart';
+import '../core/utils/date_parser.dart';
 import 'local/local_storage.dart';
+import 'pet_repository.dart';
+import 'session.dart';
 
 class LocalProfileConflictException implements Exception {
   const LocalProfileConflictException();
@@ -120,8 +123,9 @@ class VetRepository {
     _lastLocal = local;
     _lastValid = null;
     final state = result.state;
-    clientName = state?.client.name ?? 'Liminha';
-    clientBirthDate = state?.client.birthDate ?? DateTime(2007, 2, 5);
+    clientName = state?.client.name ?? Session.defaultClientName;
+    clientBirthDate =
+        state?.client.birthDate ?? Session.defaultClientBirthDate;
     clientAddress = state?.client.address ?? '';
     clientPhone = state?.client.phone ?? '';
     clientEmail = state?.client.email ?? '';
@@ -136,7 +140,7 @@ class VetRepository {
     selectedPetId = null;
     pets
       ..clear()
-      ..addAll(state?.pets ?? _demoPets());
+      ..addAll(state?.pets ?? PetRepository.demoPets());
     _novosAgendamentos
       ..clear()
       ..addAll(state?.appointments ?? {});
@@ -184,21 +188,9 @@ class VetRepository {
         return false;
       }
 
-      clientName = 'Liminha';
-      clientBirthDate = DateTime(2007, 2, 5);
-      clientAddress = '';
-      clientPhone = '';
-      clientEmail = '';
-      clientGender = '';
-      clientGenderCustom = '';
-      clientPhotoBase64 = null;
-      clientPhotoPath = null;
-      clientPhotoBytes = null;
+      Session.resetLocalClient();
       addresses.clear();
-      selectedPetId = null;
-      pets
-        ..clear()
-        ..addAll(_demoPets());
+      PetRepository.resetToDemo();
       _novosAgendamentos.clear();
       _vaccines.clear();
       _vaccinationDemoDismissedPetIds.clear();
@@ -353,94 +345,60 @@ class VetRepository {
     });
   }
 
-  static String clientName = 'Liminha';
-  static DateTime clientBirthDate = DateTime(2007, 2, 5);
-  static String clientEmail = '';
-  static String clientAddress = '';
-  static String clientPhone = '';
-  static String clientGender = '';
-  static String clientGenderCustom = '';
-  static String? clientPhotoBase64;
-  static final List<SavedAddress> addresses = [];
-  static String? clientPhotoPath;
+  // Dados do cliente: a fonte única é [Session]. Estes acessos existem para
+  // as telas e testes que ainda usam VetRepository.
+  static String get clientName => Session.clientName;
+  static set clientName(String value) => Session.clientName = value;
+
+  static DateTime get clientBirthDate => Session.clientBirthDate;
+  static set clientBirthDate(DateTime value) =>
+      Session.clientBirthDate = value;
+
+  static String get clientEmail => Session.clientEmail;
+  static set clientEmail(String value) => Session.clientEmail = value;
+
+  static String get clientAddress => Session.clientAddress;
+  static set clientAddress(String value) => Session.clientAddress = value;
+
+  static String get clientPhone => Session.clientPhone;
+  static set clientPhone(String value) => Session.clientPhone = value;
+
+  static String get clientGender => Session.clientGender;
+  static set clientGender(String value) => Session.clientGender = value;
+
+  static String get clientGenderCustom => Session.clientGenderCustom;
+  static set clientGenderCustom(String value) =>
+      Session.clientGenderCustom = value;
+
+  static String? get clientPhotoBase64 => Session.clientPhotoBase64;
+  static set clientPhotoBase64(String? value) =>
+      Session.clientPhotoBase64 = value;
+
+  static String? get clientPhotoPath => Session.clientPhotoPath;
+  static set clientPhotoPath(String? value) => Session.clientPhotoPath = value;
+
   // No Web, o caminho do picker é temporário; conserva a foto nesta sessão.
-  static Uint8List? clientPhotoBytes;
-  static String? selectedPetId;
+  static Uint8List? get clientPhotoBytes => Session.clientPhotoBytes;
+  static set clientPhotoBytes(Uint8List? value) =>
+      Session.clientPhotoBytes = value;
 
-  static PetModel? petById(String id) =>
-      pets.where((pet) => pet.id == id).firstOrNull;
+  static final List<SavedAddress> addresses = [];
 
-  static PetModel? get selectedPet =>
-      (selectedPetId == null ? null : petById(selectedPetId!)) ??
-      pets.firstOrNull;
+  // Pets: a fonte única é [PetRepository].
+  static List<PetModel> get pets => PetRepository.pets;
+
+  static String? get selectedPetId => PetRepository.selectedPetId;
+  static set selectedPetId(String? value) =>
+      PetRepository.selectedPetId = value;
+
+  static PetModel? petById(String id) => PetRepository.petById(id);
+
+  static PetModel? get selectedPet => PetRepository.selectedPet;
 
   // Compatibilidade com as telas antigas; a seleção é armazenada por ID.
-  static int get selectedPetIndex =>
-      pets.indexWhere((pet) => pet.id == selectedPet?.id);
-
-  static set selectedPetIndex(int index) {
-    selectedPetId = index >= 0 && index < pets.length ? pets[index].id : null;
-  }
-
-  static final List<PetModel> pets = _demoPets();
-
-  static List<PetModel> _demoPets() => [
-    PetModel(
-      id: 'pet-demo-1',
-      name: 'Fernando',
-      imagePath: PetImages.dog,
-      description: _petSummary('Cachorro', 14, true),
-      species: 'Cachorro',
-      sex: 'M',
-      weightKg: 24,
-      birthDate: DateTime(2012, 3, 23),
-      breed: 'Lulu-da-Pomerânia',
-      neutered: true,
-    ),
-    PetModel(
-      id: 'pet-demo-2',
-      name: 'Kelly',
-      imagePath: PetImages.cat,
-      description: _petSummary('Gato', 2, false),
-      species: 'Gato',
-      sex: 'Fêmea',
-      weightKg: 4.2,
-      breed: 'Sem raça definida',
-      neutered: false,
-      ageYears: 2,
-    ),
-    PetModel(
-      id: 'pet-demo-3',
-      name: 'Escarola',
-      imagePath: PetImages.dog,
-      description: _petSummary('Cachorro', 6, true),
-      species: 'Cachorro',
-      sex: 'Fêmea',
-      weightKg: 18,
-      breed: 'Sem raça definida',
-      neutered: true,
-      ageYears: 6,
-    ),
-    PetModel(
-      id: 'pet-demo-4',
-      name: 'Eduardido',
-      imagePath: PetImages.cat,
-      description: _petSummary('Gato', 1, false),
-      species: 'Gato',
-      sex: 'Macho',
-      weightKg: 3.4,
-      breed: 'Sem raça definida',
-      neutered: false,
-      ageYears: 1,
-    ),
-  ];
-
-  static const PetProfile _padrao = PetProfile(
-    especie: 'Cachorro',
-    idadeAnos: 4,
-    castrado: true,
-    pesoKg: 12.5,
-  );
+  static int get selectedPetIndex => PetRepository.selectedPetIndex;
+  static set selectedPetIndex(int index) =>
+      PetRepository.selectedPetIndex = index;
 
   static final Map<String, List<Agendamento>> _novosAgendamentos = {};
 
@@ -467,19 +425,7 @@ class VetRepository {
     }
   }
 
-  static PetProfile perfil(String petId) {
-    final model = petById(petId);
-    if (model == null) return _padrao;
-    final age = model.birthDate == null
-        ? model.ageYears ?? _padrao.idadeAnos
-        : ageInYears(model.birthDate!, DateTime.now());
-    return PetProfile(
-      especie: model.species ?? _padrao.especie,
-      idadeAnos: age,
-      castrado: model.neutered,
-      pesoKg: model.weightKg,
-    );
-  }
+  static PetProfile perfil(String petId) => PetRepository.perfil(petId);
 
   static bool authenticate(String email, String password) =>
       RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email.trim()) &&
@@ -488,25 +434,12 @@ class VetRepository {
       !hasDifferentLocalClientEmail(email);
 
   /// Esta demonstração mantém um único perfil local por instalação.
-  static bool hasDifferentLocalClientEmail(String? email) {
-    final current = clientEmail.trim().toLowerCase();
-    final incoming = email?.trim().toLowerCase() ?? '';
-    return current.isNotEmpty && incoming.isNotEmpty && current != incoming;
-  }
+  static bool hasDifferentLocalClientEmail(String? email) =>
+      Session.hasDifferentLocalClientEmail(email);
 
   /// Detecta uma tentativa de trocar o perfil sem fornecer o e-mail salvo.
-  /// Atualizações parciais sem nome continuam permitidas para o perfil atual.
-  static bool hasLocalClientIdentityConflict({String? email, String? name}) {
-    if (hasDifferentLocalClientEmail(email)) return true;
-
-    final currentEmail = clientEmail.trim();
-    final incomingEmail = email?.trim() ?? '';
-    final incomingName = name?.trim() ?? '';
-    return currentEmail.isNotEmpty &&
-        incomingEmail.isEmpty &&
-        incomingName.isNotEmpty &&
-        incomingName.toLowerCase() != clientName.trim().toLowerCase();
-  }
+  static bool hasLocalClientIdentityConflict({String? email, String? name}) =>
+      Session.hasLocalClientIdentityConflict(email: email, name: name);
 
   static void registerClient(Map<String, String> values) {
     _ensurePersistenceWritable();
@@ -552,7 +485,9 @@ class VetRepository {
       clientAddress = address.summary;
     }
     final birth = values['client.Data de Nascimento'];
-    if (birth != null) clientBirthDate = _parseDate(birth) ?? clientBirthDate;
+    if (birth != null) {
+      clientBirthDate = parseFlexibleDate(birth) ?? clientBirthDate;
+    }
     _save();
   }
 
@@ -781,30 +716,6 @@ class VetRepository {
     if (appointments.isEmpty) _novosAgendamentos.remove(petId);
     _save();
     return true;
-  }
-
-  static DateTime? _parseDate(String value) {
-    final parts = value.trim().split(RegExp(r'[/.-]'));
-    if (parts.length != 3) return DateTime.tryParse(value);
-    final a = int.tryParse(parts[0]);
-    final b = int.tryParse(parts[1]);
-    final c = int.tryParse(parts[2]);
-    if (a == null || b == null || c == null) return null;
-    final yearFirst = a > 31;
-    final date = yearFirst ? DateTime(a, b, c) : DateTime(c, b, a);
-    final expectedDay = yearFirst ? c : a;
-    if (date.year < 1900 ||
-        date.month != b ||
-        date.day != expectedDay ||
-        date.isAfter(DateTime.now())) {
-      return null;
-    }
-    return date;
-  }
-
-  static String _petSummary(String species, int age, bool neutered) {
-    return '$species • $age ${age == 1 ? 'ano' : 'anos'} • '
-        '${neutered ? 'Castrado' : 'Não castrado'}';
   }
 
   static DateTime get _hoje {
