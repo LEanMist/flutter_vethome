@@ -11,7 +11,10 @@ import '../core/utils/pet_images.dart';
 import '../core/utils/pet_photo.dart';
 import '../core/utils/form_fields.dart';
 import '../core/utils/formatters.dart';
-import 'local_storage.dart';
+import '../core/utils/date_parser.dart';
+import 'local/local_storage.dart';
+import 'pet_repository.dart';
+import 'session.dart';
 
 class LocalProfileConflictException implements Exception {
   const LocalProfileConflictException();
@@ -467,19 +470,13 @@ class VetRepository {
     }
   }
 
-  static PetProfile perfil(String petId) {
-    final model = petById(petId);
-    if (model == null) return _padrao;
-    final age = model.birthDate == null
-        ? model.ageYears ?? _padrao.idadeAnos
-        : ageInYears(model.birthDate!, DateTime.now());
-    return PetProfile(
-      especie: model.species ?? _padrao.especie,
-      idadeAnos: age,
-      castrado: model.neutered,
-      pesoKg: model.weightKg,
-    );
-  }
+  static PetProfile perfil(String petId) => PetRepository.perfil(petId);
+
+  static bool authenticate(String email, String password) =>
+      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email.trim()) &&
+      password.trim().isNotEmpty &&
+      password.length >= 6 &&
+      !hasDifferentLocalClientEmail(email);
 
   /// Esta demonstração mantém um único perfil local por instalação.
   static bool hasDifferentLocalClientEmail(String? email) {

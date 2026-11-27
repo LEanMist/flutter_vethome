@@ -4,15 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/utils/formatters.dart';
-import '../../../data/session.dart';
 import '../../../data/vet_repository.dart';
 import '../../../screens/pets.dart' show openPetChoiceDialog;
-import '../../../models/pet_model.dart';
-import '../../../models/saved_address.dart';
 import '../../../models/vet_models.dart';
-import '../../../service/consulta_service.dart';
-import '../../../service/endereco_service.dart';
-import '../../../service/pet_service.dart';
 import '../../../theme.dart';
 import '../../../theme/vet_colors.dart';
 import '../../../widgets.dart';
@@ -31,7 +25,6 @@ typedef _AgendaItem = ({
   String name,
   Agendamento agendamento,
   bool demo,
-  int? consultaId,
 });
 
 class AgendaScreen extends StatefulWidget {
@@ -45,96 +38,16 @@ class _AgendaScreenState extends State<AgendaScreen> {
   late DateTime _mes;
   late DateTime _selecionado;
 
-  // Consultas do cliente logado, vindas do backend (GET /consulta).
-  List<_AgendaItem> _remote = const [];
-  Map<String, PetModel> _petsPorId = const {};
-
-  /// Com cliente logado a agenda mostra só o que está no servidor.
-  /// Sem login, continua o comportamento local/demonstração de antes.
-  bool get _useServer => Session.isLoggedIn;
-
   @override
   void initState() {
     super.initState();
     _selecionado = widget.initialDate ?? DateTime.now();
     _mes = DateTime(_selecionado.year, _selecionado.month);
-    if (_useServer) _carregarConsultas();
-  }
-
-  Future<void> _carregarConsultas() async {
-    final cpf = Session.clientCpf;
-    try {
-      final pets = await PetService.listarPets(cpfCliente: cpf);
-      final consultas = await ConsultaService.listarConsultas(cpfCliente: cpf);
-      List<SavedAddress> enderecos;
-      try {
-        enderecos = await EnderecoService.listarEnderecos(cpfCliente: cpf);
-      } catch (_) {
-        enderecos = EnderecoService.addresses; // o endereço é só complemento
-      }
-      final petsPorId = {for (final pet in pets) pet.id: pet};
-      final itens = <_AgendaItem>[];
-      for (final c in consultas) {
-        final inicio = _dataHora(c['dataConsulta'], c['horarioConsulta']);
-        if (inicio == null) continue;
-        final idPet = '${c['idPet']}';
-        final convenio = '${c['convenio'] ?? ''}'.trim();
-        final descricao = '${c['descricao_consulta'] ?? ''}'.trim();
-        itens.add((
-          petId: idPet,
-          name: petsPorId[idPet]?.name ?? 'Pet',
-          demo: false,
-          consultaId: int.tryParse('${c['id']}'),
-          agendamento: Agendamento(
-            data: inicio,
-            // O servidor não guarda o término; assume 1h como no resto do app.
-            endDate: inicio.add(const Duration(hours: 1)),
-            tipo: '${c['servicos'] ?? ''}',
-            veterinario: 'Dra. Ana Silva',
-            local: convenio.isEmpty ? 'VetHome' : 'VetHome · $convenio',
-            status: StatusAgendamento.pendente,
-            descricao: descricao.isEmpty ? null : descricao,
-            address: enderecos
-                .where((a) => a.id == '${c['idEndereco']}')
-                .firstOrNull,
-          ),
-        ));
-      }
-      if (!mounted) return;
-      setState(() {
-        _petsPorId = petsPorId;
-        _remote = itens;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Não foi possível carregar as consultas. '
-            '${error.toString().replaceFirst('Exception: ', '')}',
-          ),
-        ),
-      );
-    }
-  }
-
-  /// "2026-11-30" + "14:30:00" -> DateTime local.
-  DateTime? _dataHora(Object? data, Object? hora) {
-    final d = DateTime.tryParse('${data ?? ''}');
-    if (d == null) return null;
-    final partes = '${hora ?? ''}'.split(':');
-    final h = int.tryParse(partes.isNotEmpty ? partes[0] : '') ?? 0;
-    final m = int.tryParse(partes.length > 1 ? partes[1] : '') ?? 0;
-    return DateTime(d.year, d.month, d.day, h, m);
   }
 
   @override
   Widget build(BuildContext context) {
     final consultasDoDia = <_AgendaItem>[
-      if (_useServer)
-        for (final item in _remote)
-          if (_sameDay(item.agendamento.data, _selecionado)) item,
-      if (!_useServer)
       for (final pet in VetRepository.pets)
         for (final appointment in VetRepository.agendamentos(pet.id))
           if (_sameDay(appointment.data, _selecionado))
@@ -145,9 +58,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
               demo: !VetRepository.realAppointments(
                 pet.id,
               ).contains(appointment),
-              consultaId: null,
             ),
-      if (!_useServer && _isDemoDate(_selecionado))
+      if (_isDemoDate(_selecionado))
         for (final example in const [
           (hour: 10, type: 'Hemograma', name: 'Rambo Augusto'),
           (hour: 13, type: 'Urina', name: 'Nicolly Santos'),
@@ -157,7 +69,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
             petId: '',
             name: example.name,
             demo: true,
-            consultaId: null,
             agendamento: Agendamento(
               data: DateTime(2026, 1, 13, example.hour),
               endDate: DateTime(2026, 1, 13, example.hour + 1),
@@ -295,7 +206,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 _mes = DateTime(date.year, date.month);
               }),
               hasIndicator: (date) =>
-                  (!_useServer && _isDemoDate(date)) || _hasAppointment(date),
+                  _isDemoDate(date) || _hasAppointment(date),
             ),
           ),
           Positioned(
@@ -684,7 +595,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             _selecionado = date;
             _mes = DateTime(date.year, date.month);
           }),
-          hasIndicator: (date) => (!_useServer && _isDemoDate(date)) || _hasAppointment(date),
+          hasIndicator: (date) => _isDemoDate(date) || _hasAppointment(date),
         ),
       ),
       Transform.translate(
@@ -833,7 +744,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
   Future<void> _showAppointmentDetails(_AgendaItem item) async {
     if (item.demo) return;
-    final pet = _petsPorId[item.petId] ?? VetRepository.petById(item.petId);
+    final pet = VetRepository.petById(item.petId);
     if (pet == null) return;
 
     final deleteRequested = await showDialog<bool>(
@@ -849,15 +760,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(
-          item.consultaId != null ? 'Cancelar consulta?' : 'Excluir consulta?',
-        ),
+        title: const Text('Excluir consulta?'),
         content: Text(
-          item.consultaId != null
-              ? 'Cancelar ${item.agendamento.tipo} de ${item.name} em '
-                    '${fmtData(item.agendamento.data)}?'
-              : 'Remover ${item.agendamento.tipo} de ${item.name} em '
-                    '${fmtData(item.agendamento.data)} deste dispositivo?',
+          'Remover ${item.agendamento.tipo} de ${item.name} em '
+          '${fmtData(item.agendamento.data)} deste dispositivo?',
         ),
         actions: [
           TextButton(
@@ -872,11 +778,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
       ),
     );
     if (!mounted || confirmed != true) return;
-
-    if (item.consultaId != null) {
-      await _cancelarNoServidor(item);
-      return;
-    }
 
     try {
       final removed = VetRepository.removeAgendamento(
@@ -913,41 +814,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
     }
   }
 
-  /// DELETE /consulta/{id}: o backend marca a consulta como cancelada.
-  Future<void> _cancelarNoServidor(_AgendaItem item) async {
-    try {
-      await ConsultaService.excluirConsulta('${item.consultaId}');
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
-        ),
-      );
-      return;
-    }
-    // As outras telas ainda leem a cópia local; tira a correspondente também.
-    try {
-      for (final local in VetRepository.realAppointments(item.petId)) {
-        if (local.data == item.agendamento.data &&
-            local.tipo == item.agendamento.tipo) {
-          VetRepository.removeAgendamento(item.petId, local);
-          break;
-        }
-      }
-    } catch (_) {}
-    if (!mounted) return;
-    setState(() {
-      _remote = [
-        for (final i in _remote)
-          if (i.consultaId != item.consultaId) i,
-      ];
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Consulta cancelada.')),
-    );
-  }
-
   static const _weekdayNames = [
     'Domingo',
     'Segunda-feira',
@@ -962,13 +828,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
       a.year == b.year && a.month == b.month && a.day == b.day;
   bool _isDemoDate(DateTime date) =>
       date.year == 2026 && date.month == 1 && date.day == 13;
-  bool _hasAppointment(DateTime date) => _useServer
-      ? _remote.any((item) => _sameDay(item.agendamento.data, date))
-      : VetRepository.pets.any(
-          (pet) => VetRepository.agendamentos(
-            pet.id,
-          ).any((appointment) => _sameDay(appointment.data, date)),
-        );
+  bool _hasAppointment(DateTime date) => VetRepository.pets.any(
+    (pet) => VetRepository.agendamentos(
+      pet.id,
+    ).any((appointment) => _sameDay(appointment.data, date)),
+  );
 
   void _changeMonth(int amount) {
     setState(() {
