@@ -11,7 +11,7 @@ import '../core/utils/pet_images.dart';
 import '../core/utils/pet_photo.dart';
 import '../core/utils/form_fields.dart';
 import '../core/utils/formatters.dart';
-import '../core/utils/date_parser.dart';
+import '../core/utils/date_parse.dart';
 import 'local/local_storage.dart';
 import 'pet_repository.dart';
 import 'session.dart';
