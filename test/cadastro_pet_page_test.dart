@@ -22,7 +22,10 @@ void main() {
     );
     expect(tester.widget<Icon>(icone).color, VetCores.rosaEscuro);
     final campos = find.byType(TextField);
-    expect(tester.widget<TextField>(campos.first).style!.color, VetCores.marrom);
+    expect(
+      tester.widget<TextField>(campos.first).style!.color,
+      VetCores.marrom,
+    );
     expect(tester.widget<TextField>(campos.first).textAlign, TextAlign.start);
     await tester.ensureVisible(campos.at(0));
     await tester.tap(campos.at(0));
@@ -41,6 +44,31 @@ void main() {
     await tester.tap(find.text('Fêmea'));
     await tester.pumpAndSettle();
     expect(tester.widget<TextField>(campos.at(2)).controller!.text, 'Fêmea');
+  });
+
+  testWidgets('campo de gênero usa o asset marrom', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CadastroPetPage(
+          usuarioId: 'usuario-1',
+          destinoBuilder: (_) => const SizedBox.shrink(),
+        ),
+      ),
+    );
+
+    final imagemGenero = find.byWidgetPredicate(
+      (widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName ==
+              'assets/imagens/genero_iconeMarrom50.png',
+    );
+    expect(imagemGenero, findsOneWidget);
+    expect(
+      tester.widget<Image>(imagemGenero).filterQuality,
+      FilterQuality.none,
+    );
+    expect(tester.widget<Image>(imagemGenero).width, 28);
   });
 
   testWidgets('cor configurável também se aplica ao campo editável', (
@@ -62,6 +90,9 @@ void main() {
         ),
       ),
     );
-    expect(tester.widget<TextField>(find.byType(TextField)).style!.color, Colors.white);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).style!.color,
+      Colors.white,
+    );
   });
 }

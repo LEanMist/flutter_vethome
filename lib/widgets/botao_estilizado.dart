@@ -37,9 +37,9 @@ class BotaoEstilizado extends StatelessWidget {
           boxShadow: mostrarSombra
           ? const [
               BoxShadow(
-                color: Color.fromARGB(90, 0, 0, 0),
-                blurRadius: 5,
-                offset: Offset(2, 4),
+                color: VetCores.sombra,
+                blurRadius: 2,
+                offset: Offset(2, 3),
               ),
             ]
           : null,

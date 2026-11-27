@@ -271,20 +271,19 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
     }
   }
 
-  Widget _listaAgendamentos() {
+  Widget _listaAgendamentos(double alturaMaximaCartao) {
     final estilo = GoogleFonts.montserratAlternates(
       color: VetCores.marrom,
       fontSize: 15,
       fontWeight: FontWeight.w500,
     );
+    final alturaMaximaLista = math.max(0.0, alturaMaximaCartao - 32 - 32 - 8);
     final semAgendamentos =
         !_carregandoAgendamentos &&
         !_erroAgendamentos &&
         _agendamentosAtivos.isEmpty;
     return Column(
-      mainAxisSize: _agendamentosAtivos.isEmpty
-          ? MainAxisSize.min
-          : MainAxisSize.max,
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -351,11 +350,13 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
             !_carregandoAgendamentos &&
             !_erroAgendamentos) ...[
           const SizedBox(height: 8),
-          Expanded(
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: alturaMaximaLista),
             child: BarraRolagem(
               controller: _scrollAgendamentos,
               child: ListView.separated(
                 controller: _scrollAgendamentos,
+                shrinkWrap: true,
                 physics: const ClampingScrollPhysics(),
                 key: const ValueKey('agendamentos-do-pet'),
                 padding: EdgeInsets.zero,
@@ -372,24 +373,27 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _cartaoAgendamentos() {
-    return Container(
-      key: const ValueKey('cartao-agendamentos-pet'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: inset.BoxDecoration(
-        color: VetCores.rosaEscuro25,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          inset.BoxShadow(
-            color: Color.fromARGB(55, 0, 0, 0),
-            blurRadius: 1,
-            offset: Offset(3, 3),
-            inset: true,
-          ),
-        ],
+  Widget _cartaoAgendamentos(double alturaMaxima) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: alturaMaxima),
+      child: Container(
+        key: const ValueKey('cartao-agendamentos-pet'),
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: inset.BoxDecoration(
+          color: VetCores.rosaEscuro25,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            inset.BoxShadow(
+              color: Color.fromARGB(55, 0, 0, 0),
+              blurRadius: 1,
+              offset: Offset(3, 3),
+              inset: true,
+            ),
+          ],
+        ),
+        child: _listaAgendamentos(alturaMaxima),
       ),
-      child: _listaAgendamentos(),
     );
   }
 
@@ -427,7 +431,9 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
           pet: pet,
           usuarioId: widget.usuarioId,
           agendamentoRepository: _agendamentoRepository,
+          petRepository: widget.petRepository,
           onVoltar: () => setState(() => _mostrarDetalhes = false),
+          onPetAtualizado: () => setState(() {}),
           atualizacaoAgendamentos: widget.atualizacaoAgendamentos,
         ),
       );
@@ -562,16 +568,11 @@ class _PetPerfilPage extends State<PetPerfilPage> with WidgetsBindingObserver {
                           );
                           return Align(
                             alignment: Alignment.topCenter,
-                            child: SizedBox(
-                              height: _agendamentosAtivos.isEmpty
-                                  ? null
-                                  : alturaCartao,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                ),
-                                child: _cartaoAgendamentos(),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
                               ),
+                              child: _cartaoAgendamentos(alturaCartao),
                             ),
                           );
                         },

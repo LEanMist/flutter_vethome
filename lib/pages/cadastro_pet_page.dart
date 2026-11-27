@@ -218,10 +218,9 @@ class _CadastroPetPage extends State<CadastroPetPage> {
       ),
       body: SafeArea(
         child: LayoutBuilder(
-          
-      builder: (context, constraints) {
+          builder: (context, constraints) {
             final compacto =
-                constraints.maxWidth < 500 || constraints.maxHeight < 700;      
+                constraints.maxWidth < 500 || constraints.maxHeight < 700;
             final double espacamentoInicial = compacto ? 20 : 40;
             final double espacamentoCampos = compacto ? 14 : 10;
             final double alturaCampos = compacto ? 55 : 57;
@@ -306,7 +305,7 @@ class _CadastroPetPage extends State<CadastroPetPage> {
                                 Expanded(
                                   child: CampoCadastro(
                                     titulo: 'Gênero/Sexo',
-                                    icone: Icons.wc,
+                                    icone: Icons.pets,
                                     altura: alturaCampos,
                                     largura: double.infinity,
                                     tamanhoIcone: tamanhoIcone,

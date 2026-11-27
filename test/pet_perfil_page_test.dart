@@ -39,7 +39,9 @@ void main() {
           pet: pet,
           usuarioId: 'usuario-1',
           agendamentoRepository: repository,
+          petRepository: InMemoryPetRepository(),
           onVoltar: () {},
+          onPetAtualizado: () {},
         ),
       ),
     );
@@ -48,12 +50,23 @@ void main() {
     await tester.pumpWidget(pagina(pet));
     await tester.pumpAndSettle();
     expect(find.byType(CampoCadastro), findsNWidgets(4));
-    for (final campo in tester.widgetList<CampoCadastro>(find.byType(CampoCadastro))) {
-      final icone = find.descendant(
-        of: find.byWidget(campo),
-        matching: find.byIcon(campo.icone),
-      );
-      expect(tester.widget<Icon>(icone).color, VetCores.marrom);
+    for (final campo in tester.widgetList<CampoCadastro>(
+      find.byType(CampoCadastro),
+    )) {
+      if (campo.imagemAsset != null) {
+        expect(campo.imagemAsset, 'assets/imagens/genero_icone.png');
+        final imagem = find.descendant(
+          of: find.byWidget(campo),
+          matching: find.byType(Image),
+        );
+        expect(tester.widget<Image>(imagem).filterQuality, FilterQuality.none);
+      } else {
+        final icone = find.descendant(
+          of: find.byWidget(campo),
+          matching: find.byIcon(campo.icone!),
+        );
+        expect(tester.widget<Icon>(icone).color, VetCores.marrom);
+      }
     }
     expect(find.byType(TextField), findsNothing);
     for (final valor in ['Macho', '7 kg', '01/01/2020', 'Labrador']) {
@@ -67,12 +80,14 @@ void main() {
     expect(tester.testTextInput.isVisible, isFalse);
 
     await tester.pumpWidget(
-      pagina(pet.copyWith(
-        genero: PetGenero.femea,
-        peso: 4.5,
-        dataNascimento: DateTime(2021, 2, 3),
-        raca: 'Poodle',
-      )),
+      pagina(
+        pet.copyWith(
+          genero: PetGenero.femea,
+          peso: 4.5,
+          dataNascimento: DateTime(2021, 2, 3),
+          raca: 'Poodle',
+        ),
+      ),
     );
     await tester.pumpAndSettle();
     for (final valor in ['Fêmea', '4.5 kg', '03/02/2021', 'Poodle']) {
@@ -406,6 +421,8 @@ void main() {
     expect(find.text('Labrador'), findsOneWidget);
     expect(find.text('Histórico de Atendimentos'), findsOneWidget);
     expect(find.text('Ativo'), findsWidgets);
+    expect(find.text('Cancelado'), findsOneWidget);
+    expect(find.text('Atendimento cancelado'), findsOneWidget);
     expect(find.text('Hemograma + Creatinina'), findsOneWidget);
     expect(find.text('Editar').hitTestable(), findsOneWidget);
 
@@ -414,12 +431,20 @@ void main() {
       find.descendant(of: lista, matching: find.byType(Scrollable)).first,
     );
     expect(scroll.position.maxScrollExtent, greaterThan(0));
+    expect(
+      tester
+          .widget<Scrollable>(
+            find.descendant(of: lista, matching: find.byType(Scrollable)).first,
+          )
+          .physics,
+      isA<ClampingScrollPhysics>(),
+    );
     expect(find.byType(Scrollable), findsOneWidget);
+    expect(find.byType(Scrollbar), findsOneWidget);
     await tester.drag(lista, const Offset(0, -1000));
     await tester.pumpAndSettle();
     expect(scroll.position.pixels, greaterThan(0));
     expect(find.text('Concluído'), findsOneWidget);
-    expect(find.text('Atendimento cancelado'), findsNothing);
     expect(find.text('Editar').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
 

@@ -178,9 +178,11 @@ void main() {
     expect(find.byTooltip('Tentar novamente'), findsOneWidget);
   });
 
-  testWidgets('o cartão ocupa o espaço livre e a lista rola internamente', (
+  testWidgets('o cartão cresce até o limite e a lista rola internamente', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final pets = InMemoryPetRepository()..save(_pet('max'));
     final data = DateUtils.dateOnly(
       DateTime.now(),
@@ -205,17 +207,29 @@ void main() {
     );
     await tester.pumpAndSettle();
     final cartao = find.byKey(const ValueKey('cartao-agendamentos-pet'));
-    final altura = tester.getSize(cartao).height;
+    final alturaInicial = tester.getSize(cartao).height;
     await repository.save(
       _agendamento(
         data: data.add(const Duration(days: 1)),
-        nome:
-            'Outro exame com um nome bastante extenso para ocupar mais espaço',
+        nome: 'Segundo exame',
       ),
     );
     atualizacao.value++;
     await tester.pumpAndSettle();
-    expect(tester.getSize(cartao).height, closeTo(altura, 0.1));
+    final alturaComDois = tester.getSize(cartao).height;
+    expect(alturaComDois, greaterThan(alturaInicial));
+    expect(alturaComDois, lessThan(250));
+    for (var i = 2; i < 10; i++) {
+      await repository.save(
+        _agendamento(
+          data: data.add(Duration(days: i)),
+          nome: 'Serviço de nome longo número $i para o animal',
+        ),
+      );
+    }
+    atualizacao.value++;
+    await tester.pumpAndSettle();
+    expect(tester.getSize(cartao).height, greaterThan(alturaComDois));
     final lista = find.byKey(const ValueKey('agendamentos-do-pet'));
     final scroll = tester.state<ScrollableState>(
       find.descendant(of: lista, matching: find.byType(Scrollable)).first,
@@ -257,6 +271,7 @@ void main() {
         final cartao = find.byKey(const ValueKey('cartao-agendamentos-pet'));
         final botao = find.text('Nova Consulta');
         final alturaInicial = tester.getSize(cartao).height;
+        expect(alturaInicial, lessThan(250));
         final posicaoBotao = tester.getCenter(botao);
         if (alturaTela == 900) {
           final lista = find.byKey(const ValueKey('agendamentos-do-pet'));
@@ -268,11 +283,13 @@ void main() {
             of: lista,
             matching: find.byWidgetPredicate(
               (widget) =>
-                  widget is CustomPaint && widget.foregroundPainter is ScrollbarPainter,
+                  widget is CustomPaint &&
+                  widget.foregroundPainter is ScrollbarPainter,
             ),
           );
           final painter =
-              tester.widget<CustomPaint>(customPaint).foregroundPainter! as ScrollbarPainter;
+              tester.widget<CustomPaint>(customPaint).foregroundPainter!
+                  as ScrollbarPainter;
           expect(
             painter.hitTestOnlyThumbInteractive(
               Offset(tester.getSize(lista).width - 2, 10),
@@ -282,7 +299,19 @@ void main() {
           );
         }
 
-        for (var i = 1; i < 10; i++) {
+        await repository.save(
+          _agendamento(
+            data: data.add(const Duration(days: 1)),
+            nome: 'Segundo exame',
+          ),
+        );
+        atualizacao.value++;
+        await tester.pumpAndSettle();
+        final alturaComDois = tester.getSize(cartao).height;
+        expect(alturaComDois, greaterThan(alturaInicial));
+        expect(alturaComDois, lessThan(250));
+
+        for (var i = 2; i < 10; i++) {
           await repository.save(
             _agendamento(
               data: data.add(Duration(days: i)),
@@ -310,7 +339,10 @@ void main() {
           lessThan(tester.getTopLeft(botao).dy),
         );
 
-        final barra = find.ancestor(of: lista, matching: find.byType(Scrollbar));
+        final barra = find.ancestor(
+          of: lista,
+          matching: find.byType(Scrollbar),
+        );
         final tema = tester.widget<ScrollbarTheme>(
           find.ancestor(of: barra, matching: find.byType(ScrollbarTheme)).first,
         );
@@ -319,11 +351,13 @@ void main() {
           of: lista,
           matching: find.byWidgetPredicate(
             (widget) =>
-                widget is CustomPaint && widget.foregroundPainter is ScrollbarPainter,
+                widget is CustomPaint &&
+                widget.foregroundPainter is ScrollbarPainter,
           ),
         );
         final painter =
-            tester.widget<CustomPaint>(customPaint).foregroundPainter! as ScrollbarPainter;
+            tester.widget<CustomPaint>(customPaint).foregroundPainter!
+                as ScrollbarPainter;
         final area = tester.getRect(lista);
         expect(
           painter.hitTestOnlyThumbInteractive(
@@ -354,13 +388,19 @@ void main() {
         final fim = await tester.startGesture(tester.getCenter(lista));
         await fim.moveBy(const Offset(0, -200));
         await tester.pump();
-        expect(scrollLista.position.pixels, scrollLista.position.maxScrollExtent);
+        expect(
+          scrollLista.position.pixels,
+          scrollLista.position.maxScrollExtent,
+        );
         await fim.up();
         await tester.pumpAndSettle();
-        expect(find.descendant(
-          of: lista,
-          matching: find.byType(StretchingOverscrollIndicator),
-        ), findsNothing);
+        expect(
+          find.descendant(
+            of: lista,
+            matching: find.byType(StretchingOverscrollIndicator),
+          ),
+          findsNothing,
+        );
         expect(tester.getCenter(botao), posicaoBotao);
         expect(tester.takeException(), isNull);
       },

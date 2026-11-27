@@ -8,12 +8,18 @@ class CampoCadastro extends StatelessWidget {
   const CampoCadastro({
     super.key,
     required this.titulo,
-    required this.icone,
+    this.icone,
+    this.imagemAsset,
     required this.altura,
     required this.largura,
     required this.tamanhoIcone,
     required this.tamanhoIconeInterno,
     required this.fonteLabel,
+    this.tamanhoFonteValor,
+    this.corIcone = VetCores.marrom50,
+    this.corTexto = VetCores.marrom,
+    this.corCampo = VetCores.rosaEscuro25,
+    this.alinhamentoTexto = TextAlign.start,
     this.controller,
     this.errorText,
     this.onChanged,
@@ -21,18 +27,18 @@ class CampoCadastro extends StatelessWidget {
     this.keyboardType,
     this.inputFormatters,
     this.obscureText = false,
+    this.linhaUnica = false,
+    this.paddingTexto,
     this.textCapitalization = TextCapitalization.none,
     this.valorExibicao,
-    this.tamanhoFonteValor,
-    this.corIcone = const Color(0xFFC08081),
-    this.corTexto = const Color(0xFF68442E),
-    this.alinhamentoTexto = TextAlign.start,
   }) : assert(
          valorExibicao == null ||
              (controller == null && onTap == null && onChanged == null),
-       );
+       ),
+       assert((icone == null) != (imagemAsset == null));
   final String titulo;
-  final IconData icone;
+  final IconData? icone;
+  final String? imagemAsset;
   final double altura;
   final double largura;
   final double tamanhoIcone;
@@ -45,11 +51,14 @@ class CampoCadastro extends StatelessWidget {
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final bool obscureText;
+  final bool linhaUnica;
+  final EdgeInsets? paddingTexto;
   final TextCapitalization textCapitalization;
   final String? valorExibicao;
   final double? tamanhoFonteValor;
   final Color corIcone;
   final Color corTexto;
+  final Color corCampo;
   final TextAlign alinhamentoTexto;
 
   @override
@@ -60,11 +69,11 @@ class CampoCadastro extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 0, bottom: 1),
+            padding: const EdgeInsets.only(left: 7, bottom: 1),
             child: Text(
               titulo,
               style: GoogleFonts.montserratAlternates(
-                color: const Color(0xFF68442E),
+                color: VetCores.marrom,
                 fontWeight: FontWeight.w500,
                 fontSize: fonteLabel,
               ),
@@ -80,8 +89,11 @@ class CampoCadastro extends StatelessWidget {
                 SizedBox(
                   height: altura,
                   child: Container(
-                    decoration: const inset_shadow.BoxDecoration(
-                      color: Color.fromRGBO(192, 128, 129, 0.28),
+                    alignment: linhaUnica && valorExibicao == null
+                        ? Alignment.center
+                        : null,
+                    decoration: inset_shadow.BoxDecoration(
+                      color: corCampo,
                       borderRadius: BorderRadius.all(Radius.circular(80)),
                       boxShadow: [
                         inset_shadow.BoxShadow(
@@ -107,9 +119,9 @@ class CampoCadastro extends StatelessWidget {
                                   textAlign: alinhamentoTexto,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.montserratAlternates(
+                                  style: GoogleFonts.comfortaa(
                                     color: corTexto,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.bold,
                                     fontSize: tamanhoFonteValor,
                                   ),
                                 ),
@@ -117,58 +129,52 @@ class CampoCadastro extends StatelessWidget {
                             ),
                           )
                         : TextField(
-                      controller: controller,
-                      expands: !obscureText,
-                      maxLines: obscureText ? 1 : null,
-                      minLines: obscureText ? 1 : null,
-                      obscureText: obscureText,
-                      keyboardType:
-                          keyboardType ??
-                          (titulo == 'Peso'
-                              ? TextInputType.number
-                              : TextInputType.text),
-                      inputFormatters: inputFormatters,
-                      textCapitalization: textCapitalization,
-                      textAlign: alinhamentoTexto,
-                      textAlignVertical: TextAlignVertical.center,
-                      readOnly: onTap != null,
-                      onTap: onTap,
-                      style: GoogleFonts.montserratAlternates(
-                        color: corTexto,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        isDense: true,
-                        contentPadding: EdgeInsets.only(
-                          left: tamanhoIcone + 12,
-                          right: 16,
-                          top: obscureText ? (altura - 16) / 2 : 0,
-                          bottom: obscureText ? (altura - 16) / 2 : 0,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(80),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(80),
-                          borderSide: const BorderSide(
-                            color: Colors.transparent,
-                            width: 1.5,
+                            controller: controller,
+                            expands: !obscureText && !linhaUnica,
+                            maxLines: obscureText || linhaUnica ? 1 : null,
+                            minLines: obscureText || linhaUnica ? 1 : null,
+                            obscureText: obscureText,
+                            keyboardType:
+                                keyboardType ??
+                                (titulo == 'Peso'
+                                    ? TextInputType.number
+                                    : TextInputType.text),
+                            inputFormatters: inputFormatters,
+                            textCapitalization: textCapitalization,
+                            textAlign: alinhamentoTexto,
+                            textAlignVertical: TextAlignVertical.center,
+                            readOnly: onTap != null,
+                            onTap: onTap,
+                            style: GoogleFonts.comfortaa(
+                              color: corTexto,
+                              fontWeight: FontWeight.w500,
+                              fontSize: tamanhoFonteValor,
+                            ),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.transparent,
+                              isDense: true,
+                              contentPadding: paddingTexto ?? EdgeInsets.only(
+                                left: tamanhoIcone + 12,
+                                right: 16,
+                                top: obscureText ? (altura - 16) / 2 : 0,
+                                bottom: obscureText ? (altura - 16) / 2 : 0,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(80),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(80),
+                                borderSide: const BorderSide(
+                                  color: Colors.transparent,
+                                  width: 1.5,
+                                ),
+                              ),
+                              errorText: errorText,
+                            ),
+                            onChanged: onChanged,
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(80),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF68442E),
-                            width: 1.5,
-                          ),
-                        ),
-                        errorText: errorText,
-                      ),
-                      onChanged: onChanged,
-                    ),
                   ),
                 ),
                 Positioned(

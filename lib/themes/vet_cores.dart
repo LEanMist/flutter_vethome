@@ -8,6 +8,7 @@ class VetCores {
   static const Color branco50 = Color(0x80FFFFFF);
   static const Color rosaFundo = Color(0xFFFAD3D5); // FAD3D5 (fundo, botões)
   static const Color rosaCard = Color(0xFFECBEC0);
+  static const Color rosaCard2 = Color(0xFFFBDCDD);
   static const Color rosaEscuro = Color(0xFFC08081,); // C08081 (cabeçalhos, bordas, cards)
   static const Color rosaEscuro75 = Color(0xBFC08081); // C08081 com 75% de opacidade
   static const Color rosaEscuro50 = Color(0x80C08081,); // C08081 com 50% de opacidade

@@ -5,9 +5,12 @@ import 'package:flutter_inset_shadow/flutter_inset_shadow.dart' as inset;
 import 'package:flutter_vethome/models/agendamento.dart';
 import 'package:flutter_vethome/models/pet.dart';
 import 'package:flutter_vethome/repositories/agendamento_repository.dart';
+import 'package:flutter_vethome/repositories/pet_repository.dart';
 import 'package:flutter_vethome/themes/vet_cores.dart';
+import 'package:flutter_vethome/widgets/barra_rolagem.dart';
 import 'package:flutter_vethome/widgets/botao_estilizado.dart';
 import 'package:flutter_vethome/widgets/campo_cadastro.dart';
+import 'package:flutter_vethome/widgets/editar_pet.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class DetalhesPetPage extends StatefulWidget {
@@ -16,14 +19,18 @@ class DetalhesPetPage extends StatefulWidget {
     required this.pet,
     required this.usuarioId,
     required this.agendamentoRepository,
+    required this.petRepository,
     required this.onVoltar,
+    required this.onPetAtualizado,
     this.atualizacaoAgendamentos,
   });
 
   final Pet pet;
   final String usuarioId;
   final AgendamentoRepository agendamentoRepository;
+  final PetRepository petRepository;
   final VoidCallback onVoltar;
+  final VoidCallback onPetAtualizado;
   final Listenable? atualizacaoAgendamentos;
 
   @override
@@ -33,6 +40,7 @@ class DetalhesPetPage extends StatefulWidget {
 class _DetalhesPetPageState extends State<DetalhesPetPage>
     with WidgetsBindingObserver {
   List<Agendamento> _historico = [];
+  final _scrollHistorico = ScrollController();
   bool _carregando = true;
   bool _erro = false;
   int _versaoCarregamento = 0;
@@ -67,6 +75,7 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
   @override
   void dispose() {
     widget.atualizacaoAgendamentos?.removeListener(_carregarHistorico);
+    _scrollHistorico.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -91,8 +100,7 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
               .where(
                 (agendamento) =>
                     agendamento.petId == idPet &&
-                    agendamento.usuarioId == widget.usuarioId &&
-                    agendamento.status != StatusAgendamento.cancelado,
+                    agendamento.usuarioId == widget.usuarioId,
               )
               .toList()
             ..sort((a, b) {
@@ -120,6 +128,37 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
   String _pesoFormatado(double peso) =>
       '${peso == peso.roundToDouble() ? peso.toStringAsFixed(0) : peso.toStringAsFixed(1)} kg';
 
+  Future<void> _editarPet() async {
+    final editado = await showDialog<Pet>(
+      context: context,
+      builder: (_) => EditarPet(pet: widget.pet),
+    );
+    if (!mounted || editado == null) return;
+    try {
+      final id = editado.id;
+      final atual = id == null ? null : widget.petRepository.findById(id);
+      if (atual == null || atual.usuarioId != widget.usuarioId ||
+          widget.pet.id != id) {
+        throw StateError('Não foi possível encontrar o pet selecionado.');
+      }
+      widget.petRepository.save(
+        atual.copyWith(
+          nome: editado.nome,
+          genero: editado.genero,
+          peso: editado.peso,
+          dataNascimento: editado.dataNascimento,
+          raca: editado.raca,
+        ),
+      );
+      widget.onPetAtualizado();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível salvar o pet: $error')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -127,7 +166,9 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
         final bool compacto =
             constraints.maxWidth < 500 || constraints.maxHeight < 700;
         final double alturaCabecalho = compacto ? 120 : 160;
-        final double larguraCartao = compacto ? constraints.maxWidth - 65 : constraints.maxWidth - 40;
+        final double larguraCartao = compacto
+            ? constraints.maxWidth - 65
+            : constraints.maxWidth - 40;
         return Column(
           children: [
             Container(
@@ -166,13 +207,12 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
                 ],
               ),
             ),
+            SizedBox(height: compacto ? 14 : 20),
             Padding(
               padding: EdgeInsets.fromLTRB(20, compacto ? 14 : 20, 20, 0),
-              child: _cartaoDados(
-                compacto, 
-                larguraCartao
-              ),
+              child: _cartaoDados(compacto, larguraCartao),
             ),
+            SizedBox(height: compacto ? 14 : 20),
             Padding(
               padding: const EdgeInsets.fromLTRB(22, 16, 20, 8),
               child: Align(
@@ -181,7 +221,7 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
                   'Histórico de Atendimentos',
                   style: GoogleFonts.montserratAlternates(
                     color: VetCores.marrom,
-                    fontSize: compacto ? 14 : 16,
+                    fontSize: compacto ? 18 : 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -189,13 +229,13 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
             ),
             Expanded(child: _conteudoHistorico(compacto)),
             Padding(
-              padding: EdgeInsets.fromLTRB(12, 8, 12, compacto ? 12 : 18),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 23),
               child: BotaoEstilizado(
                 texto: 'Editar',
-                onPressed: null,
-                largura: 120,
-                altura: compacto ? 46 : 52,
-                tamanhoFonte: 14,
+                onPressed: _editarPet,
+                largura: compacto ? 140 : 140,
+                altura: compacto ? 50 : 52,
+                tamanhoFonte: 15,
                 corFundo: VetCores.rosaFundo,
               ),
             ),
@@ -207,9 +247,9 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
 
   Widget _cartaoDados(bool compacto, double largura) {
     final genero = widget.pet.genero == PetGenero.macho ? 'Macho' : 'Fêmea';
-
     return Container(
       width: largura,
+      height: compacto ? 280 : 200,
       padding: EdgeInsets.all(compacto ? 14 : 16),
       decoration: inset.BoxDecoration(
         color: VetCores.rosaEscuro25,
@@ -227,10 +267,18 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
         children: [
           Row(
             children: [
-              Expanded(child: _campo('Gênero/Sexo', genero, Icons.wc_rounded)),
+              Expanded(
+                child: _campo(
+                  compacto,
+                  'Gênero/Sexo',
+                  genero,
+                  Icons.wc_rounded,
+                ),
+              ),
               SizedBox(width: compacto ? 40 : 40),
               Expanded(
                 child: _campo(
+                  compacto,
                   'Peso',
                   _pesoFormatado(widget.pet.peso),
                   Icons.monitor_weight_outlined,
@@ -240,31 +288,33 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
           ),
           const SizedBox(height: 8),
           _campo(
+            compacto,
             'Data de Nascimento',
             _dataFormatada(widget.pet.dataNascimento),
             Icons.cake_outlined,
           ),
           const SizedBox(height: 8),
-          _campo('Raça', widget.pet.raca, Icons.pets_rounded),
+          _campo(compacto, 'Raça', widget.pet.raca, Icons.pets_rounded),
         ],
       ),
     );
   }
 
-  Widget _campo(String titulo, String valor, IconData icone) {
+  Widget _campo(bool compacto, String titulo, String valor, IconData icone) {
     return CampoCadastro(
       titulo: titulo,
       icone: icone,
-      altura: 38,
+      altura: compacto ? 55 : 50,
       largura: double.infinity,
-      tamanhoIcone: 32,
-      tamanhoIconeInterno: 19,
-      corIcone: VetCores.marrom,
+      tamanhoIcone: compacto ? 55 : 60,
+      tamanhoIconeInterno: compacto ? 30 : 40,
+      corIcone: VetCores.marrom75,
       corTexto: VetCores.branco,
+      corCampo: VetCores.rosaEscuro50,
       alinhamentoTexto: TextAlign.center,
-      fonteLabel: 11,
+      fonteLabel: compacto ? 14 : 14,
+      tamanhoFonteValor: compacto ? 15 : 14,
       valorExibicao: valor,
-      tamanhoFonteValor: 11,
     );
   }
 
@@ -300,17 +350,26 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
         ),
       );
     }
-    return ListView.separated(
-      key: const ValueKey('historico-atendimentos-pet'),
-      padding: EdgeInsets.fromLTRB(20, 0, 20, compacto ? 8 : 12),
-      itemCount: _historico.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 7),
-      itemBuilder: (context, index) => _cartaoAtendimento(_historico[index]),
+    return BarraRolagem(
+      controller: _scrollHistorico,
+      child: ListView.separated(
+        key: const ValueKey('historico-atendimentos-pet'),
+        controller: _scrollHistorico,
+        physics: const ClampingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(20, 0, 20, compacto ? 8 : 12),
+        itemCount: _historico.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 7),
+        itemBuilder: (context, index) => _cartaoAtendimento(_historico[index]),
+      ),
     );
   }
 
   Widget _cartaoAtendimento(Agendamento agendamento) {
-    final statusConcluido = agendamento.status == StatusAgendamento.concluido;
+    final (textoStatus, corStatus) = switch (agendamento.status) {
+      StatusAgendamento.ativo => ('Ativo', VetCores.rosaEscuro),
+      StatusAgendamento.cancelado => ('Cancelado', VetCores.marrom75),
+      StatusAgendamento.concluido => ('Concluído', VetCores.marrom50),
+    };
     final servicos = agendamento.servicos.isEmpty
         ? 'Serviços não informados'
         : agendamento.servicos.map((servico) => servico.nome).join(' + ');
@@ -339,13 +398,11 @@ class _DetalhesPetPageState extends State<DetalhesPetPage>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusConcluido
-                      ? VetCores.marrom50
-                      : VetCores.rosaEscuro,
+                  color: corStatus,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  statusConcluido ? 'Concluído' : 'Ativo',
+                  textoStatus,
                   style: GoogleFonts.montserratAlternates(
                     color: VetCores.branco,
                     fontSize: 10,
